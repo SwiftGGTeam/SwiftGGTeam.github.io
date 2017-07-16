@@ -1,0 +1,1098 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>详解 Swift 模式匹配 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Benedikt Terhechte，原文链接，原文日期：2015-08-20译者：mmoaay；校对：numbbbbb；定稿：千叶知风   在众多 Swift 提供给 Objective-C 程序员使用的新特性中，有个特性把自己伪装成一个无聊的老头，但是却在如何优雅的解决“鞭尸金字塔“的问题上有着巨大的潜力。很显然我所说的这个特性就是 switch 语句， 对于很多 Objective-">
+<meta name="keywords" content="Swift 进阶">
+<meta property="og:type" content="article">
+<meta property="og:title" content="详解 Swift 模式匹配">
+<meta property="og:url" content="https://swift.gg/2015/10/27/swift-pattern-matching-in-detail/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Benedikt Terhechte，原文链接，原文日期：2015-08-20译者：mmoaay；校对：numbbbbb；定稿：千叶知风   在众多 Swift 提供给 Objective-C 程序员使用的新特性中，有个特性把自己伪装成一个无聊的老头，但是却在如何优雅的解决“鞭尸金字塔“的问题上有着巨大的潜力。很显然我所说的这个特性就是 switch 语句， 对于很多 Objective-">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="详解 Swift 模式匹配">
+<meta name="twitter:description" content="作者：Benedikt Terhechte，原文链接，原文日期：2015-08-20译者：mmoaay；校对：numbbbbb；定稿：千叶知风   在众多 Swift 提供给 Objective-C 程序员使用的新特性中，有个特性把自己伪装成一个无聊的老头，但是却在如何优雅的解决“鞭尸金字塔“的问题上有着巨大的潜力。很显然我所说的这个特性就是 switch 语句， 对于很多 Objective-">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2015/10/27/swift-pattern-matching-in-detail/" target="_blank" title="详解 Swift 模式匹配" itemprop="url">详解 Swift 模式匹配</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2015-10-27T01:00:00.000Z" itemprop="datePublished">2015-10-27</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Benedikt Terhechte，<a href="http://appventure.me/2015/08/20/swift-pattern-matching-in-detail/" target="_blank" rel="external">原文链接</a>，原文日期：2015-08-20<br>译者：<a href="http://mmoaay.photo/" target="_blank" rel="external">mmoaay</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="external">numbbbbb</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="external">千叶知风</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>在众多 Swift 提供给 Objective-C 程序员使用的新特性中，有个特性把自己伪装成一个无聊的老头，但是却在如何优雅的解决“鞭尸金字塔“的问题上有着巨大的潜力。很显然我所说的这个特性就是 <code>switch</code> 语句， 对于很多 Objective-C 程序员来说，除了用在 <a href="http://en.wikipedia.org/wiki/Duff%27s_device" target="_blank" rel="external">Duff’s Device</a> 上比较有趣之外，<code>switch</code> 语句非常笨拙，与多个 <code>if</code> 语句相比，它几乎没有任何优势。</p>
+<a id="more"></a>
+<p>不过 Swift 中的 <code>switch</code> 语句能做的就多了。在接下来的教程里，我会更加详细的讲解这些新特性的各种用途。我会忽略那些与 Objective-C 和 C 中 <code>switch</code> 语句相比没有任何优势的解决方案。这篇文章基础的部分写于 2014 年 7 月，但是很多我写的模式都会导致编译器崩溃，所以我只好推迟这些内容的编写，直到编译器能提供更好的支持。</p>
+<p>这篇博客还有如下语言的版本：</p>
+<blockquote>
+<p><a href="http://qiita.com/mono0926/items/f2875a9eacef53e88122" target="_blank" rel="external">日语</a> （感谢 <a href="https://twitter.com/_mono" target="_blank" rel="external">M Ono</a>！）</p>
+</blockquote>
+<h1 id="开始咯"><a href="#开始咯" class="headerlink" title="开始咯"></a>开始咯</h1><p> <code>switch</code> 语句主要的特性当然是模式匹配咯，模式匹配可以对值进行解构，然后根据相应 <code>case</code> 的正确匹配值来进行匹配。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// 历史上最坏的一个例子：二进制-&gt;十进制的转换</span></div><div class="line"><span class="keyword">let</span> bool1 = <span class="number">1</span></div><div class="line"><span class="keyword">let</span> bool2 = <span class="number">0</span></div><div class="line"><span class="keyword">switch</span> (bool1, bool2) &#123;</div><div class="line">   <span class="keyword">case</span> (<span class="number">0</span>, <span class="number">0</span>): <span class="built_in">print</span>(<span class="string">"0"</span>)</div><div class="line">   <span class="keyword">case</span> (<span class="number">0</span>, <span class="number">1</span>): <span class="built_in">print</span>(<span class="string">"1"</span>)</div><div class="line">   <span class="keyword">case</span> (<span class="number">1</span>, <span class="number">0</span>): <span class="built_in">print</span>(<span class="string">"2"</span>)</div><div class="line">   <span class="keyword">case</span> (<span class="number">1</span>, <span class="number">1</span>): <span class="built_in">print</span>(<span class="string">"3"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>模式匹配很早以前就在其他语言中存在了，这些语言包括 Haskell、Erlang、Scala 和 Prolog。这是一个福音，因为它允许我们观察那些语言如何利用模式匹配来解决问题。我们甚至可以通过观察它们的例子来找到最实用的那个。</p>
+<h1 id="一个交易引擎"><a href="#一个交易引擎" class="headerlink" title="一个交易引擎"></a>一个交易引擎</h1><p>假设华尔街找到你，他们需要一个新的运行在 iOS 设备上的交易平台。因为是交易平台，所以你需要给交易定义一个 <code>enum</code>。</p>
+<h2 id="第一步"><a href="#第一步" class="headerlink" title="第一步"></a>第一步</h2><figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">enum</span> <span class="title">Trades</span> </span>&#123;</div><div class="line">    <span class="keyword">case</span> <span class="type">Buy</span>(stock: <span class="type">String</span>, amount: <span class="type">Int</span>, stockPrice: <span class="type">Float</span>)</div><div class="line">    <span class="keyword">case</span> <span class="type">Sell</span>(stock: <span class="type">String</span>, amount: <span class="type">Int</span>, stockPrice: <span class="type">Float</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>同时还会提供如下的 API 给你来进行交易处理。<strong>注意销售订单的金额是如何变成负数的</strong>，而且他们还说股票的价格不重要，他们的引擎会在内部选择一个价格。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> - 参数 stock: 股票的名字</div><div class="line"> - 参数 amount: 金额, 负数表示销售额, 正数表示购买额</div><div class="line">*/</div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">process</span><span class="params">(stock: String, <span class="number">_</span> amount: Int)</span></span> &#123;</div><div class="line">    <span class="built_in">print</span> (<span class="string">"<span class="subst">\(amount)</span> of <span class="subst">\(stock)</span>"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>下一步就是对交易进行处理。你会发现模式匹配在写这个业务时所具备的强大处理能力：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> aTrade = <span class="type">Trades</span>.<span class="type">Buy</span>(stock: <span class="string">"APPL"</span>, amount: <span class="number">200</span>, stockPrice: <span class="number">115.5</span>)</div><div class="line"></div><div class="line"><span class="keyword">switch</span> aTrade &#123;</div><div class="line"><span class="keyword">case</span> .<span class="type">Buy</span>(<span class="keyword">let</span> stock, <span class="keyword">let</span> amount, <span class="number">_</span>):</div><div class="line">    process(stock, amount)</div><div class="line"><span class="keyword">case</span> .<span class="type">Sell</span>(<span class="keyword">let</span> stock, <span class="keyword">let</span> amount, <span class="number">_</span>):</div><div class="line">    process(stock, amount * -<span class="number">1</span>)</div><div class="line">&#125;</div><div class="line"><span class="comment">// 输出 "buy 200 of APPL"</span></div></pre></td></tr></table></figure>
+<p>Swift 可以让我们非常方便的从 <code>enum</code> 中解构/提取出我们真正想要的信息。在这个例子中只有 <code>stock</code> 和 <code>amount</code> 被解构出来。</p>
+<p>真棒，现在你可以去华尔街展示这个极好的交易平台了。然而，现实往往比美好的想象要残酷得多。你以为交易就是你以为的交易么？</p>
+<ul>
+<li>你必须根据不同的交易方式计算费用。</li>
+<li>机构越小，费用越高</li>
+<li>而且，机构越大，优先级越高。</li>
+</ul>
+<p>华尔街的人也意识到要处理这些问题你需要新的 API，所以他们给了你下面的两个：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">processSlow</span><span class="params">(stock: String, <span class="number">_</span> amount: Int, <span class="number">_</span> fee: Float)</span></span> &#123; <span class="built_in">print</span>(<span class="string">"slow"</span>) &#125;</div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">processFast</span><span class="params">(stock: String, <span class="number">_</span> amount: Int, <span class="number">_</span> fee: Float)</span></span> &#123; <span class="built_in">print</span>(<span class="string">"fast"</span>) &#125;</div></pre></td></tr></table></figure>
+<h2 id="交易类型"><a href="#交易类型" class="headerlink" title="交易类型"></a>交易类型</h2><p>于是你回到绘图板重新增加了一个 <code>enum</code>。交易类型也是每个交易的一部分。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">enum</span> <span class="title">TraderType</span> </span>&#123;</div><div class="line"><span class="keyword">case</span> <span class="type">SingleGuy</span></div><div class="line"><span class="keyword">case</span> <span class="type">Company</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">enum</span> <span class="title">Trades</span> </span>&#123;</div><div class="line">    <span class="keyword">case</span> <span class="type">Buy</span>(stock: <span class="type">String</span>, amount: <span class="type">Int</span>, stockPrice: <span class="type">Float</span>, type: <span class="type">TraderType</span>)</div><div class="line">    <span class="keyword">case</span> <span class="type">Sell</span>(stock: <span class="type">String</span>, amount: <span class="type">Int</span>, stockPrice: <span class="type">Float</span>, type: <span class="type">TraderType</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>所以，如何更好地实现这一新机制呢？你可以用一个 <code>if / else</code> 分支来实现购买和销售，但是这会导致代码嵌套以至于很快代码就变的不清晰了——而且谁知道那些华尔街人会不会给你找新的麻烦。所以你应该把它定义为模式匹配的一个新要求：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> aTrade = <span class="type">Trades</span>.<span class="type">Sell</span>(stock: <span class="string">"GOOG"</span>, amount: <span class="number">100</span>, stockPrice: <span class="number">666.0</span>, type: <span class="type">TraderType</span>.<span class="type">Company</span>)</div><div class="line"></div><div class="line"><span class="keyword">switch</span> aTrade &#123;</div><div class="line"><span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Buy</span>(stock, amount, <span class="number">_</span>, <span class="type">TraderType</span>.<span class="type">SingleGuy</span>):</div><div class="line">    processSlow(stock, amount, <span class="number">5.0</span>)</div><div class="line"><span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Sell</span>(stock, amount, <span class="number">_</span>, <span class="type">TraderType</span>.<span class="type">SingleGuy</span>):</div><div class="line">    processSlow(stock, -<span class="number">1</span> * amount, <span class="number">5.0</span>)</div><div class="line"><span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Buy</span>(stock, amount, <span class="number">_</span>, <span class="type">TraderType</span>.<span class="type">Company</span>):</div><div class="line">    processFast(stock, amount, <span class="number">2.0</span>)</div><div class="line"><span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Sell</span>(stock, amount, <span class="number">_</span>, <span class="type">TraderType</span>.<span class="type">Company</span>):</div><div class="line">    processFast(stock, -<span class="number">1</span> * amount, <span class="number">2.0</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这段代码的优雅之处在于它非常简洁的描述了不同可能的组合。注意我们把 <code>.Buy(let stock, let amount)</code> 修改成 <code>let .Buy(stock, amount)</code> 来进行简化，这样就可以用更少的语句来像之前一样对 <code>enum</code> 进行解构。</p>
+<h2 id="警卫！警卫！呼叫警卫！"><a href="#警卫！警卫！呼叫警卫！" class="headerlink" title="警卫！警卫！呼叫警卫！"></a>警卫！警卫！呼叫警卫！</h2><p>于是你再次向你的华尔街用户展示你的开发成果，而他们又提出了新的问题（你真应该把项目的细节问得更清楚一点）。</p>
+<ul>
+<li>交易总额超过 1.000.000\$ 的销售订单通常需要更快进行处理，就算是个人客户也得这样。</li>
+<li>交易总额小于 1.000\$ 的购买订单通常处理更慢。</li>
+</ul>
+<p>如果使用传统的 <code>if</code> 语句，这时代码就应该已经有点凌乱了，而 <code>switch</code> 就不会。Swift 为 <code>switch cases</code> 提供了保护机制，这种机制可以让你进一步的对可能匹配的 <code>case</code> 进行约束。</p>
+<p>你只需要对 <code>switch</code> 语句稍作修改就可以满足新的变化。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> aTrade = <span class="type">Trades</span>.<span class="type">Buy</span>(stock: <span class="string">"GOOG"</span>, amount: <span class="number">1000</span>, stockPrice: <span class="number">666.0</span>, type: <span class="type">TraderType</span>.<span class="type">SingleGuy</span>)</div><div class="line"></div><div class="line"><span class="keyword">switch</span> aTrade &#123;</div><div class="line"><span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Buy</span>(stock, amount, <span class="number">_</span>, <span class="type">TraderType</span>.<span class="type">SingleGuy</span>):</div><div class="line">    processSlow(stock, amount, <span class="number">5.0</span>)</div><div class="line"><span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Sell</span>(stock, amount, price, <span class="type">TraderType</span>.<span class="type">SingleGuy</span>)</div><div class="line">    <span class="keyword">where</span> price*<span class="type">Float</span>(amount) &gt; <span class="number">1000000</span>:</div><div class="line">    processFast(stock, -<span class="number">1</span> * amount, <span class="number">5.0</span>)</div><div class="line"><span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Sell</span>(stock, amount, <span class="number">_</span>, <span class="type">TraderType</span>.<span class="type">SingleGuy</span>):</div><div class="line">    processSlow(stock, -<span class="number">1</span> * amount, <span class="number">5.0</span>)</div><div class="line"><span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Buy</span>(stock, amount, price, <span class="type">TraderType</span>.<span class="type">Company</span>)</div><div class="line">    <span class="keyword">where</span> price*<span class="type">Float</span>(amount) &lt; <span class="number">1000</span>:</div><div class="line">    processSlow(stock, amount, <span class="number">2.0</span>)</div><div class="line"><span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Buy</span>(stock, amount, <span class="number">_</span>, <span class="type">TraderType</span>.<span class="type">Company</span>):</div><div class="line">    processFast(stock, amount, <span class="number">2.0</span>)</div><div class="line"><span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Sell</span>(stock, amount, <span class="number">_</span>, <span class="type">TraderType</span>.<span class="type">Company</span>):</div><div class="line">    processFast(stock, -<span class="number">1</span> * amount, <span class="number">2.0</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>上面的代码结构很清晰，阅读起来也相当简单，对复杂情况的封装也很好。</p>
+<p>就是这样，我们已经成功的实现了我们的交易引擎。然而，这个解决方案还是有点繁琐；我们在想是否还有对其进行改进的模式匹配方案。所以，让我们继续深入研究一下模式匹配。</p>
+<h1 id="模式匹配进阶"><a href="#模式匹配进阶" class="headerlink" title="模式匹配进阶"></a>模式匹配进阶</h1><p>现在我们在实战中已经见过了几种模式。但其语法是什么？还能匹配什么？Swift 将这些模式分为 <strong>7</strong> 种。我们现在就来认识一下它们。</p>
+<p>所有的这些模式不仅能用在 <code>switch</code> 关键词上，而且可以用在 <code>if</code>，<code>guard</code> 和 <code>for</code> 关键词上。如需了解详情，接着看下面的内容。</p>
+<h2 id="1-通配符模式"><a href="#1-通配符模式" class="headerlink" title="1. 通配符模式"></a>1. 通配符模式</h2><p>通配符模式会忽略需要匹配的值，这种 <code>case</code> 下任何值都是有可能的。这和 <code>let _ = fn()</code> 一样的模式，在这个模式下， <code>_</code>  表示你将不再使用这个值。有意思的是这个模式可以匹配包括 <code>nil</code> <a href="#1">1</a>在内的所有值 。如果增加一个 <code>?</code>，它甚至可以匹配可选值：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> p: <span class="type">String</span>? = <span class="literal">nil</span></div><div class="line"><span class="keyword">switch</span> p &#123;</div><div class="line"><span class="keyword">case</span> <span class="number">_</span>?: <span class="built_in">print</span> (<span class="string">"Has String"</span>)</div><div class="line"><span class="keyword">case</span> <span class="literal">nil</span>: <span class="built_in">print</span> (<span class="string">"No String"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>就像你在交易例子里面看到的一样，它也允许你忽略需要匹配的 <code>enum</code> 或者 <code>tuples</code> 中无用的数据：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">switch</span> (<span class="number">15</span>, <span class="string">"example"</span>, <span class="number">3.14</span>) &#123;</div><div class="line">    <span class="keyword">case</span> (<span class="number">_</span>, <span class="number">_</span>, <span class="keyword">let</span> pi): <span class="built_in">print</span> (<span class="string">"pi: <span class="subst">\(pi)</span>"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="2-标示模式"><a href="#2-标示模式" class="headerlink" title="2. 标示模式"></a>2. 标示模式</h2><p>匹配一个具体的值。这个和 Objective-C 的 <code>switch</code> 实现是一样的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">switch</span> <span class="number">5</span> &#123;</div><div class="line">  <span class="keyword">case</span> <span class="number">5</span>: <span class="built_in">print</span>(<span class="string">"5"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="3-值绑定模式"><a href="#3-值绑定模式" class="headerlink" title="3. 值绑定模式"></a>3. 值绑定模式</h2><p>这种模式和通过 <code>let</code> 或者 <code>var</code> 绑定值到变量一样，但是只能用在 <code>switch</code> 中。因为你之前已经见到过，所以我只给出一个非常简单的例子：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">switch</span> (<span class="number">4</span>, <span class="number">5</span>) &#123;</div><div class="line">  <span class="keyword">case</span> <span class="keyword">let</span> (x, y): <span class="built_in">print</span>(<span class="string">"<span class="subst">\(x)</span> <span class="subst">\(y)</span>"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="4-元组模式"><a href="#4-元组模式" class="headerlink" title="4. 元组模式"></a>4. 元组模式</h2><p><a href="http://appventure.me/2015/07/19/tuples-swift-advanced-usage-best-practices/" target="_blank" rel="external">关于元组我已经写了一整篇博文</a>，这篇博文所提供的信息远远比这里多，但是我还是在这里给出一个简短的例子：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> age = <span class="number">23</span></div><div class="line"><span class="keyword">let</span> job: <span class="type">String</span>? = <span class="string">"Operator"</span></div><div class="line"><span class="keyword">let</span> payload: <span class="type">AnyObject</span> = <span class="type">NSDictionary</span>()</div><div class="line"></div><div class="line"><span class="keyword">switch</span> (age, job, payload) &#123;</div><div class="line">  <span class="keyword">case</span> (<span class="keyword">let</span> age, <span class="number">_</span>?, <span class="number">_</span> <span class="keyword">as</span> <span class="type">NSDictionary</span>):</div><div class="line">  <span class="built_in">print</span>(age)</div><div class="line">  <span class="keyword">default</span>: ()</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在这里，我们把 3 个值结合放到一个元组中（假想它们是通过调用不同的 API 得到的），然后一口气匹配它们，注意这个模式完成了三件事情：</p>
+<ol>
+<li>提取 <code>age</code></li>
+<li>确保存在一个 <code>job</code>，就算我们不需要它</li>
+<li>确保 <code>payload</code> 的类型是 <code>NSDictionary</code>，尽管我们同样不需要访问它的具体值。</li>
+</ol>
+<h2 id="5-枚举-Case-模式（Enumeration-Case-Pattern）"><a href="#5-枚举-Case-模式（Enumeration-Case-Pattern）" class="headerlink" title="5. 枚举 Case 模式（Enumeration Case Pattern）"></a>5. 枚举 Case 模式（Enumeration Case Pattern）</h2><p>就如你在交易例子中所见，模式匹配对 Swift 的 <code>enum</code> 支持<strong>相当棒</strong>。这是因为 <code>enum cases</code> 就像密封、不可变且可解构的结构体。这非常像 <code>tuples</code>，你可以打开正好匹配上的某个单独 <code>case</code> 的内容然后只抽取出你需要的信息<a href="#2">2</a>。 </p>
+<p>假想你正在用函数式的风格写一个游戏，然后你需要定义一些实体。你可以使用 <code>structs</code> 但是你的实体的状态很少，你觉得这样有点矫枉过正。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">enum</span> <span class="title">Entities</span> </span>&#123;</div><div class="line">    <span class="keyword">case</span> <span class="type">Soldier</span>(x: <span class="type">Int</span>, y: <span class="type">Int</span>)</div><div class="line">    <span class="keyword">case</span> <span class="type">Tank</span>(x: <span class="type">Int</span>, y: <span class="type">Int</span>)</div><div class="line">    <span class="keyword">case</span> <span class="type">Player</span>(x: <span class="type">Int</span>, y: <span class="type">Int</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>现在你需要实现绘图循环。这里我们只需要 X 和 Y 坐标：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">for</span> e <span class="keyword">in</span> entities() &#123;</div><div class="line">    <span class="keyword">switch</span> e &#123;</div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Soldier</span>(x, y):</div><div class="line">      drawImage(<span class="string">"soldier.png"</span>, x, y)</div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Tank</span>(x, y):</div><div class="line">      drawImage(<span class="string">"tank.png"</span>, x, y)</div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Player</span>(x, y):</div><div class="line">      drawImage(<span class="string">"player.png"</span>, x, y)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="6-类型转换模式"><a href="#6-类型转换模式" class="headerlink" title="6. 类型转换模式"></a>6. 类型转换模式</h2><p>就像名字所表示的一样，这种模式转换或者匹配类型。它有两种不同的关键词：</p>
+<ul>
+<li><code>is</code> <strong>类型</strong>：匹配右手边内容的运行时类型（或者类型的子类）。它会做类型转换但是不关注返回值。所以你的 <code>case</code> 块不知道所匹配的类型是什么。</li>
+<li>模式 <code>as</code> <strong>类型</strong>：和 <code>is</code> 模式做同样的匹配操作，但是如果成功的话会把类型转换到左侧指定的模式中。</li>
+</ul>
+<p>下面是这两种关键词的例子：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> a: <span class="type">Any</span> = <span class="number">5</span> </div><div class="line"><span class="keyword">switch</span> a &#123;</div><div class="line">  <span class="comment">// 这会失败因为它的类型仍然是 `Any`</span></div><div class="line">  <span class="comment">// 错误: binary operator '+' cannot be applied to operands of type 'Any' and 'Int'</span></div><div class="line">  <span class="keyword">case</span> <span class="keyword">is</span> <span class="type">Int</span>: <span class="built_in">print</span> (a + <span class="number">1</span>)</div><div class="line">  <span class="comment">// 有效并返回 '6'</span></div><div class="line">  <span class="keyword">case</span> <span class="keyword">let</span> n <span class="keyword">as</span> <span class="type">Int</span>: <span class="built_in">print</span> (n + <span class="number">1</span>)</div><div class="line">  <span class="keyword">default</span>: ()</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>注意 <code>is</code> 前没有 <code>pattern</code>。它直接和 <code>a</code> 做匹配。</p>
+<h2 id="7-表达模式"><a href="#7-表达模式" class="headerlink" title="7. 表达模式"></a>7. 表达模式</h2><p>表达模式非常强大。它可以把 <code>switch</code> 的值和实现了 <code>~=</code> 操作符的表达式进行匹配。而且对于这个操作符有默认的实现，比如对于范围匹配，你可以这样做：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">switch</span> <span class="number">5</span> &#123;</div><div class="line"> <span class="keyword">case</span> <span class="number">0</span>..<span class="number">10</span>: <span class="built_in">print</span>(<span class="string">"In range 0-10"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>然而，更有趣的可能是自己重写操作符，然后使你的自定义类型可以匹配。我们假定你想重写之前写的士兵游戏，而且你无论如何都要使用结构体。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Soldier</span> </span>&#123;</div><div class="line">  <span class="keyword">let</span> hp: <span class="type">Int</span></div><div class="line">  <span class="keyword">let</span> x: <span class="type">Int</span></div><div class="line">  <span class="keyword">let</span> y: <span class="type">Int</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>现在你想轻松的匹配所有血量为 <strong>0</strong> 的实体。我们可以像下面一样实现 <code>~=</code> 操作符。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> ~= <span class="params">(pattern: Int, value: Soldier)</span></span> -&gt; <span class="type">Bool</span> &#123;</div><div class="line">    <span class="keyword">return</span> pattern == value.hp</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>现在我们就可以对一个实体做匹配了：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> soldier = <span class="type">Soldier</span>(hp: <span class="number">99</span>, x: <span class="number">10</span>, y: <span class="number">10</span>)</div><div class="line"><span class="keyword">switch</span> soldier &#123;</div><div class="line">   <span class="keyword">case</span> <span class="number">0</span>: <span class="built_in">print</span>(<span class="string">"dead soldier"</span>)</div><div class="line">   <span class="keyword">default</span>: ()</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>不幸的是，对元组做全匹配似乎不好使。如果你编写下面的代码，就会出现类型检查错误。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> ~= <span class="params">(pattern: <span class="params">(hp: Int, x: Int, y: Int)</span></span></span>, value: <span class="type">Soldier</span>) -&gt; <span class="type">Bool</span> &#123;</div><div class="line">   <span class="keyword">let</span> (hp, x, y) = pattern</div><div class="line">   <span class="keyword">return</span> hp == value.hp &amp;&amp; x == value.x &amp;&amp; y == value.y</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>一个可能解决上述类似问题的方案是给你的 <code>struct</code> 增加一个 <code>unapply</code> 方法然后再进行匹配：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Soldier</span> </span>&#123;</div><div class="line">   <span class="function"><span class="keyword">func</span> <span class="title">unapply</span><span class="params">()</span></span> -&gt; (<span class="type">Int</span>, <span class="type">Int</span>, <span class="type">Int</span>) &#123;</div><div class="line">      <span class="keyword">return</span> (<span class="keyword">self</span>.hp, <span class="keyword">self</span>.x, <span class="keyword">self</span>.y)</div><div class="line">   &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> ~= <span class="params">(p: <span class="params">(Int, Int, Int)</span></span></span>, t: (<span class="type">Int</span>, <span class="type">Int</span>, <span class="type">Int</span>)) -&gt; <span class="type">Bool</span> &#123;</div><div class="line">   <span class="keyword">return</span> p.<span class="number">0</span> == t.<span class="number">0</span> &amp;&amp; p.<span class="number">1</span> == t.<span class="number">1</span> &amp;&amp; p.<span class="number">2</span> == t.<span class="number">2</span> </div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">let</span> soldier = <span class="type">Soldier</span>(hp: <span class="number">99</span>, x: <span class="number">10</span>, y: <span class="number">10</span>)</div><div class="line"><span class="built_in">print</span>(soldier.unapply() ~= (<span class="number">99</span>, <span class="number">10</span>, <span class="number">10</span>))</div></pre></td></tr></table></figure>
+<p>但是这相当繁琐而且没有利用好模式匹配背后的大量魔法般的效果。</p>
+<p>在这篇博文之前的版本中我写过 <code>~=</code> 不适用于协议，但是我错了。我记得我在一个 <code>Playground</code> 中试过。而这个例子（<a href="https://www.reddit.com/r/swift/comments/3hq6id/match_me_if_you_can_swift_pattern_matching_in/cub187r" target="_blank" rel="external">由 reddit 上的 latrodectus 友情提供</a>）是完全可用的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">Entity</span> </span>&#123;</div><div class="line">    <span class="keyword">var</span> value: <span class="type">Int</span> &#123;<span class="keyword">get</span>&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Tank</span>: <span class="title">Entity</span> </span>&#123;</div><div class="line">    <span class="keyword">var</span> value: <span class="type">Int</span></div><div class="line">    <span class="keyword">init</span>(<span class="number">_</span> value: <span class="type">Int</span>) &#123; <span class="keyword">self</span>.value = value &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Peasant</span>: <span class="title">Entity</span> </span>&#123;</div><div class="line">    <span class="keyword">var</span> value: <span class="type">Int</span></div><div class="line">    <span class="keyword">init</span>(<span class="number">_</span> value: <span class="type">Int</span>) &#123; <span class="keyword">self</span>.value = value &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> ~=<span class="params">(pattern: Entity, x: Entity)</span></span> -&gt; <span class="type">Bool</span> &#123;</div><div class="line">    <span class="keyword">return</span> pattern.value == x.value</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">switch</span> <span class="type">Tank</span>(<span class="number">42</span>) &#123;</div><div class="line">    <span class="keyword">case</span> <span class="type">Peasant</span>(<span class="number">42</span>): <span class="built_in">print</span>(<span class="string">"Matched"</span>) <span class="comment">// 匹配成功</span></div><div class="line">    <span class="keyword">default</span>: ()</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>你可以利用 <code>Expression Patterns</code> 做很多事情。如果想要了解更多表达模式的细节，<a href="http://austinzheng.com/2014/12/17/custom-pattern-matching/" target="_blank" rel="external">看看这篇由 Austin Zheng 写的超棒博文</a>。</p>
+<p>现在我们已经讲完了所有可能的 <code>switch</code> 模式。在我们继续讲解之前，还需要讨论最后一件事情。</p>
+<h2 id="fallthrough，break-和标签"><a href="#fallthrough，break-和标签" class="headerlink" title="fallthrough，break 和标签"></a>fallthrough，break 和标签</h2><p>下面的内容和模式匹配没有直接关系，仅仅是和 <code>switch</code> 关键词有关，所以我就简单说了。和 C/C++/Objective-C 不一样的是：<code>switch cases</code> 不会自动进入下一个 <code>case</code>，这也是为什么 Swift 不需要给每个 <code>case</code> 都写上 <code>break</code>。你可以选择使用 <code>fallthrough</code> 关键词来实现传统的自动进入下一个 <code>case</code> 的行为。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">switch</span> <span class="number">5</span> &#123;</div><div class="line">   <span class="keyword">case</span> <span class="number">5</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"Is 5"</span>)</div><div class="line">    <span class="keyword">fallthrough</span></div><div class="line">   <span class="keyword">default</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"Is a number"</span>)</div><div class="line">&#125;</div><div class="line"><span class="comment">// 会在命令行输出: "Is 5" "Is a number"</span></div></pre></td></tr></table></figure>
+<p>另外，你可以使用 <code>break</code> 来提前跳出 <code>switch</code> 语句。既然不会默认进入下一个 <code>case</code>，为什么还需要这么做呢？比如你知道在一个 <code>case</code> 中有一个必须的要求是不满足的，这样你就不能继续执行这个 <code>case</code> 了：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> userType = <span class="string">"system"</span></div><div class="line"><span class="keyword">let</span> userID = <span class="number">10</span></div><div class="line"><span class="keyword">switch</span> (userType, userID)  &#123;</div><div class="line">   <span class="keyword">case</span> (<span class="string">"system"</span>, <span class="number">_</span>):</div><div class="line">     <span class="keyword">guard</span> <span class="keyword">let</span> userData = getSystemUser(userID) <span class="keyword">else</span> &#123; <span class="keyword">break</span> &#125;</div><div class="line">     <span class="built_in">print</span>(<span class="string">"user info: <span class="subst">\(userData)</span>"</span>)</div><div class="line">     insertIntoRemoteDB(userData)</div><div class="line">   <span class="keyword">default</span>: ()</div><div class="line">&#125;</div><div class="line">... 其他你需要执行的代码</div></pre></td></tr></table></figure>
+<p>在这段代码中，当 <code>getSystemUser</code> 返回的结果是 <code>nil</code> 时你不想再继续调用 <code>insertIntoRemoteData</code>。当然，你可以在这里使用 <code>if let</code>，但是如果多个这样的情况结合到一起的时候，很快你就会得到一堆可怕丑陋的 <code>if lets</code> 嵌套代码。</p>
+<p>但是如果你是在一个 <code>while</code> 循环中执行你的 <code>switch</code> 语句，然后你想跳出循环，而不是 <code>switch</code> 的时候，你需要怎么做呢？对与这种情况， Swift 允许你定义一个 <code>labels</code> ，然后 <code>break</code> 或者 <code>continue</code> 到这个 <code>labels</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">gameLoop: <span class="keyword">while</span> <span class="literal">true</span> &#123;</div><div class="line">  <span class="keyword">switch</span> state() &#123;</div><div class="line">     <span class="keyword">case</span> .<span class="type">Waiting</span>: <span class="keyword">continue</span> gameLoop</div><div class="line">     <span class="keyword">case</span> .<span class="type">Done</span>: calculateNextState()</div><div class="line">     <span class="keyword">case</span> .<span class="type">GameOver</span>: <span class="keyword">break</span> gameLoop</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>我们已经讨论过 <code>switch</code> 和模式匹配的语法和实现细节。现在，让我们来看一些（多少有点）有趣的真实案例。</p>
+<h1 id="真实案例"><a href="#真实案例" class="headerlink" title="真实案例"></a>真实案例</h1><h2 id="可选值"><a href="#可选值" class="headerlink" title="可选值"></a>可选值</h2><p><a href="http://appventure.me/2014/06/13/swift-optionals-made-simple/" target="_blank" rel="external">对可选值进行解包的方式有很多种</a>，模式匹配就是其中一种。可能到现在这种方法你已经用得非常频繁了，但还是给一个简短的例子吧：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> result: <span class="type">String</span>? = secretMethod()</div><div class="line"><span class="keyword">switch</span> result &#123;</div><div class="line"><span class="keyword">case</span> .<span class="type">None</span>:</div><div class="line">    <span class="built_in">println</span>(<span class="string">"is nothing"</span>)</div><div class="line"><span class="keyword">case</span> <span class="keyword">let</span> a:</div><div class="line">    <span class="built_in">println</span>(<span class="string">"<span class="subst">\(a)</span> is a value"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>如果是 Swift 2.0 的话，这会更简单：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> result: <span class="type">String</span>? = secretMethod()</div><div class="line"><span class="keyword">switch</span> result &#123;</div><div class="line"><span class="keyword">case</span> <span class="literal">nil</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"is nothing"</span>)</div><div class="line"><span class="keyword">case</span> <span class="keyword">let</span> a?:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"<span class="subst">\(a)</span> is a value"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>正如你所见，<code>result</code> 可以是一个字符串，但是它也可能是 <code>nil</code>，因为它是 <code>optional</code> 值。通过对 <code>result</code> 执行 <code>switch</code>。我们可以确定它是 <code>.None</code> 或者是一个确定的值。更进一步，如果他是一个确定的值，我们可以在 <code>a</code> 这种情况下马上把这个值绑定到一个变量。这段代码代码的优美之处在于：变量 <code>result</code> 可能存在的两种状态被非常明显的区分开来。</p>
+<h2 id="类型匹配"><a href="#类型匹配" class="headerlink" title="类型匹配"></a>类型匹配</h2><p>做为强类型语言，Swift 通常不会像 Objective-C 那样经常需要运行时类型检查。然而，当你需要与传统的 Objective-C 代码交互时（<a href="https://netguru.co/blog/objective-c-generics" target="_blank" rel="external">这还没有更新到简单泛型的反射一文中</a>），那你就经常会碰到需要做类型检查的代码。假想你得到了一个包含 <code>NSString</code> 和 <code>NSNumber</code> 元素的数组：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> u = <span class="type">NSArray</span>(array: [<span class="type">NSString</span>(string: <span class="string">"String1"</span>), <span class="type">NSNumber</span>(int: <span class="number">20</span>), <span class="type">NSNumber</span>(int: <span class="number">40</span>)])</div></pre></td></tr></table></figure>
+<p>当你遍历这个 <code>NSArray</code> 时，你永远不知道得到的是什么类型。然而， <code>switch</code> 语句可以让你很简单的检查这些类型：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">for</span> x <span class="keyword">in</span> u &#123;</div><div class="line">    <span class="keyword">switch</span> x &#123;</div><div class="line">    <span class="keyword">case</span> <span class="number">_</span> <span class="keyword">as</span> <span class="type">NSString</span>:</div><div class="line">	<span class="built_in">print</span>(<span class="string">"string"</span>)</div><div class="line">    <span class="keyword">case</span> <span class="number">_</span> <span class="keyword">as</span> <span class="type">NSNumber</span>:</div><div class="line">	<span class="built_in">print</span>(<span class="string">"number"</span>)</div><div class="line">    <span class="keyword">default</span>:</div><div class="line">	<span class="built_in">print</span>(<span class="string">"Unknown types"</span>)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="按范围做分级"><a href="#按范围做分级" class="headerlink" title="按范围做分级"></a>按范围做分级</h2><p>现在你正在给你当地的高校写分级的 iOS 应用。老师想要输入一个 0 到 100 的数值，然后得到一个相应的等级字符（A-F）。模式匹配现在要来拯救你了：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> aGrade = <span class="number">84</span></div><div class="line"></div><div class="line"><span class="keyword">switch</span> aGrade &#123;</div><div class="line"><span class="keyword">case</span> <span class="number">90</span>...<span class="number">100</span>: <span class="built_in">print</span>(<span class="string">"A"</span>)</div><div class="line"><span class="keyword">case</span> <span class="number">80</span>...<span class="number">90</span>: <span class="built_in">print</span>(<span class="string">"B"</span>)</div><div class="line"><span class="keyword">case</span> <span class="number">70</span>...<span class="number">80</span>: <span class="built_in">print</span>(<span class="string">"C"</span>)</div><div class="line"><span class="keyword">case</span> <span class="number">60</span>...<span class="number">70</span>: <span class="built_in">print</span>(<span class="string">"D"</span>)</div><div class="line"><span class="keyword">case</span> <span class="number">0</span>...<span class="number">60</span>: <span class="built_in">print</span>(<span class="string">"F"</span>)</div><div class="line"><span class="keyword">default</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"Incorrect Grade"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="字频率统计"><a href="#字频率统计" class="headerlink" title="字频率统计"></a>字频率统计</h2><p>有一系列的数据对，每个数据对代表一个字和它在某段文字中出现的频率。我们的目标就是把那些低于或者高于某个固定阈值的数据对过滤掉，然后只返回剩下的不包含其频率的所有字。</p>
+<p>这是我们的字集：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> wordFreqs = [(<span class="string">"k"</span>, <span class="number">5</span>), (<span class="string">"a"</span>, <span class="number">7</span>), (<span class="string">"b"</span>, <span class="number">3</span>)]</div></pre></td></tr></table></figure>
+<p>一个简单的解决方案是使用 <code>map</code> 和 <code>filter</code> 进行建模：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> res = wordFreqs.<span class="built_in">filter</span>(&#123; (e) -&gt; <span class="type">Bool</span> <span class="keyword">in</span></div><div class="line">    <span class="keyword">if</span> e.<span class="number">1</span> &gt; <span class="number">3</span> &#123;</div><div class="line">	<span class="keyword">return</span> <span class="literal">true</span></div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">	<span class="keyword">return</span> <span class="literal">false</span></div><div class="line">    &#125;</div><div class="line">&#125;).<span class="built_in">map</span> &#123; $<span class="number">0.0</span> &#125;</div><div class="line"><span class="built_in">print</span>(res)</div></pre></td></tr></table></figure>
+<p>然而，因为 <code>flatmap</code> 只能返回非空元素，所以这个解决方案还有很大的改进空间。首先，我们可以放弃使用 <code>e.1</code> 而利用元组来做适当的解构（你猜对了）。然后我们只需要调用一次 <code>flatmap</code>，这样可以减少先 <code>filter</code> 后 <code>map</code> 所带来的不必要的性能开销。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> res = wordFreqs.flatMap &#123; (e) -&gt; <span class="type">String</span>? <span class="keyword">in</span></div><div class="line">    <span class="keyword">switch</span> e &#123;</div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> (s, t) <span class="keyword">where</span> t &gt; <span class="number">3</span>: <span class="keyword">return</span> s</div><div class="line">    <span class="keyword">default</span>: <span class="keyword">return</span> <span class="literal">nil</span></div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"><span class="built_in">print</span>(res)</div></pre></td></tr></table></figure>
+<h2 id="遍历目录"><a href="#遍历目录" class="headerlink" title="遍历目录"></a>遍历目录</h2><p>假想你需要遍历一个文件树然后查找以下内容：</p>
+<ul>
+<li>所有 customer1 和 customer2 创建的 “psd“文件</li>
+<li>所有 customer2 创建的 “blend“文件</li>
+<li>所有用户创建的 “jpeg“文件</li>
+</ul>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">guard</span> <span class="keyword">let</span> enumerator = <span class="type">NSFileManager</span>.defaultManager().enumeratorAtPath(<span class="string">"/customers/2014/"</span>)</div><div class="line"><span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</div><div class="line"></div><div class="line"><span class="keyword">for</span> url <span class="keyword">in</span> enumerator &#123;</div><div class="line">    <span class="keyword">switch</span> (url.pathComponents, url.pathExtension) &#123;</div><div class="line"></div><div class="line">    <span class="comment">// customer1 和 customer2 创建的 “psd“文件</span></div><div class="line">    <span class="keyword">case</span> (<span class="keyword">let</span> f, <span class="string">"psd"</span>) </div><div class="line">	    <span class="keyword">where</span> f.<span class="built_in">contains</span>(<span class="string">"customer1"</span>) </div><div class="line">	    || f.<span class="built_in">contains</span>(<span class="string">"customer2"</span>): <span class="built_in">print</span>(url)</div><div class="line"></div><div class="line">    <span class="comment">// customer2 创建的 “blend“文件</span></div><div class="line">    <span class="keyword">case</span> (<span class="keyword">let</span> f, <span class="string">"blend"</span>) <span class="keyword">where</span> f.<span class="built_in">contains</span>(<span class="string">"customer2"</span>): <span class="built_in">print</span>(url)</div><div class="line"></div><div class="line">    <span class="comment">// 所有的 “jpeg“文件</span></div><div class="line">    <span class="keyword">case</span> (<span class="number">_</span>, <span class="string">"jpg"</span>): <span class="built_in">print</span>(url)</div><div class="line"></div><div class="line">    <span class="keyword">default</span>: ()</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>注意 <code>contains</code> 在第一个匹配就结束然后就不用遍历完整的路径了。同样，模式匹配的代码非常简洁明了。</p>
+<h2 id="Fibonacci"><a href="#Fibonacci" class="headerlink" title="Fibonacci"></a>Fibonacci</h2><p>同样，来看一下使用模式匹配实现的 fibonacci 算法有多优美<a href="#3">3</a></p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">fibonacci</span><span class="params">(i: Int)</span></span> -&gt; <span class="type">Int</span> &#123;</div><div class="line">    <span class="keyword">switch</span>(i) &#123;</div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> n <span class="keyword">where</span> n &lt;= <span class="number">0</span>: <span class="keyword">return</span> <span class="number">0</span></div><div class="line">    <span class="keyword">case</span> <span class="number">0</span>, <span class="number">1</span>: <span class="keyword">return</span> <span class="number">1</span></div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> n: <span class="keyword">return</span> fibonacci(n - <span class="number">1</span>) + fibonacci(n - <span class="number">2</span>)</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="built_in">print</span>(fibonacci(<span class="number">8</span>))</div></pre></td></tr></table></figure>
+<p>当然，如果是大数的话，程序栈会爆掉。</p>
+<h2 id="传统的-API-和值提取"><a href="#传统的-API-和值提取" class="headerlink" title="传统的 API 和值提取"></a>传统的 API 和值提取</h2><p>通常情况下，当你从外部源取数据的时候，比如一个库，或者一个 API，它不仅是一种很好的做法，而且通常在解析数据之前需要检查数据的一致性。你需要确保所有的 <code>key</code> 都是存在的、或者数据的类型都正确、或者数组的长度满足要求。如果不这么做就会因为 bug（有的 <code>key</code> 不存在）而导致 app 崩溃（索引不存在的数组项）。而传统的做法通常是嵌套 <code>if</code> 语句。</p>
+<p>假想有 API 返回一条用户信息。但是有两种类型的用户：系统用户——如管理员或者邮政局长——和本地用户——如 “John B”、“Bill Gates”等。因为系统的设计和增长，API 的使用者需要处理一些麻烦的事情：</p>
+<ul>
+<li><code>system</code> 和 <code>local</code> 用户来自同一个 API 调用。</li>
+<li>因为早期版本的数据库没有 <code>department</code> 这个字段，所以这个 <code>key</code> 可能是不存在的，而且早期的雇员从来都不需要填写这个字段。</li>
+<li>根据用户被创建的时间，<code>name</code> 数组可能包含 4 个元素（username，middlename，lastname 和 firstname）或者 2 个元素（full name，username）</li>
+<li><code>age</code> 是代表用户年龄的整型数</li>
+</ul>
+<p>我们的系统需要给这个 API 返回的所有系统用户创建用户账号，账号信息只包含如下信息：username 和 department。我们只需要 1980 年以前出生的用户。如果没有指定 department，就指定为 “Corp”。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">legacyAPI</span><span class="params">(id: Int)</span></span> -&gt; [<span class="type">String</span>: <span class="type">AnyObject</span>] &#123;</div><div class="line">    <span class="keyword">return</span> [<span class="string">"type"</span>: <span class="string">"system"</span>, <span class="string">"department"</span>: <span class="string">"Dark Arts"</span>, <span class="string">"age"</span>: <span class="number">57</span>, </div><div class="line">	   <span class="string">"name"</span>: [<span class="string">"voldemort"</span>, <span class="string">"Tom"</span>, <span class="string">"Marvolo"</span>, <span class="string">"Riddle"</span>]] </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>我们为给定的约束实现一个模式来进行匹配：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> item = legacyAPI(<span class="number">4</span>)</div><div class="line"><span class="keyword">switch</span> (item[<span class="string">"type"</span>], item[<span class="string">"department"</span>], item[<span class="string">"age"</span>], item[<span class="string">"name"</span>]) &#123;</div><div class="line">   <span class="keyword">case</span> <span class="keyword">let</span> (sys <span class="keyword">as</span> <span class="type">String</span>, dep <span class="keyword">as</span> <span class="type">String</span>, age <span class="keyword">as</span> <span class="type">Int</span>, name <span class="keyword">as</span> [<span class="type">String</span>]) <span class="keyword">where</span> </div><div class="line">      age &lt; <span class="number">1980</span> &amp;&amp;</div><div class="line">      sys == <span class="string">"system"</span>:</div><div class="line">     createSystemUser(name.<span class="built_in">count</span> == <span class="number">2</span> ? name.last! : name.first!, dep: dep ?? <span class="string">"Corp"</span>)</div><div class="line">  <span class="keyword">default</span>:()</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">// 返回 ("voldemort", "Dark Arts")</span></div></pre></td></tr></table></figure>
+<p>注意这段代码做了一个很危险的假设：就是如果 <code>name</code> 数组元素的个数不是 2 个的话，那么它<strong>一定</strong>包含 4 个元素。如果这种假设不成立，我们获得了包含 0 个元素的数组，这段代码就会崩溃。</p>
+<p>除了这一点，模式匹配向你展示了它是如何在只有一个 <code>case</code> 的情况下帮助你编写干净的代码和简化值的提取的。</p>
+<p>同样来看看我们是怎么写紧跟在 <code>case</code> 之后 <code>let</code> 的，这样一来就不必在每一次赋值的时候都重复写它。</p>
+<h1 id="模式和其他关键词"><a href="#模式和其他关键词" class="headerlink" title="模式和其他关键词"></a>模式和其他关键词</h1><p>Swift 的文档指出不是所有的模式都可以在 <code>if</code>、<code>for</code> 或者 <code>guard</code> 语句中使用。然而，这个文档似乎不是最新的。所有 7 种模式对这三个关键词都有效。</p>
+<p>我为那些感兴趣的人编了一个例子要点，为每个模式和每个关键词都写了一个例子。</p>
+<p><a href="https://gist.github.com/terhechte/6eaeb90276bbfcd1ea41" target="_blank" rel="external">你可以在这里查看所有的样例模式</a></p>
+<p>来看一个对三个关键词使用 <strong>值绑定</strong>、<strong>元组</strong>和<strong>类型转换</strong>模式的简短例子：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// 到吗编译后只是一个关键词的集合。其本身没有任何意义</span></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">valueTupleType</span><span class="params">(a: <span class="params">(Int, Any)</span></span></span>) -&gt; <span class="type">Bool</span> &#123;</div><div class="line">    <span class="comment">// guard case 的例子</span></div><div class="line">    <span class="keyword">guard</span> <span class="keyword">case</span> <span class="keyword">let</span> (x, <span class="number">_</span> <span class="keyword">as</span> <span class="type">String</span>) = a <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">false</span>&#125;</div><div class="line">    <span class="built_in">print</span>(x)</div><div class="line"></div><div class="line">    <span class="comment">// for case 的例子</span></div><div class="line">    <span class="keyword">for</span> <span class="keyword">case</span> <span class="keyword">let</span> (a, <span class="number">_</span> <span class="keyword">as</span> <span class="type">String</span>) <span class="keyword">in</span> [a] &#123;</div><div class="line">	<span class="built_in">print</span>(a)</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// if case 的例子</span></div><div class="line">    <span class="keyword">if</span> <span class="keyword">case</span> <span class="keyword">let</span> (x, <span class="number">_</span> <span class="keyword">as</span> <span class="type">String</span>) = a &#123;</div><div class="line">       <span class="built_in">print</span>(<span class="string">"if"</span>, x)</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// switch case example</span></div><div class="line">    <span class="keyword">switch</span> a &#123;</div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> (a, <span class="number">_</span> <span class="keyword">as</span> <span class="type">String</span>):</div><div class="line">	<span class="built_in">print</span>(a)</div><div class="line">	<span class="keyword">return</span> <span class="literal">true</span></div><div class="line">    <span class="keyword">default</span>: <span class="keyword">return</span> <span class="literal">false</span></div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"><span class="keyword">let</span> u: <span class="type">Any</span> = <span class="string">"a"</span></div><div class="line"><span class="keyword">let</span> b: <span class="type">Any</span> = <span class="number">5</span></div><div class="line"><span class="built_in">print</span>(valueTupleType((<span class="number">5</span>, u)))</div><div class="line"><span class="built_in">print</span>(valueTupleType((<span class="number">5</span>, b)))</div><div class="line"><span class="comment">// 5, 5, "if 5", 5, true, false</span></div></pre></td></tr></table></figure>
+<p>我们可以带着这个想法详细地看一看每一个关键词。</p>
+<h1 id="使用-for-case"><a href="#使用-for-case" class="headerlink" title="使用 for case"></a><strong>使用</strong> for case</h1><p>到了 Swift 2.0 后，模式匹配变得更加重要，因为它被扩展到不仅可以支持 <code>switch</code> ，还可以支持其他的关键词。比如，让我们写一个简单的只返回非空元素的数组函数：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">nonnil</span>&lt;T&gt;<span class="params">(array: [T?])</span></span> -&gt; [<span class="type">T</span>] &#123;</div><div class="line">   <span class="keyword">var</span> result: [<span class="type">T</span>] = []</div><div class="line">   <span class="keyword">for</span> <span class="keyword">case</span> <span class="keyword">let</span> x? <span class="keyword">in</span> array &#123;</div><div class="line">      result.append(x)</div><div class="line">   &#125;</div><div class="line">   <span class="keyword">return</span> result</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="built_in">print</span>(nonnil([<span class="string">"a"</span>, <span class="literal">nil</span>, <span class="string">"b"</span>, <span class="string">"c"</span>, <span class="literal">nil</span>]))</div></pre></td></tr></table></figure>
+<p>关键词 <code>case</code> 可以被 <code>for</code> 循环使用，就像 <code>switch</code> 中的 <code>case</code> 一样。下面是另外一个例子。还记得我们之前说的游戏么？经过第一次重构之后，现在我们的实体系统看起来是这样的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">enum</span> <span class="title">Entity</span> </span>&#123;</div><div class="line">    <span class="class"><span class="keyword">enum</span> <span class="title">EntityType</span> </span>&#123;</div><div class="line">	<span class="keyword">case</span> <span class="type">Soldier</span></div><div class="line">	<span class="keyword">case</span> <span class="type">Player</span></div><div class="line">    &#125;</div><div class="line">    <span class="keyword">case</span> <span class="type">Entry</span>(type: <span class="type">EntityType</span>, x: <span class="type">Int</span>, y: <span class="type">Int</span>, hp: <span class="type">Int</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>真棒！这可以让我们用更少的代码绘制出所有的项目：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">for</span> <span class="keyword">case</span> <span class="keyword">let</span> <span class="type">Entity</span>.<span class="type">Entry</span>(t, x, y, <span class="number">_</span>) <span class="keyword">in</span> gameEntities()</div><div class="line"><span class="keyword">where</span> x &gt; <span class="number">0</span> &amp;&amp; y &gt; <span class="number">0</span> &#123;</div><div class="line">    drawEntity(t, x, y)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>我们用一行就解析出了所有必需的属性，然后确保我们不会在 0 一下的范围绘制，最后我们调用渲染方法（<code>drawEntity</code>）。</p>
+<p>为了知道选手是否在游戏中胜出，我们想要知道是否有至少一个士兵的血量是大于 0 的。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">gameOver</span><span class="params">()</span></span> -&gt; <span class="type">Bool</span> &#123;</div><div class="line">    <span class="keyword">for</span> <span class="keyword">case</span> <span class="type">Entity</span>.<span class="type">Entry</span>(.<span class="type">Soldier</span>, <span class="number">_</span>, <span class="number">_</span>, <span class="keyword">let</span> hp) <span class="keyword">in</span> gameEntities() </div><div class="line">    <span class="keyword">where</span> hp &gt; <span class="number">0</span> &#123;<span class="keyword">return</span> <span class="literal">false</span>&#125;</div><div class="line">    <span class="keyword">return</span> <span class="literal">true</span></div><div class="line">&#125;</div><div class="line"><span class="built_in">print</span>(gameOver())</div></pre></td></tr></table></figure>
+<p>好的是 <code>Soldier</code> 的匹配是 <code>for</code> 查询的一部分。这感觉有点像 <code>SQL</code> 而不是命令循环编程。同时，这也可以让编译器更清晰的知道我们的意图，从而就有了打通调度增强这条路的可能性。另外一个很好的体验就是我们不需要完成的拼写出 <code>Entity.EntityType.Soldier</code>。就算我们像上面一样只写 <code>.Soldier</code>，Swift 也能明白我们的意图。</p>
+<h1 id="使用-guard-case"><a href="#使用-guard-case" class="headerlink" title="使用 guard case"></a><strong>使用</strong> guard case</h1><p>另外一个支持模式匹配的关键词就是新引入的 <code>guard</code> 关键词。它允许你像 <code>if let</code> 一样把 <code>optionals</code> 绑定到本地范围，而且不需要任何嵌套：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">example</span><span class="params">(a: String?)</span></span> &#123;</div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> a = a <span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</div><div class="line">    <span class="built_in">print</span>(a)</div><div class="line">&#125;</div><div class="line">example(<span class="string">"yes"</span>)</div></pre></td></tr></table></figure>
+<p><code>guard let case</code> 允许你做一些类似模式匹配所介绍的事情。让我们再来看一下士兵的例子。在玩家的血量变满之前，我们需要计算需要增加的血量。士兵不能涨血，所以对于士兵实体而言，我们始终返回 0。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> <span class="type">MAX_HP</span> = <span class="number">100</span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">healthHP</span><span class="params">(entity: Entity)</span></span> -&gt; <span class="type">Int</span> &#123;</div><div class="line">    <span class="keyword">guard</span> <span class="keyword">case</span> <span class="keyword">let</span> <span class="type">Entity</span>.<span class="type">Entry</span>(.<span class="type">Player</span>, <span class="number">_</span>, <span class="number">_</span>, hp) = entity </div><div class="line">    <span class="keyword">where</span> hp &lt; <span class="type">MAX_HP</span> </div><div class="line">    <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="number">0</span> &#125;</div><div class="line">    <span class="keyword">return</span> <span class="type">MAX_HP</span> - hp</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="built_in">print</span>(<span class="string">"Soldier"</span>, healthHP(<span class="type">Entity</span>.<span class="type">Entry</span>(type: .<span class="type">Soldier</span>, x: <span class="number">10</span>, y: <span class="number">10</span>, hp: <span class="number">79</span>)))</div><div class="line"><span class="built_in">print</span>(<span class="string">"Player"</span>, healthHP(<span class="type">Entity</span>.<span class="type">Entry</span>(type: .<span class="type">Player</span>, x: <span class="number">10</span>, y: <span class="number">10</span>, hp: <span class="number">57</span>)))</div><div class="line"></div><div class="line"><span class="comment">// 输出:</span></div><div class="line"><span class="string">"Soldier 0"</span></div><div class="line"><span class="string">"Player 43"</span></div></pre></td></tr></table></figure>
+<p>这是把我们目前讨论的各种机制用到极致的一个例子。</p>
+<ul>
+<li>它非常清晰，没有牵扯到任何嵌套</li>
+<li>状态的逻辑和初始化是在 <code>func</code> 之前处理的，这样可以提高代码的可读性</li>
+<li>非常简洁</li>
+</ul>
+<p>这也是 <code>switch</code> 和 <code>for</code> 的完美结合，可以把复杂的逻辑结构封装成易读的格式。当然，它不会让逻辑变得更容易理解，但是至少会以更清晰的方式展现给你。特别是使用 <code>enums</code> 的时候。</p>
+<h1 id="使用-if-case"><a href="#使用-if-case" class="headerlink" title="使用 if case"></a><strong>使用</strong> if case</h1><p><code>if case</code> 的作用和 <code>guard case</code> 相反。它是一种非常棒的在分支中打开和匹配数据的方式。结合之前 <code>guard</code> 的例子。很显然，我们需要一个 <code>move</code> 函数，这个函数允许我们表示一个实体在朝一个方向移动。因为我们的实体是 <code>enums</code>，所以我们需要返回一个更新过的实体。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">move</span><span class="params">(entity: Entity, xd: Int, yd: Int)</span></span> -&gt; <span class="type">Entity</span> &#123;</div><div class="line">	<span class="keyword">if</span> <span class="keyword">case</span> <span class="type">Entity</span>.<span class="type">Entry</span>(<span class="keyword">let</span> t, <span class="keyword">let</span> x, <span class="keyword">let</span> y, <span class="keyword">let</span> hp) = entity</div><div class="line">	<span class="keyword">where</span> (x + xd) &lt; <span class="number">1000</span> &amp;&amp;</div><div class="line">	    (y + yd) &lt; <span class="number">1000</span> &#123;</div><div class="line">	<span class="keyword">return</span> <span class="type">Entity</span>.<span class="type">Entry</span>(type: t, x: (x + xd), y: (y + yd), hp: hp)</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> entity</div><div class="line">&#125;</div><div class="line"><span class="built_in">print</span>(move(<span class="type">Entity</span>.<span class="type">Entry</span>(type: .<span class="type">Soldier</span>, x: <span class="number">10</span>, y: <span class="number">10</span>, hp: <span class="number">79</span>), xd: <span class="number">30</span>, yd: <span class="number">500</span>))</div><div class="line"><span class="comment">// 输出: Entry(main.Entity.EntityType.Soldier, 40, 510, 79)</span></div></pre></td></tr></table></figure>
+<h1 id="限制"><a href="#限制" class="headerlink" title="限制"></a>限制</h1><p>一些限制已经在文章中说过，比如有关 <code>Expression Patterns</code> 的问题，看起来它似乎不能匹配 <code>tuples</code> （那样的话就真的很方便了）。在 Scala 和 Clojure 中，模式匹配在集合上同样可用，所以你可以匹配它的头部、尾部和部分等。<a href="#4">4</a>。这在 Swift 中是不支持的（<a href="http://austinzheng.com/2014/12/17/custom-pattern-matching/" target="_blank" rel="external">尽管 Austin Zheng 在我之前链接的博客里差不多实现了这一点</a>）</p>
+<p>另外一种不可用的的情况是（这一点 Scala 同样做得很好）对类或者结构体进行解构。Swift 允许我们定义一个 <code>unapply</code> 方法，这个方法做的事情大体和 <code>init</code> 相反。实现这个方法，然后就可以让类型检查器对类进行匹配。而在 Swift 中，它看起来就像下面一样：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Imaginary</span> </span>&#123;</div><div class="line">   <span class="keyword">let</span> x: <span class="type">Int</span></div><div class="line">   <span class="keyword">let</span> y: <span class="type">Int</span></div><div class="line">   <span class="function"><span class="keyword">func</span> <span class="title">unapply</span><span class="params">()</span></span> -&gt; (<span class="type">Int</span>, <span class="type">Int</span>) &#123;</div><div class="line">     <span class="comment">// 实现这个方法之后，理论上来说实现了解构变量所需的所有细节</span></div><div class="line">     <span class="keyword">return</span> (<span class="keyword">self</span>.x, <span class="keyword">self</span>.y)</div><div class="line">   &#125;</div><div class="line">&#125;</div><div class="line"><span class="comment">// 然后这个就会自动 unapply 然后再进行匹配</span></div><div class="line"><span class="keyword">guard</span> <span class="keyword">case</span> <span class="keyword">let</span> <span class="type">Imaginary</span>(x, y) = anImaginaryObject <span class="keyword">else</span> &#123; <span class="keyword">break</span> &#125;</div></pre></td></tr></table></figure>
+<h1 id="更新"><a href="#更新" class="headerlink" title="更新"></a>更新</h1><p><strong>08/21/2015</strong> 结合 <a href="https://www.reddit.com/r/swift/comments/3hq6id/match_me_if_you_can_swift_pattern_matching_in/" target="_blank" rel="external">Reddit 上 foBrowsing 的有用反馈</a></p>
+<ul>
+<li>增加 <code>guard case let</code></li>
+<li>增加简化版的 let 语法（如：<code>let (x, y)</code> 替代 <code>(let x, let y)</code>）</li>
+</ul>
+<p><strong>08/22/2015</strong> <a href="https://www.reddit.com/r/swift/comments/3hq6id/match_me_if_you_can_swift_pattern_matching_in/" target="_blank" rel="external">似乎有一些东西我没测试好</a>。我列举的一些限制实际上是可用的，另外一个 Reddit 上的评论者（latrodectus）提出了一些非常有用的指正。</p>
+<ul>
+<li>将之前的修正为：所有的模式对三个关键词都适用，然后增加了一些要点案例</li>
+<li>关于协议和表达式模式无效这个限制，其实没有的</li>
+<li>增加 “模式可用性“章节</li>
+</ul>
+<p><strong>08/24/2015</strong> </p>
+<ul>
+<li>增加 <code>if case</code> 样例，重命名了一些章节。</li>
+<li>修复了一些文本拼写错误。尤其我不小心写道：<code>_</code> 不能匹配 <code>nil</code>。那当然是不对的，<code>_</code> 可以匹配所有的东西。（感谢 <a href="https://github.com/obecker" target="_blank" rel="external">obecker</a>）</li>
+</ul>
+<p><strong>09/18/2015</strong></p>
+<ul>
+<li>添加了日语翻译的链接</li>
+</ul>
+<hr>
+<p><a name="1">1.可以把它当做 <code>shell</code> 里面的 <code>*</code> 通配符</a></p>
+<p><a name="2">2.我不清楚编译器是否在对这点进行了优化，但理论上来说，它应该能计算出所需数据的正确位置，然后忽略 <code>enum</code> 的其他情况并内联这个地址</a></p>
+<p><a name="3">3.当然，不是 Haskell实现的对手：<br>fib 0 = 0<br>fib 1 = 1<br>fib n = fib (n-1) + fib (n-2)<br></a></p>
+<p><a name="4">4.比如：switch [1, 2, 4, 3] {<br>case [<em>, 2, </em>, 3]:<br>}</a></p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/APPVENTURE/">APPVENTURE</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2015/10/27/swift-pattern-matching-in-detail/" data-title="详解 Swift 模式匹配 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2015/10/28/five-myths-about-swift/" title="关于 Swift 的 5 个误区">
+  <strong>上一篇</strong><br/>
+  <span>
+  关于 Swift 的 5 个误区</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2015/10/26/swift-ranges-and-intervals/"  title="Swift 中的范围和区间">
+ <strong>下一篇</strong><br/> 
+ <span>Swift 中的范围和区间
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2015/10/27/swift-pattern-matching-in-detail/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#开始咯"><span class="toc-number">1.</span> <span class="toc-text">开始咯</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#一个交易引擎"><span class="toc-number">2.</span> <span class="toc-text">一个交易引擎</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#第一步"><span class="toc-number">2.1.</span> <span class="toc-text">第一步</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#交易类型"><span class="toc-number">2.2.</span> <span class="toc-text">交易类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#警卫！警卫！呼叫警卫！"><span class="toc-number">2.3.</span> <span class="toc-text">警卫！警卫！呼叫警卫！</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#模式匹配进阶"><span class="toc-number">3.</span> <span class="toc-text">模式匹配进阶</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-通配符模式"><span class="toc-number">3.1.</span> <span class="toc-text">1. 通配符模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-标示模式"><span class="toc-number">3.2.</span> <span class="toc-text">2. 标示模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-值绑定模式"><span class="toc-number">3.3.</span> <span class="toc-text">3. 值绑定模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-元组模式"><span class="toc-number">3.4.</span> <span class="toc-text">4. 元组模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-枚举-Case-模式（Enumeration-Case-Pattern）"><span class="toc-number">3.5.</span> <span class="toc-text">5. 枚举 Case 模式（Enumeration Case Pattern）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-类型转换模式"><span class="toc-number">3.6.</span> <span class="toc-text">6. 类型转换模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#7-表达模式"><span class="toc-number">3.7.</span> <span class="toc-text">7. 表达模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#fallthrough，break-和标签"><span class="toc-number">3.8.</span> <span class="toc-text">fallthrough，break 和标签</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#真实案例"><span class="toc-number">4.</span> <span class="toc-text">真实案例</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#可选值"><span class="toc-number">4.1.</span> <span class="toc-text">可选值</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#类型匹配"><span class="toc-number">4.2.</span> <span class="toc-text">类型匹配</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#按范围做分级"><span class="toc-number">4.3.</span> <span class="toc-text">按范围做分级</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#字频率统计"><span class="toc-number">4.4.</span> <span class="toc-text">字频率统计</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#遍历目录"><span class="toc-number">4.5.</span> <span class="toc-text">遍历目录</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Fibonacci"><span class="toc-number">4.6.</span> <span class="toc-text">Fibonacci</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#传统的-API-和值提取"><span class="toc-number">4.7.</span> <span class="toc-text">传统的 API 和值提取</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#模式和其他关键词"><span class="toc-number">5.</span> <span class="toc-text">模式和其他关键词</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#使用-for-case"><span class="toc-number">6.</span> <span class="toc-text">使用 for case</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#使用-guard-case"><span class="toc-number">7.</span> <span class="toc-text">使用 guard case</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#使用-if-case"><span class="toc-number">8.</span> <span class="toc-text">使用 if case</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#限制"><span class="toc-number">9.</span> <span class="toc-text">限制</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#更新"><span class="toc-number">10.</span> <span class="toc-text">更新</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

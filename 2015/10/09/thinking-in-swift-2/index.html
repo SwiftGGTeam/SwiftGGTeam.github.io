@@ -1,0 +1,934 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>Swift 编程思想，第二部分：数组的 Map 方法 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Olivier Halligon，原文链接，原文日期：2015-09-20译者：我偏笑；校对：pmst；定稿：shanks   在本系列的第一篇文章中，介绍了如何避免对可选类型强制解包以及拯救“小马”🐴 。在第二部分中，我们将会精简前文代码来让它看起来更有”雨燕风”(Swift-er : Swift编程语言风格)，同时向你介绍 map() 和 flatMap() 方法。">
+<meta name="keywords" content="Swift 进阶">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Swift 编程思想，第二部分：数组的 Map 方法">
+<meta property="og:url" content="https://swift.gg/2015/10/09/thinking-in-swift-2/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Olivier Halligon，原文链接，原文日期：2015-09-20译者：我偏笑；校对：pmst；定稿：shanks   在本系列的第一篇文章中，介绍了如何避免对可选类型强制解包以及拯救“小马”🐴 。在第二部分中，我们将会精简前文代码来让它看起来更有”雨燕风”(Swift-er : Swift编程语言风格)，同时向你介绍 map() 和 flatMap() 方法。">
+<meta property="og:image" content="https://swift.gg/img/articles/thinking-in-swift-2/map-everywhere.jpg1444352409.5202105">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Swift 编程思想，第二部分：数组的 Map 方法">
+<meta name="twitter:description" content="作者：Olivier Halligon，原文链接，原文日期：2015-09-20译者：我偏笑；校对：pmst；定稿：shanks   在本系列的第一篇文章中，介绍了如何避免对可选类型强制解包以及拯救“小马”🐴 。在第二部分中，我们将会精简前文代码来让它看起来更有”雨燕风”(Swift-er : Swift编程语言风格)，同时向你介绍 map() 和 flatMap() 方法。">
+<meta name="twitter:image" content="https://swift.gg/img/articles/thinking-in-swift-2/map-everywhere.jpg1444352409.5202105">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2015/10/09/thinking-in-swift-2/" target="_blank" title="Swift 编程思想，第二部分：数组的 Map 方法" itemprop="url">Swift 编程思想，第二部分：数组的 Map 方法</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2015-10-09T01:00:00.000Z" itemprop="datePublished">2015-10-09</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Olivier Halligon，<a href="http://alisoftware.github.io/swift/2015/09/20/thinking-in-swift-2/" target="_blank" rel="external">原文链接</a>，原文日期：2015-09-20<br>译者：<a href="http://blog.csdn.net/nsnirvana" target="_blank" rel="external">我偏笑</a>；校对：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="external">pmst</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>在<a href="http://alisoftware.github.io/swift/2015/09/06/thinking-in-swift-1/" target="_blank" rel="external">本系列的第一篇文章</a>中，介绍了如何避免对可选类型强制解包以及拯救“小马”🐴 。在第二部分中，我们将会精简前文代码来让它看起来更有”雨燕风”(<em>Swift-er</em> : Swift编程语言风格)，同时向你介绍 <code>map()</code> 和 <code>flatMap()</code> 方法。</p>
+<a id="more"></a>
+<blockquote>
+<p>今天这篇文章我们将要讨论数组的 <code>map()</code> 和 <code>flatMap()</code> 方法。</p>
+</blockquote>
+<h1 id="前情提要1"><a href="#前情提要1" class="headerlink" title="前情提要1"></a>前情提要<a href="thinking-in-swift-2/#note1"><sup>1</sup></a></h1><p>友情提示: 以下为<a href="http://alisoftware.github.io/swift/2015/09/06/thinking-in-swift-1/" target="_blank" rel="external">前文</a>留下的代码:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">class ListItem &#123;</div><div class="line">    var icon: UIImage?</div><div class="line">    var title: String = &quot;&quot;</div><div class="line">    var url: NSURL!</div><div class="line"></div><div class="line">    static func listItemsFromJSONData(jsonData: NSData?) -&gt; [ListItem] &#123;</div><div class="line">        guard let nonNilJsonData = jsonData,</div><div class="line">            let json = try? NSJSONSerialization.JSONObjectWithData(nonNilJsonData, options: []),</div><div class="line">            let jsonItems = json as? Array&lt;NSDictionary&gt;</div><div class="line">            else &#123;</div><div class="line">                // 倘若JSON序列化失败，或者转换类型失败</div><div class="line">                // 返回一个空数组结果</div><div class="line">                return []</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        var items = [ListItem]()</div><div class="line">        for itemDesc in jsonItems &#123;</div><div class="line">            let item = ListItem()</div><div class="line">            if let icon = itemDesc[&quot;icon&quot;] as? String &#123;</div><div class="line">                item.icon = UIImage(named: icon)</div><div class="line">            &#125;</div><div class="line">            if let title = itemDesc[&quot;title&quot;] as? String &#123;</div><div class="line">                item.title = title</div><div class="line">            &#125;</div><div class="line">            if let urlString = itemDesc[&quot;url&quot;] as? String, let url = NSURL(string: urlString) &#123;</div><div class="line">                item.url = url</div><div class="line">            &#125;</div><div class="line">            items.append(item)</div><div class="line">        &#125;</div><div class="line">        return items</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>本文的目标是使用更多“雨燕风”的模式和语法，使得代码看起来更棒并且简洁。</p>
+<h1 id="map-方法介绍"><a href="#map-方法介绍" class="headerlink" title="map()方法介绍"></a>map()方法介绍</h1><p><code>map()</code> 是 <code>Array</code> 提供的方法，通过接收一个函数作为传入参数，对数组中每个元素进行函数变换得到新的结果值。这样只需要提供<code>X-&gt;Y</code>的映射关系，就能将数组<code>[X]</code>变换到新数组<code>[Y]</code>，而无需创建一个临时可变数组(注:即上面代码中的<code>items</code>变量)。</p>
+<p>本例中，我们不再像之前一样用 <code>for</code> 来做循环，而是对 <code>jsonItems</code>(<em>JSON</em>数据:存储于类型为字典的数组中)使用 <code>map()</code> 方法，并传入一个变换函数(闭包)，将每个 <code>NSDictionary</code> 类型数组元素转换成我们所需的 <code>ListItem</code> 实例：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">return jsonItems.map &#123; (itemDesc: NSDictionary) -&gt; ListItem in</div><div class="line">    let item = ListItem()</div><div class="line">    if let icon = itemDesc[&quot;icon&quot;] as? String &#123;</div><div class="line">        item.icon = UIImage(named: icon)</div><div class="line">    &#125;</div><div class="line">    if let title = itemDesc[&quot;title&quot;] as? String &#123;</div><div class="line">        item.title = title</div><div class="line">    &#125;</div><div class="line">    if let urlString = itemDesc[&quot;url&quot;] as? String, let url = NSURL(string: urlString) &#123;</div><div class="line">        item.url = url</div><div class="line">    &#125;</div><div class="line">    return item</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这看起来只是个很小的改动，但是它让我们专注于怎样把 <code>NSDictionary</code> 转化成 <code>ListItem</code>，毕竟这是解决问题的核心。更为重要的是，避免了像在 ObjC 里做的那样，新建一个中间数组。我们应该尽可能地避免这种情况发生。</p>
+<h3 id="错误数据"><a href="#错误数据" class="headerlink" title="错误数据"></a>错误数据</h3><p>目前代码还存在一个问题：即便输入的数据是不可用的，我们依然创建了一个 <code>ListItem</code> 实例(并返回添加到结果数组<code>jsonItems</code>当中)。所以，倘若某些 <code>NSDictionary</code>是无效的，最终的输出数组中，就会添加一些毫无意义的<code>ListItem()</code>空实例。<br>更重要的是，我们仍在杀死一些小马 🐴 。当我们使用<code>NSURL!</code>时，代码允许我们创建那些没有 <code>NSURL</code> 的 <code>ListItem()</code> 实例（我们没有一个有效的<code>url</code>键值，所以访问<code>item.url</code>不起作用），当我们访问无效的<code>NSURL!</code>时，程序将会崩溃。</p>
+<p>为了解决这个问题，我们对变换函数稍加修改，当输入值无效时，返回一个值为<code>nil</code>的<code>ListItem</code>，这比返回一个错误或无内容的<code>ListItem</code>更为合适。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">return jsonItems.map &#123; (itemDesc: NSDictionary) -&gt; ListItem? in</div><div class="line">    guard …/* condition for valid data */… else &#123; return nil &#125;</div><div class="line">    let realValidItem = ListItem()</div><div class="line">    … /* fill the ListItem with the values */</div><div class="line">    return realValidItem</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>但是如果 <code>jsonItems.map</code> 里面传入的函数参数类型为 <code>NSDictionary -&gt; ListItem?</code>，最后我们得到的是一个 <code>[ListItem?]</code> 数组，那些原来是不可用 <code>NSDictionary</code> 的位置就被我们替换成了 <code>nil</code>。比原来要好一些了，但还不够。</p>
+<h1 id="使用flatMap"><a href="#使用flatMap" class="headerlink" title="使用flatMap()"></a>使用flatMap()</h1><p>这个时候就轮到 <code>flatMap()</code> 来救场了。</p>
+<p><code>flatMap()</code> 与 <code>map()</code> 相似，但 <code>flatMap()</code> 用的是 <code>T-&gt;U?</code> 变换而不是 <code>T-&gt;U</code> 转化，而且倘若变换后的数组元素值为 <code>nil</code><a href="thinking-in-swift-1/#note2"><sup>2</sup></a>，则不会被添加到最后的结果数组里面。</p>
+<p>从语法上，你可以这么理解，<code>flatMap</code> 就是先使用 <code>map</code>处理数组，接着将结果数组“压平”（顾名思义)，也就是从输出数组里剔除值为<code>nil</code>的元素。</p>
+<p>通过<code>flatMap</code>方法改写后的实例代码如下:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">return jsonItems.flatMap &#123; (itemDesc: NSDictionary) -&gt; ListItem? in</div><div class="line">    guard let title = itemDesc[&quot;title&quot;] as? String,</div><div class="line">        let urlString = itemDesc[&quot;url&quot;] as? String,</div><div class="line">        let url = NSURL(string: urlString)</div><div class="line">        else &#123; return nil &#125;</div><div class="line">    let li = ListItem()</div><div class="line">    if let icon = itemDesc[&quot;icon&quot;] as? String &#123;</div><div class="line">        li.icon = UIImage(named: icon)</div><div class="line">    &#125;</div><div class="line">    li.title = title</div><div class="line">    li.url = url</div><div class="line">    return li</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>现在我们只返回所有键都存在<a href="/thinking-in-swift-1/#note3"><sup>3</sup></a>并有效的 <code>ListItem</code>对象（保证 <code>NSURL</code>不为<code>nil</code>）。否则执行<code>guard</code>语句，返回<code>nil</code>值通知<code>flatMap</code>不要将这些无效元素添加到返回结果数组中。</p>
+<p>这样做就更好更安全了，对吧？，我们解决了数据异常的问题，当有错误输入时候，避免了无效的<code>ListItem</code>项添加到数组当中。</p>
+<h1 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h1><p>我们仍然有很多工作要做，但是今天就先做这些吧（让我们为本系列文章的下一篇准备一下材料！）</p>
+<p>在这篇文章里面，我们学到了怎么用<code>map</code>或者<code>flatMap</code>来替换掉<code>for</code>循环，确保即便输入数据是不可用的的情况下，输出数组也不会出问题。这确实已经算是很大的进步了。</p>
+<p>在下一篇文章里，将介绍如何用结构体(<code>struct</code>)重写<code>ListItem</code>类有助于探索 <code>map</code> 和 <code>flatMap</code> 的其它用法 – 尤其是在处理 <code>Optionals</code> 的时候。</p>
+<p>同时，希望你花点时间来深入了解一下 <code>map()</code> 和 <code>flatMap()</code> 在数组上的应用，我知道你第一次学的时候可能觉得它们很复杂，但是一旦你学会了，你什么时候都会想用它们。</p>
+<p><img src="/img/articles/thinking-in-swift-2/map-everywhere.jpg1444352409.5202105" alt=""></p>
+<p><a href="#note1">1</a>: 请脑补一些作秀节目的用词</p>
+<p><a href="#note2">2</a>: <code>flatMap</code>还有其他一些作用。比如把一个二维数组变换为一维数组，比如，[[T]] -&gt; [T]。但是在这里，我们只需要关注在如何使用 T-&gt;U? 的变换把 [T] 变成 [U]。</p>
+<p><a href="#note3">3</a>: 注意到我们的代码中，允许<code>NSDictionary</code>没有<code>icon</code>键，这意味着我们认为一个<code>ListItem</code>可以不需要有任何<code>icon</code>。但是其他键是必须的。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Crunchy-Development/">Crunchy Development</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2015/10/09/thinking-in-swift-2/" data-title="Swift 编程思想，第二部分：数组的 Map 方法 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2015/10/09/thinking-in-swift-2/" title="Swift 编程思想，第二部分：数组的 Map 方法">
+  <strong>上一篇</strong><br/>
+  <span>
+  Swift 编程思想，第二部分：数组的 Map 方法</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2015/10/08/stack-view-tutorial/"  title="如何在 iOS 9 中创建 Stack View">
+ <strong>下一篇</strong><br/> 
+ <span>如何在 iOS 9 中创建 Stack View
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2015/10/09/thinking-in-swift-2/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#前情提要1"><span class="toc-number">1.</span> <span class="toc-text">前情提要1</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#map-方法介绍"><span class="toc-number">2.</span> <span class="toc-text">map()方法介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#错误数据"><span class="toc-number">2.0.1.</span> <span class="toc-text">错误数据</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#使用flatMap"><span class="toc-number">3.</span> <span class="toc-text">使用flatMap()</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#结论"><span class="toc-number">4.</span> <span class="toc-text">结论</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

@@ -1,0 +1,973 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>在 iOS 上用 Core Image 实现人脸检测 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Gregg Mojica，原文链接，原文日期：2016-09-06译者：智多芯；校对：Crystal Sun；定稿：CMB   Core Image 是 Cocoa Touch 框架提供的功能强大的 API，是 iOS SDK 中常常被忽视的关键部件。本教程将尝试探索 Core Image 提供的人脸识别功能，并将其应用到 iOS App 中。  注：这是中高级 iOS 教程，本教程假设你">
+<meta name="keywords" content="iOS 开发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在 iOS 上用 Core Image 实现人脸检测">
+<meta property="og:url" content="https://swift.gg/2017/05/11/face-detection-core-image/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Gregg Mojica，原文链接，原文日期：2016-09-06译者：智多芯；校对：Crystal Sun；定稿：CMB   Core Image 是 Cocoa Touch 框架提供的功能强大的 API，是 iOS SDK 中常常被忽视的关键部件。本教程将尝试探索 Core Image 提供的人脸识别功能，并将其应用到 iOS App 中。  注：这是中高级 iOS 教程，本教程假设你">
+<meta property="og:image" content="http://www.appcoda.com/wp-content/uploads/2016/09/face-detection-storyboard.jpg">
+<meta property="og:image" content="http://www.appcoda.com/wp-content/uploads/2016/09/face-detection-2.png">
+<meta property="og:image" content="http://www.appcoda.com/wp-content/uploads/2016/09/core-image-coordinate-1240x835.jpg">
+<meta property="og:image" content="http://www.appcoda.com/wp-content/uploads/2016/09/face-detection-result-1240x809.jpg">
+<meta property="og:image" content="http://www.appcoda.com/wp-content/uploads/2016/08/faces.png">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="在 iOS 上用 Core Image 实现人脸检测">
+<meta name="twitter:description" content="作者：Gregg Mojica，原文链接，原文日期：2016-09-06译者：智多芯；校对：Crystal Sun；定稿：CMB   Core Image 是 Cocoa Touch 框架提供的功能强大的 API，是 iOS SDK 中常常被忽视的关键部件。本教程将尝试探索 Core Image 提供的人脸识别功能，并将其应用到 iOS App 中。  注：这是中高级 iOS 教程，本教程假设你">
+<meta name="twitter:image" content="http://www.appcoda.com/wp-content/uploads/2016/09/face-detection-storyboard.jpg">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2017/05/11/face-detection-core-image/" target="_blank" title="在 iOS 上用 Core Image 实现人脸检测" itemprop="url">在 iOS 上用 Core Image 实现人脸检测</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2017-05-10T16:00:00.000Z" itemprop="datePublished">2017-05-11</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Gregg Mojica，<a href="http://www.appcoda.com/face-detection-core-image/" target="_blank" rel="external">原文链接</a>，原文日期：2016-09-06<br>译者：<a href="http://hulizhen.me" target="_blank" rel="external">智多芯</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>Core Image 是 Cocoa Touch 框架提供的功能强大的 API，是 iOS SDK 中常常被忽视的关键部件。本教程将尝试探索 Core Image 提供的人脸识别功能，并将其应用到 iOS App 中。</p>
+<blockquote>
+<p>注：这是中高级 iOS 教程，本教程假设你已经使用过类似 UIImagePicker，Core Image 等技术。如果你对这些还不熟悉，先看看<a href="http://www.appcoda.com/ios-programming-course" target="_blank" rel="external">我们的 iOS 教程系列</a>，等你准备好了再看这篇文章。</p>
+</blockquote>
+<a id="more"></a>
+<h2 id="接下来要做的事"><a href="#接下来要做的事" class="headerlink" title="接下来要做的事"></a>接下来要做的事</h2><p>自从 iOS 5（大概在2011年左右）之后，iOS 开始支持人脸识别，只是用的人不多。人脸识别 API 让开发者不仅可以进行人脸检测，还能识别微笑、眨眼等表情。</p>
+<p>首先创建一个简单的应用，探索一下 Core Image 提供的人脸识别技术，该应用可以识别出照片中的人脸并用方框将人脸框起来。在第二个例子中，用户可以拍照并检测照片上是否有人脸出现，如果有则提取人脸坐标。通过这两个例子，你将学会 iOS 上所有关于人脸识别的技术，并充分利用它强大却经常被忽视的功能。</p>
+<p>下面开始吧！</p>
+<h2 id="设置工程"><a href="#设置工程" class="headerlink" title="设置工程"></a>设置工程</h2><p><a href="https://github.com/appcoda/FaceDetector/raw/master/FaceDetectorStarter.zip" target="_blank" rel="external">下载</a>并在 Xcode 中打开起始工程。该工程中的 Storyboard 仅包含一个已连接到代码的 IBOutlet 和 imageView。</p>
+<p><img src="http://www.appcoda.com/wp-content/uploads/2016/09/face-detection-storyboard.jpg" alt=""></p>
+<blockquote>
+<p><strong>注</strong>：项目中的图片由 <a href="http://unsplash.com/" target="_blank" rel="external">unsplash.com</a> 提供。</p>
+</blockquote>
+<p>在开始使用 Core Image 进行人脸识别之前，需要将 Core Image 库导入项目中。打开 ViewController.swift 文件，在文件最上方插入如下代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> CoreImage</div></pre></td></tr></table></figure>
+<h2 id="用-Core-Image-实现人脸检测"><a href="#用-Core-Image-实现人脸检测" class="headerlink" title="用 Core Image 实现人脸检测"></a>用 Core Image 实现人脸检测</h2><p>在起始工程的 storyboard 里包含一个通过 IBOutlet 连接到代码中的 imageView。下一步将实现人脸检测的代码。先把以下代码加入 swift 文件中，后面再解释：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">detect</span><span class="params">()</span></span> &#123;</div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> personciImage = <span class="type">CIImage</span>(image: personPic.image!) <span class="keyword">else</span> &#123;</div><div class="line">        <span class="keyword">return</span></div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="keyword">let</span> accuracy = [<span class="type">CIDetectorAccuracy</span>: <span class="type">CIDetectorAccuracyHigh</span>]</div><div class="line">    <span class="keyword">let</span> faceDetector = <span class="type">CIDetector</span>(ofType: <span class="type">CIDetectorTypeFace</span>, context: <span class="literal">nil</span>, options: accuracy)</div><div class="line">    <span class="keyword">let</span> faces = faceDetector?.features(<span class="keyword">in</span>: personciImage)</div><div class="line">    </div><div class="line">    <span class="keyword">for</span> face <span class="keyword">in</span> faces <span class="keyword">as</span>! [<span class="type">CIFaceFeature</span>] &#123;</div><div class="line">        <span class="built_in">print</span>(<span class="string">"Found bounds are <span class="subst">\(face.bounds)</span>"</span>)</div><div class="line">        </div><div class="line">        <span class="keyword">let</span> faceBox = <span class="type">UIView</span>(frame: face.bounds)</div><div class="line">        faceBox.layer.borderWidth = <span class="number">3</span></div><div class="line">        faceBox.layer.borderColor = <span class="type">UIColor</span>.red.cgColor</div><div class="line">        faceBox.backgroundColor = <span class="type">UIColor</span>.clear</div><div class="line">        personPic.addSubview(faceBox)</div><div class="line">        </div><div class="line">        <span class="keyword">if</span> face.hasLeftEyePosition &#123;</div><div class="line">            <span class="built_in">print</span>(<span class="string">"Left eye bounds are <span class="subst">\(face.leftEyePosition)</span>"</span>)</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        <span class="keyword">if</span> face.hasRightEyePosition &#123;</div><div class="line">            <span class="built_in">print</span>(<span class="string">"Right eye bounds are <span class="subst">\(face.rightEyePosition)</span>"</span>)</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里解释一下上面的代码：</p>
+<ul>
+<li>第 3 行：从 storyboard 中的 UIImageView 提取出 UIImage 并转换成 CIImage，将其保存在新创建的 <code>personciImage</code> 变量中。Core Image 需要用到 CIImage。</li>
+<li>第 7 行：创建一个 <code>accuracy</code> 变量并设置为 <code>CIDetectorAccuracyHigh</code>。你可以选择 <code>CIDetectorAccuracyHigh</code> 或 <code>CIDetectorAccuracyLow</code>。本文希望得到高精度的结果，因此选择了 <code>CIDetectorAccuracyHigh</code>。</li>
+<li>第 8 行：创建一个 <code>faceDetector</code> 变量并设置为  <code>CIDetector</code>  的实例。实例化 <code>CIDetector</code> 时将前文创建的 <code>accuracy</code> 作为参数传入。</li>
+<li>第 9 行：通过调用 <code>faceDetector</code> 的 <code>features(in:)</code> 方法可检测出给定图像的所有人脸，最终以数组的形式返回所有人脸。</li>
+<li>第 11 行：遍历数组中所有的人脸，并将其转换为 <code>CIFaceFeature</code> 类型。</li>
+<li>第 15 行：创建一个 UIView 实例并命名为 <code>faceBox</code>，然后根据 <code>faces.first</code> 设置其大小。这将画一个方框用于高亮检测到的人脸。</li>
+<li>第 17 行：将 <code>faceBox</code> 的边框宽度设为 3。</li>
+<li>第 18 行：将边框颜色设置为红色。</li>
+<li>第 19 行：将背景色设为透明，表示该视图没有可见的背景。</li>
+<li>第 20 行：最后，将该视图添加到 <code>personPic</code> 视图中。</li>
+<li>第 22-28 行：这些 API 不仅可以检测出人脸，还能检测出人脸的左右眼，但本文就不在图像中高亮人眼了。本文只想展示一些 <code>CIFaceFeature</code> 的相关属性。</li>
+</ul>
+<p>接着调用在 <code>viewDidLoad</code>中调用  <code>detect</code> 方法，在方法中增加下列一行代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">detect()</div></pre></td></tr></table></figure>
+<p>编译并运行程序，可以看到如下效果：</p>
+<p><img src="http://www.appcoda.com/wp-content/uploads/2016/09/face-detection-2.png" alt=""></p>
+<p>根据控制台的输出结果，似乎可以检测出人脸：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="type">Found</span> bounds are (<span class="number">177.0</span>, <span class="number">415.0</span>, <span class="number">380.0</span>, <span class="number">380.0</span>)</div></pre></td></tr></table></figure>
+<p>还有几个问题没有处理：</p>
+<ul>
+<li>人脸识别程序应用于原始图像上，而原始图像有着比 imageView 更高的分辨率。另外，工程中 imageView 的 content mode 被设置为 aspect fit。为了正确地画出检测框，还需要计算出 imageView 中识别到的人脸的实际位置和尺寸。</li>
+<li>再者，Core Image 和 UIView（或者UIKit）使用了不同的坐标系（如下图所示），因此还需要实现 Core Image 坐标到 UIView 坐标的转换。</li>
+</ul>
+<p><img src="http://www.appcoda.com/wp-content/uploads/2016/09/core-image-coordinate-1240x835.jpg" alt=""></p>
+<p>现在使用下面的代码替换 <code>detect()</code> 方法中的代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">detect</span><span class="params">()</span></span> &#123;</div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> personciImage = <span class="type">CIImage</span>(image: personPic.image!) <span class="keyword">else</span> &#123;</div><div class="line">        <span class="keyword">return</span></div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="keyword">let</span> accuracy = [<span class="type">CIDetectorAccuracy</span>: <span class="type">CIDetectorAccuracyHigh</span>]</div><div class="line">    <span class="keyword">let</span> faceDetector = <span class="type">CIDetector</span>(ofType: <span class="type">CIDetectorTypeFace</span>, context: <span class="literal">nil</span>, options: accuracy)</div><div class="line">    <span class="keyword">let</span> faces = faceDetector?.features(<span class="keyword">in</span>: personciImage)</div><div class="line">    </div><div class="line">    <span class="comment">// 将 Core Image 坐标转换成 UIView 坐标</span></div><div class="line">    <span class="keyword">let</span> ciImageSize = personciImage.extent.size</div><div class="line">    <span class="keyword">var</span> transform = <span class="type">CGAffineTransform</span>(scaleX: <span class="number">1</span>, y: -<span class="number">1</span>)</div><div class="line">    transform = transform.translatedBy(x: <span class="number">0</span>, y: -ciImageSize.height)</div><div class="line">    </div><div class="line">    <span class="keyword">for</span> face <span class="keyword">in</span> faces <span class="keyword">as</span>! [<span class="type">CIFaceFeature</span>] &#123;</div><div class="line">        <span class="built_in">print</span>(<span class="string">"Found bounds are <span class="subst">\(face.bounds)</span>"</span>)</div><div class="line">        </div><div class="line">        <span class="comment">// 实现坐标转换</span></div><div class="line">        <span class="keyword">var</span> faceViewBounds = face.bounds.applying(transform)</div><div class="line">        </div><div class="line">        <span class="comment">// 计算实际的位置和大小</span></div><div class="line">        <span class="keyword">let</span> viewSize = personPic.bounds.size</div><div class="line">        <span class="keyword">let</span> scale = <span class="built_in">min</span>(viewSize.width / ciImageSize.width,</div><div class="line">                        viewSize.height / ciImageSize.height)</div><div class="line">        <span class="keyword">let</span> offsetX = (viewSize.width - ciImageSize.width * scale) / <span class="number">2</span></div><div class="line">        <span class="keyword">let</span> offsetY = (viewSize.height - ciImageSize.height * scale) / <span class="number">2</span></div><div class="line">        </div><div class="line">        faceViewBounds = faceViewBounds.applying(<span class="type">CGAffineTransform</span>(scaleX: scale, y: scale))</div><div class="line">        faceViewBounds.origin.x += offsetX</div><div class="line">        faceViewBounds.origin.y += offsetY</div><div class="line">        </div><div class="line">        <span class="keyword">let</span> faceBox = <span class="type">UIView</span>(frame: faceViewBounds)</div><div class="line">        </div><div class="line">        faceBox.layer.borderWidth = <span class="number">3</span></div><div class="line">        faceBox.layer.borderColor = <span class="type">UIColor</span>.red.cgColor</div><div class="line">        faceBox.backgroundColor = <span class="type">UIColor</span>.clear</div><div class="line">        personPic.addSubview(faceBox)</div><div class="line">        </div><div class="line">        <span class="keyword">if</span> face.hasLeftEyePosition &#123;</div><div class="line">            <span class="built_in">print</span>(<span class="string">"Left eye bounds are <span class="subst">\(face.leftEyePosition)</span>"</span>)</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        <span class="keyword">if</span> face.hasRightEyePosition &#123;</div><div class="line">            <span class="built_in">print</span>(<span class="string">"Right eye bounds are <span class="subst">\(face.rightEyePosition)</span>"</span>)</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>首先，上面的代码使用放射变换将 Core Image 坐标转换成了 UIKit 坐标。然后，添加了一些额外的代码用于计算框视图的实际位置和尺寸。</p>
+<p>现在再一次运行程序，应该可以看到检测框将识别出的人脸框起来了，这样就成功地用 Core Image 检测到人脸了。</p>
+<p><img src="http://www.appcoda.com/wp-content/uploads/2016/09/face-detection-result-1240x809.jpg" alt=""></p>
+<h2 id="开发一个支持人脸识别的摄像应用"><a href="#开发一个支持人脸识别的摄像应用" class="headerlink" title="开发一个支持人脸识别的摄像应用"></a>开发一个支持人脸识别的摄像应用</h2><p>假设有一个用于摄像或拍照的应用程序，我们希望在拍照后检测是否有人脸出现。如果出现了人脸，可能想将这张照片打上一些标签并对其分类。下面结合 <code>UIImagePicker</code> 类，拍照完成时立刻运行上面的人脸检测代码。</p>
+<p>上面的起始工程中已经创建了一个 <code>CameraViewController</code> 类，将其代码更新成下面这样，用以实现摄像功能：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">CameraViewController</span>: <span class="title">UIViewController</span>, <span class="title">UIImagePickerControllerDelegate</span>, <span class="title">UINavigationControllerDelegate</span> </span>&#123;</div><div class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">var</span> imageView: <span class="type">UIImageView</span>!</div><div class="line">    <span class="keyword">let</span> imagePicker = <span class="type">UIImagePickerController</span>()</div><div class="line">    </div><div class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</div><div class="line">        <span class="keyword">super</span>.viewDidLoad()</div><div class="line">        </div><div class="line">        imagePicker.delegate = <span class="keyword">self</span></div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="meta">@IBAction</span> <span class="function"><span class="keyword">func</span> <span class="title">takePhoto</span><span class="params">(sender: AnyObject)</span></span> &#123;</div><div class="line">        <span class="keyword">if</span> !<span class="type">UIImagePickerController</span>.isSourceTypeAvailable(.camera) &#123;</div><div class="line">            <span class="keyword">return</span></div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        imagePicker.allowsEditing = <span class="literal">false</span></div><div class="line">        imagePicker.sourceType = .camera</div><div class="line">        </div><div class="line">        present(imagePicker, animated: <span class="literal">true</span>, completion: <span class="literal">nil</span>)</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">imagePickerController</span><span class="params">(<span class="number">_</span> picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any])</span></span> &#123;</div><div class="line">        <span class="keyword">if</span> <span class="keyword">let</span> pickedImage = info[<span class="type">UIImagePickerControllerOriginalImage</span>] <span class="keyword">as</span>? <span class="type">UIImage</span> &#123;</div><div class="line">            imageView.contentMode = .scaleAspectFit</div><div class="line">            imageView.image = pickedImage</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        dismiss(animated: <span class="literal">true</span>, completion: <span class="literal">nil</span>)</div><div class="line">        <span class="keyword">self</span>.detect()</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">imagePickerControllerDidCancel</span><span class="params">(<span class="number">_</span> picker: UIImagePickerController)</span></span> &#123;</div><div class="line">        dismiss(animated: <span class="literal">true</span>, completion: <span class="literal">nil</span>)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>开始的几行代码设置了 <code>UIImagePicker</code> 代理。在 <code>didFinishPickingMediaWithInfo</code> 方法（这是一个 <code>UIImagePicker</code> 代理方法）中，将传入的图像设置到 imageView 上，最后关闭拾取器并调用 <code>detect</code> 函数。</p>
+<p>上面的代码还未实现 <code>detect</code> 函数，将下面的代码加上：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">detect</span><span class="params">()</span></span> &#123;</div><div class="line">    <span class="keyword">let</span> imageOptions = <span class="type">NSDictionary</span>(object: <span class="type">NSNumber</span>(value: <span class="number">5</span>) <span class="keyword">as</span> <span class="type">NSNumber</span>, forKey: <span class="type">CIDetectorImageOrientation</span> <span class="keyword">as</span> <span class="type">NSString</span>)</div><div class="line">    <span class="keyword">let</span> personciImage = <span class="type">CIImage</span>(cgImage: imageView.image!.cgImage!)</div><div class="line">    <span class="keyword">let</span> accuracy = [<span class="type">CIDetectorAccuracy</span>: <span class="type">CIDetectorAccuracyHigh</span>]</div><div class="line">    <span class="keyword">let</span> faceDetector = <span class="type">CIDetector</span>(ofType: <span class="type">CIDetectorTypeFace</span>, context: <span class="literal">nil</span>, options: accuracy)</div><div class="line">    <span class="keyword">let</span> faces = faceDetector?.features(<span class="keyword">in</span>: personciImage, options: imageOptions <span class="keyword">as</span>? [<span class="type">String</span> : <span class="type">AnyObject</span>])</div><div class="line">    </div><div class="line">    <span class="keyword">if</span> <span class="keyword">let</span> face = faces?.first <span class="keyword">as</span>? <span class="type">CIFaceFeature</span> &#123;</div><div class="line">        <span class="built_in">print</span>(<span class="string">"found bounds are <span class="subst">\(face.bounds)</span>"</span>)</div><div class="line">        </div><div class="line">        <span class="keyword">let</span> alert = <span class="type">UIAlertController</span>(title: <span class="string">"Say Cheese!"</span>, message: <span class="string">"We detected a face!"</span>, preferredStyle: <span class="type">UIAlertControllerStyle</span>.alert)</div><div class="line">        alert.addAction(<span class="type">UIAlertAction</span>(title: <span class="string">"OK"</span>, style: <span class="type">UIAlertActionStyle</span>.<span class="keyword">default</span>, handler: <span class="literal">nil</span>))</div><div class="line">        <span class="keyword">self</span>.present(alert, animated: <span class="literal">true</span>, completion: <span class="literal">nil</span>)</div><div class="line">        </div><div class="line">        <span class="keyword">if</span> face.hasSmile &#123;</div><div class="line">            <span class="built_in">print</span>(<span class="string">"face is smiling"</span>);</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        <span class="keyword">if</span> face.hasLeftEyePosition &#123;</div><div class="line">            <span class="built_in">print</span>(<span class="string">"Left eye bounds are <span class="subst">\(face.leftEyePosition)</span>"</span>)</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        <span class="keyword">if</span> face.hasRightEyePosition &#123;</div><div class="line">            <span class="built_in">print</span>(<span class="string">"Right eye bounds are <span class="subst">\(face.rightEyePosition)</span>"</span>)</div><div class="line">        &#125;</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        <span class="keyword">let</span> alert = <span class="type">UIAlertController</span>(title: <span class="string">"No Face!"</span>, message: <span class="string">"No face was detected"</span>, preferredStyle: <span class="type">UIAlertControllerStyle</span>.alert)</div><div class="line">        alert.addAction(<span class="type">UIAlertAction</span>(title: <span class="string">"OK"</span>, style: <span class="type">UIAlertActionStyle</span>.<span class="keyword">default</span>, handler: <span class="literal">nil</span>))</div><div class="line">        <span class="keyword">self</span>.present(alert, animated: <span class="literal">true</span>, completion: <span class="literal">nil</span>)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里的 detect() 函数和之前的实现非常相似，不过这一次我们使用的是临时拍到的图像。根据检测结果会显示一个提示框，提示是否检测到人脸。运行程序来快速测试一下。</p>
+<p><img src="http://www.appcoda.com/wp-content/uploads/2016/08/faces.png" alt=""></p>
+<p>CIFaceFeature 中的一些属性和方法前面已经尝试过了。例如，若要判断照片中的人是否正在微笑，可以通过 <code>hasSmile</code> 属性判断。还可以通过 <code>hasLeftEyePosition</code>  （或<code>hasRightEyePosition</code>）属性检查是否有左眼（或右眼）出现（希望有）。</p>
+<p>还可以通过 <code>hasMouthPosition</code> 来判断是否出现了嘴巴。如果出现了，可以通过 <code>mouthPosition</code> 属性得到其坐标，代码如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">if</span> (face.hasMouthPosition) &#123;</div><div class="line">     <span class="built_in">print</span>(<span class="string">"mouth detected"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>如你所见，通过 Core Image 进行人脸识别极其简单。除了检测嘴、微笑、眼睛位置等，还可以通过 <code>leftEyeClosed</code> （或<code>rightEyeClosed</code>）判断左眼（或右眼）是否睁开。</p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>本教程探索了 Core Image 提供的人脸识别 API，并展示了如何在摄像机应用中使用该功能。本文通过 UIImagePicker 拍摄图像，并检测该图像中是否有人的出现。</p>
+<p>如你所见，Core Image 的人脸识别 API 有着非常多的用处！希望你能觉得本教程有所帮助，让你了解到了这一鲜为人知的 iOS API！</p>
+<blockquote>
+<p> 注：欢迎继续关注让人脸识别更加强大的<a href="https://www.appcoda.com/tag/neural-net/" target="_blank" rel="external">神经网络系列教程</a>。</p>
+</blockquote>
+<p>你可以从<a href="https://github.com/appcoda/FaceDetector" target="_blank" rel="external">这里</a>下载到最终的工程代码。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/AppCoda/">AppCoda</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/iOS-开发/">iOS 开发</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2017/05/11/face-detection-core-image/" data-title="在 iOS 上用 Core Image 实现人脸检测 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2017/05/16/unowned-or-weak-lifetime-and-performance/" title="Unowned 还是 Weak？生命周期和性能对比">
+  <strong>上一篇</strong><br/>
+  <span>
+  Unowned 还是 Weak？生命周期和性能对比</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2017/05/10/multiple-outlets-tutorial/"  title="创建多个 Outlet 教程">
+ <strong>下一篇</strong><br/> 
+ <span>创建多个 Outlet 教程
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2017/05/11/face-detection-core-image/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#接下来要做的事"><span class="toc-number">1.</span> <span class="toc-text">接下来要做的事</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#设置工程"><span class="toc-number">2.</span> <span class="toc-text">设置工程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#用-Core-Image-实现人脸检测"><span class="toc-number">3.</span> <span class="toc-text">用 Core Image 实现人脸检测</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#开发一个支持人脸识别的摄像应用"><span class="toc-number">4.</span> <span class="toc-text">开发一个支持人脸识别的摄像应用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-number">5.</span> <span class="toc-text">结语</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

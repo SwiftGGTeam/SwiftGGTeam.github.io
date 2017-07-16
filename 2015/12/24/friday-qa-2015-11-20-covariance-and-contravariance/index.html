@@ -1,0 +1,985 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>Friday Q&amp;A 2015-11-20：协变与逆变 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Mike Ash，原文链接，原文日期：2015-11-20译者：Cee；校对：千叶知风；定稿：numbbbbb   在现代的编程语言中，子类型（Subtypes）和超类型（Supertypes）已经成为了非常常见的一部分了。协变（Convariance）和逆变（Contravariance）则能告诉我们什么时候使用子类型或超类型会优于原来使用的类型。这在我们使用的大多数编程语言中非常的常见">
+<meta name="keywords" content="Swift 进阶">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Friday Q&amp;A 2015-11-20：协变与逆变">
+<meta property="og:url" content="https://swift.gg/2015/12/24/friday-qa-2015-11-20-covariance-and-contravariance/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Mike Ash，原文链接，原文日期：2015-11-20译者：Cee；校对：千叶知风；定稿：numbbbbb   在现代的编程语言中，子类型（Subtypes）和超类型（Supertypes）已经成为了非常常见的一部分了。协变（Convariance）和逆变（Contravariance）则能告诉我们什么时候使用子类型或超类型会优于原来使用的类型。这在我们使用的大多数编程语言中非常的常见">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Friday Q&amp;A 2015-11-20：协变与逆变">
+<meta name="twitter:description" content="作者：Mike Ash，原文链接，原文日期：2015-11-20译者：Cee；校对：千叶知风；定稿：numbbbbb   在现代的编程语言中，子类型（Subtypes）和超类型（Supertypes）已经成为了非常常见的一部分了。协变（Convariance）和逆变（Contravariance）则能告诉我们什么时候使用子类型或超类型会优于原来使用的类型。这在我们使用的大多数编程语言中非常的常见">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2015/12/24/friday-qa-2015-11-20-covariance-and-contravariance/" target="_blank" title="Friday Q&amp;A 2015-11-20：协变与逆变" itemprop="url">Friday Q&amp;A 2015-11-20：协变与逆变</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2015-12-23T16:00:00.000Z" itemprop="datePublished">2015-12-24</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Mike Ash，<a href="https://mikeash.com/pyblog/friday-qa-2015-11-20-covariance-and-contravariance.html" target="_blank" rel="external">原文链接</a>，原文日期：2015-11-20<br>译者：<a href="https://github.com/Cee" target="_blank" rel="external">Cee</a>；校对：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="external">千叶知风</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="external">numbbbbb</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>在现代的编程语言中，子类型（Subtypes）和超类型（Supertypes）已经成为了非常常见的一部分了。协变（Convariance）和逆变（Contravariance）则能告诉我们什么时候使用子类型或超类型会优于原来使用的类型。这在我们使用的大多数编程语言中非常的常见，但是很多开发者仍然对这些概念感到模糊不清。今天我们就来详细讨论一下。</p>
+<a id="more"></a>
+<h3 id="子类型（Subtypes）和超类型（Supertypes）"><a href="#子类型（Subtypes）和超类型（Supertypes）" class="headerlink" title="子类型（Subtypes）和超类型（Supertypes）"></a>子类型（Subtypes）和超类型（Supertypes）</h3><p>我们都知道子类（Subclass）是什么。当你创建一个子类的时候，你就在创建一个子类型。用一个经典的例子来讲，就是用 <code>Animal</code> 的子类去创建一只 <code>Cat</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Animal</span> </span>&#123;</div><div class="line">    ...</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Cat</span>: <span class="title">Animal</span> </span>&#123;</div><div class="line">    ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这让 <code>Cat</code> 成为了 <code>Animal</code> 的子类型，也就意味着所有的 <code>Cat</code> 都是 <code>Animal</code>。但并不意味着所有的 <code>Animal</code> 都是 <code>Cat</code>。</p>
+<p>子类型通常能够替代超类型。很明显懂一点编程知识的任何程序员都知道，在 Swift 中，下面的代码的第一行能够正常的运行，然而第二行则不能：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> animal: <span class="type">Animal</span> = <span class="type">Cat</span>()</div><div class="line"><span class="keyword">let</span> cat: <span class="type">Cat</span> = <span class="type">Animal</span>()</div></pre></td></tr></table></figure>
+<p>对于函数类型也是适用的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">animalF</span><span class="params">()</span></span> -&gt; <span class="type">Animal</span> &#123;</div><div class="line">    <span class="keyword">return</span> <span class="type">Animal</span>()</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">catF</span><span class="params">()</span></span> -&gt; <span class="type">Cat</span> &#123;</div><div class="line">    <span class="keyword">return</span> <span class="type">Cat</span>()</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">let</span> returnsAnimal: () -&gt; <span class="type">Animal</span> = catF  <span class="comment">//可以运行</span></div><div class="line"><span class="keyword">let</span> returnsCat: () -&gt; <span class="type">Cat</span> = animalF  <span class="comment">//出错</span></div></pre></td></tr></table></figure>
+<p>这些在 Objective-C 下也能实现，只不过要用 block，而且语法上会显得比较丑。所以我坚定地使用 Swift。</p>
+<p>注意，以下的代码是有问题的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">catCatF</span><span class="params">(inCat: Cat)</span></span> -&gt; <span class="type">Cat</span> &#123;</div><div class="line">    <span class="keyword">return</span> inCat</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">let</span> animalAnimal: <span class="type">Animal</span> -&gt; <span class="type">Animal</span> = catCatF</div></pre></td></tr></table></figure>
+<p>很困惑，不是吗？不用担心，整篇文章就是为了彻底了解为什么第一个版本是可行而第二个版本是不可行的。除此之外，我们在探索的过程中还会了解很多非常有用的东西。</p>
+<h3 id="重写（Override）方法"><a href="#重写（Override）方法" class="headerlink" title="重写（Override）方法"></a>重写（Override）方法</h3><p>类似的事情在重写方法中也能正确地执行，想象一下有这样一个类：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Person</span> </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">purchaseAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Animal</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>现在我们建立它的子类，然后重写父类的方法，并改变返回值的类型：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">CrazyCatLady</span>: <span class="title">Person</span> </span>&#123;</div><div class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">purchaseAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Cat</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这样做对吗？对。为什么呢？</p>
+<p><a href="https://en.wikipedia.org/wiki/Liskov_substitution_principle" target="_blank" rel="external">Liskov 替换原则</a>被用于指导何时该使用子类。简明扼要的来说，它指出任何子类的实例总是能够替代父类的实例。比如你有一个 <code>Animal</code>，你就能用 <code>Cat</code> 替代它；你也总是能够用 <code>CrazyCatLady</code> 替代 <code>Person</code>。</p>
+<p>下面是使用 <code>Person</code> 作为例子写的一段代码，接下来会有解释来解释清楚：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> person: <span class="type">Person</span> = getAPerson()</div><div class="line"><span class="keyword">let</span> animal: <span class="type">Animal</span> = person.purchaseAnimal()</div><div class="line">animal.pet()</div></pre></td></tr></table></figure>
+<p>想象一下当 <code>getAPerson</code> 返回一位 <code>CrazyCatLady</code>。整段代码还可行吗？<code>CrazyCatLady.purchaseAnimal</code> 会返回一只 <code>Cat</code>。这个实例被放入了 <code>animal</code> 中。<code>Cat</code> 是 <code>Animal</code> 的一种，所以它也能够做 <code>Animal</code> 能够做的事情，包括 <code>pet</code> 方法。类似，<code>CrazyCatLady</code> 返回的 <code>Cat</code> 也是有效的。</p>
+<p>我们这时把 <code>pet</code> 函数放入 <code>Person</code> 类中，所以我们能够知道一个人所养的特定的动物：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Person</span> </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">purchaseAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Animal</span></div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">pet</span><span class="params">(animal: Animal)</span></span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>自然，<code>CrazyCatLady</code> 只拥有宠物猫：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">CrazyCatLady</span>: <span class="title">Person</span> </span>&#123;</div><div class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">purchaseAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Cat</span></div><div class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">pet</span><span class="params">(animal: Cat)</span></span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>现在这样对吗？<em>不对！</em></p>
+<p>为了理解为什么不对，我们来看一下使用这个方法的代码片段：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> person: <span class="type">Person</span> = getAPerson()</div><div class="line"><span class="keyword">let</span> animal: <span class="type">Animal</span> = getAnAnimal()</div><div class="line">person.pet(animal)</div></pre></td></tr></table></figure>
+<p>假设 <code>getAPerson</code> 方法返回了一位 <code>CrazyCatLady</code>，第一行非常的正确：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> person: <span class="type">Person</span> = getAPerson()</div></pre></td></tr></table></figure>
+<p>如果 <code>getAnAnimal</code> 方法返回了一只 <code>Dog</code>，它也是 <code>Animal</code> 的子类但是和 <code>Cat</code> 有截然不同的表现。接下来的一行看上去也非常的正确：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> animal: <span class="type">Animal</span> = getAnAnimal()</div></pre></td></tr></table></figure>
+<p>接下来我们的 <code>person</code> 变量中有一位 <code>CrazyCatLady</code>，以及在 <code>animal</code> 变量中有一只 <code>Dog</code>，然后执行了这一行：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">person.pet(animal)</div></pre></td></tr></table></figure>
+<p>爆炸了噜！<code>CrazyCatLady</code> 的 <code>pet</code> 方法期望参数是一只 <code>Cat</code>。对于这只 <code>Dog</code> 就显得无计可施。这个方法也有可能会访问其他的属性或者调用其他 <code>Dog</code> 类所不具备的方法。</p>
+<p>这段代码原本是完全正确的。首先它得到 <code>Person</code> 和 <code>Animal</code>，然后调用 <code>Person</code> 中的方法让人拥有这个 <code>Animal</code>。上面的问题在于我们把 <code>CrazyCatLady.pet</code> 方法的参数类型变成了 <code>Cat</code>。这破坏了 Liskov 替换原则：此时的 <code>CrazyCatLady</code> 并不能在任意的地方替代 <code>Person</code> 的使用。</p>
+<p>感谢编译器给我们留了一手。它明白使用子类型用于重写方法的参数类型是不正确的，会拒绝编译这个代码。</p>
+<p>那在重写方法时使用不同的类型究竟对不对呢？对！事实上，你需要<em>超类型（Supertype）</em>。举一个例子，假设 <code>Animal</code> 是 <code>Thing</code> 的子类，那么当我们重写 <code>pet</code> 方法时，参数类型变为 <code>Thing</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">pet</span><span class="params">(thing: Thing)</span></span></div></pre></td></tr></table></figure>
+<p>这保证了可替换性。如果是一个 <code>Person</code>，那么这个方法所传进来的参数类型始终是 <code>Animal</code>，这是 <code>Thing</code> 的一种。</p>
+<p>有个重要的规则来了：函数的返回值可以换成原类型的<em>子类型</em>，在层级上<em>降</em>了一级；反之函数的参数可以换成原类型的<em>超类型</em>，在层级上<em>升</em>了一级。</p>
+<h3 id="单独的函数（Standalone-functions）"><a href="#单独的函数（Standalone-functions）" class="headerlink" title="单独的函数（Standalone functions）"></a>单独的函数（Standalone functions）</h3><p>这种子类型和超类型的关系我们已经在类上面了解得很清楚了。它能够通过类与类之间的层级关系直接推出。那么如果是单独的函数关系呢？</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> f1: <span class="type">A</span> -&gt; <span class="type">B</span> = ...</div><div class="line"><span class="keyword">let</span> f2: <span class="type">C</span> -&gt; <span class="type">D</span> = f1</div></pre></td></tr></table></figure>
+<p>这种关系什么时候是对的，什么时候又是错的呢？</p>
+<p>这可以被看做是 Liskov 替换原则的一种精简版本。 事实上，你可以把函数想象成是非常小的（mini-objects）、只有一个方法的对象。当你有两个不同的对象类型时，怎么做才能够让这两个对象也遵循我们的原则呢？只有当原对象类型是后者类型的子类型就可以了。那什么时候函数是另一个函数的子类型呢？正如上面所见，当前者的参数是后者的超类型并且返回值是后者的子类型即可。</p>
+<p>把这个方法应用在这儿，上面的代码当 <code>A</code> 是 <code>C</code> 的超类型且 <code>B</code> 是 <code>D</code> 的子类型时可以正常的执行。用具体的例子来说：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> f1: <span class="type">Animal</span> -&gt; <span class="type">Animal</span> = ...</div><div class="line"><span class="keyword">let</span> f2: <span class="type">Cat</span> -&gt; <span class="type">Thing</span> = f1</div></pre></td></tr></table></figure>
+<p>参数和返回值的类型朝着相反的方向移动。可能不是你所想的那样，但是这就是能让函数正确执行的唯一方法。</p>
+<p>这又是一个重要的规则：一个函数若是另外一个函数的子类型，那么它的参数是原函数参数的<em>超类型</em>，返回值是原函数返回值的<em>子类型</em>（译者注：又叫做 <a href="http://www.wikiwand.com/en/Robustness_principle" target="_blank" rel="external">Robustness 原则</a>）。</p>
+<h3 id="属性（Property）"><a href="#属性（Property）" class="headerlink" title="属性（Property）"></a>属性（Property）</h3><p>如果是只读的属性那就很简单。子类的属性必须是父类属性的子类型。只读的属性本质上是一个不接收参数而返回成员值的函数，所以上述的规则依旧适用。</p>
+<p>可读可写的属性其实也非常的简单。子类的属性必须和父类的属性类型相同。一个可读可写的属性其实由一对函数组成。<code>Getter</code> 是一个不接收参数而返回成员值的函数，<code>Setter</code> 则是一个需要传入一个参数但无需返回值的函数。看下面的例子：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> animal: <span class="type">Animal</span></div><div class="line"><span class="comment">// 这等价于：</span></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">getAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Animal</span></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">setAnimal</span><span class="params">(animal: Animal)</span></span></div></pre></td></tr></table></figure>
+<p>正如我们之前得到的结论一样，函数的参数和返回值需要各自向上和向下改变一级。然而参数和返回值的类型却是固定的，所以它们的类型都不能被改变：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// 注意到 animal 的类型是 Animal</span></div><div class="line"><span class="comment">// 这样不对（向下）</span></div><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">getAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Cat</span></div><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">setAnimal</span><span class="params">(animal: Cat)</span></span></div><div class="line"></div><div class="line"><span class="comment">// 这样也不对（向上）</span></div><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">getAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Thing</span></div><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">setAnimal</span><span class="params">(animal: Thing)</span></span></div></pre></td></tr></table></figure>
+<h3 id="泛型（Generics）"><a href="#泛型（Generics）" class="headerlink" title="泛型（Generics）"></a>泛型（Generics）</h3><p>那如果是泛型呢？给定泛型类型的参数，什么时候又是正确的呢？</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> var1: <span class="type">SomeType</span>&lt;<span class="type">A</span>&gt; = ...</div><div class="line"><span class="keyword">let</span> var2: <span class="type">SomeType</span>&lt;<span class="type">B</span>&gt; = var1</div></pre></td></tr></table></figure>
+<p>理论上来说，这要看泛型参数是如何使用的。一个泛型类型参数本身并不做什么事情，但是它会被用作于属性的类型、函数方法的参数类型和返回类型。</p>
+<p>如果泛型参数仅仅被用作函数返回值的类型和只读属性身上，那么 <code>B</code> 需要是 <code>A</code> 的超类型：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> var1: <span class="type">SomeType</span>&lt;<span class="type">Cat</span>&gt; = ...</div><div class="line"><span class="keyword">let</span> var2: <span class="type">SomeType</span>&lt;<span class="type">Animal</span>&gt; = var1</div></pre></td></tr></table></figure>
+<p>如果泛型参数仅被用作于函数方法的参数类型，那么 <code>B</code> 需要是 <code>A</code> 的子类型：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> var1: <span class="type">SomeType</span>&lt;<span class="type">Animal</span>&gt; = ...</div><div class="line"><span class="keyword">let</span> var2: <span class="type">SomeType</span>&lt;<span class="type">Cat</span>&gt; = var1</div></pre></td></tr></table></figure>
+<p>如果泛型参数在上述提到的两方面都被使用了，那么当且仅当 <code>A</code> 和 <code>B</code> 是相同类型的时候才是有效的。这也同样适用于当泛型参数作为可读可写属性的情况。</p>
+<p>这就是理论部分，看上去有些复杂但其实很简短。与此同时，Swift 寻求到了其简便的解决之道。对于两个需要相互匹配的泛型类型，Swift 要求它们的泛型参数的类型也需要相同。子类型和超类型都是不被允许的，尽管理论上可行。</p>
+<p>Objective-C 事实上比 Swift 更好一些。一个在 Objective-C 中的泛型参数可以在声明时增加 <code>__covariant</code> 关键字来表示它能够接受子类型，而在声明时增加 <code>__contravariant</code> 关键字来表示它能够接受超类型。这在 <code>NSArray</code> 和其他的类的接口中有所体现：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">@interface NSArray&lt;__covariant ObjectType&gt; : NSObject ...</div></pre></td></tr></table></figure>
+<h3 id="协变和逆变（Convariance-and-Contravariance）"><a href="#协变和逆变（Convariance-and-Contravariance）" class="headerlink" title="协变和逆变（Convariance and Contravariance）"></a>协变和逆变（Convariance and Contravariance）</h3><p>那些细心的读者会注意到：在标题中提到的两个词至今为止我通篇未提。现在我们既然了解了这些概念，那就来谈一下这几个专业术语。</p>
+<p><em>协变（Convariance）</em>指可接受子类型。重写只读的属性是「协变的」。</p>
+<p><em>逆变（Contravariance）</em>指可接受超类型。重写方法中的参数是「逆变的」。</p>
+<p><em>不变（Invariance）</em>指既不接受子类型，又不接受超类型。Swift 中泛型是「不变的」。</p>
+<p><em>双向协变（Bivariate）</em>指既接受子类型，又接受超类型。我想不到在 Objective-C 或 Swift 中的任何例子。</p>
+<p>你会发现这种专业术语非常难记。那就对了，因为这并不重要。只要你懂得子类型、超类型，以及什么时候在特定位置适用一个类的子类或者超类就够了。在需要用到术语的时候看一下就够了。</p>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>协变和逆变决定了在特定位置该怎样使用子类型或超类型。通常出现在重写方法以及改变传入参数或者返回值类型的地方。这种情况下我们已经知道返回值必须是原来的子类型，而参数是原来的超类型。整个指导我们这么做的原则就叫做 Liskov 替换原则，意思是任何子类的实例总是能够使用在父类的实例所使用的地方。子类型和超类型就是从这条原则中衍生出来。</p>
+<p>今天就到这儿了。记得回来探索更多有趣的事情；或者说就来探索有趣的事情。「更多」可能在这不适用，因为协变这件事并不是那么的令人激动。无论如何，我们的 Friday Q&amp;A 都会听从读者的建议，所以有什么更高的建议或者文章的话，记得<a href="mailto:mike@mikeash.com" target="_blank" rel="external">给我们写信</a>！</p>
+<hr>
+<p>译者注：</p>
+<ol>
+<li>Swift 中的泛型的确是「不变的（Invariance）」，但是 Swift 标准库中的 Collection 类型通常情况下是「协变的（Convariance）」。举个例子：</li>
+</ol>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> UIKit </div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Thing</span>&lt;<span class="title">T</span>&gt; </span>&#123; <span class="comment">// 亦可以使用结构体 struct 声明</span></div><div class="line">    <span class="keyword">var</span> thing: <span class="type">T</span> </div><div class="line">    <span class="keyword">init</span>(<span class="number">_</span> thing: <span class="type">T</span>) &#123; <span class="keyword">self</span>.thing = thing &#125; </div><div class="line">&#125; </div><div class="line"><span class="keyword">var</span> foo: <span class="type">Thing</span>&lt;<span class="type">UIView</span>&gt; = <span class="type">Thing</span>(<span class="type">UIView</span>()) </div><div class="line"><span class="keyword">var</span> bar: <span class="type">Thing</span>&lt;<span class="type">UIButton</span>&gt; = <span class="type">Thing</span>(<span class="type">UIButton</span>()) </div><div class="line">foo = bar <span class="comment">// 报错：error: cannot assign value of type 'Thing&lt;UIButton&gt;' to type 'Thing&lt;UIView&gt;' </span></div><div class="line"></div><div class="line"><span class="comment">// Array 则不会报错 </span></div><div class="line"></div><div class="line"><span class="keyword">var</span> views: <span class="type">Array</span>&lt;<span class="type">UIView</span>&gt; = [<span class="type">UIView</span>()] </div><div class="line"><span class="keyword">var</span> buttons: <span class="type">Array</span>&lt;<span class="type">UIButton</span>&gt; = [<span class="type">UIButton</span>()] </div><div class="line">views = buttons</div></pre></td></tr></table></figure>
+<ol>
+<li>Swift 中的 Protocol 不支持这里的类型改变。如果某个协议是继承自另外一个协议而且尝试着「重写」父协议的方法，Swift 会把它当做是另外一个方法。举个例子：</li>
+</ol>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Thing</span> </span>&#123;&#125; </div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Animal</span>: <span class="title">Thing</span> </span>&#123;&#125; </div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Cat</span>: <span class="title">Animal</span> </span>&#123;&#125; </div><div class="line"></div><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">SuperP</span> </span>&#123; </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(animal: Animal)</span></span> -&gt; <span class="type">Animal</span> </div><div class="line">&#125; </div><div class="line"></div><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">SubP1</span>: <span class="title">SuperP</span> </span>&#123; </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(thing: Thing)</span></span> -&gt; <span class="type">Cat</span> </div><div class="line">&#125; </div><div class="line"></div><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">SubP2</span>: <span class="title">SuperP</span> </span>&#123; </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(cat: Cat)</span></span> -&gt; <span class="type">Thing</span> </div><div class="line">&#125; </div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">ImplementsSubP1</span>: <span class="title">SubP1</span> </span>&#123; </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(thing: Thing)</span></span> -&gt; <span class="type">Cat</span> &#123; </div><div class="line">        <span class="keyword">return</span> <span class="type">Cat</span>() </div><div class="line">    &#125; </div><div class="line">&#125; </div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">ImplementsSubP2</span>: <span class="title">SubP2</span> </span>&#123; </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(cat: Cat)</span></span> -&gt; <span class="type">Thing</span> &#123; </div><div class="line">        <span class="keyword">return</span> <span class="type">Thing</span>() </div><div class="line">    &#125; </div><div class="line">&#125; </div><div class="line"><span class="comment">// ImplementSubP1 和 ImplementSubP2 将不被认为遵循了 SuperP 的协议</span></div></pre></td></tr></table></figure>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/mikeash-com/">mikeash.com</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2015/12/24/friday-qa-2015-11-20-covariance-and-contravariance/" data-title="Friday Q&amp;A 2015-11-20：协变与逆变 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2015/12/25/interesting-discussions-on-swift-evolution/" title="关于 Swift 演变的趣味探讨">
+  <strong>上一篇</strong><br/>
+  <span>
+  关于 Swift 演变的趣味探讨</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2015/12/23/swift-qa-2015-12-23/"  title="[原创] 每周 Swift 社区问答 2015-12-23">
+ <strong>下一篇</strong><br/> 
+ <span>[原创] 每周 Swift 社区问答 2015-12-23
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2015/12/24/friday-qa-2015-11-20-covariance-and-contravariance/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#子类型（Subtypes）和超类型（Supertypes）"><span class="toc-number">1.</span> <span class="toc-text">子类型（Subtypes）和超类型（Supertypes）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#重写（Override）方法"><span class="toc-number">2.</span> <span class="toc-text">重写（Override）方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#单独的函数（Standalone-functions）"><span class="toc-number">3.</span> <span class="toc-text">单独的函数（Standalone functions）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#属性（Property）"><span class="toc-number">4.</span> <span class="toc-text">属性（Property）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#泛型（Generics）"><span class="toc-number">5.</span> <span class="toc-text">泛型（Generics）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#协变和逆变（Convariance-and-Contravariance）"><span class="toc-number">6.</span> <span class="toc-text">协变和逆变（Convariance and Contravariance）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#小结"><span class="toc-number">7.</span> <span class="toc-text">小结</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

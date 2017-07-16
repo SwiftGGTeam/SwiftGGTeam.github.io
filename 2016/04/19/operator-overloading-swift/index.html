@@ -1,0 +1,984 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>Swift 运算符重载简介 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift运算符重载,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="运算符重载在很多语言中都有，那么在 Swift 中是怎样的呢，下面就来介绍下 Swift 运算符重载吧。">
+<meta name="keywords" content="swift运算符重载">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Swift 运算符重载简介">
+<meta property="og:url" content="https://swift.gg/2016/04/19/operator-overloading-swift/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="运算符重载在很多语言中都有，那么在 Swift 中是怎样的呢，下面就来介绍下 Swift 运算符重载吧。">
+<meta property="og:image" content="http://www.appcoda.com/wp-content/uploads/2016/03/learn-operator-overloading-1.png">
+<meta property="og:image" content="http://www.appcoda.com/wp-content/uploads/2016/03/generic-operators.png">
+<meta property="og:image" content="http://www.appcoda.com/wp-content/uploads/2016/03/custom-operators.png">
+<meta property="og:image" content="http://www.appcoda.com/wp-content/uploads/2016/03/compound-operators.png">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Swift 运算符重载简介">
+<meta name="twitter:description" content="运算符重载在很多语言中都有，那么在 Swift 中是怎样的呢，下面就来介绍下 Swift 运算符重载吧。">
+<meta name="twitter:image" content="http://www.appcoda.com/wp-content/uploads/2016/03/learn-operator-overloading-1.png">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/04/19/operator-overloading-swift/" target="_blank" title="Swift 运算符重载简介" itemprop="url">Swift 运算符重载简介</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-04-18T16:00:00.000Z" itemprop="datePublished">2016-04-19</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：COSMIN PUPĂZĂ，<a href="http://www.appcoda.com/operator-overloading-swift/" target="_blank" rel="external">原文链接</a>，原文日期：2016-03-29<br>译者：<a href="http://zltunes.com" target="_blank" rel="external">zltunes</a>；校对：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a>；定稿：<a href="http://www.swiftyper.com" target="_blank" rel="external">小锅</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>在任何一门计算机编程语言中，运算符重载都是非常强大的特性之一，因此苹果决定为 Swift 也提供这一机制。然而，”能力越强责任越大”。利用运算符重载你很容易实现一些奇怪的场景，例如用减法运算符实现两数相加，或者用乘法运算符实现两数相除，但这显然都不是你希望出现的。</p>
+<p>好了，闲话少叙 —— 让我们看看运算符重载究竟是怎么一回事。</p>
+<a id="more"></a>
+<h2 id="挑战"><a href="#挑战" class="headerlink" title="挑战"></a>挑战</h2><p>这一小节的任务很简单：扩展乘法运算符的标准功能，使其适用于字符串。你将会用到字符串拼接运算符，想象一下这种用法：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">&quot;abc&quot; * 5 = &quot;abc&quot; + &quot;abc&quot; + &quot;abc&quot; + &quot;abc&quot; + &quot;abc&quot; = &quot;abcabcabcabcabc&quot;</div></pre></td></tr></table></figure>
+<p>正式编码之前，思考一下应该怎么做，分几步来实现。我的做法是这样的：</p>
+<ul>
+<li>定义变量 <code>result</code> 并进行初始化 —— 默认字符串。</li>
+<li>从 2 开始循环，一直到待拼接的字符串数目终止，每次迭代只做一件事 —— 把字符串拼接到 <code>result</code> 末尾。</li>
+<li>打印 <code>result</code>。</li>
+</ul>
+<p>算法大致就是这样，接下来让我们付诸实践。</p>
+<h2 id="基本运算符重载"><a href="#基本运算符重载" class="headerlink" title="基本运算符重载"></a>基本运算符重载</h2><p><img src="http://www.appcoda.com/wp-content/uploads/2016/03/learn-operator-overloading-1.png" alt=""><br>启动 Xcode 并新建一个 playground 文件。删除原有代码，添加乘法运算符的函数原型：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">func *(lhs: String, rhs: Int) -&gt; String &#123;</div><div class="line"> </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>函数有两个参数 —— 左操作数是 <code>String</code> 类型，右操作数是 <code>Int</code> 类型，函数返回类型为 <code>String</code> 。<br>函数体内应该完成三件事。首先，定义 <code>result</code> 变量并初始化为函数的 <code>String</code> 参数 —— 这是一个变量，稍后会修改它的值。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">var result = lhs</div></pre></td></tr></table></figure>
+<p>接下来使用 <code>for in</code> 控制流语句及闭区间运行符从 2 开始循环，直到函数的 <code>Int</code> 参数时为止：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">for _ in 2...rhs &#123;</div><div class="line"> </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>注意：这里使用了 <code>_</code> 作为通配符，因为我们希望忽略序列的具体值 —— 关于循环的更多说明可以<a href="https://cosminpupaza.wordpress.com/2015/12/04/for-vs-while-a-beginners-approach/" target="_blank" rel="external">看这里</a>。</p>
+<p>循环体内只有一个任务 —— 更新 <code>result</code>：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">result += lhs</div></pre></td></tr></table></figure>
+<p>注意：你也可以按如下方式来写 —— 上边这种写法更短，是因为用了加法复合运算符。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">result = result + lhs</div></pre></td></tr></table></figure>
+<p>最后返回 result：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">return result</div></pre></td></tr></table></figure>
+<p>现在我们直接使用运算符：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">let u = &quot;abc&quot;</div><div class="line">let v = u * 5</div></pre></td></tr></table></figure>
+<p>搞定了！只是还有一个问题 —— 你只能将其用于字符串，那其它类型的数据怎么办？我们使用范型运算符来完善。</p>
+<h2 id="泛型运算符"><a href="#泛型运算符" class="headerlink" title="泛型运算符"></a>泛型运算符</h2><p><img src="http://www.appcoda.com/wp-content/uploads/2016/03/generic-operators.png" alt=""><br>泛型默认是不支持运算符的，所以需要协议来支持。向 playground 中添加协议原型：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">protocol Type &#123;</div><div class="line"> </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>现在向协议中添加加法复合运算符函数的原型：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">func +=(inout lhs: Self, rhs: Self)</div></pre></td></tr></table></figure>
+<p>函数拥有左右操作数，并且都设置为 <code>Self</code> 类型 —— 这是一种巧妙的方式，说明二者的类型都是实现了该协议的类。左操作数标记为<code>inout</code>，因为它的值是要被修改并且最后被函数返回的。</p>
+<p>或者，你也可以定义加法运算符的函数原型：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">func +(lhs: Self, rhs: Self) -&gt; Self</div></pre></td></tr></table></figure>
+<p>函数拥有 <code>Self</code> 类型的左右操作数，并且加法运算的返回结果也是 <code>Self</code> 。这种情况下就不需要使用 <code>inout</code> 参数了。</p>
+<p>接下来，为 <code>String</code> , <code>Int</code> , <code>Double</code> , <code>Float</code> 等实现了 <code>Type</code> 协议的类型创建扩展。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">extension String: Type &#123;&#125;</div><div class="line">extension Int: Type &#123;&#125;</div><div class="line">extension Double: Type &#123;&#125;</div><div class="line">extension Float: Type &#123;&#125;</div></pre></td></tr></table></figure>
+<p>注意：这些扩展的实现是空的，因为你并不打算为默认类型添加任何东西，仅仅是要让他们遵循 <code>Type</code> 协议。</p>
+<p>现在向 playground 中添加乘法操作符函数原型：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">func *&lt;T: Type&gt;(lhs: T, rhs: Int) -&gt; T &#123;</div><div class="line"> </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>函数有两个参数，左操作数是 <code>T</code> 类型，右操作数是 <code>Int</code> 类型，函数返回类型为 <code>T</code> 。利用类型约束使 <code>T</code> 类型遵循 <code>Type</code> 协议，这样它就可以使用加法复合运算符了。</p>
+<p>注意：你可以使用 <code>where</code> 关键字定义类型约束——尽管上边的方法更简短：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">func *&lt;T where T: Type&gt;(lhs: T, rhs: Int) -&gt; T</div></pre></td></tr></table></figure>
+<p>函数的实现跟之前一样：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">var result = lhs</div><div class="line"> </div><div class="line">for _ in 2...rhs &#123;</div><div class="line"> </div><div class="line">    result += lhs</div><div class="line">    </div><div class="line">&#125;</div><div class="line"> </div><div class="line">return result</div></pre></td></tr></table></figure>
+<p>注意：可以使用加法操作符替代，但要确保它的函数原型添加到了协议中。<br>测试一下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">let x = &quot;abc&quot;</div><div class="line">let y = x * 5</div><div class="line"> </div><div class="line">let a = 2</div><div class="line">let b = a * 5</div><div class="line"> </div><div class="line">let c = 3.14</div><div class="line">let d = c * 5</div><div class="line"> </div><div class="line">let e: Float = 4.56</div><div class="line">let f = e * 5</div></pre></td></tr></table></figure>
+<p>搞定了！不过有一个问题：你使用的是标准乘法运算符，这个可能造成歧义。如果换成其它运算符会更好。接下来我们试着用自定义运算符解决这个问题。</p>
+<h2 id="自定义运算符"><a href="#自定义运算符" class="headerlink" title="自定义运算符"></a>自定义运算符</h2><p><img src="http://www.appcoda.com/wp-content/uploads/2016/03/custom-operators.png" alt=""></p>
+<p>首先添加下面一行到 playground：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">infix operator ** &#123;associativity left precedence 150&#125;</div></pre></td></tr></table></figure>
+<p>一步一步解释：</p>
+<ul>
+<li>自定义乘法运算符的名称是 **。</li>
+<li>类型是 <code>中缀运算符(infix)</code> 因为它有两个操作数。</li>
+<li>运算顺序从左至右，因此是左结合。</li>
+<li>优先级设置为 150 —— 与标准乘法运算符相同，因为它是高优先级运算符。</li>
+</ul>
+<p>注意：关于运算符优先级和结合性的更多说明可以看<a href="https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/AdvancedOperators.html" target="_blank" rel="external">这里</a>。</p>
+<p>自定义运算符的函数原型与标准运算符类似 —— 只有函数名不同：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">func **&lt;T: Type&gt;(lhs: T, rhs: Int) -&gt; T &#123;</div><div class="line"> </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>函数实现跟之前完全一样：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">var result = lhs</div><div class="line"> </div><div class="line">for _ in 2...rhs &#123;</div><div class="line"> </div><div class="line">    result += lhs</div><div class="line">    </div><div class="line">&#125;</div><div class="line"> </div><div class="line">return result</div></pre></td></tr></table></figure>
+<p>测试一下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">let g = &quot;abc&quot;</div><div class="line">let h = g ** 5</div><div class="line"> </div><div class="line">let i = 2</div><div class="line">let j = i ** 5</div><div class="line"> </div><div class="line">let k = 3.14</div><div class="line">let l = k ** 5</div><div class="line"> </div><div class="line">let m: Float = 4.56</div><div class="line">let n = m ** 5</div></pre></td></tr></table></figure>
+<p>搞定了！还有一个问题——运算符的复合类型还没有定义，接下来我们解决这个问题：</p>
+<h2 id="复合运算符"><a href="#复合运算符" class="headerlink" title="复合运算符"></a>复合运算符</h2><p><img src="http://www.appcoda.com/wp-content/uploads/2016/03/compound-operators.png" alt=""><br>复合运算符的类型、优先级和结合性和之前一样 —— 只有名称不同：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">infix operator **= &#123;associativity left precedence 150&#125;</div></pre></td></tr></table></figure>
+<p>接着向 playground 添加复合运算符的函数原型：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">func **=&lt;T: Type&gt;(inout lhs: T, rhs: Int) &#123;</div><div class="line"> </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>函数没有返回类型，因为左操作数被标记为  <code>inout</code> 。<br>函数体只做一件事 —— 运用之前的自定义运算符返回乘法结果：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">lhs = lhs ** rhs</div></pre></td></tr></table></figure>
+<p>测试一下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">var o = &quot;abc&quot;</div><div class="line">o **= 5</div><div class="line"> </div><div class="line">var q = 2</div><div class="line">q **= 5</div><div class="line"> </div><div class="line">var s = 3.14</div><div class="line">s **= 5</div><div class="line"> </div><div class="line">var w: Float = 4.56</div><div class="line">w **= 5</div></pre></td></tr></table></figure>
+<p>搞定了！这已经是最简版本了！</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>如果谨慎地使用运算符重载，它便能够发挥强大的功能 —— 我希望你能在自己的项目中找到合适使用的方法。<br>作为参考，这里有一个<a href="https://github.com/appcoda/operator-overloading-swift" target="_blank" rel="external">完整版的 Playground</a>，我已经在 Xcode 7.3 用 Swift 2.2 测试过了。</p>
+<p>如果你对本教程或者运算符重载有什么看法的话可以给我留言。</p>
+<blockquote>
+<p>致谢：连环画是在 MakeBeliefsComix.com 制作的。<br>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/AppCoda/">AppCoda</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-入门/">Swift 入门</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/04/19/operator-overloading-swift/" data-title="Swift 运算符重载简介 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/04/20/selector-and-the-responder-chain/" title="#selector() 和响应链">
+  <strong>上一篇</strong><br/>
+  <span>
+  #selector() 和响应链</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/04/18/10-Swift-One-Liners-To-Impress-Your-Friends/"  title="Swift 中 10 个震惊小伙伴的单行代码">
+ <strong>下一篇</strong><br/> 
+ <span>Swift 中 10 个震惊小伙伴的单行代码
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/04/19/operator-overloading-swift/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#挑战"><span class="toc-number">1.</span> <span class="toc-text">挑战</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#基本运算符重载"><span class="toc-number">2.</span> <span class="toc-text">基本运算符重载</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#泛型运算符"><span class="toc-number">3.</span> <span class="toc-text">泛型运算符</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#自定义运算符"><span class="toc-number">4.</span> <span class="toc-text">自定义运算符</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#复合运算符"><span class="toc-number">5.</span> <span class="toc-text">复合运算符</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">6.</span> <span class="toc-text">总结</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

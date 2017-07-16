@@ -1,0 +1,961 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>使用 Swift 进行 JSON 解析 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift json解析,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="Swift 解析 JSON 不是一件轻松的活，本文就来说下 Swift JSON 解析的例子，帮助你更好的弄明白它。">
+<meta name="keywords" content="swift json解析">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用 Swift 进行 JSON 解析">
+<meta property="og:url" content="https://swift.gg/2016/09/06/decoding-json/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="Swift 解析 JSON 不是一件轻松的活，本文就来说下 Swift JSON 解析的例子，帮助你更好的弄明白它。">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用 Swift 进行 JSON 解析">
+<meta name="twitter:description" content="Swift 解析 JSON 不是一件轻松的活，本文就来说下 Swift JSON 解析的例子，帮助你更好的弄明白它。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/09/06/decoding-json/" target="_blank" title="使用 Swift 进行 JSON 解析" itemprop="url">使用 Swift 进行 JSON 解析</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-09-05T16:00:00.000Z" itemprop="datePublished">2016-09-06</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Soroush Khanlou，<a href="http://khanlou.com/2016/04/decoding-json/" target="_blank" rel="external">原文链接</a>，原文日期：2016-04-08<br>译者：<a href="http://lanfordcai.github.io" target="_blank" rel="external">Lanford3_3</a>；校对：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="external">pmst</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>使用 Swift 解析 JSON 是件很痛苦的事。你必须考虑多个方面：可选类性、类型转换、基本类型（primitive types）、构造类型（constructed types）（其构造器返回结果也是可选类型）、字符串类型的键（key）以及其他一大堆问题。</p>
+<p>对于强类型（well-typed）的 Swift 来说，其实更适合使用一种强类型的有线格式(wire format)。在我的下一个项目中，我将会选择使用 Google 的 <a href="https://developers.google.com/protocol-buffers/" target="_blank" rel="external">protocol buffers</a>（<a href="http://blog.codeclimate.com/blog/2014/06/05/choose-protocol-buffers/" target="_blank" rel="external">这篇文章</a>说明了它的好处）。我希望在得到更多经验后，写篇文章说说它和 Swift 配合起来有多么好用。但目前这篇文章主要是关于如何解析 JSON 数据 —— 一种被最广泛使用的有线格式。</p>
+<a id="more"></a>
+<p>对于 JSON 的解析，已经有了许多优秀的解决方案。第一个方案，使用如 <a href="https://github.com/thoughtbot/Argo" target="_blank" rel="external">Argo</a> 这样的库，采用函数式操作符来柯里化一个初始化构造器：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">User</span>: <span class="title">Decodable</span> </span>&#123;</div><div class="line">  <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">decode</span><span class="params">(j: JSON)</span></span> -&gt; <span class="type">Decoded</span>&lt;<span class="type">User</span>&gt; &#123;</div><div class="line">    <span class="keyword">return</span> curry(<span class="type">User</span>.<span class="keyword">init</span>)</div><div class="line">      &lt;^&gt; j &lt;| <span class="string">"id"</span></div><div class="line">      &lt;*&gt; j &lt;| <span class="string">"name"</span></div><div class="line">      &lt;*&gt; j &lt;|? <span class="string">"email"</span> <span class="comment">// Use ? for parsing optional values</span></div><div class="line">      &lt;*&gt; j &lt;| <span class="string">"role"</span> <span class="comment">// Custom types that also conform to Decodable just work</span></div><div class="line">      &lt;*&gt; j &lt;| [<span class="string">"company"</span>, <span class="string">"name"</span>] <span class="comment">// Parse nested objects</span></div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>Argo 是一个非常好的解决方案。它简洁，灵活，表达力强，但柯里化以及奇怪的操作符都是些不太好理解的东西。(Thoughtbot 的人已经写了一篇<a href="https://robots.thoughtbot.com/efficient-json-in-swift-with-functional-concepts-and-generics" target="_blank" rel="external">不错的文章</a>来对这些加以解释)</p>
+<p>另外一个常见的解决方案是，手动使用 <code>guard let</code> 进行处理以得到非可选值。这个方案需要手动做的事儿会多一些，对于每个属性的处理都需要两行代码：一行用来在 guard 语句中生成非可选的局部变量，另一行设置属性。若要得到上例中同样的结果，代码可能长这样：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">User</span> </span>&#123;</div><div class="line">  <span class="keyword">init</span>?(dictionary: [<span class="type">String</span>: <span class="type">AnyObject</span>]?) &#123;</div><div class="line">    <span class="keyword">guard</span></div><div class="line">      <span class="keyword">let</span> dictionary = dictionary,</div><div class="line">      <span class="keyword">let</span> id = dictionary[<span class="string">"id"</span>] <span class="keyword">as</span>? <span class="type">String</span>,</div><div class="line">      <span class="keyword">let</span> name = dictionary[<span class="string">"name"</span>] <span class="keyword">as</span>? <span class="type">String</span>,</div><div class="line">      <span class="keyword">let</span> roleDict = dictionary[<span class="string">"role"</span>] <span class="keyword">as</span>? [<span class="type">String</span>: <span class="type">AnyObject</span>],</div><div class="line">      <span class="keyword">let</span> role = <span class="type">Role</span>(dictionary: roleDict)</div><div class="line">      <span class="keyword">let</span> company = dictionary[<span class="string">"company"</span>] <span class="keyword">as</span>? [<span class="type">String</span>: <span class="type">AnyObject</span>],</div><div class="line">      <span class="keyword">let</span> companyName = company[<span class="string">"name"</span>] <span class="keyword">as</span>? <span class="type">String</span>,</div><div class="line">        <span class="keyword">else</span> &#123;</div><div class="line">          <span class="keyword">return</span> <span class="literal">nil</span></div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="keyword">self</span>.id = id</div><div class="line">    <span class="keyword">self</span>.name = name</div><div class="line">    <span class="keyword">self</span>.role = role</div><div class="line">    <span class="keyword">self</span>.email = dictionary[<span class="string">"email"</span>] <span class="keyword">as</span>? <span class="type">String</span></div><div class="line">    <span class="keyword">self</span>.companyName = companyName</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这份代码的好处在于它是纯 Swift 的，不过看起来比较乱，可读性不佳，变量间的依赖链并不明显。举个例子，由于 <code>roleDict</code> 被用在 <code>role</code> 的定义中，所以它必须在 <code>role</code> 被定义前定义，但由于代码如此繁杂，很难清晰地找出这种依赖关系。</p>
+<p>（我甚至都不想提在 Swift 1 中解析 JSON 时，大量 <code>if let</code> 嵌套而成的鞭尸金字塔（pyramid-of-doom），那可真是糟透了，很高兴现在我们有了多行的 <code>if let</code> 和 <code>guard let</code> 结构。）</p>
+<hr>
+<p>在 <a href="https://www.natashatherobot.com/swift-2-error-handling/" target="_blank" rel="external">Swift 的错误处理</a>发布的时候，我觉得这东西糟透了。似乎不管从哪一个方面都不及 <a href="https://github.com/antitypical/Result" target="_blank" rel="external"><code>Result</code></a> ：</p>
+<ul>
+<li>你无法直接访问到错误：Swift 的错误处理机制在 <code>Result</code> 类型之上，添加了一些必须使用的语法（是的，事实如此），这让人们无法直接访问到错误。</li>
+<li>你不能像使用 <code>Result</code> 一样进行链式处理。<code>Result</code> 是个 <a href="http://khanlou.com/2015/09/what-the-heck-is-a-monad/" target="_blank" rel="external">monad</a>，可以用 <code>flatMap</code> 链接起来进行有效的处理。</li>
+<li>Swift 错误模型无法异步使用（除非你进行一些 hack，比如说<a href="https://appventure.me/2015/06/19/swift-try-catch-asynchronous-closures/" target="_blank" rel="external">提供一个内部函数来抛出</a>结果)， 但 <code>Result</code> 可以。</li>
+</ul>
+<p>尽管 Swift 的错误处理模型有着这些看起来相当明显的缺点，但<a href="http://www.sunsetlakesoftware.com/2015/06/12/swift-2-error-handling-practice" target="_blank" rel="external">有篇文章</a>讲述了一个使用 Swift 错误模型的例子，在该例子中 Swift 的错误模型明显比 Objective-C 的版本更加简洁，也比 <code>Result</code> 可读性更强。这是怎么回事呢？</p>
+<p>这里的秘密在于，当你的代码中有许多 <code>try</code> 调用的时候，利用带有 <code>do</code>/<code>catch</code> 结构的 Swift 错误模型进行处理，效果会非常好。在 Swift 中对代码进行错误处理时需要写一些模板代码。在声明函数时，你需要加入 <code>throws</code>， 或使用 <code>do</code>/<code>catch</code> 结构显式地处理所有错误。对于单个 <code>try</code> 语句来说，做这些事让人觉得很麻烦。然而，就多个 <code>try</code> 语句而言，这些前期工作就变得物有所值了。</p>
+<hr>
+<p>我曾试图寻找一种方法，能够在 JSON 缺失某个键时打印出某种警告。如果在访问缺失的键时，能够得到一个报错，那么这个问题就解决了。由于在键缺失的时候，原生的 <code>Dictionary</code> 类型并不会抛出错误，所以需要有个对象对字典进行封装。我想实现的代码大概长这样：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">MyModel</span> </span>&#123;</div><div class="line">    <span class="keyword">let</span> aString: <span class="type">String</span></div><div class="line">    <span class="keyword">let</span> anInt: <span class="type">Int</span></div><div class="line">    </div><div class="line">    <span class="keyword">init</span>?(dictionary: [<span class="type">String</span>: <span class="type">AnyObject</span>]?) &#123;</div><div class="line">        <span class="keyword">let</span> parser = <span class="type">Parser</span>(dictionary: dictionary)</div><div class="line">        <span class="keyword">do</span> &#123;</div><div class="line">            <span class="keyword">self</span>.aString = <span class="keyword">try</span> parser.fetch(<span class="string">"a_string"</span>)</div><div class="line">            <span class="keyword">self</span>.anInt = <span class="keyword">try</span> parser.fetch(<span class="string">"an_int"</span>)</div><div class="line">        &#125; <span class="keyword">catch</span> <span class="keyword">let</span> error &#123;</div><div class="line">            <span class="built_in">print</span>(error)</div><div class="line">            <span class="keyword">return</span> <span class="literal">nil</span> </div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>理想的说来，由于类型推断的存在，在解析过程中我甚至不需要明确地写出类型。现在让我们丝分缕解，看看怎么实现这份代码。首先从 <code>ParserError</code> 开始：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ParserError</span>: <span class="title">ErrorType</span> </span>&#123;</div><div class="line">    <span class="keyword">let</span> message: <span class="type">String</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>接下来，我们开始搞定 <code>Parser</code>。它可以是一个 <code>struct</code> 或是一个 <code>class</code>。（由于它不会被用在别的地方，所以他的引用语义并不重要。）</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Parser</span> </span>&#123;</div><div class="line">    <span class="keyword">let</span> dictionary: [<span class="type">String</span>: <span class="type">AnyObject</span>]?</div><div class="line">    </div><div class="line">    <span class="keyword">init</span>(dictionary: [<span class="type">String</span>: <span class="type">AnyObject</span>]?) &#123;</div><div class="line">        <span class="keyword">self</span>.dictionary = dictionary</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>我们的 parser 将会获取一个字典并持有它。</p>
+<p><code>fetch</code> 函数开始显得有点复杂了。我们来一行一行地进行解释。类中的每个方法都可以类型参数化，以充分利用类型推断带来的便利。此外，这个函数会抛出错误，以使我们能够获得处理失败的数据：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">fetch</span>&lt;T&gt;<span class="params">(key: String)</span></span> <span class="keyword">throws</span> -&gt; <span class="type">T</span> &#123;</div></pre></td></tr></table></figure>
+<p>下一步是获取键对应的对象，并保证它不是空的，否则抛出一个错误。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> fetchedOptional = dictionary?[key]</div><div class="line"><span class="keyword">guard</span> <span class="keyword">let</span> fetched = fetchedOptional <span class="keyword">else</span> &#123;</div><div class="line">    <span class="keyword">throw</span> <span class="type">ParserError</span>(message: <span class="string">"The key \"<span class="subst">\(key)</span>\" was not found."</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>最后一步是，给获得的值加上类型信息。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">guard</span> <span class="keyword">let</span> typed = fetched <span class="keyword">as</span>? <span class="type">T</span> <span class="keyword">else</span> &#123;</div><div class="line">    <span class="keyword">throw</span> <span class="type">ParserError</span>(message: <span class="string">"The key \"<span class="subst">\(key)</span>\" was not the correct type. It had value \"<span class="subst">\(fetched)</span>.\""</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>最终，返回带类型的非空值。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">    <span class="keyword">return</span> typed</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>（我将会在文末附上包含所有代码的 gist 和 playground）</p>
+<p>这份代码是可用的！类型参数化及类型推断为我们处理了一切。上面写的 “理想” 代码完美地工作了：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">self</span>.aString = <span class="keyword">try</span> parser.fetch(<span class="string">"a_string"</span>)</div></pre></td></tr></table></figure>
+<p>我还想添加一些东西。首先，添加一种方法来解析出那些确实可选的值（译者注：也就是我们允许这些值为空）。由于在这种情况下我们并不需要抛出错误，所以我们可以实现一个简单许多的方法。但很不幸，这个方法无法和上面的方法同名，否则编译器就无法知道应该使用哪个方法了，所以，我们把它命名为 <code>fetchOptional</code>。这个方法相当的简单。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">fetchOptional</span>&lt;T&gt;<span class="params">(key: String)</span></span> -&gt; <span class="type">T</span>? &#123;</div><div class="line">    <span class="keyword">return</span> dictionary?[key] <span class="keyword">as</span>? <span class="type">T</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>（如果键存在，但是并非你所期望的类型，则可以抛出一个错误。为了简略起见，我就不写了）</p>
+<p>另外一件事就是，在字典中取出一个对象后，有时需要对它进行一些额外的转换。我们可能得到一个枚举的 <code>rawValue</code>，需要构建出对应的枚举，或者是一个嵌套的字典，需要处理它包含的对象。我们可以在 <code>fetch</code> 函数中接收一个闭包作为参数，作进一步地类型转换，并在转换失败的情况下抛出错误。泛型中 <code>U</code> 参数类型能够帮助我们明确 <code>transformation</code> 闭包转换得到的结果值类型和 <code>fetch</code> 方法得到的值类型一致。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">fetch</span>&lt;T, U&gt;<span class="params">(key: String, transformation: <span class="params">(T)</span></span></span> -&gt; (<span class="type">U</span>?)) <span class="keyword">throws</span> -&gt; <span class="type">U</span> &#123;</div><div class="line">    <span class="keyword">let</span> fetched: <span class="type">T</span> = <span class="keyword">try</span> fetch(key)</div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> transformed = transformation(fetched) <span class="keyword">else</span> &#123;</div><div class="line">        <span class="keyword">throw</span> <span class="type">ParserError</span>(message: <span class="string">"The value \"<span class="subst">\(fetched)</span>\" at key \"<span class="subst">\(key)</span>\" could not be transformed."</span>)</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> transformed</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>最后，我们希望 <code>fetchOptional</code> 也能接受一个转换闭包作为参数。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">fetchOptional</span>&lt;T, U&gt;<span class="params">(key: String, transformation: <span class="params">(T)</span></span></span> -&gt; (<span class="type">U</span>?)) -&gt; <span class="type">U</span>? &#123;</div><div class="line">    <span class="keyword">return</span> (dictionary?[key] <span class="keyword">as</span>? <span class="type">T</span>).flatMap(transformation)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>看啊！<code>flatMap</code> 的力量！注意，转换闭包 <code>transformation</code> 和 <code>flatMap</code> 接收的闭包有着一样的形式：<code>T -&gt; U?</code></p>
+<p>现在我们可以解析带有嵌套项或者枚举的对象了。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">OuterType</span> </span>&#123;</div><div class="line">    <span class="keyword">let</span> inner: <span class="type">InnerType</span></div><div class="line">    </div><div class="line">    <span class="keyword">init</span>?(dictionary: [<span class="type">String</span>: <span class="type">AnyObject</span>]?) &#123;</div><div class="line">        <span class="keyword">let</span> parser = <span class="type">Parser</span>(dictionary: dictionary)</div><div class="line">        <span class="keyword">do</span> &#123;</div><div class="line">            <span class="keyword">self</span>.inner = <span class="keyword">try</span> parser.fetch(<span class="string">"inner"</span>) &#123; <span class="type">InnerType</span>(dictionary: $<span class="number">0</span>) &#125;</div><div class="line">        &#125; <span class="keyword">catch</span> <span class="keyword">let</span> error &#123;</div><div class="line">            <span class="built_in">print</span>(error)</div><div class="line">            <span class="keyword">return</span> <span class="literal">nil</span> </div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>再一次注意到，Swift 的类型推断魔法般地为我们处理了一切，而我们根本不需要写下任何 <code>as?</code> 逻辑！</p>
+<p>用类似的方法，我们也可以处理数组。对于基本数据类型的数组，<code>fetch</code> 方法已经能很好地工作了：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> stringArray: [<span class="type">String</span>]</div><div class="line"></div><div class="line"><span class="comment">//...</span></div><div class="line"><span class="keyword">do</span> &#123;</div><div class="line">    <span class="keyword">self</span>.stringArray = <span class="keyword">try</span> parser.fetch(<span class="string">"string_array"</span>)</div><div class="line"><span class="comment">//...</span></div></pre></td></tr></table></figure>
+<p>对于我们想要构建的特定类型（Domain Types）的数组， Swift 的类型推断似乎无法那么深入地推断类型，所以我们必须加入另外的类型注解：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">self</span>.enums = <span class="keyword">try</span> parser.fetch(<span class="string">"enums"</span>) &#123; (array: [<span class="type">String</span>]) <span class="keyword">in</span> array.flatMap(<span class="type">SomeEnum</span>(rawValue: $<span class="number">0</span>)) &#125;</div></pre></td></tr></table></figure>
+<p>由于这行显得有些粗糙，让我们在 <code>Parser</code> 中创建一个新的方法来专门处理数组：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">fetchArray</span>&lt;T, U&gt;<span class="params">(key: String, transformation: T -&gt; U?)</span></span> <span class="keyword">throws</span> -&gt; [<span class="type">U</span>] &#123;</div><div class="line">    <span class="keyword">let</span> fetched: [<span class="type">T</span>] = <span class="keyword">try</span> fetch(key)</div><div class="line">    <span class="keyword">return</span> fetched.flatMap(transformation)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里使用 flatMap 来帮助我们移除空值，减少了代码量:</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">self</span>.enums = <span class="keyword">try</span> parser.fetchArray(<span class="string">"enums"</span>) &#123; <span class="type">SomeEnum</span>(rawValue: $<span class="number">0</span>) &#125;</div></pre></td></tr></table></figure>
+<p>末尾的这个闭包应该被作用于 <em>每个</em> 元素，而不是整个数组（你也可以修改 <code>fetchArray</code> 方法，以在任意值无法被构建时抛出错误。）</p>
+<p>我很喜欢泛型模式。它很简单，可读性强，而且也没有复杂的依赖（这只是个 50 行的 Parser 类型）。它使用了 Swift 风格的结构， 还会给你非常特定的错误提示，告诉你 <em>为何</em> 解析失败了，当你在从服务器返回的 JSON 沼泽中摸爬滚打时，这显得非常有用。最后，用这种方法解析的另外一个好处是，它在结构体和类上都能很好地工作，这使得从引用类型切换到值类型，或者反之，都变得很简单。</p>
+<p><a href="https://gist.github.com/khanlou/bc90b27155f5c7c137d9697c083cda89" target="_blank" rel="external">这里</a>是包含所有代码的一个 gist，而<a href="http://cl.ly/3d352D3Q1Z0A" target="_blank" rel="external">这里</a>是一个作为补充的 Playground.</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/KHANLOU/">KHANLOU</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/09/06/decoding-json/" data-title="使用 Swift 进行 JSON 解析 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/09/07/idiomatic-swift-conditional-unwrapping-initialization/" title="地道的 Swift：解包引导的初始化过程">
+  <strong>上一篇</strong><br/>
+  <span>
+  地道的 Swift：解包引导的初始化过程</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/09/05/pdf-generation-ios/"  title="在 iOS 中使用 HTML 模版和 UIPrintPageRenderer 生成 PDF">
+ <strong>下一篇</strong><br/> 
+ <span>在 iOS 中使用 HTML 模版和 UIPrintPageRenderer 生成 PDF
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/09/06/decoding-json/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ 
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

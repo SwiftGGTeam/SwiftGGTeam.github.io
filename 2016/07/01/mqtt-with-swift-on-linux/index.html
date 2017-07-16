@@ -1,0 +1,963 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>Linux 下使用 Swift MQTT | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift mqtt,linux mqtt,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="这是一篇关于服务器端的 swift 开发教程，将一个开源的客户端 MQTT 库应用在 Swift 应用里面。">
+<meta name="keywords" content="swift mqtt,linux mqtt">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux 下使用 Swift MQTT">
+<meta property="og:url" content="https://swift.gg/2016/07/01/mqtt-with-swift-on-linux/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="这是一篇关于服务器端的 swift 开发教程，将一个开源的客户端 MQTT 库应用在 Swift 应用里面。">
+<meta property="og:image" content="http://swiftgg-main.b0.upaiyun.com/img/mqtt-with-swift-on-linux-1.png">
+<meta property="og:image" content="https://img.shields.io/badge/Swift-3.0-orange.svg?style=flat">
+<meta property="og:image" content="https://img.shields.io/badge/OS-Linux-blue.svg?style=flat">
+<meta property="og:image" content="http://swiftgg-main.b0.upaiyun.com/img/mqtt-with-swift-on-linux-2.png">
+<meta property="og:image" content="http://swiftgg-main.b0.upaiyun.com/img/mqtt-with-swift-on-linux-3.png">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linux 下使用 Swift MQTT">
+<meta name="twitter:description" content="这是一篇关于服务器端的 swift 开发教程，将一个开源的客户端 MQTT 库应用在 Swift 应用里面。">
+<meta name="twitter:image" content="http://swiftgg-main.b0.upaiyun.com/img/mqtt-with-swift-on-linux-1.png">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/07/01/mqtt-with-swift-on-linux/" target="_blank" title="Linux 下使用 Swift MQTT" itemprop="url">Linux 下使用 Swift MQTT</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-06-30T16:00:00.000Z" itemprop="datePublished">2016-07-01</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Joe，<a href="http://dev.iachieved.it/iachievedit/mqtt-with-swift-on-linux/" target="_blank" rel="external">原文链接</a>，原文日期：2016-06-12<br>译者：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a>；校对：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a>；定稿：<a href="https://github.com/Cee" target="_blank" rel="external">Cee</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p><img src="http://swiftgg-main.b0.upaiyun.com/img/mqtt-with-swift-on-linux-1.png" alt=""></p>
+<p><img src="https://img.shields.io/badge/Swift-3.0-orange.svg?style=flat" alt=""> <img src="https://img.shields.io/badge/OS-Linux-blue.svg?style=flat" alt=""></p>
+<p>在过去几年的时间里，我一直从事<a href="https://en.wikipedia.org/wiki/Internet_of_things" target="_blank" rel="external">物联网</a>（Internet of Things，IoT）软件的开发项目。在这段时间里面，我学到了不少关于和云端通信传感以及遥感的协议方案。在物联网领域最通用的方案是 <a href="http://mqtt.org/" target="_blank" rel="external">MQTT</a> ，一个轻量级的协议，用于发布消息给<strong>频道</strong>，同时提供对<strong>频道</strong>的订阅功能。这种模式通常被称为<a href="https://en.wikipedia.org/wiki/Publish–subscribe_pattern" target="_blank" rel="external">「发布──订阅」模式</a>。 </p>
+<p>除了在做物联网和 MQTT 的工作以外，我对 Swift 语言充满了兴趣，特别是在 Swift 开源，进入了服务器端领域，能够在 Linux 下运行以后。自然地，可以把这些领域的知识连接在一起，开始使用 Swift 来实现一个 <a href="https://github.com/emqtt/CocoaMQTT" target="_blank" rel="external">MQTT 的客户端</a>。我们把这个基于 Swift 3.0 和 Linux 平台的 MQTT 客户端的 iOS 实现开放出来了。这个例子说明，实际上， Swift 已经同时进军了服务器端和物联网领域。</p>
+<p>在我们开始之前，做一个免责声明：目前基于 Linux 下的 Swift 3.0 版本还处于开发者预览版阶段。从<a href="http://dev.iachieved.it/iachievedit/introducing-swift-3-0/" target="_blank" rel="external">这里</a>可以获取到在 Ubuntu 14.04 和 15.10 下使用 Swift 3.0 的信息。或者，如果你有一台如 BeagleBone Black 等基于 armv7 的设备，可以尝试使用 Swift 3.0 版本下的 <a href="http://dev.iachieved.it/iachievedit/swift-3-0-on-a-beaglebone-black/" target="_blank" rel="external">ARM port</a>。</p>
+<a id="more"></a>
+<h3 id="实例应用"><a href="#实例应用" class="headerlink" title="实例应用"></a>实例应用</h3><p>我的第一个想法是创建一个牛逼的 BeagleBone MQTT 客户端，读取 ADC 的输入，然后把数据发送给代理网关，输入来自于微芯片 <a href="http://ww1.microchip.com/downloads/en/DeviceDoc/21942e.pdf" target="_blank" rel="external"><code>MCP9700</code></a> 温度传感 IC。传感 IC 的最大输出电压是 5.5V，我知道的是，一个电压分压器保证输入电压在 1.8V 以下，供应给 BeagleBone。我做了一个分压器的草图，请查收！</p>
+<p><img src="http://swiftgg-main.b0.upaiyun.com/img/mqtt-with-swift-on-linux-2.png" alt=""></p>
+<p>不幸的是，当我们测试标准匹配的传感 IC 时，在靠近 IC 封装附近的地方，着火了。<a href="https://en.wikipedia.org/wiki/Icarus" target="_blank" rel="external">Icarus</a> 项目因此终止了。我们替代的例子没那么激进了，但是起到了使用 Swift 来创建一个 MQTT 客户端的作用，但是已经无关比赛了。</p>
+<h3 id="MQTT"><a href="#MQTT" class="headerlink" title="MQTT"></a>MQTT</h3><p>我们的应用基于一个开源的客户端 MQTT 库（必须是开源的！）来做的，我们简单的把这个库命名为 MQTT, 发布到了 <a href="https://github.com/iachievedit/MQTT" target="_blank" rel="external">GitHub</a> 上。这个库可以被用在 Swift 应用里面，你可以使用以下代码来创建 Swift 应用：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line">mkdir PubSysTemp</div><div class="line"><span class="built_in">cd</span> PubSysTemp</div><div class="line">swift package init --<span class="built_in">type</span> executable</div></pre></td></tr></table></figure>
+<p>运行 <code>swift package init --type executable</code> 后会给你一个 Swift 的项目文件夹（可以 npm init），在这里你可以按照你的想法自定义内容。我们将会编辑 Package.swift 来添加对 MQTT 库的依赖：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> PackageDescription</div><div class="line"><span class="keyword">let</span> package = <span class="type">Package</span>(</div><div class="line">  name: <span class="string">"PubSysTemp"</span>,</div><div class="line">  dependencies:[</div><div class="line">    .<span class="type">Package</span>(url:<span class="string">"https://github.com/iachievedit/MQTT"</span>, majorVersion:<span class="number">0</span>, minor:<span class="number">1</span>)</div><div class="line">  ]</div><div class="line">)</div></pre></td></tr></table></figure>
+<h4 id="MQTT-客户端代理"><a href="#MQTT-客户端代理" class="headerlink" title="MQTT 客户端代理"></a>MQTT 客户端代理</h4><p>MQTT 库的设计，会让你创建一个客户端类，继承 <code>MQTT</code> 和 <code>MQTTDelegate</code> ，一个非常基础的实现就像以下代码那样：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> Foundation</div><div class="line"><span class="keyword">import</span> MQTT</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Client</span>:<span class="title">MQTT</span>, <span class="title">MQTTDelegate</span> </span>&#123;</div><div class="line">  </div><div class="line">  <span class="keyword">init</span>(clientId:<span class="type">String</span>) &#123;</div><div class="line">    <span class="keyword">super</span>.<span class="keyword">init</span>(clientId:clientId)</div><div class="line">    <span class="keyword">super</span>.delegate = <span class="keyword">self</span></div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqtt</span><span class="params">(mqtt: MQTT, didConnect host: String, port: Int)</span></span> &#123;</div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqtt</span><span class="params">(mqtt: MQTT, didConnectAck ack: MQTTConnAck)</span></span> &#123;</div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqtt</span><span class="params">(mqtt: MQTT, didPublishMessage message: MQTTMessage, id: UInt16)</span></span> &#123;</div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqtt</span><span class="params">(mqtt: MQTT, didPublishAck id: UInt16)</span></span> &#123;</div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqtt</span><span class="params">(mqtt: MQTT, didReceiveMessage message: MQTTMessage, id: UInt16 )</span></span> &#123;</div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqtt</span><span class="params">(mqtt: MQTT, didSubscribeTopic topic: String)</span></span> &#123;</div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqtt</span><span class="params">(mqtt: MQTT, didUnsubscribeTopic topic: String)</span></span> &#123;</div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqttDidPing</span><span class="params">(mqtt: MQTT)</span></span> &#123;</div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqttDidReceivePong</span><span class="params">(mqtt: MQTT)</span></span> &#123;</div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqttDidDisconnect</span><span class="params">(mqtt: MQTT, withError err: NSError?)</span></span> &#123;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>当 MQTT 客户端进行连接，发布一条消息或者订阅一个频道时候，你应该可以猜到，以上代码中的代理方法会被调用。客户端可以按照你的要求对代理方法进行具体的实现。在我们的例子中，我们将实现 <code>mqttDidDisconnect</code> 方法：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">mqttDidDisconnect</span><span class="params">(mqtt: MQTT, withError err: NSError?)</span></span> &#123;</div><div class="line">  <span class="type">NSNotificationCenter</span>.defaultCenter().postNotificationName(<span class="string">"DisconnectedNotification"</span>,object:<span class="literal">nil</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在之前的文章中，我提到过如何灵活地提交一个通知，然后也描述了接收方如何处理这个通知。<code>DisconnectedNotification</code> 会在我们的 <code>main.swift</code> 出现。</p>
+<h4 id="main-swift"><a href="#main-swift" class="headerlink" title="main.swift"></a>main.swift</h4><p>接下来我们来看看 <code>main.swift</code>，里面将初始化基于 MQTT 的客户端，需要的最基础的设置如下代码所示：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> client = <span class="type">Client</span>(clientId:<span class="string">"a-client-id"</span>)</div><div class="line">client.host = <span class="string">"broker.hivemq.com"</span></div><div class="line">client.connect()</div><div class="line">client.publish(topic:<span class="string">"/my/topic"</span>, withString:<span class="string">"my string"</span>)</div></pre></td></tr></table></figure>
+<p>我们想让客户端更加健壮一些，所以我们加入了连接断开后的自动重连机制，做法如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="type">NSNotificationCenter</span>.defaultCenter().addObserverForName(<span class="string">"DisconnectedNotification"</span>,</div><div class="line">                                                            object:<span class="literal">nil</span>, queue:<span class="literal">nil</span>)&#123;<span class="number">_</span> <span class="keyword">in</span></div><div class="line">  <span class="keyword">guard</span> client.connect() <span class="keyword">else</span> &#123;</div><div class="line">    <span class="built_in">print</span>(<span class="string">"Unable to connect to broker"</span>)</div><div class="line">    exit(-<span class="number">1</span>)</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在这里，大家有可能觉得在连接到代理网关（broker）失败的时候，我们不需要 <code>exit</code> 函数。我们能做的就是设置一个计时器，然后重新广播我们的 <code>DisconnectedNotification</code>。在下面的代码中会详细讲到这种做法。</p>
+<p>我们应该推送一些有用的东西给代理网关，所以我们就初始化一个 <code>NSTimer</code> ，每 10 秒钟唤醒一次，得到 CPU 的温度，然后提交这个信息。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> reportInterval    = <span class="number">10</span></div><div class="line"><span class="keyword">let</span> reportTemperature = <span class="type">NSTimer</span>.scheduledTimer(<span class="type">NSTimeInterval</span>(reportInterval), repeats:<span class="literal">true</span>)&#123;<span class="number">_</span> <span class="keyword">in</span></div><div class="line">  <span class="keyword">if</span> <span class="keyword">let</span> cpuTemperature = <span class="type">CPU</span>().temperature &#123;</div><div class="line">  <span class="number">_</span> = client.publish(topic:<span class="string">"/(client.clientId)/cpu/temperature/value"</span>, withString:<span class="type">String</span>(cpuTemperature))</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line">reportTemperature.fire()</div><div class="line"><span class="type">NSRunLoop</span>.currentRunLoop().addTimer(reportTemperature, forMode:<span class="type">NSDefaultRunLoopMode</span>)</div><div class="line"><span class="type">NSRunLoop</span>.currentRunLoop().run()</div></pre></td></tr></table></figure>
+<p>需要注意的是，我们设置好了计时器以后，接着就调用了 <code>fire()</code> 函数（在第一次提交时候我们没有等 10 秒）。另外，我们提交的频道名称是 <code>/&lt;i&gt;clientid&lt;/i&gt;/cpu/temperature/value</code> ，这是一个 MQTT 频道命名的规范的示例，像此名称一样。当你深入设计一个物联网应用时候，你会发觉，这种命名方式将会变得异常重要。</p>
+<h4 id="得到-CPU-的温度"><a href="#得到-CPU-的温度" class="headerlink" title="得到 CPU 的温度"></a>得到 CPU 的温度</h4><p>我喜欢在 Linux 下工作，Linux 的一些健康状况可以在 <code>/sys</code> 和 <code>/proc</code> 下查看。不幸的是，当你在与硬件打交道的时候，你不得不频繁地剪裁你的代码运行到指定的硬件上。比如，在我的 x86 服务器上，获取 CPU 的温度要通过读取 <code>/sys/class/hwmon/hwmon0/temp1_input</code> 。在 BeagleBoard X15 又是读取 <code>/sys/class/hwmon/hwmon1/temp1_input</code> 。这让人纠结。</p>
+<p>我们不会现在就去写一些通配的代码，但是你应该可以采用这个例子满足你自己系统的需要：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">CPU</span> </span>&#123;</div><div class="line">  <span class="keyword">var</span> temperature:<span class="type">Double</span>? &#123;</div><div class="line">    <span class="keyword">get</span> &#123;</div><div class="line">      <span class="keyword">let</span> <span class="type">BUFSIZE</span> = <span class="number">16</span></div><div class="line">      <span class="keyword">let</span> pp      = popen(<span class="string">"cat /sys/class/hwmon/hwmon0/temp1_input"</span>, <span class="string">"r"</span>)</div><div class="line">      <span class="keyword">var</span> buf     = [<span class="type">CChar</span>](repeating:<span class="number">0</span>, <span class="built_in">count</span>:<span class="type">BUFSIZE</span>)</div><div class="line">      <span class="keyword">guard</span> fgets(&amp;buf, <span class="type">Int32</span>(<span class="type">BUFSIZE</span>), pp) != <span class="literal">nil</span> <span class="keyword">else</span> &#123;</div><div class="line">        pclose(pp)</div><div class="line">        <span class="keyword">return</span> <span class="literal">nil</span></div><div class="line">      &#125;</div><div class="line">      pclose(pp)</div><div class="line"></div><div class="line">      <span class="keyword">let</span> s = <span class="type">String</span>(<span class="type">String</span>(cString:buf).characters.<span class="built_in">dropLast</span>())</div><div class="line">      <span class="keyword">if</span> <span class="keyword">let</span> t = <span class="type">Double</span>(s) &#123;</div><div class="line">        <span class="keyword">return</span> t/<span class="number">1000</span></div><div class="line">      &#125; <span class="keyword">else</span> &#123;</div><div class="line">        <span class="keyword">return</span> <span class="literal">nil</span></div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="整合到一起"><a href="#整合到一起" class="headerlink" title="整合到一起"></a>整合到一起</h3><p>现在让我们把所有这些整合到一起，编译出一个可以运行的 MQTT 客户端，提交 CPU 温度到 <code>broker.hivemq.com</code> ，作为奖励，我们提供一个页面，把 CPU 温度用仪表器形式显示出来。</p>
+<p>有 3 个文件用于生成我们的客户端：</p>
+<ul>
+<li>Client.swift</li>
+<li>CPU.swift</li>
+<li>main.swift</li>
+</ul>
+<p>所有文件都应该放到 <code>Sources</code> 文件夹中，让我们看看它们各自完整的实现：</p>
+<h4 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h4><p><code>Client.swift</code></p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> swiftlog</div><div class="line"><span class="keyword">import</span> Foundation</div><div class="line"><span class="keyword">import</span> MQTT</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Client</span>:<span class="title">MQTT</span>, <span class="title">MQTTDelegate</span> </span>&#123;</div><div class="line"></div><div class="line">  <span class="keyword">init</span>(clientId:<span class="type">String</span>) &#123;</div><div class="line">    <span class="keyword">super</span>.<span class="keyword">init</span>(clientId:clientId)</div><div class="line">    <span class="keyword">super</span>.delegate = <span class="keyword">self</span></div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqtt</span><span class="params">(mqtt: MQTT, didConnect host: String, port: Int)</span></span> &#123;</div><div class="line">    <span class="type">SLogInfo</span>(<span class="string">"MQTT client has connected to <span class="subst">\(host)</span>:<span class="subst">\(port)</span>"</span>)</div><div class="line">    <span class="type">NSNotificationCenter</span>.defaultCenter().postNotificationName(<span class="string">"ConnectedNotification"</span>,</div><div class="line">                                                              object:<span class="literal">nil</span>)</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqtt</span><span class="params">(mqtt: MQTT, didConnectAck ack: MQTTConnAck)</span></span> &#123;</div><div class="line">    <span class="type">ENTRY_LOG</span>()</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqtt</span><span class="params">(mqtt: MQTT, didPublishMessage message: MQTTMessage, id: UInt16)</span></span> &#123;</div><div class="line">    <span class="type">ENTRY_LOG</span>()</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqtt</span><span class="params">(mqtt: MQTT, didPublishAck id: UInt16)</span></span> &#123;</div><div class="line">    <span class="type">ENTRY_LOG</span>()</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqtt</span><span class="params">(mqtt: MQTT, didReceiveMessage message: MQTTMessage, id: UInt16 )</span></span> &#123;</div><div class="line">    <span class="type">ENTRY_LOG</span>()</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqtt</span><span class="params">(mqtt: MQTT, didSubscribeTopic topic: String)</span></span> &#123;</div><div class="line">    <span class="type">ENTRY_LOG</span>()</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqtt</span><span class="params">(mqtt: MQTT, didUnsubscribeTopic topic: String)</span></span> &#123;</div><div class="line">    <span class="type">ENTRY_LOG</span>()</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqttDidPing</span><span class="params">(mqtt: MQTT)</span></span> &#123;</div><div class="line">    <span class="type">ENTRY_LOG</span>()</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqttDidReceivePong</span><span class="params">(mqtt: MQTT)</span></span> &#123;</div><div class="line">    <span class="type">ENTRY_LOG</span>()</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">mqttDidDisconnect</span><span class="params">(mqtt: MQTT, withError err: NSError?)</span></span> &#123;</div><div class="line">    <span class="type">SLogInfo</span>(<span class="string">"Disconnected from broker"</span>)</div><div class="line">    <span class="type">NSNotificationCenter</span>.defaultCenter().postNotificationName(<span class="string">"DisconnectedNotification"</span>,object:<span class="literal">nil</span>)</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="CPU"><a href="#CPU" class="headerlink" title="CPU"></a>CPU</h4><p><code>CPU.swift</code></p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> Glibc</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">CPU</span> </span>&#123;</div><div class="line">  <span class="keyword">var</span> temperature:<span class="type">Double</span>? &#123;</div><div class="line">    <span class="keyword">get</span> &#123;</div><div class="line">      <span class="keyword">let</span> <span class="type">BUFSIZE</span> = <span class="number">16</span></div><div class="line">      <span class="keyword">let</span> pp      = popen(<span class="string">"cat /sys/class/hwmon/hwmon0/temp1_input"</span>, <span class="string">"r"</span>)</div><div class="line">      <span class="keyword">var</span> buf     = [<span class="type">CChar</span>](repeating:<span class="number">0</span>, <span class="built_in">count</span>:<span class="type">BUFSIZE</span>)</div><div class="line">      <span class="keyword">guard</span> fgets(&amp;buf, <span class="type">Int32</span>(<span class="type">BUFSIZE</span>), pp) != <span class="literal">nil</span> <span class="keyword">else</span> &#123;</div><div class="line">        pclose(pp)</div><div class="line">        <span class="keyword">return</span> <span class="literal">nil</span></div><div class="line">      &#125;</div><div class="line">      pclose(pp)</div><div class="line"></div><div class="line">      <span class="keyword">let</span> s = <span class="type">String</span>(<span class="type">String</span>(cString:buf).characters.<span class="built_in">dropLast</span>())</div><div class="line">      <span class="keyword">if</span> <span class="keyword">let</span> t = <span class="type">Double</span>(s) &#123;</div><div class="line">        <span class="keyword">return</span> t/<span class="number">1000</span></div><div class="line">      &#125; <span class="keyword">else</span> &#123;</div><div class="line">        <span class="keyword">return</span> <span class="literal">nil</span></div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="main"><a href="#main" class="headerlink" title="main"></a>main</h4><p><code>main.swift</code> 看起来有点复杂，但是实际上很简单。主要做的事情是，等待通知的到来，然后根据通知设置计时器，让我们的客户端运行起来。举个例子，如果我们没有建立一个 MQTT 连接，没有任何东西会被推送。一旦连接建立以后，将会设置一个 10 秒的计时器，在保持连接的条件下，将会更新温度。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> swiftlog</div><div class="line"><span class="keyword">import</span> Glibc</div><div class="line"><span class="keyword">import</span> Foundation</div><div class="line"></div><div class="line">slogLevel = .<span class="type">Info</span> <span class="comment">// Change to .Verbose to get real chatty</span></div><div class="line"></div><div class="line">slogToFile(atPath:<span class="string">"/tmp/pubSysTemp.log"</span>)</div><div class="line"></div><div class="line"><span class="keyword">let</span> <span class="type">BUFSIZE</span> = <span class="number">128</span></div><div class="line"><span class="keyword">var</span> buffer  = [<span class="type">CChar</span>](repeating:<span class="number">0</span>, <span class="built_in">count</span>:<span class="type">BUFSIZE</span>)</div><div class="line"><span class="keyword">guard</span> gethostname(&amp;buffer, <span class="type">BUFSIZE</span>) == <span class="number">0</span> <span class="keyword">else</span> &#123;</div><div class="line">  <span class="type">SLogError</span>(<span class="string">"Unable to obtain hostname"</span>)</div><div class="line">  exit(-<span class="number">1</span>)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">let</span> client = <span class="type">Client</span>(clientId:<span class="type">String</span>(cString:buffer))</div><div class="line">client.host = <span class="string">"broker.hivemq.com"</span></div><div class="line">client.keepAlive = <span class="number">10</span></div><div class="line"></div><div class="line"><span class="keyword">let</span> nc = <span class="type">NSNotificationCenter</span>.defaultCenter()</div><div class="line"><span class="keyword">var</span> reportTemperature:<span class="type">NSTimer</span>?</div><div class="line"></div><div class="line"><span class="number">_</span> = nc.addObserverForName(<span class="string">"DisconnectedNotification"</span>, object:<span class="literal">nil</span>, queue:<span class="literal">nil</span>)&#123;<span class="number">_</span> <span class="keyword">in</span></div><div class="line">  <span class="type">SLogInfo</span>(<span class="string">"Connecting to broker"</span>)</div><div class="line"></div><div class="line">  reportTemperature?.invalidate()</div><div class="line">  <span class="keyword">if</span> !client.connect() &#123;</div><div class="line">    <span class="type">SLogError</span>(<span class="string">"Unable to connect to broker.hivemq.com, retrying in 30 seconds"</span>)</div><div class="line">    <span class="keyword">let</span> retryInterval     = <span class="number">30</span></div><div class="line">    <span class="keyword">let</span> retryTimer        = <span class="type">NSTimer</span>.scheduledTimer(<span class="type">NSTimeInterval</span>(retryInterval),</div><div class="line">                                                   repeats:<span class="literal">false</span>)&#123; <span class="number">_</span> <span class="keyword">in</span></div><div class="line">      nc.postNotificationName(<span class="string">"DisconnectedNotification"</span>, object:<span class="literal">nil</span>)</div><div class="line">    &#125;</div><div class="line">    <span class="type">NSRunLoop</span>.currentRunLoop().addTimer(retryTimer, forMode:<span class="type">NSDefaultRunLoopMode</span>)</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="number">_</span> = nc.addObserverForName(<span class="string">"ConnectedNotification"</span>, object:<span class="literal">nil</span>, queue:<span class="literal">nil</span>) &#123;<span class="number">_</span> <span class="keyword">in</span></div><div class="line"></div><div class="line">  <span class="keyword">let</span> reportInterval    = <span class="number">10</span></div><div class="line">  reportTemperature = <span class="type">NSTimer</span>.scheduledTimer(<span class="type">NSTimeInterval</span>(reportInterval),</div><div class="line">                                                 repeats:<span class="literal">true</span>)&#123;<span class="number">_</span> <span class="keyword">in</span></div><div class="line"></div><div class="line">    <span class="keyword">if</span> client.connState == .<span class="type">CONNECTED</span> &#123;</div><div class="line">      <span class="keyword">if</span> <span class="keyword">let</span> cpuTemperature = <span class="type">CPU</span>().temperature &#123;</div><div class="line">        <span class="number">_</span> = client.publish(topic:<span class="string">"/<span class="subst">\(client.clientId)</span>/cpu/temperature/value"</span>,</div><div class="line">                           withString:<span class="type">String</span>(cpuTemperature))</div><div class="line">        <span class="type">SLogInfo</span>(<span class="string">"Published temperature to <span class="subst">\(cpuTemperature)</span>"</span>)</div><div class="line">      &#125; <span class="keyword">else</span> &#123;</div><div class="line">        <span class="type">SLogError</span>(<span class="string">"Unable to obtain CPU temperature"</span>)</div><div class="line">      &#125;</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">      <span class="type">SLogError</span>(<span class="string">"MQTT client is not connected"</span>)</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">                                                                           </div><div class="line">  <span class="type">NSRunLoop</span>.currentRunLoop().addTimer(reportTemperature!, forMode:<span class="type">NSDefaultRunLoopMode</span>)</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line">nc.postNotificationName(<span class="string">"DisconnectedNotification"</span>, object:<span class="literal">nil</span>) <span class="comment">// Kick the connection</span></div><div class="line"></div><div class="line"><span class="keyword">let</span> heartbeat = <span class="type">NSTimer</span>.scheduledTimer(<span class="type">NSTimeInterval</span>(<span class="number">30</span>), repeats:<span class="literal">true</span>)&#123;<span class="number">_</span> <span class="keyword">in</span> <span class="keyword">return</span>&#125;</div><div class="line"><span class="type">NSRunLoop</span>.currentRunLoop().addTimer(heartbeat, forMode:<span class="type">NSDefaultRunLoopMode</span>)</div><div class="line"><span class="type">NSRunLoop</span>.currentRunLoop().run()</div></pre></td></tr></table></figure>
+<p>需要注意的是，我们使用的是一个心跳计时器，如果没有请求源或者计时器的附加，循环会退出，所以我们使用了一个简单的重复计时器来保证心跳的正常运行，这样，循环也能运行。</p>
+<p><code>Package.swift</code> 应该是这样的：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">import PackageDescription</div><div class="line"></div><div class="line">let package = Package(</div><div class="line">  name: &quot;PubSysTemp&quot;,</div><div class="line">  dependencies:[</div><div class="line">    .Package(url:&quot;https://github.com/iachievedit/MQTT&quot;, majorVersion:0, minor:1)</div><div class="line">  ]</div><div class="line">)</div></pre></td></tr></table></figure>
+<p>你可以在 <a href="https://github.com/iachievedit/PubSysTemp" target="_blank" rel="external">GitHub</a> 上拿到我们的代码，使用 <code>swift build</code> 编译然后运行程序：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line"><span class="comment"># git clone https://github.com/iachievedit/PubSysTemp</span></div><div class="line"><span class="comment"># cd PubSysTemp</span></div><div class="line"><span class="comment"># swift build</span></div><div class="line"><span class="comment"># .build/debug/PubSysTemp</span></div></pre></td></tr></table></figure>
+<p>注意：代码是基于 Swift 3.0 版本编写的，你可以在我们的<a href="http://dev.iachieved.it/iachievedit/introducing-swift-3-0/" target="_blank" rel="external">这篇文章</a>中获取 Linux 下使用 Swift 3.0 的信息。</p>
+<h3 id="代理网关究竟做了什么事情？"><a href="#代理网关究竟做了什么事情？" class="headerlink" title="代理网关究竟做了什么事情？"></a>代理网关究竟做了什么事情？</h3><p>可以把 MQTT 的代理网关理解成 <code>NSNotificationCenter</code> ，在 iOS 里面，一个典型的场景是，通过 <code>NSNotificationCenter.defaultCenter()</code> 获取一个引用，然后向它发送一个消息。当一个命名的消息发送时，你注册的消息中心将会接收到一条消息。</p>
+<p>你需要和代理网关进行通信来使用 MQTT，如果你想编译一个物联网的网关，你可以使用 <a href="http://mosquitto.org/" target="_blank" rel="external"><code>Mosquitto</code></a> 或者 <a href="http://mosquitto.org/" target="_blank" rel="external"><code>HiveMQ</code></a> 来运行你自己的代理网关。如果你只是想写一个 MQTT 的教程，你可以去使用一些公共的代理网关，比如 <code>test.mosquitto.org</code> 或者 <code>broker.hivemq.com</code>，比你自建更好（就像我们做的那样！）。</p>
+<p>在我们上面的例子中，我们写了一个 MQTT 客户端，用来推送数据。那么订阅数据呢？这也属于 MQTT 客户端的事情。在我们的例子中，我们使用一个非常不错的 <a href="https://github.com/jpmens/tempgauge" target="_blank" rel="external">温度度量插件</a>来增强我们的<a href="http://dev.iachieved.it/mqttgauge/" target="_blank" rel="external">温度显示</a>。</p>
+<p><img src="http://swiftgg-main.b0.upaiyun.com/img/mqtt-with-swift-on-linux-3.png" alt=""></p>
+<p>这里需要强调的是，温度度量实际上是一个基于 javascript 的 MQTT 客户端，订阅来自 <code>broker.hivemq.com</code>，<code>/darthvader/cpu/temperature/value</code> 频道的推送消息。（<code>darthvader</code> 是我们客户端的名称）</p>
+<h3 id="下一步计划"><a href="#下一步计划" class="headerlink" title="下一步计划"></a>下一步计划</h3><p>对于 <a href="https://github.com/iachievedit/MQTT" target="_blank" rel="external">MQTT 库</a>，我们还做了更多的事情。2016.6.11的时候，连接和推送成功了，但是订阅频道是另外一则故事。我们将在下篇专题中放送。</p>
+<p>对于服务器端的 Swift 开发，这仅仅是一个开始，诸如 <a href="http://www.zewo.io/" target="_blank" rel="external">Zewo</a> 的组织正在辛劳的开发一些库，用于在 Linux 下使用 Swift 编写服务器端软件。事实上，我们的 MQTT 库使用了 Zewo 的 <a href="https://github.com/VeniceX/TCP" target="_blank" rel="external">VeniceX</a> TCP组件，用于我们的网络 IO。时间会证明，我也肯定认为 Swift 将会有一个广阔的未来，不仅仅限于 iOS 开发。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/iAchieved-it/">iAchieved.it</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/07/01/mqtt-with-swift-on-linux/" data-title="Linux 下使用 Swift MQTT | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/07/04/obscuring-api-keys/" title="混淆 API 密钥">
+  <strong>上一篇</strong><br/>
+  <span>
+  混淆 API 密钥</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/06/30/sensible-cocoa-and-cocoa-touch-defaults/"  title="合理的 Cocoa 和 Cocoa Touch 默认值">
+ <strong>下一篇</strong><br/> 
+ <span>合理的 Cocoa 和 Cocoa Touch 默认值
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/07/01/mqtt-with-swift-on-linux/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#实例应用"><span class="toc-number">1.</span> <span class="toc-text">实例应用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MQTT"><span class="toc-number">2.</span> <span class="toc-text">MQTT</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#MQTT-客户端代理"><span class="toc-number">2.1.</span> <span class="toc-text">MQTT 客户端代理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#main-swift"><span class="toc-number">2.2.</span> <span class="toc-text">main.swift</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#得到-CPU-的温度"><span class="toc-number">2.3.</span> <span class="toc-text">得到 CPU 的温度</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#整合到一起"><span class="toc-number">3.</span> <span class="toc-text">整合到一起</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Client"><span class="toc-number">3.1.</span> <span class="toc-text">Client</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#CPU"><span class="toc-number">3.2.</span> <span class="toc-text">CPU</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#main"><span class="toc-number">3.3.</span> <span class="toc-text">main</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#代理网关究竟做了什么事情？"><span class="toc-number">4.</span> <span class="toc-text">代理网关究竟做了什么事情？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#下一步计划"><span class="toc-number">5.</span> <span class="toc-text">下一步计划</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

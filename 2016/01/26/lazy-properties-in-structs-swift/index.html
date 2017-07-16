@@ -1,0 +1,933 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>结构体中的 Lazy 属性探究 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Ole Begemann，原文链接，原文日期：2015-12-17译者：pmst；校对：Cee；定稿：小锅    定稿注：原文没有提供源码，作为一个走心的翻译组，我们已经将本篇文章的最终版源码作成 Playground，可以到这个地址进行下载。 更新： 2015-12-17 提到 Swift evolution 邮件列表中一个关于行为属性的新提案，如果这个提案被采取，则本篇文章中的大部分将">
+<meta name="keywords" content="Swift 进阶">
+<meta property="og:type" content="article">
+<meta property="og:title" content="结构体中的 Lazy 属性探究">
+<meta property="og:url" content="https://swift.gg/2016/01/26/lazy-properties-in-structs-swift/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Ole Begemann，原文链接，原文日期：2015-12-17译者：pmst；校对：Cee；定稿：小锅    定稿注：原文没有提供源码，作为一个走心的翻译组，我们已经将本篇文章的最终版源码作成 Playground，可以到这个地址进行下载。 更新： 2015-12-17 提到 Swift evolution 邮件列表中一个关于行为属性的新提案，如果这个提案被采取，则本篇文章中的大部分将">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="结构体中的 Lazy 属性探究">
+<meta name="twitter:description" content="作者：Ole Begemann，原文链接，原文日期：2015-12-17译者：pmst；校对：Cee；定稿：小锅    定稿注：原文没有提供源码，作为一个走心的翻译组，我们已经将本篇文章的最终版源码作成 Playground，可以到这个地址进行下载。 更新： 2015-12-17 提到 Swift evolution 邮件列表中一个关于行为属性的新提案，如果这个提案被采取，则本篇文章中的大部分将">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/01/26/lazy-properties-in-structs-swift/" target="_blank" title="结构体中的 Lazy 属性探究" itemprop="url">结构体中的 Lazy 属性探究</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-01-25T16:00:00.000Z" itemprop="datePublished">2016-01-26</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Ole Begemann，<a href="http://oleb.net/blog/2015/12/lazy-properties-in-structs-swift/" target="_blank" rel="external">原文链接</a>，原文日期：2015-12-17<br>译者：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="external">pmst</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="external">Cee</a>；定稿：<a href="http://www.swiftyper.com" target="_blank" rel="external">小锅</a></p>
+</blockquote>
+<!--此处开始正文-->
+<blockquote>
+<p>定稿注：原文没有提供源码，作为一个走心的翻译组，我们已经将本篇文章的最终版源码作成 Playground，可以到<a href="https://github.com/buginux/SwiftGGArticleCode" target="_blank" rel="external">这个地址</a>进行下载。</p>
+<p>更新：</p>
+<p>2015-12-17 提到 Swift evolution 邮件列表中一个关于行为属性的新提案，如果这个提案被采取，则本篇文章中的大部分将成为过时的内容</p>
+</blockquote>
+<p>Swift 中的 <a href="https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/Properties.html#//apple_ref/doc/uid/TP40014097-CH14-ID257" target="_blank" rel="external">lazy 关键字</a>允许你定义这么一个属性：它的初始值在当它被首次访问的时候才计算。举个例子，试想通过一个结构体来描述一副图像。该图像的元数据（metadata）字典创建操作所需要的开销代价也许很大，因此我们更倾向于推迟这个行为直至需要该数据的时候。我们可以像这样声明一个 <code>lazy var</code> 属性：</p>
+<a id="more"></a>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Image</span> </span>&#123;</div><div class="line">    <span class="built_in">lazy</span> <span class="keyword">var</span> metadata: [<span class="type">String</span>:<span class="type">AnyObject</span>] = &#123;</div><div class="line">        <span class="comment">// 加载图片和解析 metadata，相当占内存</span></div><div class="line">        <span class="comment">// ...</span></div><div class="line">        <span class="keyword">return</span> ...</div><div class="line">    &#125;()</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>注意我们必须使用 <code>var</code> 关键字声明属性。<code>let</code> 关键字声明的常量必须在实例初始化完成前拥有一个值，显然对于 <code>lazy</code> 变量无法保证初始化前有值。（译者注：实例指结构体实例）</p>
+<p>访问 <code>lazy</code> 属性是一个 <code>mutating</code> 操作，因为属性的初始值只在第一次访问时才计算确定。当结构体（属于值类型）包含一个 <code>lazy</code> 属性时，任何该结构体的拥有者同样必须声明为一个变量（<code>var</code> 关键字声明），因为访问该属性意味着可能改变结构体内容。所以以下行为是不被允许的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> image = <span class="type">Image</span>()</div><div class="line"><span class="built_in">print</span>(image.metadata)</div><div class="line"><span class="comment">// error: Cannot use mutating getter on immutable value: 'image' is a 'let' constant.</span></div></pre></td></tr></table></figure>
+<p>你可以强制要求用户使用 <code>var</code> 关键字来声明 <code>Image</code> 类型，但是这可能有些不合适（比如，<a href="https://github.com/apple/swift-evolution/blob/master/proposals/0003-remove-var-parameters-patterns.md" target="_blank" rel="external">函数中作为变量的情况</a>）或容易混淆（因为 getter 方法通常并不是可变的）。</p>
+<h3 id="使用Box包装类型"><a href="#使用Box包装类型" class="headerlink" title="使用Box包装类型"></a>使用Box包装类型</h3><p>另外一种选择是将 <code>lazy</code> 值封装到一个类中，有点类似经常使用的 <a href="https://github.com/robrix/Box" target="_blank" rel="external"><code>Box type</code></a>。由于类是引用类型，结构体可以包含一个 <code>let</code> 常量指向一个类实例，如此结构体依旧是不可变的，但它指向的引用对象本身是可以改变的。</p>
+<p>首先我们定义一个枚举类型，命名为 <code>LazyValue</code>，用于表示值类型 <code>T</code> 能够被懒加载（有时又称延迟加载）。它具有两个可能状态：要么还未执行计算操作，要么已经执行计算并得到结果值。在前一种情况中，它存储用于执行计算的函数（闭包）。后一种情况中，它存储计算值。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="class"><span class="keyword">enum</span> <span class="title">LazyValue</span>&lt;<span class="title">T</span>&gt; </span>&#123;</div><div class="line">    <span class="keyword">case</span> <span class="type">NotYetComputed</span>(() -&gt; <span class="type">T</span>)</div><div class="line">    <span class="keyword">case</span> <span class="type">Computed</span>(<span class="type">T</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>现在我们将封装该枚举到一个类中，命名为 <code>LazyBox</code>，这样我们就能够独立地在它内部做一些改变。而 <code>LazyBox</code>实例的拥有者依旧能够保持不可变状态。实现如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">LazyBox</span>&lt;<span class="title">T</span>&gt; </span>&#123;</div><div class="line">    <span class="keyword">init</span>(computation: () -&gt; <span class="type">T</span>) &#123;</div><div class="line">        _value = .<span class="type">NotYetComputed</span>(computation)</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">var</span> _value: <span class="type">LazyValue</span>&lt;<span class="type">T</span>&gt;</div><div class="line"></div><div class="line">    <span class="keyword">var</span> value: <span class="type">T</span> &#123;</div><div class="line">        <span class="keyword">switch</span> <span class="keyword">self</span>._value &#123;</div><div class="line">        <span class="keyword">case</span> .<span class="type">NotYetComputed</span>(<span class="keyword">let</span> computation):</div><div class="line">            <span class="keyword">let</span> result = computation()</div><div class="line">            <span class="keyword">self</span>._value = .<span class="type">Computed</span>(result)</div><div class="line">            <span class="keyword">return</span> result</div><div class="line">        <span class="keyword">case</span> .<span class="type">Computed</span>(<span class="keyword">let</span> result):</div><div class="line">            <span class="keyword">return</span> result</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>LazyBox</code> 类构造方法接收一个闭包作为变量，用于计算值。我们将该函数存储到一个私有的 <code>LazyValue</code> 属性中，等待需要时进行访问。该类的公有接口是一个只读属性 <code>value</code>。在 <code>value</code> 的 <code>getter</code> 方法中我们检查是否已经拥有一个计算属性，如果是则返回该值。否则我们执行一次计算函数并缓存结果值到 <code>_value</code> 等待之后的读取操作。</p>
+<p>我们可以像这样使用 <code>LazyBox</code>，并且验证计算函数确实仅被执行了一次：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> counter = <span class="number">0</span></div><div class="line"><span class="keyword">let</span> box = <span class="type">LazyBox</span>&lt;<span class="type">Int</span>&gt; &#123;</div><div class="line">    counter += <span class="number">1</span>;</div><div class="line">    <span class="keyword">return</span> counter * <span class="number">10</span></div><div class="line">&#125;</div><div class="line"><span class="built_in">assert</span>(box.value == <span class="number">10</span>)</div><div class="line"><span class="built_in">assert</span>(box.value == <span class="number">10</span>)</div><div class="line"><span class="built_in">assert</span>(counter == <span class="number">1</span>)<span class="comment">// 倘若你把 1 改成 2，就会报错</span></div></pre></td></tr></table></figure>
+<p>上面这种方式的优势在于它能够应用到常量结构体中。而在其他方面，它相比较 <code>lazy</code> 变量使用略逊一筹，因为用户需要通过 <code>value</code> 属性才能访问结果值。如果感觉这样不直观的话，我们可以隐藏具体的实现，而向用户提供另外一个计算属性返回 <code>LazyBox.value</code>，同时我们将 <code>LazyBox</code> 属性设置为私有。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Image</span> </span>&#123;</div><div class="line">    <span class="comment">// 延迟存储</span></div><div class="line">    <span class="keyword">private</span> <span class="keyword">let</span> _metadata = <span class="type">LazyBox</span>&lt;[<span class="type">String</span>:<span class="type">AnyObject</span>]&gt; &#123;</div><div class="line">        <span class="comment">// 加载图片和解析 metadata，相当占内存</span></div><div class="line">        <span class="comment">// ...</span></div><div class="line">        <span class="keyword">return</span> ...</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">var</span> metadata: [<span class="type">String</span>:<span class="type">AnyObject</span>] &#123;</div><div class="line">        <span class="keyword">return</span> _metadata.value</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">let</span> image = <span class="type">Image</span>()</div><div class="line"><span class="built_in">print</span>(image.metadata) <span class="comment">// 不报错</span></div></pre></td></tr></table></figure>
+<p>这样该结构体依旧保留了它的值语义。值类型内部使用引用类型是惯用伎俩，以这种方式实现能够保证值语义。标准库中许多集合类型都是以这种方式实现的。</p>
+<h3 id="并发性"><a href="#并发性" class="headerlink" title="并发性"></a>并发性</h3><p>这种实现方式还存在最后一个潜在问题，也就是未考虑并发性。倘若 <code>LazyBox.value</code> 还未完成值计算操作，同时被多个线程访问，那么计算函数就将被执行多次。这些都是你需要避免的情况，万一计算函数会产生副作用或相当耗内存呢，对吧？</p>
+<p>我们可以将内部 <code>_value</code> 属性的所有读写操作都安排到一个私有串行队列中，这样就能够保证函数仅被执行一次。下面是新的实现方式：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">LazyBox</span>&lt;<span class="title">T</span>&gt; </span>&#123;</div><div class="line">    <span class="keyword">init</span>(computation: () -&gt; <span class="type">T</span>) &#123;</div><div class="line">        _value = .<span class="type">NotYetComputed</span>(computation)</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">var</span> _value: <span class="type">LazyValue</span>&lt;<span class="type">T</span>&gt;</div><div class="line"></div><div class="line">    <span class="comment">/// 所有对于 `_value` 的读写都在这个线程队列中。</span></div><div class="line">    <span class="keyword">private</span> <span class="keyword">let</span> queue = dispatch_queue_create(</div><div class="line">        <span class="string">"LazyBox._value"</span>, <span class="type">DISPATCH_QUEUE_SERIAL</span>)</div><div class="line"></div><div class="line">    <span class="keyword">var</span> value: <span class="type">T</span> &#123;</div><div class="line">        <span class="keyword">var</span> returnValue: <span class="type">T</span>? = <span class="literal">nil</span></div><div class="line">        dispatch_sync(queue) &#123;</div><div class="line">            <span class="keyword">switch</span> <span class="keyword">self</span>._value &#123;</div><div class="line">            <span class="keyword">case</span> .<span class="type">NotYetComputed</span>(<span class="keyword">let</span> computation):</div><div class="line">                <span class="keyword">let</span> result = computation()</div><div class="line">                <span class="keyword">self</span>._value = .<span class="type">Computed</span>(result)</div><div class="line">                returnValue = result</div><div class="line">            <span class="keyword">case</span> .<span class="type">Computed</span>(<span class="keyword">let</span> result):</div><div class="line">                returnValue = result</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="built_in">assert</span>(returnValue != <span class="literal">nil</span>)</div><div class="line">        <span class="keyword">return</span> returnValue!</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>使用这种方式的缺点是每次访问 <code>value</code> 时都会造成一个小的性能影响，倘若多个线程同时读取该值时可能引起争用，毕竟它们都要经过同一个串行队列。鉴于每次缓存值被计算后队列中要执行的工作量相当少，在大多数情况中都可以忽略不计。</p>
+<p>值得注意的是 Swift 并没有为 <code>lazy</code> 关键字提供上述保证。<a href="https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/Properties.html#//apple_ref/doc/uid/TP40014097-CH14-ID257" target="_blank" rel="external">官方文档</a>里是这么说的：</p>
+<blockquote>
+<p>注意：倘若一个标记为 lazy 的属性同时被多个线程修改时，且该属性还未进行初始化操作，那么将无法保证该属性仅被初始化一次。</p>
+</blockquote>
+<p><strong>最新更新：</strong>就在我发布该文章之后的一个小时，<a href="https://twitter.com/jckarter" target="_blank" rel="external">Joe Groff</a> 在 Swift evolution 中为属性行为发布了一个影响深远的提议，邮件内容请点击<a href="https://lists.swift.org/pipermail/swift-evolution/Week-of-Mon-20151214/003148.html" target="_blank" rel="external">这里</a>，一旦被采纳，将实现我在本文中讨论的内容（且远远不止），并以一个更自然的方式来实现。我强烈建议你看一下。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Ole-Begemann/">Ole Begemann</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/01/26/lazy-properties-in-structs-swift/" data-title="结构体中的 Lazy 属性探究 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/01/27/generic-tableviewcells/" title="使用泛型来优化 TableView Cells 的使用体验">
+  <strong>上一篇</strong><br/>
+  <span>
+  使用泛型来优化 TableView Cells 的使用体验</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/01/25/friday-qa-2015-11-06-why-is-swifts-string-api-so-hard/"  title="Friday Q&amp;A 2015-11-06：为什么 Swift 中的 String API 如此难用？">
+ <strong>下一篇</strong><br/> 
+ <span>Friday Q&amp;A 2015-11-06：为什么 Swift 中的 String API 如此难用？
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/01/26/lazy-properties-in-structs-swift/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#使用Box包装类型"><span class="toc-number">1.</span> <span class="toc-text">使用Box包装类型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#并发性"><span class="toc-number">2.</span> <span class="toc-text">并发性</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

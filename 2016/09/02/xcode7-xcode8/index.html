@@ -1,0 +1,1005 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>同时兼容 Xcode7 和 Xcode8 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="xcode7,xcode8,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="想同时支持 iOS 9（Xcode 7）和 iOS 10（Xcode 8）吗，本文教你如何实现同时兼容 Xcode7 和 Xcode8 还不需要使用分支哦。">
+<meta name="keywords" content="xcode7,xcode8">
+<meta property="og:type" content="article">
+<meta property="og:title" content="同时兼容 Xcode7 和 Xcode8">
+<meta property="og:url" content="https://swift.gg/2016/09/02/xcode7-xcode8/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="想同时支持 iOS 9（Xcode 7）和 iOS 10（Xcode 8）吗，本文教你如何实现同时兼容 Xcode7 和 Xcode8 还不需要使用分支哦。">
+<meta property="og:image" content="http://radex.io/assets/2016/xcode7-xcode8/BuildSettings.png">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="同时兼容 Xcode7 和 Xcode8">
+<meta name="twitter:description" content="想同时支持 iOS 9（Xcode 7）和 iOS 10（Xcode 8）吗，本文教你如何实现同时兼容 Xcode7 和 Xcode8 还不需要使用分支哦。">
+<meta name="twitter:image" content="http://radex.io/assets/2016/xcode7-xcode8/BuildSettings.png">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/09/02/xcode7-xcode8/" target="_blank" title="同时兼容 Xcode7 和 Xcode8" itemprop="url">同时兼容 Xcode7 和 Xcode8</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-09-01T16:00:00.000Z" itemprop="datePublished">2016-09-02</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：radex.io，<a href="http://radex.io/xcode7-xcode8/" target="_blank" rel="external">原文链接</a>，原文日期：2016-07-28<br>译者：<a href="undefined">ckitakishi</a>；校对：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="external">Channe</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>作为一名 iOS 开发者，你一定对 iOS 10 带来的新特性感到无比兴奋，并迫不及待地想要在应用中实践。虽然你想<em>马上</em>就动手以便第一时间就能“上车”。但 iOS 10 正式上线却是几个月以后的事情，在那之前，你不得不保持每几周就为应用发布一个新版本的频率。这个情况听起来是不是跟你现在的处境很像呢？</p>
+<p>当然，目前你还不能用 Xcode 8 来编译需要发布的应用——因为它无法通过 App Store 的验证。所以你需要把项目拆分成两个分支，稳定分支和 iOS 10 开发分支……</p>
+<p>而不可避免地是，这烂透了。如果只是暂时在分支上做一点某个特性的开发并无伤大雅。但是随着整个代码库的改变，主分支的演进，持续好几个月来维护这样一个庞大的分支的时候，你就会渐渐遇到一些不可描述的合并之痛。我的意思是，你尝试过处理 <code>.xcodeproj</code> 文件的合并冲突么？</p>
+<p>这篇文章的目的就是告诉你如何彻底避免使用分支。对于大部分应用而言，只用一个工程文件就同时支持 iOS 9（Xcode 7）和 iOS 10（Xcode 8）是完全可能的。而且即使你不得不使用分支，这些小技巧也可以帮助你减少两个分支之间的差异，从而更舒服地对它们进行同步。</p>
+<a id="more"></a>
+<h2 id="你用的是-Swift-2-3"><a href="#你用的是-Swift-2-3" class="headerlink" title="你用的是 Swift 2.3"></a>你用的是 Swift 2.3</h2><p>我先说明一点：</p>
+<p>我们都为 Swift 3 的到来而兴奋。它很棒，但是如果你正在读这篇文章，<em>请别用它</em>（或者说暂时别）。虽然它足够好，但是在代码层面上存在的不兼容，比一年前的 Swift 2 还要严重得多。而且一旦应用存在对第三方 Swift 库的依赖，就得等这些库都升级到 Swift 3，它才可以跟着升级。</p>
+<p>而好消息是，史无前例地，Xcode 8 支持<em>两个</em>版本的 Swift：2.3 和 3.0。</p>
+<p>为了防止你因错过了发布会而不太了解现状，我想再说一遍，除了<em>少数的</em> API 有所调整（之后会详细介绍）以外，Xcode 7 中的 Swift 2.2 和 Swift 2.3 基本是一致的。</p>
+<p>所以！为了保持兼容性，我们还是用 Swift 2.3 来进行开发。</p>
+<h2 id="Xcode-的设置"><a href="#Xcode-的设置" class="headerlink" title="Xcode 的设置"></a>Xcode 的设置</h2><p>说这么多你应该已经很明白了。现在让我来告诉你如何设置 Xcode 项目，让它可以在这两个版本上运行。</p>
+<h3 id="Swift-版本"><a href="#Swift-版本" class="headerlink" title="Swift 版本"></a>Swift 版本</h3><p><img src="http://radex.io/assets/2016/xcode7-xcode8/BuildSettings.png" alt=""></p>
+<p>首先，在 Xcode 7 中打开你的项目，选中项目设置页的 Build settings  选项，然后点击 “+“ 来增加一个 User-Defined 设置项：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">“<span class="type">SWIFT_VERSION</span>” = “<span class="number">2.3</span>”</div></pre></td></tr></table></figure>
+<p>这个选项是 Xcode 8 新增的，因此，即使它表示该项目使用 Swift 2.3，Xcode 7（<em>实际上</em>它并没有 Swift 2.3）也会完全忽略这个设置并继续使用 Swift 2.2 来进行构建。</p>
+<h3 id="Framework-provisioning"><a href="#Framework-provisioning" class="headerlink" title="Framework provisioning"></a>Framework provisioning</h3><p>Framework provisioning 的工作方式在 Xcode 8 上稍有不同 —— 如果是模拟器，它们会按原样继续编译，而对于真机会构建失败。</p>
+<p>要解决这个问题，可以像设置 <code>SWIFT_VERSION</code> 时所做的一样，遍历 Build Settings 中所有的 Framework targets 并增加如下选项：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">“<span class="type">PROVISIONING_PROFILE_SPECIFIER</span>” = “<span class="type">ABCDEFGHIJ</span>/“</div></pre></td></tr></table></figure>
+<p>你需要把 “ABCDEFGHIJ“ 替换成你的团队 ID（你可以在 <a href="https://developer.apple.com/account/#/membership/" target="_blank" rel="external">Apple Developer Portal</a>中找到它），然后保留最后的斜杠。</p>
+<p>这实际上就是告诉 Xcode 8 “嘿，我是来自这个团队的，你注意下 codesign，好吗？“，然后 Xcode 7 仍然会忽略这个设置，这样就万事大吉了。</p>
+<h3 id="Interface-Builder"><a href="#Interface-Builder" class="headerlink" title="Interface Builder"></a>Interface Builder</h3><p>浏览所有 <code>.xib</code> 和 <code>.storyboard</code> 文件，打开右侧边栏，选中第一个选项（File inspector），然后找到 “Opens in“ 设置项。</p>
+<p>显示的内容很可能是 “Default (7.0)“，将它修改为 “Xcode 7.0“。这样就可以保证即使你是在 Xcode 8 中操作这个文件，也只能做一些可以向后兼容 Xcode 7 的变动。</p>
+<p>再次提醒一定要注意在 Xcode 8 中对 XIB 所做的改动。因为它会添加一些 Xcode 版本相关的数据（不能确定的是应用上传到 App Store 之后这些数据是否会被移除掉），而且某些时候它还会尝试把文件回滚到只支持 Xcode 8 的格式（这是个 bug）。可能的话，尽可能避免在 Xcode 8 中操作 interface 文件，如果实在没办法，务必要仔细 review diff，并且只提交你需要的那几行。</p>
+<h3 id="SDK-版本"><a href="#SDK-版本" class="headerlink" title="SDK 版本"></a>SDK 版本</h3><p>确保项目所有构建目标的 “Base SDK“ 设置项都已被设置为了 “Latest iOS“。（大部分情况下默认设置就是这样的，但是还是要再次确认下。）这样一来，Xcode 7 就会针对 iOS 9 来进行编译，但是你可以在 Xcode 8 中打开同样的项目并使用 iOS 10 的新特性。</p>
+<h3 id="CocoaPods-设置"><a href="#CocoaPods-设置" class="headerlink" title="CocoaPods 设置"></a>CocoaPods 设置</h3><p>如果你正在使用 CocoaPods，你同样也需要更新 Pods 项目的设置，以保证其 Swift 和 provisioning 的设置是正确的。</p>
+<p>不过你可以通过在 <code>Podfile</code> 文件中添加如下 post-install 钩子脚本来代替手动设置：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">post_install <span class="keyword">do</span> |installer|</div><div class="line">  installer.pods_project.build_configurations.each <span class="keyword">do</span> |config|</div><div class="line">    # <span class="type">Configure</span> <span class="type">Pod</span> targets <span class="keyword">for</span> <span class="type">Xcode</span> <span class="number">8</span> compatibility</div><div class="line">    config.build_settings['<span class="type">SWIFT_VERSION'</span>] = '<span class="number">2.3</span>'</div><div class="line">    config.build_settings['<span class="type">PROVISIONING_PROFILE_SPECIFIER'</span>] = '<span class="type">ABCDEFGHIJ</span>/'</div><div class="line">    config.build_settings['<span class="type">ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES'</span>] = '<span class="type">NO'</span></div><div class="line">  end</div><div class="line">end</div></pre></td></tr></table></figure>
+<p>同样，记得把 <code>ABCDEFGHIJ</code> 替换成你的团队 ID。然后运行 <code>pod install</code> 来重新生成 Pods 项目。</p>
+<p>（如果发现这个 Pod 不兼容 Swift 2.3，那么你需要为 Xcode 8 单独拉一个不同的分支， 这是由 Igor Palaguta 提供的<a href="https://twitter.com/radexp/status/760197303047168000" target="_blank" rel="external">一个解决方案</a>）</p>
+<h3 id="在-Xcode-8-中打开"><a href="#在-Xcode-8-中打开" class="headerlink" title="在 Xcode 8 中打开"></a>在 Xcode 8 中打开</h3><p>好了，就是现在：在 Xcode 8 中打开这个项目。第一次打开的时候你会被大量的请求轰炸。</p>
+<p>Xcode 会催促你升级到新版本的 Swift。忽略。</p>
+<p>Xcode 还会建议更新项目的设置为 “推荐设置“，同样忽略。</p>
+<p>记住，我们已经对项目做了设置，让它可以在两个版本下都可以编译通过。所以现在我们要做的是尽量少做改动，从而保证同时兼容。更重要的是，因为我们发布到 App Store 的文件是同一个，所以我们不希望 <code>.xcodeproj</code> 文件中包含任何 Xcode 8 相关的数据。</p>
+<h2 id="处理-Swift-2-3-的差异"><a href="#处理-Swift-2-3-的差异" class="headerlink" title="处理 Swift 2.3 的差异"></a>处理 Swift 2.3 的差异</h2><p>就像我之前说过的，Swift 2.3 和 Swift 2.2 是相同的<em>语言</em>。然而，iOS 10 SDK 的 <em>frameworks</em> 已经更新了一些 Swift 的注释。我不是在谈论<a href="https://developer.apple.com/videos/play/wwdc2016/403/" target="_blank" rel="external">大规模重命名</a>（那只适用于 Swift 3.0）—— 不过，Swift 2.3 中许多 API 的名字，类型和可选性还是稍有一些变化的。</p>
+<h3 id="条件编译"><a href="#条件编译" class="headerlink" title="条件编译"></a>条件编译</h3><p>考虑到你可能会忽略这一点， Swift 2.2 就<a href="https://github.com/apple/swift-evolution/blob/master/proposals/0020-if-swift-version.md" target="_blank" rel="external">引入</a>了编译预处理宏。用法很简单：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">#<span class="keyword">if</span> swift(&gt;=<span class="number">2.3</span>)</div><div class="line"><span class="comment">// this compiles on Xcode 8 / Swift 2.3 / iOS 10</span></div><div class="line">#<span class="keyword">else</span></div><div class="line"><span class="comment">// this compiles on Xcode 7 / Swift 2.2 / iOS 9</span></div><div class="line">#endif</div></pre></td></tr></table></figure>
+<p>太棒了！一个文件，没有分支，同时兼容两个版本的 Xcode 。</p>
+<p>有两个需要注意的事项：</p>
+<ul>
+<li><code>#if swift(&lt;2.3)</code> 这种写法是不存在的，只有 &gt;=。如果要表达相反的意思，你可以写 <code>#if !swift(&gt;=2.3)</code>。（如果需要的话你还可以使用 <code>#else</code> 和 <code>#elseif</code>）。</li>
+<li>不用于 C 预处理器，<code>#if</code> 和 <code>#else</code> 之间必须是有效的 Swift 代码。例如，你不能只改变函数签名而不改变函数体。（对于这点后面会有相应的处理方案）</li>
+</ul>
+<h3 id="可选性的变化"><a href="#可选性的变化" class="headerlink" title="可选性的变化"></a>可选性的变化</h3><p>Swift 2.3 中很多签名都把不必要的可选性都去掉了，而有些（比如很多 <code>NSURL</code> 的属性）现在 <em>变成</em> 了可选值。</p>
+<p>你当然也可以用条件编译来处理这个问题，比如：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">#<span class="keyword">if</span> swift(&gt;=<span class="number">2.3</span>)</div><div class="line"><span class="keyword">let</span> specifier = url.resourceSpecifier ?? <span class="string">""</span></div><div class="line">#<span class="keyword">else</span></div><div class="line"><span class="keyword">let</span> specifier = url.resourceSpecifier</div><div class="line">#endif</div></pre></td></tr></table></figure>
+<p>但是下面的方法可能会小有帮助：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">optionalize</span>&lt;T&gt;<span class="params">(x: T?)</span></span> -&gt; <span class="type">T</span>? &#123;</div><div class="line">    <span class="keyword">return</span> x</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>我知道这有点难理解。也许你看过结果之后就会容易得多了：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> specifier = optionalize(url.resourceSpecifier) ?? <span class="string">""</span> <span class="comment">// 适用于两个版本！</span></div></pre></td></tr></table></figure>
+<p>这样就发挥了可选值的封装优势，从而避免在调用的时候写恶心的条件编译代码了。<code>optionalize()</code> 方法做的事情就是把任何传进去的值转换成可选值，除非传入的已经是可选值的情况，在这种情况下，它就把参数直接返回。这样一来，不管 <code>url.resourceSpecifier</code> 是（Xcode 8）不是（Xcode 7）可选值，“optionalized“版本永远是一样的。</p>
+<p>（更深入地说：在 Swift 里面， <code>Foo</code> 可以被理解为 <code>Foo?</code> 的子类，因为你可以在不丢失信息的情况下把任何一个 <code>Foo</code> 类型的值封装成可选值。编译器一旦知道这点，它就允许传入一个非可选值来代替可选值参数 —— 将 <code>Foo</code> 封装到 <code>Foo?</code>。）</p>
+<h3 id="用别名来拯救签名的变化"><a href="#用别名来拯救签名的变化" class="headerlink" title="用别名来拯救签名的变化"></a>用别名来拯救签名的变化</h3><p>Swift 2.3 中，一些方法（特别是在 macOS 的 SDK 中）修改了它们的参数类型。</p>
+<p>比如，之前 <code>NSWindow</code> 的构造方法是这样的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">init</span>(contentRect: <span class="type">NSRect</span>, styleMask: <span class="type">Int</span>, backing: <span class="type">NSBackingStoreType</span>, <span class="keyword">defer</span>: <span class="type">Bool</span>)</div></pre></td></tr></table></figure>
+<p>现在变成了这样：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">init</span>(contentRect: <span class="type">NSRect</span>, styleMask: <span class="type">NSWindowStyleMask</span>, backing: <span class="type">NSBackingStoreType</span>, <span class="keyword">defer</span>: <span class="type">Bool</span>)</div></pre></td></tr></table></figure>
+<p>注意看 <code>styleMask</code> 的类型。之前它是一个 Int 松散类型（以全局常量方式输入的选项），但是在 Xcode 8 中，它以更合理的 <code>OptionSetType</code> 类型输入。</p>
+<p>不幸的是你不能条件编译函数体相同，而函数签名不同的两个版本。不过别担心，你可以通过条件编译给类型起别名的方式来解决这个问题！</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">#<span class="keyword">if</span> !swift(&gt;=<span class="number">2.3</span>)</div><div class="line"><span class="keyword">typealias</span> <span class="type">NSWindowStyleMask</span> = <span class="type">Int</span></div><div class="line">#endif</div></pre></td></tr></table></figure>
+<p>这样你就可以像 Swift 2.3 一样在方法签名中使用 <code>NSWindowStyleMask</code> 了。对于 Swift 2.2 而言，这个类型并不存在，<code>NSWindowStyleMask</code> 只是 <code>Int</code> 的一个别名，类型检查器仍然可以完美工作。</p>
+<h3 id="非正式-vs-正式协议"><a href="#非正式-vs-正式协议" class="headerlink" title="非正式 vs 正式协议"></a>非正式 vs 正式协议</h3><p>Swift 2.3 把一些之前的<a href="https://developer.apple.com/library/ios/documentation/General/Conceptual/DevPedia-CocoaCore/Protocol.html" target="_blank" rel="external">非正式协议</a> 改成了正式协议。</p>
+<p>比如，要实现一个 <code>CALayer</code> 代理，你只需要继承 <code>NSObject</code> 就可以了，不需要声明它符合 <code>CALayerDelegate</code> 协议。事实上，这个协议在 Xcode 7 中根本就不存在，只是现在有了。</p>
+<p>同样，直接对类声明那行代码做条件编译是不可行的。但是你可以通过在 Swift 2.2 中声明虚协议的方式来解决这个问题，就像下面这样：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">#<span class="keyword">if</span> !swift(&gt;=<span class="number">2.3</span>)</div><div class="line"><span class="keyword">private</span> <span class="class"><span class="keyword">protocol</span> <span class="title">CALayerDelegate</span> </span>&#123;&#125;</div><div class="line">#endif</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyView</span>: <span class="title">NSView</span>, <span class="title">CALayerDelegate</span> </span>&#123; . . . &#125;</div></pre></td></tr></table></figure>
+<p>（<a href="https://twitter.com/jckarter/status/758856922070065153" target="_blank" rel="external">Joe Groff 指出</a>，你也可以为 <code>CALayerDelegate</code> 起一个叫做 <code>Any</code> 的别名 —— 同样的结果，但是没什么开销。）</p>
+<h2 id="构建-iOS-10-的特性"><a href="#构建-iOS-10-的特性" class="headerlink" title="构建 iOS 10 的特性"></a>构建 iOS 10 的特性</h2><p>至此，你的项目可以同时在 Xcode 7 和 Xcode 8 上进行编译，不需要建立任何分支，这简直太棒了！</p>
+<p>现在就是构建 iOS 10 特性的时候了，因为已经有了上面所说的各种提示和小技巧，所以这件事情会变得非常简单。但是，还是有一些需要注意的事情：</p>
+<ol>
+<li>只用 <code>@available(iOS 10, *)</code> 和 <code>if #available(iOS 10, *)</code> 是不够的。首先，不要在发布的应用中编译任何 iOS 10 的代码，因为这样比较安全。更为重要的原因是，编译器需要检查这些代码，从而保证 API 的使用是安全的，这样就需要注意被调用的 API 是存在的。如果你使用了 iOS 9 的 SDK 中不存在的方法或者类型，那么你的代码就无法在 Xcode 7 中通过编译。</li>
+<li>你需要把所有 iOS 10 专用的代码封装在 <code>#if swift(&gt;=2.3)</code> 中（目前你可以认为 Swift 2.3 和 iOS 10 是相等的）。</li>
+<li>大部分时候，你会<em>同时</em>需要条件编译（这样你就不会在 Xcode 7 中编译那些不可用的代码） 和 <code>@available/#available</code>（用来通过 Xcode 8 的安全检查）。</li>
+<li>如果需要处理 iOS 10 独有的特性，最简单的方式就是把相关代码抽离到单独的文件中 —— 这样一来你就可以把整个文件的内容都包含在一个 <code>#if swift…</code> 判断中（在 Xcode 7 中这个文件还是可能会被编译器处理，但是里面的内容都会被忽略。）</li>
+</ol>
+<h2 id="应用扩展"><a href="#应用扩展" class="headerlink" title="应用扩展"></a>应用扩展</h2><p>但问题是，你可能想要在 iOS 10 上为你的应用添加一些新的扩展，而不是仅仅给应用本身添加更多的代码。</p>
+<p>这就很棘手了。我们可以条件编译我们的代码，但是没有“条件目标“这种东西。</p>
+<p>好消息是，只要 Xcode 7 无需实际地编译这些目标，它就不会向你抱怨什么。（是的，它可能会发出警告，告诉你项目包含一个目标，用于配置将应用部署到一个比基础 SDK 版本更高的 iOS 上，它会发布到一个比 base SDK 版本更高的 iOS 版本上，但是这不是什么大问题。）</p>
+<p>所以方法就是：在每个地方都保留构建目标和它的代码，但是有选择地从应用构建目标 build phases 标签页的 “Target Dependencies“ 和 “Embed App Extensions“ 选项中移除它们。</p>
+<p>如何做到这一点呢？我想到的最佳方式是默认禁用构建设置中的应用扩展，从而兼容 Xcode 7。然后只有在使用 Xcode 8的时候，才暂时重新添加这些扩展，并且任何时候都不提交这些变动。</p>
+<p>如果每次都手动做，听起来太反复无常了（更别说与 CI 和自动化构建的不兼容），别担心，我帮你写了<a href="https://github.com/radex/configure_extensions" target="_blank" rel="external">一个脚本</a>！</p>
+<p>安装：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">sudo gem install configure_extensions</div></pre></td></tr></table></figure>
+<p>在提交 Xcode 项目的任何变化之前，从应用的构建目标中移除 iOS 10 专用的应用扩展：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">configure_extensions remove <span class="type">MyApp</span>.xcodeproj <span class="type">MyAppTarget</span> <span class="type">NotificationsUI</span> <span class="type">Intents</span></div></pre></td></tr></table></figure>
+<p>然后在 Xcode 8 中使用时，把它们添加回来：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">configure_extensions add <span class="type">MyApp</span>.xcodeproj <span class="type">MyAppTarget</span> <span class="type">NotificationsUI</span> <span class="type">Intents</span></div></pre></td></tr></table></figure>
+<p>你可以把这个放到你的 <code>script/</code> 文件夹中，然后可以把它加到 Xcode 构建的预处理中，也可以加到 Git 的预提交 hook 上，或者集成到 CI 和自动化构建系统中。（更多信息请参照 <a href="https://github.com/radex/configure_extensions" target="_blank" rel="external">GitHub</a>）</p>
+<p>关于 iOS 10 应用扩展需要注意的最后一点：Xcode 给这些扩展建立的模板是基于 Swift 3 的，而不是 Swift 2.3 的代码。所以一定要注意把应用扩展的 “Use Legacy Swift Language Version“ 构建选项设置为 “Yes“，然后把代码用 Swift 2.3 重写。</p>
+<h2 id="到了-9-月"><a href="#到了-9-月" class="headerlink" title="到了 9 月"></a>到了 9 月</h2><p>到了 9 月份，iOS 10 就出来了，那个时候我们需要去掉对 Xcode 7 的支持并清理项目！</p>
+<p>我给你准备了一个确认清单（记得加入书签，以备日后参考）：</p>
+<ul>
+<li>移除所有 Swift 2.2 的代码和不必要的 <code>#if swift(&gt;=2.3)</code> 检查</li>
+<li>移除所有过渡处理，比如对 <code>optionalize()</code> 的使用，临时定义的别名，或是创建的虚协议</li>
+<li>移除 <code>configure_extensions</code> 脚本，然后把增加了新应用扩展支持的项目设置提交到代码库</li>
+<li>如果你使用了 CocoaPods，把它更新，然后移除之前我们添加到 Podfile 中 <code>post_install</code> hook（9月份以后基本就用不上了）</li>
+<li>更新为 Xcode 推荐的项目设置（在侧边栏中选中项目，然后在菜单中选择：Editor → Validate Settings…）</li>
+<li>考虑把 provisioning 设置升级，使用新的 <code>PROVISIONING_PROFILE_SPECIFIER</code></li>
+<li>回滚所有的 <code>.xib</code> 和 <code>.storyboard</code> 的文件，使用默认设置 “Opens in: Latest Xcode (8.0)“。</li>
+<li>确保你依赖的所有 Swift 库都已经升级到了 Swift 3。如果没有，可以考虑自己对 Swift 3 移植做出贡献</li>
+<li>上面的步骤都搞定之后，就可以把应用更新到 Swift 3 了！找到 Edit → Convert → To Current Swift Syntax…，选择所有的构建目标（记住，你需要一次全部转换好），review 一下 diff，测试，然后提交！</li>
+<li>如果你尚未完成这些步骤，不妨考虑移除对 iOS 8 的支持——这样一来你就可以告别更多的 <code>@available</code> 检查和其他的条件语句。</li>
+</ul>
+<p>祝好运！</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/radex-io/">radex.io</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/iOS-开发/">iOS 开发</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/09/02/xcode7-xcode8/" data-title="同时兼容 Xcode7 和 Xcode8 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/09/05/pdf-generation-ios/" title="在 iOS 中使用 HTML 模版和 UIPrintPageRenderer 生成 PDF">
+  <strong>上一篇</strong><br/>
+  <span>
+  在 iOS 中使用 HTML 模版和 UIPrintPageRenderer 生成 PDF</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/09/01/packing-bytes-in-swift/"  title="Swift 中动手封装字节">
+ <strong>下一篇</strong><br/> 
+ <span>Swift 中动手封装字节
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/09/02/xcode7-xcode8/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#你用的是-Swift-2-3"><span class="toc-number">1.</span> <span class="toc-text">你用的是 Swift 2.3</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Xcode-的设置"><span class="toc-number">2.</span> <span class="toc-text">Xcode 的设置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Swift-版本"><span class="toc-number">2.1.</span> <span class="toc-text">Swift 版本</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Framework-provisioning"><span class="toc-number">2.2.</span> <span class="toc-text">Framework provisioning</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Interface-Builder"><span class="toc-number">2.3.</span> <span class="toc-text">Interface Builder</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SDK-版本"><span class="toc-number">2.4.</span> <span class="toc-text">SDK 版本</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CocoaPods-设置"><span class="toc-number">2.5.</span> <span class="toc-text">CocoaPods 设置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#在-Xcode-8-中打开"><span class="toc-number">2.6.</span> <span class="toc-text">在 Xcode 8 中打开</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#处理-Swift-2-3-的差异"><span class="toc-number">3.</span> <span class="toc-text">处理 Swift 2.3 的差异</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#条件编译"><span class="toc-number">3.1.</span> <span class="toc-text">条件编译</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#可选性的变化"><span class="toc-number">3.2.</span> <span class="toc-text">可选性的变化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#用别名来拯救签名的变化"><span class="toc-number">3.3.</span> <span class="toc-text">用别名来拯救签名的变化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#非正式-vs-正式协议"><span class="toc-number">3.4.</span> <span class="toc-text">非正式 vs 正式协议</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#构建-iOS-10-的特性"><span class="toc-number">4.</span> <span class="toc-text">构建 iOS 10 的特性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#应用扩展"><span class="toc-number">5.</span> <span class="toc-text">应用扩展</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#到了-9-月"><span class="toc-number">6.</span> <span class="toc-text">到了 9 月</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

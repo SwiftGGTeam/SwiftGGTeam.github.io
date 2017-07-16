@@ -1,0 +1,928 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>面向协议的日志：给 Swift 协议添加默认参数 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift协议,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="在 Swift 中的协议不允许给方法参数指定默认值，那么要怎么做才能实现给 Swift 协议添加默认参数呢，本文就来讲解下吧。">
+<meta name="keywords" content="swift协议">
+<meta property="og:type" content="article">
+<meta property="og:title" content="面向协议的日志：给 Swift 协议添加默认参数">
+<meta property="og:url" content="https://swift.gg/2016/09/12/default-arguments-in-protocols/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="在 Swift 中的协议不允许给方法参数指定默认值，那么要怎么做才能实现给 Swift 协议添加默认参数呢，本文就来讲解下吧。">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="面向协议的日志：给 Swift 协议添加默认参数">
+<meta name="twitter:description" content="在 Swift 中的协议不允许给方法参数指定默认值，那么要怎么做才能实现给 Swift 协议添加默认参数呢，本文就来讲解下吧。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/09/12/default-arguments-in-protocols/" target="_blank" title="面向协议的日志：给 Swift 协议添加默认参数" itemprop="url">面向协议的日志：给 Swift 协议添加默认参数</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-09-11T16:00:00.000Z" itemprop="datePublished">2016-09-12</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Natasha The Robot，<a href="http://oleb.net/blog/2016/05/default-arguments-in-protocols/" target="_blank" rel="external">原文链接</a>，原文日期：2016-05-01<br>译者：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="external">Channe</a>；校对：<a href="http://chengway.in/" target="_blank" rel="external">walkingway</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p><strong>Swift 2.2 不允许在协议声明时提供默认参数。如果你想使用协议抽象出 App 中的日志代码，就会面临一个问题。因为默认参数通常用来将源代码位置传递给日志函数。不过，你可以在协议扩展中使用默认参数，这是一个变通方案。</strong></p>
+<p>一个典型的<a href="https://en.wikipedia.org/wiki/Logfile" target="_blank" rel="external">日志</a>消息应该包括日志事件的源代码位置（文件名、行号和可能的函数名）。Swift 为此提供了 <code>#file</code>，<code>#line</code>，<code>#column</code> 和 <code>#function</code> <a href="https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/Expressions.html#//apple_ref/doc/uid/TP40014097-CH32-ID390" target="_blank" rel="external">调试标识</a>。在编译时，解析器将这些占位符展开为字符串或用来描述当前源代码位置的整数字面量。如果我们在每次调用日志函数时都包含这些参数，那重复的次数太多，所以它们通常都是作为默认参数传递。这里之所以可行是因为编译器足够聪明，能够在评估默认参数列表时将调试标识扩展到<a href="https://en.wikipedia.org/wiki/Call_site" target="_blank" rel="external">函数调用处</a>。标准库中的 <a href="http://swiftdoc.org/v2.2/func/assert/#func-assert_-bool_-string-file_-staticstring-line_-uint" target="_blank" rel="external">assert</a> 函数就是<a href="https://developer.apple.com/swift/blog/?id=15" target="_blank" rel="external">一个例子</a>，它这样声明：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">assert</span><span class="params">(</span></span></div><div class="line">    @autoclosure condition: <span class="params">()</span> -&gt; <span class="type">Bool</span>,</div><div class="line">    <span class="meta">@autoclosure</span> <span class="number">_</span> message: () -&gt; <span class="type">String</span> = <span class="keyword">default</span>,</div><div class="line">    file: <span class="type">StaticString</span> = #file,</div><div class="line">    line: <span class="type">UInt</span> = #line)</div></pre></td></tr></table></figure>
+<p>第三个和第四个参数默认扩展为调用者源代码的位置。（如果你对 <code>@autoclosure</code> 属性有疑问，它把一个表达式封装为一个闭包，有效地将表达式的执行从调用处延迟到函数体执行时，即闭包表达式在明确使用时才会执行。<code>assert</code> 只在调试构建时使用它来执行 condition 参数的计算（可能代价高昂或者有副作用），同时只在断言失败时才计算 message 参数。）</p>
+<a id="more"></a>
+<h2 id="一个简单、全局的日志函数"><a href="#一个简单、全局的日志函数" class="headerlink" title="一个简单、全局的日志函数"></a>一个简单、全局的日志函数</h2><p>你可以使用同样的方法来写一个日志函数，该函数需要一个日志消息和一个日志级别作为参数。它的接口和实现类似于：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">enum</span> <span class="title">LogLevel</span>: <span class="title">Int</span> </span>&#123;</div><div class="line">    <span class="keyword">case</span> verbose = <span class="number">1</span></div><div class="line">    <span class="keyword">case</span> debug = <span class="number">2</span></div><div class="line">    <span class="keyword">case</span> info = <span class="number">3</span></div><div class="line">    <span class="keyword">case</span> warning = <span class="number">4</span></div><div class="line">    <span class="keyword">case</span> error = <span class="number">5</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">log</span><span class="params">(</span></span></div><div class="line">    logLevel: LogLevel,</div><div class="line">    @autoclosure <span class="number">_</span> message: <span class="params">()</span> -&gt; <span class="type">String</span>,</div><div class="line">    file: <span class="type">StaticString</span> = #file,</div><div class="line">    line: <span class="type">Int</span> = #line,</div><div class="line">    function: <span class="type">StaticString</span> = #function)</div><div class="line">&#123;</div><div class="line">    <span class="comment">// 使用 `print` 打印日志</span></div><div class="line">    <span class="comment">// 此时不用考虑 `logLevel`</span></div><div class="line">    <span class="built_in">print</span>(<span class="string">"<span class="subst">\(logLevel)</span> – <span class="subst">\(file)</span>:<span class="subst">\(line)</span> – <span class="subst">\(function)</span> – <span class="subst">\(message()</span>)"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>你可能主张使用另一种方法，而不是像这里将 message 参数声明为 <code>@autoclosure</code>。这个属性并没有提供多少好处，因为 message 参数无论什么情况都会计算。既然如此，我们来修改一下。</p>
+<h2 id="具体类型"><a href="#具体类型" class="headerlink" title="具体类型"></a>具体类型</h2><p>为了代替全局的日志函数，我们创建一种叫做 <code>PrintLogger</code> 的类型，它用最小日志级别初始化，只会记录最小日志级别的事件。<code>LogLevel</code> 因此需要 <code>Comparable</code> 协议，这是为什么我之前把它声明为 <code>Int</code> 型来存储原始数据的原因：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">LogLevel</span>: <span class="title">Comparable</span> </span>&#123;&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> &lt;(lhs: LogLevel, rhs: LogLevel) -&gt; <span class="title">Bool</span> </span>&#123;</div><div class="line">    <span class="keyword">return</span> lhs.rawValue &lt; rhs.rawValue</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">PrintLogger</span> </span>&#123;</div><div class="line">    <span class="keyword">let</span> minimumLogLevel: <span class="type">LogLevel</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">log</span><span class="params">(</span></span></div><div class="line">        logLevel: LogLevel,</div><div class="line">        @autoclosure <span class="number">_</span> message: <span class="params">()</span> -&gt; <span class="type">String</span>,</div><div class="line">        file: <span class="type">StaticString</span> = #file,</div><div class="line">        line: <span class="type">Int</span> = #line,</div><div class="line">        function: <span class="type">StaticString</span> = #function)</div><div class="line">    &#123;</div><div class="line">        <span class="keyword">if</span> logLevel &gt;= minimumLogLevel &#123;</div><div class="line">            <span class="built_in">print</span>(<span class="string">"<span class="subst">\(logLevel)</span> – <span class="subst">\(file)</span>:<span class="subst">\(line)</span> – <span class="subst">\(function)</span> – <span class="subst">\(message()</span>)"</span>)</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>你将会这样使用 <code>PrintLogger</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> logger = <span class="type">PrintLogger</span>(</div><div class="line">    minimumLogLevel: .warning)</div><div class="line">logger.log(.error, <span class="string">"This is an error log"</span>)</div><div class="line">    <span class="comment">// 获取日志</span></div><div class="line">logger.log(.debug, <span class="string">"This is a debug log"</span>)</div><div class="line">    <span class="comment">// 啥也没做</span></div></pre></td></tr></table></figure>
+<h2 id="带默认参数的协议"><a href="#带默认参数的协议" class="headerlink" title="带默认参数的协议"></a>带默认参数的协议</h2><p>下一步，我将会创建一个 <code>Logger</code> 协议作为 <code>PrintLogger</code> 的抽象。它将允许我今后使用更高级的实现替换简单的 print 语句，比如记录日志到文件或者发送日志给服务器。但是，我在这里碰了壁，因为 Swift 不允许在协议声明时提供默认参数。下面的代码无法通过编译：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">Logger</span> </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">log</span><span class="params">(</span></span></div><div class="line">        logLevel: LogLevel,</div><div class="line">        @autoclosure <span class="number">_</span> message: <span class="params">()</span> -&gt; <span class="type">String</span>,</div><div class="line">        file: <span class="type">StaticString</span> = #file,</div><div class="line">        line: <span class="type">Int</span> = #line,</div><div class="line">        function: <span class="type">StaticString</span> = #function)</div><div class="line">    <span class="comment">// 错误: 协议方法中不允许默认参数</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>因此，我不得不删掉默认参数，使协议编译能够通过。这似乎并不是一个问题。<code>PrintLogger</code> 可以使用带有空扩展的协议，它目前的实现基本上能满足要求。通过使用一个 <code>logger: PrintLogger</code> 类型的变量和之前的用法没有什么区别。</p>
+<p>如果你尝试使用一个 <code>logger2: Logger</code> 协议类型的变量，问题马上就来了，因为你调用代码时是猜不到具体的实现的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> logger2: <span class="type">Logger</span> = <span class="type">PrintLogger</span>(minimumLogLevel: .warning)</div><div class="line">logger2.log(.error, <span class="string">"An error occurred"</span>)</div><div class="line">    <span class="comment">// 错误：调用时缺少参数</span></div><div class="line">logger2.log(.error, <span class="string">"An error occurred"</span>, file: #file, line: #line, function: #function)</div><div class="line">    <span class="comment">// 可用但是 😱</span></div></pre></td></tr></table></figure>
+<p><code>logger2</code> 只知道这个日志函数有五个必须的参数，所以你不得不每次都全部写上它们。讨厌！</p>
+<h2 id="把默认参数移到协议扩展里"><a href="#把默认参数移到协议扩展里" class="headerlink" title="把默认参数移到协议扩展里"></a>把默认参数移到协议扩展里</h2><p>解决方法是声明两个版本的日志函数：一，在协议声明时没有默认参数，我命名这个方法为 <code>writeLogEntry</code>。二，在 <code>Logger</code> 的协议扩展里包含默认参数（这是允许的），我保持这个方法名就为 <code>log</code>，因为该方法会是这个协议的公开接口。</p>
+<p>现在，<code>log</code> 的实现只有一行代码：调用 <code>writeLogEntry</code>，传入所有参数，而调用者通过默认参数传入了源代码位置。<code>writeLogEntry</code> 从另一方面来说是协议必须实现的适配器方法，用来执行实际的日志操作。这里是完整的协议代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">Logger</span> </span>&#123;</div><div class="line">    <span class="comment">/// 打印一条日志</span></div><div class="line">    <span class="comment">/// 类型必须遵循 Logger 协议的必选参数</span></div><div class="line">    <span class="comment">/// - 注意：Logger 的调用者永远不应该调用此方法</span></div><div class="line">     <span class="comment">/// 总是调用 log(_:,_:) 方法</span></div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">writeLogEntry</span><span class="params">(</span></span></div><div class="line">        logLevel: LogLevel,</div><div class="line">        @autoclosure <span class="number">_</span> message: <span class="params">()</span> -&gt; <span class="type">String</span>,</div><div class="line">        file: <span class="type">StaticString</span>,</div><div class="line">        line: <span class="type">Int</span>,</div><div class="line">        function: <span class="type">StaticString</span>)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Logger</span> </span>&#123;</div><div class="line">    <span class="comment">/// Logger 协议的公开 API</span></div><div class="line">    <span class="comment">/// 只是调用 writeLogEntry(_:,_:,file:,line:,function:) 方法</span></div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">log</span><span class="params">(</span></span></div><div class="line">        logLevel: LogLevel,</div><div class="line">        @autoclosure <span class="number">_</span> message: <span class="params">()</span> -&gt; <span class="type">String</span>,</div><div class="line">        file: <span class="type">StaticString</span> = #file,</div><div class="line">        line: <span class="type">Int</span> = #line,</div><div class="line">        function: <span class="type">StaticString</span> = #function)</div><div class="line">    &#123;</div><div class="line">        writeLogEntry(logLevel, message,</div><div class="line">            file: file, line: line,</div><div class="line">            function: function)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>按照 <a href="https://developer.apple.com/videos/play/wwdc2015/408/" target="_blank" rel="external">session 408</a> 的说法，<code>writeLogEntry</code> 是一个<em>协议要求</em>和协议的<em>用户自定义点</em>，但 <code>log</code> 并不是。这就是我们想要的。<code>log</code> 方法的唯一任务就是立刻转发给 <code>writeLogEntry</code>，<code>writeLogEntry</code> 包含了实际的逻辑。实现 <code>Logger</code> 协议时就没有理由重写<code>log</code>方法了。</p>
+<p>下面是采用协议后的完整 <code>PrintLogger</code> 类型：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">PrintLogger</span> </span>&#123;</div><div class="line">    <span class="keyword">let</span> minimumLogLevel: <span class="type">LogLevel</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">PrintLogger</span>: <span class="title">Logger</span> </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">writeLogEntry</span><span class="params">(</span></span></div><div class="line">        logLevel: LogLevel,</div><div class="line">        @autoclosure <span class="number">_</span> message: <span class="params">()</span> -&gt; <span class="type">String</span>,</div><div class="line">        file: <span class="type">StaticString</span>,</div><div class="line">        line: <span class="type">Int</span>,</div><div class="line">        function: <span class="type">StaticString</span>)</div><div class="line">    &#123;</div><div class="line">        <span class="keyword">if</span> logLevel &gt;= minimumLogLevel &#123;</div><div class="line">            <span class="built_in">print</span>(<span class="string">"<span class="subst">\(logLevel)</span> – <span class="subst">\(file)</span>:<span class="subst">\(line)</span> – <span class="subst">\(function)</span> – <span class="subst">\(message()</span>)"</span>)</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>现在你可以像期望中那样使用协议了：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> logger3: <span class="type">Logger</span> = <span class="type">PrintLogger</span>(</div><div class="line">    minimumLogLevel: .verbose)</div><div class="line">logger3.log(.error, <span class="string">"An error occurred"</span>) <span class="comment">// 撒花🎉</span></div></pre></td></tr></table></figure>
+<h2 id="调用者的-API-可见度"><a href="#调用者的-API-可见度" class="headerlink" title="调用者的 API 可见度"></a>调用者的 API 可见度</h2><p>这个方法有一个弊端，不能简便清晰的通过<a href="https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/AccessControl.html" target="_blank" rel="external">访问控制</a>给使用者指出协议中的 <code>log</code> 和 <code>writeLogEntry</code> 的作用。理想情况下，调用者使用协议时不会看到 <code>writeLogEntry</code> 方法，然而部署协议的对象可能同时看到 <code>log</code> 和 <code>writeLogEntry</code> 。如果你不想让调用者创建自己的 <code>Logger</code> 类型，只能使用 <code>public</code> 、 <code>internal</code> 和 <code>private</code>。当然，通过文档说明情况也是一个选择。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Ole-Begemann/">Ole Begemann</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/09/12/default-arguments-in-protocols/" data-title="面向协议的日志：给 Swift 协议添加默认参数 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/09/13/cagradientlayer/" title="利用 CAGradientLayer 实现渐变色效果">
+  <strong>上一篇</strong><br/>
+  <span>
+  利用 CAGradientLayer 实现渐变色效果</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/09/09/closure-capture-1/"  title="闭包捕获语义第一弹：一网打尽！">
+ <strong>下一篇</strong><br/> 
+ <span>闭包捕获语义第一弹：一网打尽！
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/09/12/default-arguments-in-protocols/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#一个简单、全局的日志函数"><span class="toc-number">1.</span> <span class="toc-text">一个简单、全局的日志函数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#具体类型"><span class="toc-number">2.</span> <span class="toc-text">具体类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#带默认参数的协议"><span class="toc-number">3.</span> <span class="toc-text">带默认参数的协议</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#把默认参数移到协议扩展里"><span class="toc-number">4.</span> <span class="toc-text">把默认参数移到协议扩展里</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#调用者的-API-可见度"><span class="toc-number">5.</span> <span class="toc-text">调用者的 API 可见度</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

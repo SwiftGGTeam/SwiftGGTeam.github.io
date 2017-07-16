@@ -1,0 +1,932 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>Swift 2.1 函数类型转换：协变与逆变 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：uraimo，原文链接，原文日期：2015-09-29译者：Lanford3_3；校对：shanks；定稿：Cee    这篇 Swift 2.1 相关的文章需要使用 Xcode 7.1 beta 或者更新的版本， 你可以通过 GitHub 或者是 zip 文件 来获取相关 playground 文件。  在即将和 Xcode 7.1 一起到来的 Swift 2.1 中（译者注：原文发表于">
+<meta name="keywords" content="Swift 进阶">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Swift 2.1 函数类型转换：协变与逆变">
+<meta property="og:url" content="https://swift.gg/2016/04/05/Swift2.1-Function-Types-Conversion-Covariance-Contravariance/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：uraimo，原文链接，原文日期：2015-09-29译者：Lanford3_3；校对：shanks；定稿：Cee    这篇 Swift 2.1 相关的文章需要使用 Xcode 7.1 beta 或者更新的版本， 你可以通过 GitHub 或者是 zip 文件 来获取相关 playground 文件。  在即将和 Xcode 7.1 一起到来的 Swift 2.1 中（译者注：原文发表于">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Swift 2.1 函数类型转换：协变与逆变">
+<meta name="twitter:description" content="作者：uraimo，原文链接，原文日期：2015-09-29译者：Lanford3_3；校对：shanks；定稿：Cee    这篇 Swift 2.1 相关的文章需要使用 Xcode 7.1 beta 或者更新的版本， 你可以通过 GitHub 或者是 zip 文件 来获取相关 playground 文件。  在即将和 Xcode 7.1 一起到来的 Swift 2.1 中（译者注：原文发表于">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/04/05/Swift2.1-Function-Types-Conversion-Covariance-Contravariance/" target="_blank" title="Swift 2.1 函数类型转换：协变与逆变" itemprop="url">Swift 2.1 函数类型转换：协变与逆变</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-04-04T16:00:00.000Z" itemprop="datePublished">2016-04-05</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：uraimo，<a href="https://www.uraimo.com/2015/09/29/Swift2.1-Function-Types-Conversion-Covariance-Contravariance/" target="_blank" rel="external">原文链接</a>，原文日期：2015-09-29<br>译者：<a href="http://lanfordcai.github.io" target="_blank" rel="external">Lanford3_3</a>；校对：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a>；定稿：<a href="https://github.com/Cee" target="_blank" rel="external">Cee</a></p>
+</blockquote>
+<!--此处开始正文-->
+<blockquote>
+<p>这篇 Swift 2.1 相关的文章需要使用 Xcode 7.1 beta 或者更新的版本， 你可以通过 <a href="https://github.com/uraimo/Swift-Playgrounds" target="_blank" rel="external">GitHub</a> 或者是 <a href="https://www.uraimo.com/2015/09/29/Swift2.1-Function-Types-Conversion-Covariance-Contravariance/" target="_blank" rel="external">zip 文件</a> 来获取相关 playground 文件。</p>
+</blockquote>
+<p>在即将和 Xcode 7.1 一起到来的 Swift 2.1 中（译者注：原文发表于 2015 年 9 月=，=），函数类型将支持协变与逆变。让我们看看这意味着什么。 </p>
+<a id="more"></a>
+<p>在计算机科学及类型推断的语境中，型变（variance）这个词表示的是，两种类型之间的关系是如何影响他们派生出的复杂类型之间的关系的。复杂类型间的关系，根据原始类型间的关系来看，无外乎不变（invariance）、协变（covariance）与逆变（contravariance）。要高效地使用复杂类型，理解这种派生关系是如何定义的是非常重要的。</p>
+<p>我们用伪代码来对此进行阐释。考虑这样一个复杂的参数类型 <code>List&lt;T&gt;</code> 和两个简单类型: <code>Car</code> 和 <code>Car</code> 的一个子类型（subtype） <code>Maserati</code>。</p>
+<p>我们把已有的两种类型作为 <code>List&lt;T&gt;</code> 的 <code>T</code> 来获得两种新类型，之后就可以通过讨论新类型的关系，来对不变，协变和逆变加以解释：</p>
+<ul>
+<li><strong>协变</strong>：如果 <code>List&lt;Maserati&gt;</code> 也是 <code>List&lt;Car&gt;</code> 的子类型，那么原始类型间的关系也存在于 <code>List</code> 中，这是因为，<code>List</code> 和他的原始类型是<em>协变</em>的。</li>
+<li><strong>逆变</strong>：但倘若 <code>List&lt;Car&gt;</code> 是 <code>List&lt;Maserati&gt;</code> 的子类型，那么原始类型间的关系和 <code>List</code> 派生出的复杂类型间的关系是相反的，因为 <code>List</code> 相对于它的原始类型是<em>逆变</em>的。</li>
+<li><strong>不变</strong>：<code>List&lt;Car&gt;</code> 不是 <code>List&lt;Maserati&gt;</code> 的子类型，反之亦然，则两种复杂类型间没有衍生关系。</li>
+</ul>
+<p>每种语言都采用了一个特定的型变方法集，了解复杂类型间是如何相互联系的，有助于理解两个复杂类型是否兼容，是否能在一些情境下互换，就像是一种类型和他的子类型那样。</p>
+<p>在函数类型（Function Types）的语境中，复杂类型的兼容问题可以归结为一个简单的问题：当你需要使用 A 类型的函数时，在什么情况下使用 B 类型的函数进行替代是安全的？</p>
+<p>一个通用的规则是，能够兼容的函数类型有这样的特征：其参数是更加泛用的父类型（相比于 A 函数所声明的参数类型，A 的调用者也能够处理更特殊的参数），返回的结果则是一个更加特殊的子类型（A 的调用者会把返回值的类型当成 A 中声明的父类型的简化版）[^1]，参数是逆变的，而返回值是协变的。</p>
+<blockquote>
+<p>译者注：如果 <code>T1</code> 是 <code>T2</code> 的子类型，则可以表示为 <code>T1 &lt; T2</code>，那么上面的规则就可以表示为：对函数类型 <code>F1 = S1 -&gt; T1</code> 和 <code>F2 = S2 -&gt; T2</code> 来说，当且仅当 <code>S2 &lt; S1</code> 且 <code>T1 &lt; T2</code> 时，<code>F1</code> 是 <code>F2</code> 的子类型。<br><code>S1</code> 和 <code>S2</code> 在入参位置上，他们之间的关系和 <code>F1</code> 与 <code>F2</code> 间的关系是相反的，所以入参是逆变的，同时，<code>T1</code> 和 <code>T2</code> 在出参位置上，他们之间的关系和 <code>F1</code> 与 <code>F2</code> 间的关系是相同的，所以出参是协变的。</p>
+</blockquote>
+<p>在 Swift 2.1 前的版本中，函数类型都是不变（invariance）的，如果你在 Playground 中尝试运行下面的代码，你会得到一些类似这样的警告：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"></div><div class="line"><span class="comment">// Cannot convert value of type '(Int) -&gt; Int' to expected argument type '(Int) -&gt; Any </span></div><div class="line"><span class="comment">// (无法把 '(Int) -&gt; Int' 转换为期望的参数类型 '(Int) -&gt; Any')</span></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">testVariance</span><span class="params">(foo:<span class="params">(Int)</span></span></span>-&gt;<span class="type">Any</span>)&#123;foo(<span class="number">1</span>)&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">innerAnyInt</span><span class="params">(p1:Any)</span></span> -&gt; <span class="type">Int</span>&#123; <span class="keyword">return</span> <span class="number">1</span> &#125;</div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">innerAnyAny</span><span class="params">(p1:Any)</span></span> -&gt; <span class="type">Any</span>&#123; <span class="keyword">return</span> <span class="number">1</span> &#125;</div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">innerIntInt</span><span class="params">(p1:Int)</span></span> -&gt; <span class="type">Int</span>&#123; <span class="keyword">return</span> <span class="number">1</span> &#125;</div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">innerIntAny</span><span class="params">(p1:Int)</span></span> -&gt; <span class="type">Any</span>&#123; <span class="keyword">return</span> <span class="number">1</span> &#125;</div><div class="line"></div><div class="line">testVariance(innerIntAny)</div><div class="line">testVariance(innerAnyInt)</div><div class="line">testVariance(innerAnyAny)</div><div class="line">testVariance(innerIntInt)</div></pre></td></tr></table></figure>
+<p>在 Swift 2.1 中情况发生了改变，Swift 已经支持函数类型转换，现在参数是逆变的，而返回值是协变的。</p>
+<p>回到上面的示例代码，即便 <code>testVariance</code> 函数输入参数的类型是 <code>Int -&gt; Any</code>，但现在传入 <code>Any -&gt; Any</code>、<code>Any -&gt; Int</code>、<code>Int -&gt; Int</code> 三种类型的函数也都是允许的。 </p>
+<blockquote>
+<p>译者注：上述这个 Int 和 Any 的例子其实并不合适，因为 Int 并不是 Any 的子类型。可以参考下面这个例子：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">&gt;<span class="class"><span class="keyword">class</span> <span class="title">Animal</span> </span>&#123;&#125;</div><div class="line">&gt;<span class="class"><span class="keyword">class</span> <span class="title">Cat</span>: <span class="title">Animal</span> </span>&#123;&#125;</div><div class="line"></div><div class="line">&gt;<span class="function"><span class="keyword">func</span> <span class="title">innerAnimalCat</span><span class="params">(p1: Animal)</span></span> -&gt; <span class="type">Cat</span> &#123; <span class="keyword">return</span> <span class="type">Cat</span>() &#125;</div><div class="line">&gt;<span class="function"><span class="keyword">func</span> <span class="title">innerAnimalAnimal</span><span class="params">(p1: Animal)</span></span> -&gt; <span class="type">Animal</span> &#123; <span class="keyword">return</span> <span class="type">Cat</span>() &#125;</div><div class="line">&gt;<span class="function"><span class="keyword">func</span> <span class="title">innerCatCat</span><span class="params">(p1: Cat)</span></span> -&gt; <span class="type">Cat</span> &#123; <span class="keyword">return</span> <span class="type">Cat</span>() &#125;</div><div class="line">&gt;<span class="function"><span class="keyword">func</span> <span class="title">innerCatAnimal</span><span class="params">(p1: Cat)</span></span> -&gt; <span class="type">Animal</span> &#123; <span class="keyword">return</span> <span class="type">Cat</span>() &#125;</div><div class="line"></div><div class="line">&gt;<span class="function"><span class="keyword">func</span> <span class="title">testVariance</span><span class="params">(foo: <span class="params">(Cat)</span></span></span> -&gt; <span class="type">Animal</span>) &#123; foo(<span class="type">Cat</span>()) &#125;</div><div class="line"></div><div class="line">&gt;testVariance(innerAnimalCat)</div><div class="line">&gt;testVariance(innerAnimalAnimal)</div><div class="line">&gt;testVariance(innerCatCat)</div><div class="line">&gt;testVariance(innerCatAnimal)</div><div class="line">&gt;</div></pre></td></tr></table></figure>
+</blockquote>
+<p>说点什么？来 <a href="https://www.twitter.com/uraimo" target="_blank" rel="external">Twitter</a> 找我吧~</p>
+<p>校者注：关于协变与逆变，还可以参考翻译组翻译的另外一篇文章，解释的更加详细：<a href="http://swift.gg/2015/12/24/friday-qa-2015-11-20-covariance-and-contravariance/">Friday Q&amp;A 2015-11-20：协变与逆变</a></p>
+<hr>
+<p>[^1]: 我并不太理解括号中的内容。对于这段话想表达的意思，举个例子来说明应该是，定义类型 <code>Animal</code> 及其子类型 <code>Cat</code>，对于函数 <code>test(catAnimalF: Cat -&gt; Animal)</code> 中的函数类型 A <code>catAnimalF: Cat -&gt; Animal</code> 来说，是可以使用函数 B <code>animalCatF: Animal -&gt; Cat</code> 来替换的。因为 <code>animalCatF</code> 相较于 <code>catAnimalF</code>，其参数类型 <code>Animal</code> 是比 <code>Cat</code> 更加泛用的父类型，而其返回值类型则更加特殊。但作者在括号内的解释我却没看懂。第一个括号是想说，用 B 替代 A 之后，相较于 A 所声明的参数类型（<code>Cat</code>），A 的调用者（<code>test</code>）能够处理一个更加特殊的类型？感觉不对诶…第二个括号意思是，在用 B 替代 A 后，其调用者（<code>test</code>）会把返回的类型（<code>Cat</code>）作为 A 中声明的返回类型（<code>Animal</code>）的简化版处理？这个倒好像说的过去囧…（校者注：第一个括号的理解，A 的调用者，也就是函数 <code>test</code>，函数类型的入参可以是 <code>Cat</code> 的父类，也就是 <code>Animal</code>，译者理解是对的，第二个括号理解也是对的。）(定稿注：正好翻译了之前那篇「协变与逆变」，所以译者的理解是正确的。)</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/uraimo/">uraimo</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/04/05/Swift2.1-Function-Types-Conversion-Covariance-Contravariance/" data-title="Swift 2.1 函数类型转换：协变与逆变 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/04/06/swift-evolution-acceptances-the-big-three/" title="Swift 进化接受了三大提议">
+  <strong>上一篇</strong><br/>
+  <span>
+  Swift 进化接受了三大提议</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/04/01/raspberry-pi-2-gpio-with-swiftygpio/"  title="树莓派2 GPIO 和 SwiftyGPIO">
+ <strong>下一篇</strong><br/> 
+ <span>树莓派2 GPIO 和 SwiftyGPIO
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/04/05/Swift2.1-Function-Types-Conversion-Covariance-Contravariance/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ 
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

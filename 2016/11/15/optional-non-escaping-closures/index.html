@@ -1,0 +1,939 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>Swift 非逃逸闭包 | 可选型的非逃逸闭包 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift闭包,非逃逸闭包,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="在 Swift 中的闭包有逃逸和非逃逸两种，本文就来探讨下可选型的非逃逸闭包。">
+<meta name="keywords" content="swift闭包,非逃逸闭包">
+<meta property="og:type" content="article">
+<meta property="og:title" content="可选型的非逃逸闭包">
+<meta property="og:url" content="https://swift.gg/2016/11/15/optional-non-escaping-closures/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="在 Swift 中的闭包有逃逸和非逃逸两种，本文就来探讨下可选型的非逃逸闭包。">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="可选型的非逃逸闭包">
+<meta name="twitter:description" content="在 Swift 中的闭包有逃逸和非逃逸两种，本文就来探讨下可选型的非逃逸闭包。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/11/15/optional-non-escaping-closures/" target="_blank" title="可选型的非逃逸闭包" itemprop="url">可选型的非逃逸闭包</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-11-14T16:00:00.000Z" itemprop="datePublished">2016-11-15</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Ole Begemann，<a href="https://oleb.net/blog/2016/10/optional-non-escaping-closures/" target="_blank" rel="external">原文链接</a>，原文日期：2016/10/10<br>译者：<a href="http://weibo.com/277195544" target="_blank" rel="external">Cwift</a>；校对：<a href="http://chengway.in/" target="_blank" rel="external">walkingway</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>Swift 的闭包分为 <strong>逃逸</strong> 与 <strong>非逃逸</strong> 两种。一个接受<a href="https://developer.apple.com/library/content/documentation/Swift/Conceptual/Swift_Programming_Language/Closures.html" target="_blank" rel="external">逃逸闭包</a>作为参数的函数，逃逸闭包（可能）会在函数返回之后才被调用————也就是说，闭包逃离了函数的作用域。</p>
+<p>逃逸闭包通常与异步控制流相关联，如下例所示：</p>
+<ul>
+<li>一个函数开启了一个后台任务后立即返回，然后通过一个完成回调（completion handler）报告后台任务的结果。</li>
+<li>一个视图类把『按钮点击事件执行的操作』封装成一个闭包，并存储为自身的属性。每次用户点击按钮时，都会调用该闭包。闭包会逃离属性的设置器（setter）。</li>
+<li>你使用 <a href="">DispatchQueue.async</a> 在派发队列（dispatch queue）上安排了一个异步执行的任务。这个闭包任务的生命周期会比 <code>async</code> 的作用域活得更长久。</li>
+</ul>
+<p>与之对应的 <a href="https://developer.apple.com/reference/dispatch/dispatchqueue/2016081-sync" target="_blank" rel="external">DispatchQueue.sync</a>，它会一直等到任务闭包执行完毕后才返回——闭包永远不会逃逸。<a href="https://developer.apple.com/reference/swift/sequence/1641748-map" target="_blank" rel="external">map</a> 以及标准库中其他的序列和数组的算法也是非逃逸的。</p>
+<a id="more"></a>
+<h2 id="为什么区分闭包的逃逸性与非逃逸性如此重要？"><a href="#为什么区分闭包的逃逸性与非逃逸性如此重要？" class="headerlink" title="为什么区分闭包的逃逸性与非逃逸性如此重要？"></a>为什么区分闭包的逃逸性与非逃逸性如此重要？</h2><p>简单来说，是为了管理内存。一个闭包会强引用它捕获的所有对象————如果你在闭包中访问了当前对象中的任意属性或实例方法，闭包会持有当前对象，因为这些方法和属性都隐性地携带了一个 <code>self</code> 参数。</p>
+<p>这种方式很容易导致<a href="https://developer.apple.com/library/content/documentation/Swift/Conceptual/Swift_Programming_Language/AutomaticReferenceCounting.html#//apple_ref/doc/uid/TP40014097-CH20-ID56" target="_blank" rel="external">循环引用</a>，这解释了为什么编译器会要求你在闭包中显式地写出对 <code>self</code> 的引用。这迫使你考虑潜在的循环引用，并<a href="https://developer.apple.com/library/content/documentation/Swift/Conceptual/Swift_Programming_Language/AutomaticReferenceCounting.html#//apple_ref/doc/uid/TP40014097-CH20-ID56" target="_blank" rel="external">使用捕获列表</a>手动处理。</p>
+<p>然而，使用非逃逸的闭包不会产生循环引用————编译器可以保证在函数返回时闭包会释放它捕获的所有对象。因此，编译器只要求在逃逸闭包中明确对 <code>self</code> 的强引用。显然，使用非逃逸闭包是一个更加愉悦的方案。</p>
+<p>使用非逃逸闭包的另一个好处是编译器可以应用更多强有力的性能优化。例如，当明确了一个闭包的生命周期的话，就可以省去一些保留（retain）和释放（release）的调用。此外，如果闭包是一个非逃逸闭包，它的上下文的内存可以保存在栈上而不是堆上————虽然我不确定当前的编译器是否执行了这个优化（<a href="https://bugs.swift.org/browse/SR-904" target="_blank" rel="external">一篇公布于 2016 年 3 月的错误报告</a>显示当时并没有执行）。</p>
+<h2 id="闭包默认是非逃逸的…"><a href="#闭包默认是非逃逸的…" class="headerlink" title="闭包默认是非逃逸的…"></a>闭包默认是非逃逸的…</h2><p>从 Swift 3.0 开始，非逃逸闭包变成了<a href="https://github.com/apple/swift-evolution/blob/master/proposals/0103-make-noescape-default.md" target="_blank" rel="external">闭包参数的默认形式</a>。如果你想允许一个闭包参数逃逸，需要给这个类型增加一个 <code>@escaping</code> 的标注。例如，<code>DispatchQueue.async</code>（逃逸）和 <code>DispatchQueue.sync</code>（非逃逸）的定义：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">DispatchQueue</span> </span>&#123;</div><div class="line">    ...</div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">async</span><span class="params">(<span class="comment">/* other params omitted */</span>, execute work: @escaping <span class="params">()</span></span></span> -&gt; <span class="type">Void</span>)</div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">sync</span>&lt;T&gt;<span class="params">(execute work: <span class="params">()</span></span></span> <span class="keyword">throws</span> -&gt; <span class="type">T</span>) <span class="keyword">rethrows</span> -&gt; <span class="type">T</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在 Swift 3 之前，完全是另外一回事：逃逸是默认状态，你可以添加 <code>@noescape</code> 来覆盖此状态。新的行为更好，因为在默认状态下是安全的：遇到有潜在循环引用的情况时，一个方法调用必须显式地予以标注。因此，<code>@escaping</code> 标识符还有警示开发者的作用。</p>
+<p>##…但是只能作为即时函数的参数</p>
+<p>关于非逃逸的闭包有一个默认规则：它只能应用到<em>即时函数的参数列表位</em>，也就是说任何作为参数传入的闭包。所有其他类型的闭包都是逃逸的。</p>
+<h3 id="即时的参数位是什么意思？"><a href="#即时的参数位是什么意思？" class="headerlink" title="即时的参数位是什么意思？"></a>即时的参数位是什么意思？</h3><p>让我们看一些示例。最简单的情况就像 map：这个函数接受一个立即执行的闭包参数。正如我们所看到的，这个闭包是一个非逃逸的（我从 map 的真实签名中省略了一些无关、不重要的细节）：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">map</span>&lt;T&gt;<span class="params">(<span class="number">_</span> transform: <span class="params">(Iterator.Element)</span></span></span> -&gt; <span class="type">T</span>) -&gt; [<span class="type">T</span>]</div></pre></td></tr></table></figure>
+<h4 id="函数类型的变量总是逃逸的"><a href="#函数类型的变量总是逃逸的" class="headerlink" title="函数类型的变量总是逃逸的"></a>函数类型的变量总是逃逸的</h4><p>与此相比。即使没有明确的标注，指向/保存函数类型（闭包）的变量或属性，都是自动逃逸的（实际上，如果你显式添加一个 @escaping 也会报错）。这其实很合理，因为赋值给一个变量隐性地允许该值逃逸到变量的作用域中，而非逃逸闭包不允许这种行为。这可能会让人困惑，但一个未做任何标注的闭包在参数列表中与其他任何情况都不同。</p>
+<h4 id="可选型的闭包总是逃逸的"><a href="#可选型的闭包总是逃逸的" class="headerlink" title="可选型的闭包总是逃逸的"></a>可选型的闭包总是逃逸的</h4><p>更令人惊讶的是，即便闭包被用作参数，但是当闭包被包裹在其他类型（例如元组、枚举的 case 以及可选型）中的时候，闭包仍旧是逃逸的。由于在这种情况下闭包不再是<em>即时</em>的参数，它会自动变成逃逸闭包。因此，在 Swift 3.0 中，当你编写一个接受函数类型参数的函数时，该参数不能同时是可选型和非逃逸的。思考下面这个精心设计的例子：函数 <code>transform</code> 接受一个整数 n 以及一个可选型的变换函数 f。正常情况下它返回 f(n)，而 f 为空值时返回 n。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">/// Applies `f` to `n` and returns the result.</span></div><div class="line"><span class="comment">/// Returns `n` unchanged if `f` is nil.</span></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">transform</span><span class="params">(<span class="number">_</span> n: Int, with f: <span class="params">(<span class="params">(Int)</span></span></span></span> -&gt; <span class="type">Int</span>)?) -&gt; <span class="type">Int</span> &#123;</div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> f = f <span class="keyword">else</span> &#123; <span class="keyword">return</span> n &#125;</div><div class="line">    <span class="keyword">return</span> f(n)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里函数 f 是逃逸的，因为 <code>((Int) -&gt; Int)?</code> 是 <code>Optional&lt;(Int) -&gt; Int&gt;</code> 的缩写，即函数类型不在一个即时参数位上。</p>
+<h4 id="将可选参数替换为默认实现"><a href="#将可选参数替换为默认实现" class="headerlink" title="将可选参数替换为默认实现"></a>将可选参数替换为默认实现</h4><p>Swift 团队已经<a href="https://bugs.swift.org/browse/SR-2444" target="_blank" rel="external">意识到了这个问题</a>，并且会在将来的版本中解决它。在那之前，对这个问题有一定了解是非常重要的。目前没有办法让一个可选型的闭包变成非逃逸的，但是在许多情况下，你可以通过为闭包提供一个默认值的方式来避免使用可选型参数。在我们的例子中，默认值是一个特定的函数，返回一个不可变的参数：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">/// Uses a default implementation for `f` if omitted</span></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">transform</span><span class="params">(<span class="number">_</span> n: Int, with f: <span class="params">(Int)</span></span></span> -&gt; <span class="type">Int</span> = &#123; $<span class="number">0</span> &#125;) -&gt; <span class="type">Int</span> &#123;</div><div class="line">    <span class="keyword">return</span> f(n)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="使用重载提供一个可选型和一个非逃逸的变体"><a href="#使用重载提供一个可选型和一个非逃逸的变体" class="headerlink" title="使用重载提供一个可选型和一个非逃逸的变体"></a>使用重载提供一个可选型和一个非逃逸的变体</h4><p>如果不能提供默认值，Michael Ilseman 建议使用<a href="https://lists.swift.org/pipermail/swift-users/Week-of-Mon-20160912/003300.html" target="_blank" rel="external">重载解决</a>————你可以编写两个版本的方法，一个带有可选型（逃逸）函数参数，另一个带有非可选型的非逃逸参数：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// Overload 1: optional, escaping</span></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">transform</span><span class="params">(<span class="number">_</span> n: Int, with f: <span class="params">(<span class="params">(Int)</span></span></span></span> -&gt; <span class="type">Int</span>)?) -&gt; <span class="type">Int</span> &#123;</div><div class="line">    <span class="built_in">print</span>(<span class="string">"Using optional overload"</span>)</div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> f = f <span class="keyword">else</span> &#123; <span class="keyword">return</span> n &#125;</div><div class="line">    <span class="keyword">return</span> f(n)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">// Overload 2: non-optional, non-escaping</span></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">transform</span><span class="params">(<span class="number">_</span> input: Int, with f: <span class="params">(Int)</span></span></span> -&gt; <span class="type">Int</span>) -&gt; <span class="type">Int</span> &#123;</div><div class="line">    <span class="built_in">print</span>(<span class="string">"Using non-optional overload"</span>)</div><div class="line">    <span class="keyword">return</span> f(input)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>我添加了一些打印语句来演示哪个函数被调用。用不同的参数来测试一下。不出意外，当你传入 <code>nil</code>，类型检查器选择第一个重载的版本，因为只有它兼容输入的参数类型：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">transform(10, with: nil) // → 10</div><div class="line">// Using optional overload</div></pre></td></tr></table></figure>
+<p>如果你传递一个可选函数类型的闭包，同样如此：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> f: ((<span class="type">Int</span>) -&gt; <span class="type">Int</span>)? = &#123; $<span class="number">0</span> * <span class="number">2</span> &#125;</div><div class="line">transform(<span class="number">10</span>, with: f) <span class="comment">// → 20</span></div><div class="line"><span class="comment">// Using optional overload</span></div></pre></td></tr></table></figure>
+<p>即便变量的值不是可选型的，Swift 依旧选择第一个版本的重载。这是因为存储在变量中的函数是自动逃逸的，因此与期望传入非逃逸参数的第二个重载版本不兼容：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> g: (<span class="type">Int</span>) -&gt; <span class="type">Int</span> = &#123; $<span class="number">0</span> * <span class="number">2</span> &#125;</div><div class="line">transform(<span class="number">10</span>, with: g) <span class="comment">// → 20</span></div><div class="line"><span class="comment">// Using optional overload</span></div></pre></td></tr></table></figure>
+<p>但是，当你传递一个闭包的表达式，即函数字面量到相应的位置时，情况会变得不一样。此时会选择第二个非逃逸的版本：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">transform(<span class="number">10</span>) &#123; $<span class="number">0</span> * <span class="number">2</span> &#125; <span class="comment">// → 20</span></div><div class="line"><span class="comment">// Using non-optional overload</span></div></pre></td></tr></table></figure>
+<p>现在使用字面量的闭包表达式来调用高阶函数的方式已经习以为常，所以在大多数情况下你都可以选用这个令人愉悦的方式（即非逃逸，不需要担心循环引用），同时仍然可以选择传入 <code>nil</code>。如果你决定这么做，一定要在文档中明确标注你需要两个重载的理由。</p>
+<h4 id="类型别名总是逃逸的"><a href="#类型别名总是逃逸的" class="headerlink" title="类型别名总是逃逸的"></a>类型别名总是逃逸的</h4><p>最后要注意的是，在 Swift 3.0 中，你不能向 <code>typealiases</code> 中添加逃逸或者非逃逸的标注。如果你在函数声明中对一个函数类型的参数使用了类型别名（typealias），这个参数总会被视为逃逸的。这个 bug 已经在主分支上修复了，应该会出现在下一个 release 版本中。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Ole-Begemann/">Ole Begemann</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift/">Swift</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/11/15/optional-non-escaping-closures/" data-title="可选型的非逃逸闭包 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/11/18/slicing/" title="切片职责">
+  <strong>上一篇</strong><br/>
+  <span>
+  切片职责</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/11/09/collection-associated-types/"  title="老司机带你深入浅出 Collection">
+ <strong>下一篇</strong><br/> 
+ <span>老司机带你深入浅出 Collection
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/11/15/optional-non-escaping-closures/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#为什么区分闭包的逃逸性与非逃逸性如此重要？"><span class="toc-number">1.</span> <span class="toc-text">为什么区分闭包的逃逸性与非逃逸性如此重要？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#闭包默认是非逃逸的…"><span class="toc-number">2.</span> <span class="toc-text">闭包默认是非逃逸的…</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#即时的参数位是什么意思？"><span class="toc-number">2.1.</span> <span class="toc-text">即时的参数位是什么意思？</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#函数类型的变量总是逃逸的"><span class="toc-number">2.1.1.</span> <span class="toc-text">函数类型的变量总是逃逸的</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#可选型的闭包总是逃逸的"><span class="toc-number">2.1.2.</span> <span class="toc-text">可选型的闭包总是逃逸的</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#将可选参数替换为默认实现"><span class="toc-number">2.1.3.</span> <span class="toc-text">将可选参数替换为默认实现</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#使用重载提供一个可选型和一个非逃逸的变体"><span class="toc-number">2.1.4.</span> <span class="toc-text">使用重载提供一个可选型和一个非逃逸的变体</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#类型别名总是逃逸的"><span class="toc-number">2.1.5.</span> <span class="toc-text">类型别名总是逃逸的</span></a></li></ol></li></ol></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

@@ -1,0 +1,932 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>使用 Parse 是一个糟糕的主意 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="parse服务器,facebook api,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="如果想让你的应用有一个稳定的后端，强烈建议你自己创建一个，而不是去依赖类似 Parse 的服务。">
+<meta name="keywords" content="parse服务器,facebook api">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用 Parse 是一个糟糕的主意">
+<meta property="og:url" content="https://swift.gg/2016/05/18/your-parse-backend-was-always-a-bad-idea/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="如果想让你的应用有一个稳定的后端，强烈建议你自己创建一个，而不是去依赖类似 Parse 的服务。">
+<meta property="og:image" content="https://swift.gg/img/articles/your-parse-backend-was-always-a-bad-idea/12401463538621.8656638">
+<meta property="og:image" content="https://swift.gg/img/articles/your-parse-backend-was-always-a-bad-idea/12401463538623.3903446">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用 Parse 是一个糟糕的主意">
+<meta name="twitter:description" content="如果想让你的应用有一个稳定的后端，强烈建议你自己创建一个，而不是去依赖类似 Parse 的服务。">
+<meta name="twitter:image" content="https://swift.gg/img/articles/your-parse-backend-was-always-a-bad-idea/12401463538621.8656638">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/05/18/your-parse-backend-was-always-a-bad-idea/" target="_blank" title="使用 Parse 是一个糟糕的主意" itemprop="url">使用 Parse 是一个糟糕的主意</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-05-17T16:00:00.000Z" itemprop="datePublished">2016-05-18</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Jameson Quave，<a href="http://jamesonquave.com/blog/your-parse-backend-was-always-a-bad-idea/" target="_blank" rel="external">原文链接</a>，原文日期：2016-2-2<br>译者：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="external">numbbbbb</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="external">千叶知风</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>不知道你是否听说，Facebook 要关闭 Parse 了。Parse 是一个后端云服务（BaaS），前不久刚刚被 Facebook 收购。很多开发者感到有些失望，甚至感觉被 Facebook 背叛，我在推特发了这张 Parse 被关闭前网站首页截屏图片，它能说明一切：</p>
+<p><a href="https://t.co/ctoxrvTLYx" target="_blank" rel="external">图片链接</a><br>— Jameson Quave (@jquave) <a href="https://twitter.com/jquave/status/692910323850985472" target="_blank" rel="external">January 29, 2016</a></p>
+<p>不用我在这里额外强调，他们都在网站上说了。成千上万的开发者<strong><em>信任</em></strong>我们。可以从类似的描述中明白，为什么开发者觉得他们遭到了背叛。在明知 Facebook 会任意地关闭某项技术服务的情况下，还会有人使用 React Native、React JS、HHVM、Relay 等 Facebook 提供的技术服务吗？</p>
+<a id="more"></a>
+<p>确实，这些项目都是开源项目，开源社区可以接手，但是开源项目需要维护，而大公司的支持能够给项目带来更多好处。Facebook 的行为已经向我们证明，我们不能相信 Facebook。凡是与 Facebook 的 API 接口打过交道的人，或者处理过第三方社交媒体 API 接口的人，都不会对这个结论感到惊讶，我会在以后详细说说这一点。但是现在让我先暂时改变一下话题，来讨论一下另外一个大麻烦：Twitter……和更重要的<a href="https://get.fabric.io" target="_blank" rel="external">Twitter Fabric</a>，拥有 Crashlytics（应用崩溃报告服务商），整合了很多由<a href="https://github.com/KrauseFx" target="_blank" rel="external">Felixt Krause</a>实现的令人惊艳的工作成果。</p>
+<p>但是要理解 Twitter 在过去是如何对待开发者社区，我认为我们应该先说一说 Meerkat 应用。我保证之后会继续讨论 Parse 和 Facebook，Meerkat 的故事也是发生在同样的背景下，所以稍稍忍耐一下吧。</p>
+<h2 id="Meerkat"><a href="#Meerkat" class="headerlink" title="Meerkat"></a>Meerkat</h2><p>先介绍一下背景：我住在德克萨斯州的 Austin，这意味着在每年我都能在 SXSW 看到接下来将变成大公司的初创公司。Twitter、Foursquare、GameSalad，甚至连 Four-Hour Work Week 都是 SXSW 孵化的项目。这都是一些成功项目，每年有无数天真的创业者来到 Austin 展示他们的项目，希望能够获得投资。在 2015 年，赢家是一个名为 Meerkat 的项目。</p>
+<p><img src="/img/articles/your-parse-backend-was-always-a-bad-idea/12401463538621.8656638" alt=""></p>
+<p>Meerkat 是一个实时流媒体直播的 P2P 平台，用户可以用 iPhone 直接把流媒体视频展示给其他用户观看，这在 SXSW 掀起了一场<a href="http://www.theverge.com/2015/3/17/8234769/how-meerkat-conquered-all-at-sxsw" target="_blank" rel="external">风暴</a>。去年只要你在 Austin 走走，经过 SXSW，到处都能看到 Meerkat 的 T 恤衫，每一个人都在现场直播音乐、SXSW 的课程、午饭或者任何人们正在做的事情。突然间，Meerkat 停止了服务，原因是：</p>
+<p><strong><em>随着 Meerkat 的下载量持续攀升，Twitter 在发出通知的<a href="http://www.fastcompany.com/3043716/sxsw/twitter-only-gave-meerkat-2-hours-notice-before-cutting-access-to-the-social-graph" target="_blank" rel="external">两个小时</a>后，就关闭了 Meerkat 访问 Twitter 的接口。</em></strong></p>
+<p>如果你熟悉 iOS 应用商店审核过程，也许你就能意识到问题所在了。即使 Meerkat 的人能够重新写他们的应用代码，来不去使用 Twitter 的 API 接口，他们也无法在 2 小时内把最新的 App 更新到苹果应用商店中，实际上，需要至少 3 周的时间才能更新上去。</p>
+<p>我实际上并没有感到惊讶，但是好多人不理解 Twitter 为什么要做这样的事情，Twitter 是否违反了 API 条款？属于违法行为吗？</p>
+<p>实际上，没有违反条款，也没有违法……</p>
+<p>Twitter 关闭了 Meerkat，因为 Twitter 自己开发了一个应用叫 Periscope，是 Meerkat 的竞争对手，我拒绝给出链接。</p>
+<p>于是就发生了 Twitter 上一度<a href="https://gigaom.com/2014/09/30/twitter-to-developers-seriously-this-time-you-can-totally-trust-us-not-to-ambush-you/" target="_blank" rel="external">要求给予开发者信任</a>的事情，唉……</p>
+<h2 id="Parse"><a href="#Parse" class="headerlink" title="Parse"></a>Parse</h2><p>看，我就说我们会回到 Parse 这个话题上来的咩~</p>
+<p>Twitter 和 Facebook 就像是社交网络硬币的两面，对我来说，信任哪一方结果都是一样的。我当我想知道某个科技公司在将来如何前进时，我总会重复这句咒语：“跟着金钱走”，这咒语也能告诉你大公司在将来如何会如何表现，尤其是上市公司（TWTR 和 FB 都是上市公司）。美国上市公司在季度财务报表上需要对股东负责，为了有个好看的季度财报，有时甚至不惜损害客户或者合作伙伴的利益。当我看到 Parse 的免费使用范围如何巨大时，我特别担心。在我看来，99% 的应用甚至更多应用都不会达到付费要求的，即使到达了付费要求，也只需付出一点点钱。当 Parse 成为开发者的工具，特别是作为后端服务商时，Facebook 在赚不到钱的情景下做这件事情的动机是什么呢？我相信答案十分明显，<strong><em>那就是 Facebook 想要你的数据，结果发现这些数据不值钱</em></strong>。所以他们决定不再花费时间在 Parse 上了，免费使用 Parse 的众多开发者们没有给 Facebook 带来利润，所以他们做出关闭 Parse 的决定，用 Facebook 自己的话来说就是：</p>
+<p><strong>Parse 曾经帮助过无数的开发者创建出优秀的手机应用，对此我们非常骄傲，但是我们需要把资源放到其他地方上了。</strong></p>
+<p>翻译过来就是：“你们没有给我们带来足够的钱”</p>
+<p>Facebook 和 Twitter、Google 一样，从广告中获得收益，特别是 Google，作为世界上最有价值的公司，超过了苹果公司。事实上，在众多平台中，唯有苹果公司的主要利润来源不是广告，其他都靠广告。</p>
+<h2 id="跟着金钱走"><a href="#跟着金钱走" class="headerlink" title="跟着金钱走"></a>跟着金钱走</h2><p>今早我发表了这么一条推特：</p>
+<p>人们问我有哪些方式可以代替 Parse，如果你不编写自己的服务器代码，你的后台就永远处于危险之中。— Jameson Quave (@jquave) <a href="https://twitter.com/jquave/status/694516340300713984" target="_blank" rel="external">February 2, 2016</a></p>
+<p>这是真的，你真不能盲目信任这些社交媒体公司的服务作为自己的后端。你要根据“跟着金钱走”原则来找当事人的动机，如果他们动机不是给你提供服务赚取利润，那么估计这个公司也不会坚持太久。如果你是初创企业的 CEO，这也是做出商业决策的一个好方法。当你和任何人合作时，你必须确认他们的资金动机和你相似，不然你们之间永远都无法有效连接合作。这个理论也使用与雇员、联合创业者、合伙人和平台供应商等等。</p>
+<h2 id="Facebook-的-API"><a href="#Facebook-的-API" class="headerlink" title="Facebook 的 API"></a>Facebook 的 API</h2><p>早期使用 Facebook 的 API 时，你能轻易获取用户的联系人，结果导致了很多人都会收到 Facebook 游戏的垃圾邮件和信息，也造就了开心农场这样的成功游戏。但是 Facebook 觉得自己不喜欢这样，不再提供获取联系人的接口，这样就给很多应用造成了伤害，Zynga 的股票应声下跌。说真的，看看 Facebook 对 Zynga 的股票造成了哪些伤害：<br><img src="/img/articles/your-parse-backend-was-always-a-bad-idea/12401463538623.3903446" alt=""></p>
+<p>如果你的主营业务是 App，<strong><em>那么你的后端是非常重要的业务资产，你必须能够自己控制</em></strong>。类似 Salesforce 的云计算公司几乎花了十年的时间才变成大型公司，甚至是在今天，大部分还在使用现场托管软件。原因就是运行良好的业务必须要有自己的关键系统。虽然这样做需要支付系统维护费用和初始部署的费用，但是如果你不能控制核心业务，那就只能把核心业务交给那些不靠谱的人，他们幻想能从你们的数据库中淘出点什么东西提供给广告商。你想让这些人来控制你的服务器吗？你信任 Facebook、Twitter、Google 吗？</p>
+<h2 id="创建你自己的该死的后端"><a href="#创建你自己的该死的后端" class="headerlink" title="创建你自己的该死的后端"></a>创建你自己的该死的后端</h2><p>你想要你的应用有一个稳定的后端，那么唯一的方法就是你自己创建一个。我知道这样听起来很难，不过如果你用 Ruby on Rails 或者 NodeJS 来创建一个简单的 API 来连接应用的话，难度也不是很大。说白了，Parse 后端基于 javascript，和 NodeJS 在表达上还是有一些相似的地方，使用节点模块传送 API，用 MongoDB 数据库作为后台。如果对你来说这听起来很困难，你只需花费几个小说去网上阅读一下教程即可，你就会意识到完全由你自己来做也不麻烦。实在不行，你还可以雇佣<a href="https://docs.google.com/spreadsheet/viewform?formkey=dGZFNjEyYXo2UDM0YlVQeGNQR2ZGMUE6MQ#gid=0" target="_blank" rel="external">我的公司</a>来帮你做这件事情。</p>
+<p>如果你打算让某个平台来创建你的后端，你要确保能够拿到源代码，以及加载到任何服务器上所属的一切工具。Docker 能够包含 App 所有需要的所有的环境，而类似 Heroku 的服务能够让你轻松的部署 Rails 应用。</p>
+<p>有趣的一件事情：在我这些博客快要写到 95% 的时候，在使用 Twitter embeds 功能时，它极具讽刺性地毁掉了所有的格式，我不得不重新调整所有的格式。^_^</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/JamesonQuave-com/">JamesonQuave.com</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/05/18/your-parse-backend-was-always-a-bad-idea/" data-title="使用 Parse 是一个糟糕的主意 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/05/18/swift-qa-2016-05-18/" title="每周 Swift 社区问答：@convention">
+  <strong>上一篇</strong><br/>
+  <span>
+  每周 Swift 社区问答：@convention</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/05/18/api-design-guidelines/"  title="Swift API 设计指南">
+ <strong>下一篇</strong><br/> 
+ <span>Swift API 设计指南
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/05/18/your-parse-backend-was-always-a-bad-idea/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Meerkat"><span class="toc-number">1.</span> <span class="toc-text">Meerkat</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Parse"><span class="toc-number">2.</span> <span class="toc-text">Parse</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#跟着金钱走"><span class="toc-number">3.</span> <span class="toc-text">跟着金钱走</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Facebook-的-API"><span class="toc-number">4.</span> <span class="toc-text">Facebook 的 API</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#创建你自己的该死的后端"><span class="toc-number">5.</span> <span class="toc-text">创建你自己的该死的后端</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

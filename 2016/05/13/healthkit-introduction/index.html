@@ -1,0 +1,951 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>用 HealthKit 来开发一个健身 App | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="healthkit开发,ios healthkit,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="HealthKit 框架可以让应用使用它来分享健康和健身数据，那么具体要如何使用 HealthKit 来开发一个健身 App呢。">
+<meta name="keywords" content="healthkit开发,ios healthkit">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用 HealthKit 来开发一个健身 App">
+<meta property="og:url" content="https://swift.gg/2016/05/13/healthkit-introduction/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="HealthKit 框架可以让应用使用它来分享健康和健身数据，那么具体要如何使用 HealthKit 来开发一个健身 App呢。">
+<meta property="og:image" content="http://www.appcoda.com/wp-content/uploads/2016/03/screenshots.png">
+<meta property="og:image" content="http://www.appcoda.com/wp-content/uploads/2016/03/capabilities.png">
+<meta property="og:image" content="http://www.appcoda.com/wp-content/uploads/2016/03/details.png">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="用 HealthKit 来开发一个健身 App">
+<meta name="twitter:description" content="HealthKit 框架可以让应用使用它来分享健康和健身数据，那么具体要如何使用 HealthKit 来开发一个健身 App呢。">
+<meta name="twitter:image" content="http://www.appcoda.com/wp-content/uploads/2016/03/screenshots.png">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/05/13/healthkit-introduction/" target="_blank" title="用 HealthKit 来开发一个健身 App" itemprop="url">用 HealthKit 来开发一个健身 App</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-05-12T16:00:00.000Z" itemprop="datePublished">2016-05-13</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：AppCoda，<a href="http://www.appcoda.com/healthkit-introduction/" target="_blank" rel="external">原文链接</a>，原文日期：2016-03-22<br>译者：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="external">numbbbbb</a>；定稿：<a href="https://github.com/Cee" target="_blank" rel="external">Cee</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>看新闻我们也知道，比起历史上任何一个时刻，健身和健康在今天都更加重要。说起来也挺好笑的，我似乎记得几天前新闻也在说同样的事情，也许是因为年纪越来越大的缘故，我更需要健康和健身。不管怎么说，这是一个热门话题。随着技术的不断进步，手机应用和硬件在世界范围内都变得流行起来，这些都给日益流行的健身健康话题加入了新的元素。</p>
+<p>HealthKit 是苹果公司的重要桥梁，把追踪的重要的健康数据同有健康意识的科技消费者、运动迷、平常使用 iPhone 的人连接了起来。这很酷，用户可以很容易的就追踪衡量一段时间内的健身和健康数据，除了意识到的好处之外，我们看到图标中向上走的曲线，就能给我们极大的鼓励，激励我们继续运动。</p>
+<a id="more"></a>
+<p>正如我们能想象到的，在管理健康信息时，数据安全成为非常重要的因素。HealthKit 对于所有的 HealthKit 信息有绝对的控制权，会直接传递到用户手中。用户可以准许或者拒绝任何 App 获取他们的健康数据的请求。</p>
+<p>对于开发者来说，我们需要请求许可方能读取或者写入 HealthKit 数据。实际上，我们需要特别声明一下，我们想影响获取具体哪些数据。另外，任何使用 HealthKit 的 App 必须要包含一份 Privacy Policy（隐私协议），这样用户在进行信息交易时会觉得更舒服一些。</p>
+<h3 id="关于走路一小时（OneHourWalker）"><a href="#关于走路一小时（OneHourWalker）" class="headerlink" title="关于走路一小时（OneHourWalker）"></a>关于走路一小时（OneHourWalker）</h3><p>今天，我们要创建一个非常有趣的 App，既能读取 HealthKit 中的信息，也能写入新的数据。看一下 OneHourWalker 的外表吧：</p>
+<p><img src="http://www.appcoda.com/wp-content/uploads/2016/03/screenshots.png" alt=""></p>
+<p>OneHourWalker 是一个健身 App，能够跟踪用户在一个小时内走路或跑步的距离。用户可以把距离分享到 HealthKit，这样就能在健康应用中查看。我知道，整整一个小时听起来确实有点吓人，至少对我而言是这样。因此，用户可以提前结束健身，此时仍然可以分享距离。</p>
+<p>所以，听起来只需要把数据写入 HealthKit 即可。不过我们要读取的数据是什么？</p>
+<p>好问题！我喜欢在树林里的小路上漫步。我常常穿越一些枝杈纵横的区域。因为我是八尺大汉，这会带来一些问题。我们的解决方案是：我们会从 HealthKit 中读取用户的身高，然后显示到 Label 控件上。这样会比较友好地提示用户，帮他避免不适合运动的区域。</p>
+<p>下面是 OneHourWalker 的<a href="https://raw.githubusercontent.com/appcoda/OneHourWalker/master/OneHourWalker.zip" target="_blank" rel="external">初始工程</a>，下载然后运行，看起来好像 App 可以运行。计时器和定位系统都已经在运行了，所以我们只需要将注意力放在使用 HealthKit 上，注意一下，六十分钟后，计时器和定位系统就会自动停止。</p>
+<h3 id="启用-HealthKit"><a href="#启用-HealthKit" class="headerlink" title="启用 HealthKit"></a>启用 HealthKit</h3><p>第一步就是在应用中开启 HealthKit 功能，在 Project Navigator 中，选中 OneHourWalker，然后点击 Targets 下方的 OneHourWalker。接着，在屏幕上方的 tab 栏中点击 Capabilities。</p>
+<p><img src="http://www.appcoda.com/wp-content/uploads/2016/03/capabilities.png" alt=""></p>
+<p>在 Capabilities 底部把 <code>HealthKit</code> 设置为 On。这会把 HealthKit entitlement 添加到 App ID 中、把 HealthKit key 添加到 info plist 文件中、把 HealthKit entitlement 添加到资格文件中、连接 <code>HealthKit.framework</code>。就是这么简单。</p>
+<h3 id="开始写代码吧"><a href="#开始写代码吧" class="headerlink" title="开始写代码吧"></a>开始写代码吧</h3><p>找到 <code>TimerViewController.swift</code>，下面我们给 OneHourWalker 添加 HealthKit。首先我们创建一个 HealthKitManager 实例。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> UIKit</div><div class="line"><span class="keyword">import</span> CoreLocation</div><div class="line"><span class="keyword">import</span> HealthKit</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">TimerViewController</span>: <span class="title">UIViewController</span>, <span class="title">CLLocationManagerDelegate</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">weak</span> <span class="keyword">var</span> timerLabel: <span class="type">UILabel</span>!</div><div class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">weak</span> <span class="keyword">var</span> milesLabel: <span class="type">UILabel</span>!</div><div class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">weak</span> <span class="keyword">var</span> heightLabel: <span class="type">UILabel</span>!</div><div class="line">    </div><div class="line">    <span class="keyword">var</span> zeroTime = <span class="type">NSTimeInterval</span>()</div><div class="line">    <span class="keyword">var</span> timer : <span class="type">NSTimer</span> = <span class="type">NSTimer</span>()</div><div class="line">    </div><div class="line">    <span class="keyword">let</span> locationManager = <span class="type">CLLocationManager</span>()</div><div class="line">    <span class="keyword">var</span> startLocation: <span class="type">CLLocation</span>!</div><div class="line">    <span class="keyword">var</span> lastLocation: <span class="type">CLLocation</span>!</div><div class="line">    <span class="keyword">var</span> distanceTraveled = <span class="number">0.0</span></div><div class="line">    </div><div class="line">    <span class="keyword">let</span> healthManager:<span class="type">HealthKitManager</span> = <span class="type">HealthKitManager</span>()</div></pre></td></tr></table></figure>
+<p><code>HealthKitManager.swift</code> 里包含了所有和 HealthKit 有关的操作。里面有一些重要的方法，稍后我们会实现它。</p>
+<p>正如开头介绍的那样，我们需要获取用户的授权，从而读取和写入他们的健康数据。在 <code>ViewDidLoad()</code>中获取授权：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</div><div class="line">    <span class="keyword">super</span>.viewDidLoad()</div><div class="line"></div><div class="line">    locationManager.requestWhenInUseAuthorization();</div><div class="line">    </div><div class="line">    <span class="keyword">if</span> <span class="type">CLLocationManager</span>.locationServicesEnabled()&#123;</div><div class="line">        locationManager.delegate = <span class="keyword">self</span></div><div class="line">        locationManager.desiredAccuracy = kCLLocationAccuracyBest</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">else</span> &#123;</div><div class="line">        <span class="built_in">print</span>(<span class="string">"Need to Enable Location"</span>);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="comment">// 不向用户请求许可就无法获取用户的 HealthKit 数据</span></div><div class="line">    getHealthKitPermission()</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>getHealthKitPermission()</code> 方法会调用 manager 的 <code>authorizeHealthKit()</code> 方法。如果一切顺利，我们可以调用 <code>setHeight()</code> 方法，稍后我们会介绍这个方法。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">getHealthKitPermission</span><span class="params">()</span></span> &#123;</div><div class="line">    <span class="comment">// 在 HealthKitManager.swift 文件里寻找授权情况。</span></div><div class="line">    healthManager.authorizeHealthKit &#123; (authorized,  error) -&gt; <span class="type">Void</span> <span class="keyword">in</span></div><div class="line">        <span class="keyword">if</span> authorized &#123;</div><div class="line">            </div><div class="line">            <span class="comment">// 获得然后设置用户的高度</span></div><div class="line">            <span class="keyword">self</span>.setHeight()</div><div class="line">        &#125; <span class="keyword">else</span> &#123;</div><div class="line">            <span class="keyword">if</span> error != <span class="literal">nil</span> &#123;</div><div class="line">                <span class="built_in">print</span>(error)</div><div class="line">            &#125;</div><div class="line">            <span class="built_in">print</span>(<span class="string">"Permission denied."</span>)</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在 <code>HealthKitManager.swift</code> 文件中创建 <code>authorizeHealthKit()</code> 方法。除此之外，我们还需要创建 HealthKit store，将 App 连接到 HealthKit 数据。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> healthKitStore: <span class="type">HKHealthStore</span> = <span class="type">HKHealthStore</span>()</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">authorizeHealthKit</span><span class="params">(completion: <span class="params">(<span class="params">(success: Bool, error: NSError!)</span></span></span></span> -&gt; <span class="type">Void</span>)!) &#123;</div><div class="line">    </div><div class="line">    <span class="comment">// 声明我们想从 HealthKit 里读取的健康数据的类型</span></div><div class="line">    <span class="keyword">let</span> healthDataToRead = <span class="type">Set</span>(arrayLiteral: <span class="type">HKObjectType</span>.quantityTypeForIdentifier(<span class="type">HKQuantityTypeIdentifierHeight</span>)!)</div><div class="line">    </div><div class="line">    <span class="comment">// 声明我们想写入 HealthKit 的数据的类型</span></div><div class="line">    <span class="keyword">let</span> healthDataToWrite = <span class="type">Set</span>(arrayLiteral: <span class="type">HKObjectType</span>.quantityTypeForIdentifier(<span class="type">HKQuantityTypeIdentifierDistanceWalkingRunning</span>)!)</div><div class="line">    </div><div class="line">    <span class="comment">// 以防万一 OneHourWalker 在 iPad 中打开</span></div><div class="line">    <span class="keyword">if</span> !<span class="type">HKHealthStore</span>.isHealthDataAvailable() &#123;</div><div class="line">        <span class="built_in">print</span>(<span class="string">"Can't access HealthKit."</span>)</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="comment">// 请求可以读取和写入数据的权限</span></div><div class="line">    healthKitStore.requestAuthorizationToShareTypes(healthDataToWrite, readTypes: healthDataToRead) &#123; (success, error) -&gt; <span class="type">Void</span> <span class="keyword">in</span></div><div class="line">        <span class="keyword">if</span>( completion != <span class="literal">nil</span> ) &#123;</div><div class="line">            completion(success:success, error:error)</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>当我们请求授权获取用户健康数据时，需要特别表明我们只是想读取和写入数据。对于这个应用来说，我们想读取用户的身高，从而帮助他们避免撞到树枝。我们期望 HealthKit 提供一个 HKObject 实体，我们可以把它转换成可读性更高的身高值。此外，我们还需要申请写入权限，从而把用户步行和跑步的距离写入 HKObject 实体。</p>
+<p>我们会在处理完 iPad 屏幕适配之后发起权限请求。</p>
+<p>我们在 <code>HealthKitManager.swift</code> 文件中创建 <code>getHeight()</code> 方法，从 HealthKit 中读取用户的高度数据。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">getHeight</span><span class="params">(sampleType: HKSampleType , completion: <span class="params">(<span class="params">(HKSample!, NSError!)</span></span></span></span> -&gt; <span class="type">Void</span>)!) &#123;</div><div class="line">    </div><div class="line">    <span class="comment">// 创建断言，以查询高度</span></div><div class="line">    <span class="keyword">let</span> distantPastHeight = <span class="type">NSDate</span>.distantPast() <span class="keyword">as</span> <span class="type">NSDate</span></div><div class="line">    <span class="keyword">let</span> currentDate = <span class="type">NSDate</span>()</div><div class="line">    <span class="keyword">let</span> lastHeightPredicate = <span class="type">HKQuery</span>.predicateForSamplesWithStartDate(distantPastHeight, endDate: currentDate, options: .<span class="type">None</span>)</div><div class="line">    </div><div class="line">    <span class="comment">// 获得最近的高度值</span></div><div class="line">    <span class="keyword">let</span> sortDescriptor = <span class="type">NSSortDescriptor</span>(key: <span class="type">HKSampleSortIdentifierStartDate</span>, ascending: <span class="literal">false</span>)</div><div class="line"></div><div class="line">    <span class="comment">// 从 HealthKit 里获取最近的高度值</span></div><div class="line">    <span class="keyword">let</span> heightQuery = <span class="type">HKSampleQuery</span>(sampleType: sampleType, predicate: lastHeightPredicate, limit: <span class="number">1</span>, sortDescriptors: [sortDescriptor]) &#123; (sampleQuery, results, error ) -&gt; <span class="type">Void</span> <span class="keyword">in</span></div><div class="line">            </div><div class="line">            <span class="keyword">if</span> <span class="keyword">let</span> queryError = error &#123;</div><div class="line">                completion(<span class="literal">nil</span>, queryError)</div><div class="line">                <span class="keyword">return</span></div><div class="line">            &#125;</div><div class="line"></div><div class="line">            <span class="comment">// 把第一个 HKQuantitySample 作为最近的高度值</span></div><div class="line">            <span class="keyword">let</span> lastHeight = results!.first</div><div class="line">        </div><div class="line">            <span class="keyword">if</span> completion != <span class="literal">nil</span> &#123;</div><div class="line">                completion(lastHeight, <span class="literal">nil</span>)</div><div class="line">            &#125;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="comment">// 是时候执行查询了</span></div><div class="line">    <span class="keyword">self</span>.healthKitStore.executeQuery(heightQuery)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>查询身高数据的第一步是创建一个断言，用它定义时间参数。我们会获取一段时间内的所有身高信息。当然，这会返回一个数组。我们只想要最近的身高，所以我们对数据排序，让数据中最新的数据排在最前面。</p>
+<p>在创建查询的过程中，我们把数组的长度限制为一。处理完可能出现的错误之后，我们把第一个也是唯一一个 item 作为 lastHeight 的结果。接着，调用 getHeight() 的回调函数。最后，执行我们的查询操作。</p>
+<p>回到 <code>TimerViewController.swift</code>，在用户授权完成之后，用户开始使用 App 之前，需要在 <code>getHealthKitPermission()</code> 中调用 <code>setHeight()</code>。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> height: <span class="type">HKQuantitySample</span>?</div></pre></td></tr></table></figure>
+<p>首先，我们需要给 HKQuantitySample 实例声明一个高度变量。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">setHeight</span><span class="params">()</span></span> &#123;</div><div class="line"></div><div class="line">    <span class="comment">// 创建高度 HKSample。</span></div><div class="line">    <span class="keyword">let</span> heightSample = <span class="type">HKSampleType</span>.quantityTypeForIdentifier(<span class="type">HKQuantityTypeIdentifierHeight</span>)</div><div class="line">    </div><div class="line">    <span class="comment">// 调用 HealthKitManager 的 getSample() 方法，来获取用户的高度。</span></div><div class="line">    <span class="keyword">self</span>.healthManager.getHeight(heightSample!, completion: &#123; (userHeight, error) -&gt; <span class="type">Void</span> <span class="keyword">in</span></div><div class="line">        </div><div class="line">        <span class="keyword">if</span>( error != <span class="literal">nil</span> ) &#123;</div><div class="line">            <span class="built_in">print</span>(<span class="string">"Error: <span class="subst">\(error.localizedDescription)</span>"</span>)</div><div class="line">            <span class="keyword">return</span></div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        <span class="keyword">var</span> heightString = <span class="string">""</span></div><div class="line">        </div><div class="line">        <span class="keyword">self</span>.height = userHeight <span class="keyword">as</span>? <span class="type">HKQuantitySample</span></div><div class="line">        </div><div class="line">        <span class="comment">// 把高度转换成用户本地的计量单位。</span></div><div class="line">        <span class="keyword">if</span> <span class="keyword">let</span> meters = <span class="keyword">self</span>.height?.quantity.doubleValueForUnit(<span class="type">HKUnit</span>.meterUnit()) &#123;</div><div class="line">            <span class="keyword">let</span> formatHeight = <span class="type">NSLengthFormatter</span>()</div><div class="line">            formatHeight.forPersonHeightUse = <span class="literal">true</span></div><div class="line">            heightString = formatHeight.stringFromMeters(meters)</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        <span class="comment">// 设置 label 显示用户的高度。</span></div><div class="line">        dispatch_async(dispatch_get_main_queue(), &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></div><div class="line">            <span class="keyword">self</span>.heightLabel.text = heightString</div><div class="line">        &#125;)</div><div class="line">    &#125;)</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在 <code>share()</code> 方法之前创建 <code>setHeigth()</code> 方法。我们请求的身高数据会返回一个 <code>HKQuantity</code>，它的 identifier 是 <code>HKQuantityTypeIdentifierHeight</code>。</p>
+<p>接着，我们调用 manager 中的 <code>getHeight()</code> 方法。有了身高数据，我们需要将它转换成合适的字符串，展示到我们的 Label 控件中。照例，我们要考虑所有可能的错误。</p>
+<p>现在，用户能够打开 App，查看他们的身高，将身高记录到健康应用中，开始计时，然后追踪跑步或者走路的距离。下一步就是处理写入数据，让用户可以记录所有的健身数据。</p>
+<p>用户完成运动之后（无论是整整一小时还是不到一小时），他/她会点击 Share 按钮，将他们的距离发送给 Health 应用。所以我们在 <code>share()</code> 方法中调用 <code>HealthKitManager.swift</code> 里的 <code>saveDistance()</code> 方法，这样数据和日期都能被归档，明天用户可以试着去挑战他/她自己的记录！</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="meta">@IBAction</span> <span class="function"><span class="keyword">func</span> <span class="title">share</span><span class="params">(sender: AnyObject)</span></span> &#123;</div><div class="line">    healthManager.saveDistance(distanceTraveled, date: <span class="type">NSDate</span>())</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>回到 manager，我们创建 <code>saveDistance()</code> 方法，首先，我们需要让 HealthKit 知道我们想写入跑步距离和走路步数，接着，我们将计量单位换成英里并赋值给实体。HealthKit 的 <code>saveObject()</code> 方法将会写入用户的健康数据。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">saveDistance</span><span class="params">(distanceRecorded: Double, date: NSDate )</span></span> &#123;</div><div class="line">            </div><div class="line">    <span class="comment">// 设置跑步距离或走路步数的数量的类型</span></div><div class="line">    <span class="keyword">let</span> distanceType = <span class="type">HKQuantityType</span>.quantityTypeForIdentifier(<span class="type">HKQuantityTypeIdentifierDistanceWalkingRunning</span>)</div><div class="line">    </div><div class="line">    <span class="comment">// 把计量单位设置成英里</span></div><div class="line">    <span class="keyword">let</span> distanceQuantity = <span class="type">HKQuantity</span>(unit: <span class="type">HKUnit</span>.mileUnit(), doubleValue: distanceRecorded)</div><div class="line"></div><div class="line">    <span class="comment">// 设置正式的 Quantity Sample。</span></div><div class="line">    <span class="keyword">let</span> <span class="built_in">distance</span> = <span class="type">HKQuantitySample</span>(type: distanceType!, quantity: distanceQuantity, startDate: date, endDate: date)</div><div class="line">    </div><div class="line">    <span class="comment">// 保存距离数量，把健康数据写入 HealthKit</span></div><div class="line">    healthKitStore.saveObject(<span class="built_in">distance</span>, withCompletion: &#123; (success, error) -&gt; <span class="type">Void</span> <span class="keyword">in</span></div><div class="line">        <span class="keyword">if</span>( error != <span class="literal">nil</span> ) &#123;</div><div class="line">            <span class="built_in">print</span>(error)</div><div class="line">        &#125; <span class="keyword">else</span> &#123;</div><div class="line">            <span class="built_in">print</span>(<span class="string">"The distance has been recorded! Better go check!"</span>)</div><div class="line">        &#125;</div><div class="line">    &#125;)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>打开健康应用，记录的数据会包含在 Walking + Running Distance 里。我们可以查看具体的记录：Health Data tab &gt; Fitness &gt; Walking + Running Distance &gt; Show All Data。我们的数据就在这清单里。点击任意一行就会看到我们的图标（目前还空着）。再次点击这一行，就会出现所有的详细信息。</p>
+<p><img src="http://www.appcoda.com/wp-content/uploads/2016/03/details.png" alt=""></p>
+<p>有了 OneHourWalker，我们就可以为全世界 iOS 用户的健康贡献我们的力量。然而，这仅仅是一个开始。HealthKit 有无限可能。</p>
+<p>当然，让用户查看所有追踪信息非常有用，人们可以对比每天、每周或者任意时间的数据，从而给自己动力。但是真正有价值的是，开发者可以用无数种新的、有创造力的、有趣的方式来获取数据。</p>
+<p>此外，HealthKit 应用的测试会非常有趣！</p>
+<p>这里是我们最终版本的 <a href="https://github.com/appcoda/OneHourWalker" target="_blank" rel="external">OneHourWalker</a>。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/AppCoda/">AppCoda</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/05/13/healthkit-introduction/" data-title="用 HealthKit 来开发一个健身 App | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/05/16/using-swift-extensions/" title="“错误”的使用 Swift 中的 Extension">
+  <strong>上一篇</strong><br/>
+  <span>
+  “错误”的使用 Swift 中的 Extension</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/05/12/introduction-to-firebase-building-a-simple-social-app-in-swift/"  title="Firebase 新手指南：使用 Swift 构建一款简单的社交应用">
+ <strong>下一篇</strong><br/> 
+ <span>Firebase 新手指南：使用 Swift 构建一款简单的社交应用
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/05/13/healthkit-introduction/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#关于走路一小时（OneHourWalker）"><span class="toc-number">1.</span> <span class="toc-text">关于走路一小时（OneHourWalker）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#启用-HealthKit"><span class="toc-number">2.</span> <span class="toc-text">启用 HealthKit</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#开始写代码吧"><span class="toc-number">3.</span> <span class="toc-text">开始写代码吧</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

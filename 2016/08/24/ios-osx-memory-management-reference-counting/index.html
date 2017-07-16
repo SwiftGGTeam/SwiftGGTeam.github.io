@@ -1,0 +1,940 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>iOS 与 OSX 内存管理：引用计数 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="ios引用计数,ios内存管理,os x 内存管理,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="iOS 和 OSX 的内存管理都采用了引用计数机制，那么具体是怎么实现的呢，本文就来研究一番吧。">
+<meta name="keywords" content="ios引用计数,ios内存管理,os x 内存管理">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iOS 与 OSX 内存管理：引用计数">
+<meta property="og:url" content="https://swift.gg/2016/08/24/ios-osx-memory-management-reference-counting/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="iOS 和 OSX 的内存管理都采用了引用计数机制，那么具体是怎么实现的呢，本文就来研究一番吧。">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="iOS 与 OSX 内存管理：引用计数">
+<meta name="twitter:description" content="iOS 和 OSX 的内存管理都采用了引用计数机制，那么具体是怎么实现的呢，本文就来研究一番吧。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/08/24/ios-osx-memory-management-reference-counting/" target="_blank" title="iOS 与 OSX 内存管理：引用计数" itemprop="url">iOS 与 OSX 内存管理：引用计数</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-08-23T16:00:00.000Z" itemprop="datePublished">2016-08-24</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Andyy Hope，<a href="https://medium.com/swift-programming/ios-osx-memory-management-reference-counting-7bf60c3fbb8a#.6q2r41nkv" target="_blank" rel="external">原文链接</a>，原文日期：2016-02-23<br>译者：<a href="http://www.jianshu.com/users/b7978363eb99/latest_articles" target="_blank" rel="external">wiilen</a>；校对：<a href="http://www.swiftyper.com" target="_blank" rel="external">小锅</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>在 2009 年，我第一次下定决心要学习如何开发 App。那时候 iOS 3 才刚刚发布，之后，App Store 就成了那些开发 to-do 列表、笔记记录以及其它无聊应用的开发者们的金矿。</p>
+<p>Objective-C 是我决定要全身心投入学习的第一门面向对象的语言，那时候这门语言与现在有很多区别。过去几年我们见证了它的发展，与此同时苹果还发布了令人印象深刻的 Swift 语言。</p>
+<p>如今开发者们认为 ARC（自动引用计数）是理所应当的存在，特别是那些在 iOS 5 发布（2011年）之后学习 Objective-C 的人，或是学习 Swift 的人。</p>
+<a id="more"></a>
+<h2 id="什么是引用计数？"><a href="#什么是引用计数？" class="headerlink" title="什么是引用计数？"></a>什么是引用计数？</h2><p>引用计数是计算机科学中的一种技术，通过这种技术，每个对象在实例化时都被分配了一个计数值，因此应用程序可以知道哪些对象仍在使用。在对象的生命周期中，其它对象如果需要使用该对象，就声明对该它的所有权，然后增加计数值；当该对象完成了任务之后释放（release）所有权，然后减少计数值。一个对象的计数值减为 0 时，就会从内存中销毁（deallocate）。举个例子：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><div class="line">- (<span class="keyword">void</span>)demonstration &#123;</div><div class="line">    MyClass *foo = [[MyClass alloc] init];</div><div class="line">    [foo performSomeMethod];</div><div class="line">    [foo release];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在上面的代码中，我们做了三件事：初始化一个对象，调用它的某个方法，最后释放它。在 iOS 5 发布之前，开发者们在开发应用时都需要这么做。这种内存管理的方式被称为手动引用计数，即 MRC（Manual Reference Counting） 或 MRM（Manual Reference Management）。</p>
+<p>在看了上面的代码之后，你的第一印象可能觉得这么做并没有什么大不了，因为它很简单。然而当代码量持续增加，并且更多开发者参与到项目中时，开发者更有可能在这里出错。</p>
+<h2 id="手动引用计数"><a href="#手动引用计数" class="headerlink" title="手动引用计数"></a>手动引用计数</h2><p>所以 MRC 中具体包含了哪些内容呢？</p>
+<h3 id="alloc"><a href="#alloc" class="headerlink" title="alloc"></a>alloc</h3><figure class="highlight objc"><table><tr><td class="code"><pre><div class="line">MyClass *foo = [[MyClass alloc] init];</div></pre></td></tr></table></figure>
+<p>这段代码是 Objective-C 中最最基础的。要创建一个对象，首先需要初始化它。当调用 <code>alloc</code> 来创建一个对象时，系统会为该对象分配内存空间，并将它的引用计数设为 1。</p>
+<h3 id="release"><a href="#release" class="headerlink" title="release"></a>release</h3><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">[foo release];</div></pre></td></tr></table></figure>
+<p>对象调用 <code>release</code> 会使它的引用计数减 1。当对象的引用计数减为 0 时，系统会将该对象从内存移除，并释放内存空间以供其它对象使用。</p>
+<h3 id="retain"><a href="#retain" class="headerlink" title="retain"></a>retain</h3><figure class="highlight objc"><table><tr><td class="code"><pre><div class="line">[foo <span class="keyword">retain</span>];</div></pre></td></tr></table></figure>
+<p>对象调用 <code>retain</code> 时，会通知系统为它的引用计数加 1。调用 <code>retain</code> 意味着其它对象想要持有 <code>foo</code>。</p>
+<p>我们假设两个不同的对象都持有 <code>foo</code>，当第一个对象对 <code>foo</code> 调用 <code>release</code> 时，<code>foo</code> 的引用计数会从 2 减为 1。第二个对象仍然可以使用 <code>foo</code>，而无需担心 carsh 或产生一个悬空指针。</p>
+<h3 id="copy"><a href="#copy" class="headerlink" title="copy"></a>copy</h3><figure class="highlight objc"><table><tr><td class="code"><pre><div class="line">MyClass *bar = [foo <span class="keyword">copy</span>];</div></pre></td></tr></table></figure>
+<p><code>copy</code> 与 <code>retain</code> 的原理很相似，它可以复制一份原来的对象，不同之处在于引用计数。如果复制 <code>foo</code> 时它的引用计数为 4，复制得到的对象 <code>bar</code> 的引用计数只会为 1。</p>
+<h3 id="autorelease"><a href="#autorelease" class="headerlink" title="autorelease"></a>autorelease</h3><figure class="highlight objc"><table><tr><td class="code"><pre><div class="line">[foo autorelease];</div></pre></td></tr></table></figure>
+<p>当一个对象的作用域超出了它所声明的范围，就需要对其调用 <code>autorelease</code>。它会告诉系统，我们并不希望立即销毁这个对象，而是在 <code>autoreleasepool</code> 被清空的时候再去销毁这个对象。</p>
+<p><code>autorelase</code> 通常当我们在一个方法内部声明一个对象并将其返回给其调用者时使用。另一个情景是对象在 for 循环中实例化，并且该循环中有一个 <code>autoreleasepool</code> 时，也可以使用 <code>autorelease</code>。</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><div class="line">- (MyClass *)foo &#123;</div><div class="line">    MyClass *foo = [[MyClass alloc] init];</div><div class="line">    [foo autorelease];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="autoreleasepool"><a href="#autoreleasepool" class="headerlink" title="autoreleasepool"></a>autoreleasepool</h3><figure class="highlight objc"><table><tr><td class="code"><pre><div class="line">- (<span class="keyword">void</span>)example &#123;</div><div class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>, i &lt; <span class="number">10</span>, i++) &#123;</div><div class="line">        <span class="keyword">@autoreleasepool</span> &#123;</div><div class="line">            MyClass *foo = [[MyClass alloc] init];</div><div class="line">            [foo autorelease];</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>上面的代码中，我们实例化了 <code>foo</code> 对象，并对其调用了 <code>autorelease</code>。这些操作被包裹在 <code>autoreleasepool</code> 中，外层还有一个 for 循环。</p>
+<p>这么做的好处在于，for 循环中实例化的所有对象，可以在每一轮循环结束时自动被释放。当这一切发生时 <code>autoreleasepool</code> 会自己进行销毁，并释放所有对象，恢复到原来干净整洁的状态。</p>
+<h3 id="dealloc"><a href="#dealloc" class="headerlink" title="dealloc"></a>dealloc</h3><figure class="highlight objc"><table><tr><td class="code"><pre><div class="line">- (<span class="keyword">void</span>)dealloc &#123;</div><div class="line">    [foo release];</div><div class="line">    [bar release];</div><div class="line">    [fubar release];</div><div class="line">    [<span class="keyword">super</span> dealloc];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>dealloc</code> 是所有继承自 <code>NSObject</code> 的对象最后会调用的方法。你可以把 <code>dealloc</code> 想象成清理那些引用计数大于 0 的遗留对象的地方。</p>
+<h2 id="手动引用计数的缺点"><a href="#手动引用计数的缺点" class="headerlink" title="手动引用计数的缺点"></a>手动引用计数的缺点</h2><p>现在你应该能更好的理解手动管理引用计数所需要做的工作。下面介绍两个常见场景，关于微小的人为失误可能导致运行时 crash 的情况。</p>
+<h3 id="悬空指针"><a href="#悬空指针" class="headerlink" title="悬空指针"></a>悬空指针</h3><figure class="highlight objc"><table><tr><td class="code"><pre><div class="line">MyClass *foo = [[MyClass alloc] init];</div><div class="line">[foo release];</div><div class="line">[foo doSomething];</div></pre></td></tr></table></figure>
+<p>之前提到过，如果对象的引用计数减为 0，系统会将该对象从内存移除。该地址的内存空间清空之后，可能保留着仍为空的状态，也可能有其它对象占据了这块空间。</p>
+<p>但是要记住一点， <code>foo</code> 指针仍然指向这块内存。所以当 <code>doSomething</code> 方法被调用时，实际上会让 nil 或其它占据这块内存的对象去调用这个方法，这样做常常会引起 crash。</p>
+<h3 id="内存泄漏"><a href="#内存泄漏" class="headerlink" title="内存泄漏"></a>内存泄漏</h3><figure class="highlight objc"><table><tr><td class="code"><pre><div class="line">MyClass *foo = [[MyClass alloc] init];</div><div class="line">[foo <span class="keyword">retain</span>];</div><div class="line">[foo <span class="keyword">retain</span>];</div><div class="line">[foo release];</div></pre></td></tr></table></figure>
+<p>这有点像悬空指针的反面情况，当对象调用 <code>release</code> 的次数少于调用 <code>retain</code> 的次数时，就会发生内存泄漏。如果对象的引用计数一直不减为 0，系统就无法把该对象的资源分配给其它对象。</p>
+<p>你的应用中有些对象永远没有被释放，看上去好像没有多大的问题，不过如果这样的对象太多，就会导致应用的内存被耗光，产生一些奇怪的问题，并最终导致 crash。这也是我们在 <code>dealloc</code> 中执行清空操作的原因。</p>
+<h2 id="关于自动引用计数"><a href="#关于自动引用计数" class="headerlink" title="关于自动引用计数"></a>关于自动引用计数</h2><h3 id="Session-323-－-iOS，OS-X"><a href="#Session-323-－-iOS，OS-X" class="headerlink" title="Session 323 － iOS，OS X"></a>Session 323 － iOS，OS X</h3><p>2011 年，旧金山六月的一个令人愉快的早晨，大家在 Hall－H 参加了每年一度的 WWDC。Phil Schiller 展示了新的 Mail app，Scott Forstall 展示了 Game Center 的漂亮 UI，不幸的是那也是 Steve Jobs 的最后一场 keynote😔。那场 Keynote 中展示了大量新内容，但没有 ARC 这个对开发者而言的大惊喜。这周晚些时候，开发者们也参加了关于 iOS 与 OS X 的 Session 323，他们的生活从此发生了巨大的变化。</p>
+<h3 id="自动化的魔法"><a href="#自动化的魔法" class="headerlink" title="自动化的魔法"></a>自动化的魔法</h3><p>直到今天，所有 iOS 与 OS X 应用仍然使用引用计数，唯一不同在于我们不再需要进行手动管理，因为编译器都帮我们做好了。</p>
+<p>这里严肃声明一点，所有我之前提到的语句，编译器在编译时会帮我们自动插入，包括 <code>retain</code>、<code>release</code>、<code>copy</code>、<code>autorelease</code>、<code>autoreleasepool</code>。如果你回去看看我提供的演示代码，想象上面五种调用都被注释了，简而言之 ARC 都帮我们处理好了。继续前进吧，初学者们，自由地写 app，不用再担心内存管理！除了循环引用之外你不需要再担心什么，不过那是下一节的内容了。</p>
+<hr>
+<p>我已经在 <a href="https://github.com/andyyhope/MemoryManagement" target="_blank" rel="external">GitHub</a> 中上传了一些样例，你可以下载看看其中内存管理的语法。这只是一个简单的 OS X 控制台程序，其中 ARC 已经关闭了。示例函数的调用已经都被注释了，如果你想要看看它们的运行效果，只需要取消注释，编译并运行。尽情体验吧！</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/medium-com/">medium.com</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/iOS-开发/">iOS 开发</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/08/24/ios-osx-memory-management-reference-counting/" data-title="iOS 与 OSX 内存管理：引用计数 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/08/25/swift-pretty-in-print-pt-3/" title="Swift：如何优雅地使用 print()（三）">
+  <strong>上一篇</strong><br/>
+  <span>
+  Swift：如何优雅地使用 print()（三）</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/08/23/swift-pretty-in-print-pt-2/"  title="Swift：如何优雅地使用 print()（二）">
+ <strong>下一篇</strong><br/> 
+ <span>Swift：如何优雅地使用 print()（二）
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/08/24/ios-osx-memory-management-reference-counting/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是引用计数？"><span class="toc-number">1.</span> <span class="toc-text">什么是引用计数？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#手动引用计数"><span class="toc-number">2.</span> <span class="toc-text">手动引用计数</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#alloc"><span class="toc-number">2.1.</span> <span class="toc-text">alloc</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#release"><span class="toc-number">2.2.</span> <span class="toc-text">release</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#retain"><span class="toc-number">2.3.</span> <span class="toc-text">retain</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#copy"><span class="toc-number">2.4.</span> <span class="toc-text">copy</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#autorelease"><span class="toc-number">2.5.</span> <span class="toc-text">autorelease</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#autoreleasepool"><span class="toc-number">2.6.</span> <span class="toc-text">autoreleasepool</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#dealloc"><span class="toc-number">2.7.</span> <span class="toc-text">dealloc</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#手动引用计数的缺点"><span class="toc-number">3.</span> <span class="toc-text">手动引用计数的缺点</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#悬空指针"><span class="toc-number">3.1.</span> <span class="toc-text">悬空指针</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#内存泄漏"><span class="toc-number">3.2.</span> <span class="toc-text">内存泄漏</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#关于自动引用计数"><span class="toc-number">4.</span> <span class="toc-text">关于自动引用计数</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Session-323-－-iOS，OS-X"><span class="toc-number">4.1.</span> <span class="toc-text">Session 323 － iOS，OS X</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#自动化的魔法"><span class="toc-number">4.2.</span> <span class="toc-text">自动化的魔法</span></a></li></ol></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

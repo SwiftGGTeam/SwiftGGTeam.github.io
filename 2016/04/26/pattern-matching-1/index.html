@@ -1,0 +1,946 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>模式匹配第一弹: switch, enums &amp; where 子句 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift模式匹配,swift switch,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="在 Swift 中最简单常见的模式匹配就是 switch 了，那么本文就来说下 switch 的使用吧。">
+<meta name="keywords" content="swift模式匹配,swift switch">
+<meta property="og:type" content="article">
+<meta property="og:title" content="模式匹配第一弹: switch, enums &amp; where 子句">
+<meta property="og:url" content="https://swift.gg/2016/04/26/pattern-matching-1/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="在 Swift 中最简单常见的模式匹配就是 switch 了，那么本文就来说下 switch 的使用吧。">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="模式匹配第一弹: switch, enums &amp; where 子句">
+<meta name="twitter:description" content="在 Swift 中最简单常见的模式匹配就是 switch 了，那么本文就来说下 switch 的使用吧。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/04/26/pattern-matching-1/" target="_blank" title="模式匹配第一弹: switch, enums &amp; where 子句" itemprop="url">模式匹配第一弹: switch, enums &amp; where 子句</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-04-25T16:00:00.000Z" itemprop="datePublished">2016-04-26</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Olivier Halligon，<a href="http://alisoftware.github.io/swift/2016/03/27/pattern-matching-1/" target="_blank" rel="external">原文链接</a>，原文日期：2016-03-27<br>译者：<a href="http://chengway.in/" target="_blank" rel="external">walkingway</a>；校对：<a href="http://www.swiftyper.com" target="_blank" rel="external">小锅</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>从简单的 switch 到复杂的表达式、Swift 中的模式匹配可以变得相当强大。今天开始我们来探索一下 switch 炫酷的使用技巧，稍后一系列文章会更进一步，为大家带来更高级的模式匹配技法。</p>
+<p>本文作为模式匹配的第一篇介绍文章，旨在抛砖引玉。</p>
+<a id="more"></a>
+<h2 id="Switch-基本用法"><a href="#Switch-基本用法" class="headerlink" title="Switch 基本用法"></a>Switch 基本用法</h2><p>Swift 中最简单、最为常见的模式匹配就是 <code>switch</code> 语句，大家对下面的形式都比较熟悉了：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">enum</span> <span class="title">Direction</span> </span>&#123;</div><div class="line">  <span class="keyword">case</span> <span class="type">North</span>, <span class="type">South</span>, <span class="type">East</span>, <span class="type">West</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">// 可以很容易地切换枚举值</span></div><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Direction</span>: <span class="title">CustomStringConvertible</span> </span>&#123;</div><div class="line">  <span class="keyword">var</span> description: <span class="type">String</span> &#123;</div><div class="line">    <span class="keyword">switch</span> <span class="keyword">self</span> &#123;</div><div class="line">    <span class="keyword">case</span> <span class="type">North</span>: <span class="keyword">return</span> <span class="string">"↑"</span></div><div class="line">    <span class="keyword">case</span> <span class="type">South</span>: <span class="keyword">return</span> <span class="string">"↓"</span></div><div class="line">    <span class="keyword">case</span> <span class="type">East</span>:  <span class="keyword">return</span> <span class="string">"→"</span></div><div class="line">    <span class="keyword">case</span> <span class="type">West</span>:  <span class="keyword">return</span> <span class="string">"←"</span></div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>但是 switch 可以更进一步，允许使用包含变量的匹配模式，并在匹配时绑定这些变量。这适用于带关联值的枚举对象：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">enum</span> <span class="title">Media</span> </span>&#123;</div><div class="line">  <span class="keyword">case</span> <span class="type">Book</span>(title: <span class="type">String</span>, author: <span class="type">String</span>, year: <span class="type">Int</span>)</div><div class="line">  <span class="keyword">case</span> <span class="type">Movie</span>(title: <span class="type">String</span>, director: <span class="type">String</span>, year: <span class="type">Int</span>)</div><div class="line">  <span class="keyword">case</span> <span class="type">WebSite</span>(url: <span class="type">NSURL</span>, title: <span class="type">String</span>)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Media</span> </span>&#123;</div><div class="line">  <span class="keyword">var</span> mediaTitle: <span class="type">String</span> &#123;</div><div class="line">    <span class="keyword">switch</span> <span class="keyword">self</span> &#123;</div><div class="line">    <span class="keyword">case</span> .<span class="type">Book</span>(title: <span class="keyword">let</span> aTitle, author: <span class="number">_</span>, year: <span class="number">_</span>):</div><div class="line">      <span class="keyword">return</span> aTitle</div><div class="line">    <span class="keyword">case</span> .<span class="type">Movie</span>(title: <span class="keyword">let</span> aTitle, director: <span class="number">_</span>, year: <span class="number">_</span>):</div><div class="line">      <span class="keyword">return</span> aTitle</div><div class="line">    <span class="keyword">case</span> .<span class="type">WebSite</span>(url: <span class="number">_</span>, title: <span class="keyword">let</span> aTitle):</div><div class="line">      <span class="keyword">return</span> aTitle</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">let</span> book = <span class="type">Media</span>.<span class="type">Book</span>(title: <span class="string">"20,000 leagues under the sea"</span>, author: <span class="string">"Jules Verne"</span>, year: <span class="number">1870</span>)</div><div class="line">book.mediaTitle</div></pre></td></tr></table></figure>
+<p>这种形式下的通用语法是 <code>case MyEnum.EnumValue(let variable)</code> ，表明『如果对应的值是 <code>MyEnum.EnumValue</code> 且附带一个关联值，就绑定变量 <code>variable</code> 到该关联值上』。</p>
+<p>当 media 实例匹配其中一个条件，比如匹配第一个 case：<code>Media.Book</code>，紧接着一个新的变量 <code>let aTitle</code> 被创建，且相关联的值 title 也会绑定到这个变量中。这就是我们为什么这里需要一个 <code>let</code>，因为如果匹配的话会创建一个新的变量（或常量）</p>
+<p>请注意，你可以将 let 写在整个表达式的前面，而不用再写在每个变量前，下面这两行代码是等价的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">case</span> .<span class="type">Book</span>(title: <span class="keyword">let</span> aTitle, author: <span class="keyword">let</span> anAuthor, year: <span class="keyword">let</span> aYear): …</div><div class="line"><span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Book</span>(title: aTitle, author: anAuthor, year: aYear): …</div></pre></td></tr></table></figure>
+<p>上面的代码使用了通配符 <code>_</code>，意味着：『我期待这里有东西就好，但不关心是什么，所以在我不使用时，不要将其绑定到一个变量』，类似于我们为不使用的值放置一个占位符。</p>
+<h2 id="使用固定的值"><a href="#使用固定的值" class="headerlink" title="使用固定的值"></a>使用固定的值</h2><p>记住 <code>case</code> 仍然是关于模式匹配的，与之相比较的他都会尝试去匹配一下。这意味着你可以使用一个常量值来判断是否匹配，例如：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Media</span> </span>&#123;</div><div class="line">  <span class="keyword">var</span> isFromJulesVerne: <span class="type">Bool</span> &#123;</div><div class="line">    <span class="keyword">switch</span> <span class="keyword">self</span> &#123;</div><div class="line">    <span class="keyword">case</span> .<span class="type">Book</span>(title: <span class="number">_</span>, author: <span class="string">"Jules Verne"</span>, year: <span class="number">_</span>): <span class="keyword">return</span> <span class="literal">true</span></div><div class="line">    <span class="keyword">case</span> .<span class="type">Movie</span>(title: <span class="number">_</span>, director: <span class="string">"Jules Verne"</span>, year: <span class="number">_</span>): <span class="keyword">return</span> <span class="literal">true</span></div><div class="line">    <span class="keyword">default</span>: <span class="keyword">return</span> <span class="literal">false</span></div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line">book.isFromJulesVerne</div></pre></td></tr></table></figure>
+<p>这个例子或许并没有什么实际意义，但是至少向你展示了如何绑定常量。我提到它是因为我们已经学习过将一个值绑定到一个变量上，然后判断该变量是否等于一个常量，而不是直接和这个常量进行模式匹配。</p>
+<p>一个更有帮助和通用的例子看起来应该是这样的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Media</span> </span>&#123;</div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">checkAuthor</span><span class="params">(author: String)</span></span> -&gt; <span class="type">Bool</span> &#123;</div><div class="line">    <span class="keyword">switch</span> <span class="keyword">self</span> &#123;</div><div class="line">    <span class="keyword">case</span> .<span class="type">Book</span>(title: <span class="number">_</span>, author: author, year: <span class="number">_</span>): <span class="keyword">return</span> <span class="literal">true</span></div><div class="line">    <span class="keyword">case</span> .<span class="type">Movie</span>(title: <span class="number">_</span>, director: author, year: <span class="number">_</span>): <span class="keyword">return</span> <span class="literal">true</span></div><div class="line">    <span class="keyword">default</span>: <span class="keyword">return</span> <span class="literal">false</span></div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line">book.checkAuthor(<span class="string">"Jules Verne"</span>)</div></pre></td></tr></table></figure>
+<p>注意这里尽管我们在 <code>case</code> 模式中使用了 <code>author</code>，但这里不需要使用 <code>let</code>（与之前的代码不同）。因为这种情况下，我们不会创建一个变量来绑定一个值。相反，我们使用一个已经被赋过值的常量（这个值由函数参数提供），而不会创建一个新值绑定到匹配的 <code>self</code> 上 </p>
+<h2 id="一次绑定多种模式"><a href="#一次绑定多种模式" class="headerlink" title="一次绑定多种模式"></a>一次绑定多种模式</h2><p>在 Swift 2.2 中，我们不能一次绑定多种模式，所以下面的例子是不能正常工作的，因为我们尝试声明了一些变量用做 <code>self</code> 匹配 <code>.Book</code> 或 <code>.Movie</code> 的情形，然后只要满足这两种情形任意一种就绑定一个变量：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Media</span> </span>&#123;</div><div class="line">  <span class="keyword">var</span> mediaTitle2: <span class="type">String</span> &#123;</div><div class="line">    <span class="keyword">switch</span> <span class="keyword">self</span> &#123;</div><div class="line">      <span class="comment">// 错误: 'case' 标签中含多种模式，变量是不能被声明的</span></div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Book</span>(title: aTitle, author: <span class="number">_</span>, year: <span class="number">_</span>), <span class="keyword">let</span> .<span class="type">Movie</span>(title: aTitle, director: <span class="number">_</span>, year: <span class="number">_</span>):</div><div class="line">      <span class="keyword">return</span> aTitle</div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">WebSite</span>(url: <span class="number">_</span>, title: aTitle):</div><div class="line">      <span class="keyword">return</span> aTitle</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这在大多数情形下是可以理解的；你期望下面这些代码做些什么：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Book</span>(title: aTitle, author: <span class="number">_</span>, year: <span class="number">_</span>), <span class="keyword">let</span> .<span class="type">Movie</span>(title: <span class="number">_</span>, director: <span class="number">_</span>, year: aYear)?</div></pre></td></tr></table></figure>
+<p>随后你该如何在代码中使用绑定的变量（<code>aTitle</code> 或 <code>aYear</code>）呢？如果 self 是 <code>.Book</code>，则只有 <code>aTitle</code> 将会被绑定，那么 <code>aYear</code> 怎么办？如果你在随后的 case 下的代码块中使用 <code>aYear</code> 变量，不可能有意义的。</p>
+<p>但是可能需要考虑的一个特例是当你尝试绑定相同名字和类型的变量时，这仍然是有意义的工作，就像上面例子中我们尝试在 cases 是 <code>.Book</code> 和 <code>.Movie</code> 时绑定 <code>aTitle</code>。这样做可以避免重复代码，不是吗？所以为什么在那种情形下还不允许这么用？别担心，这个<a href="https://github.com/apple/swift-evolution/blob/master/proposals/0043-declare-variables-in-case-labels-with-multiple-patterns.md" target="_blank" rel="external">提议</a>已经被 Swift 3.0 接受了。</p>
+<h2 id="使用没有参数标签的元组"><a href="#使用没有参数标签的元组" class="headerlink" title="使用没有参数标签的元组"></a>使用没有参数标签的元组</h2><p>注意当处理 <code>enum</code> 的关联值时，我们可以考虑使用一个元组来做唯一的关联值，而元组则包含所有真正的关联值。下面有两个结果：</p>
+<ul>
+<li>第一个你可以省略参数标签，然后 case 仍然能够正常工作：</li>
+</ul>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Media</span> </span>&#123;</div><div class="line">  <span class="keyword">var</span> mediaTitle2: <span class="type">String</span> &#123;</div><div class="line">    <span class="keyword">switch</span> <span class="keyword">self</span> &#123;</div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Book</span>(title, <span class="number">_</span>, <span class="number">_</span>): <span class="keyword">return</span> title</div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Movie</span>(title, <span class="number">_</span>, <span class="number">_</span>): <span class="keyword">return</span> title</div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">WebSite</span>(<span class="number">_</span>, title): <span class="keyword">return</span> title</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ul>
+<li>第二个你可以将关联值看做是一个唯一的大元组，然后方法里面独立的元素。</li>
+</ul>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Media</span> </span>&#123;</div><div class="line">  <span class="keyword">var</span> mediaTitle3: <span class="type">String</span> &#123;</div><div class="line">    <span class="keyword">switch</span> <span class="keyword">self</span> &#123;</div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Book</span>(tuple): <span class="keyword">return</span> tuple.title</div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Movie</span>(tuple): <span class="keyword">return</span> tuple.title</div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">WebSite</span>(tuple): <span class="keyword">return</span> tuple.title</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>作为附加的奖励，可以不用指定特定的元组来匹配任何关联值，所以下面三个表达式是相等的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">case</span> .<span class="type">WebSite</span> <span class="comment">// not specifying the tuple at all</span></div><div class="line"><span class="keyword">case</span> .<span class="type">WebSite</span>(<span class="number">_</span>) <span class="comment">// matching a single tuple of associated values that we don't care about</span></div><div class="line"><span class="keyword">case</span> .<span class="type">WebSite</span>(<span class="number">_</span>, <span class="number">_</span>) <span class="comment">// matching individual associated values that we don't care about either</span></div></pre></td></tr></table></figure>
+<h2 id="使用-Where-语句"><a href="#使用-Where-语句" class="headerlink" title="使用 Where 语句"></a>使用 Where 语句</h2><p>比起比较两个枚举，模式匹配允许更强大的方式，你可以在比较中添加条件，使用 where 从句，如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Media</span> </span>&#123;</div><div class="line">  <span class="keyword">var</span> publishedAfter1930: <span class="type">Bool</span> &#123;</div><div class="line">    <span class="keyword">switch</span> <span class="keyword">self</span> &#123;</div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Book</span>(<span class="number">_</span>, <span class="number">_</span>, year) <span class="keyword">where</span> year &gt; <span class="number">1930</span>: <span class="keyword">return</span> <span class="literal">true</span></div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">Movie</span>(<span class="number">_</span>, <span class="number">_</span>, year) <span class="keyword">where</span> year &gt; <span class="number">1930</span>: <span class="keyword">return</span> <span class="literal">true</span></div><div class="line">    <span class="keyword">case</span> .<span class="type">WebSite</span>: <span class="keyword">return</span> <span class="literal">true</span> <span class="comment">// same as "case .WebSite(_)" but we ignore the associated tuple value</span></div><div class="line">    <span class="keyword">default</span>: <span class="keyword">return</span> <span class="literal">false</span></div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这样只有当左边的模式（<code>let .Book(_, _, year)</code>）成功匹配，并且 <code>where</code> 限定的条件为 <code>true</code> 时，整个匹配过程才算完成。在稍后的系列文章中我们将继续深挖更强大的模式匹配。</p>
+<h2 id="下一部分的计划"><a href="#下一部分的计划" class="headerlink" title="下一部分的计划"></a>下一部分的计划</h2><p>这篇文章很简单，带你回顾了 <code>swith</code> 中的一些基本的模式匹配，下一部分将探讨更高级的用法，包括：</p>
+<ul>
+<li>在 <code>enum</code> 之外的其他地方使用 <code>switch</code>（尤其指 <code>tuples</code>，<code>structs</code>，<code>is</code> 和 <code>as</code>）</li>
+<li>与其他语句一起配合使用模式匹配，包括 <code>if case</code>, <code>guard case</code>, <code>for case</code>, <code>=~</code>, …</li>
+<li>嵌套模式，包括包含可选值</li>
+<li>将上面这些结合起来创造一些魔法  <blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+</li>
+</ul>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Crunchy-Development/">Crunchy Development</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/04/26/pattern-matching-1/" data-title="模式匹配第一弹: switch, enums &amp; where 子句 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/04/27/pattern-matching-2/" title="模式匹配第二弹：元组，range 和类型">
+  <strong>上一篇</strong><br/>
+  <span>
+  模式匹配第二弹：元组，range 和类型</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/04/25/force-optionals-in-guard-or-let-optional-binding/"  title="在 guard let 或 if let 多重解包中让元素强制可空">
+ <strong>下一篇</strong><br/> 
+ <span>在 guard let 或 if let 多重解包中让元素强制可空
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/04/26/pattern-matching-1/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Switch-基本用法"><span class="toc-number">1.</span> <span class="toc-text">Switch 基本用法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用固定的值"><span class="toc-number">2.</span> <span class="toc-text">使用固定的值</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#一次绑定多种模式"><span class="toc-number">3.</span> <span class="toc-text">一次绑定多种模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用没有参数标签的元组"><span class="toc-number">4.</span> <span class="toc-text">使用没有参数标签的元组</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用-Where-语句"><span class="toc-number">5.</span> <span class="toc-text">使用 Where 语句</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#下一部分的计划"><span class="toc-number">6.</span> <span class="toc-text">下一部分的计划</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

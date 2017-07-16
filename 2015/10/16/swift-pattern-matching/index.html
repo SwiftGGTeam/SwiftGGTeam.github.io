@@ -1,0 +1,962 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>Swift中的模式匹配 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Ole Begemann，原文链接，原文日期：2015-09-18译者：lfb_CD；校对：pmst；定稿：千叶知风   Swift中的模式匹配更新:2015.9.19: 添加了一些关于Swift语法问题的笔记。把自定义操作符的符号改为了一个我认为更加适合的。在总结中添加了一些对函数式编程的想法。2015.9.25: 添加了关于标准库中已经存在的~&amp;gt;操作符的笔记">
+<meta name="keywords" content="Swift 进阶">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Swift中的模式匹配">
+<meta property="og:url" content="https://swift.gg/2015/10/16/swift-pattern-matching/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Ole Begemann，原文链接，原文日期：2015-09-18译者：lfb_CD；校对：pmst；定稿：千叶知风   Swift中的模式匹配更新:2015.9.19: 添加了一些关于Swift语法问题的笔记。把自定义操作符的符号改为了一个我认为更加适合的。在总结中添加了一些对函数式编程的想法。2015.9.25: 添加了关于标准库中已经存在的~&amp;gt;操作符的笔记">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Swift中的模式匹配">
+<meta name="twitter:description" content="作者：Ole Begemann，原文链接，原文日期：2015-09-18译者：lfb_CD；校对：pmst；定稿：千叶知风   Swift中的模式匹配更新:2015.9.19: 添加了一些关于Swift语法问题的笔记。把自定义操作符的符号改为了一个我认为更加适合的。在总结中添加了一些对函数式编程的想法。2015.9.25: 添加了关于标准库中已经存在的~&amp;gt;操作符的笔记">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2015/10/16/swift-pattern-matching/" target="_blank" title="Swift中的模式匹配" itemprop="url">Swift中的模式匹配</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2015-10-16T01:00:00.000Z" itemprop="datePublished">2015-10-16</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Ole Begemann，<a href="http://oleb.net/blog/2015/09/swift-pattern-matching/" target="_blank" rel="external">原文链接</a>，原文日期：2015-09-18<br>译者：<a href="http://weibo.com/lfbWb" target="_blank" rel="external">lfb_CD</a>；校对：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="external">pmst</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="external">千叶知风</a></p>
+</blockquote>
+<!--此处开始正文-->
+<h1 id="Swift中的模式匹配"><a href="#Swift中的模式匹配" class="headerlink" title="Swift中的模式匹配"></a>Swift中的模式匹配</h1><p>更新:<br>2015.9.19: 添加了一些关于Swift语法问题的笔记。把自定义操作符的符号改为了一个我认为更加适合的。在总结中添加了一些对函数式编程的想法。<br>2015.9.25: 添加了关于标准库中已经存在的<code>~&gt;</code>操作符的笔记</p>
+<a id="more"></a>
+<p>这个系列的其他文章：<br>(1)Custom Pattern Matching (就是这篇)<br>(2)<a href="http://oleb.net/blog/2015/09/swift-ranges-and-intervals/" target="_blank" rel="external">Ranges and Intervals</a><br>(3)<a href="http://oleb.net/blog/2015/09/more-pattern-matching-examples/" target="_blank" rel="external">More Pattern Matching Examples</a></p>
+<blockquote>
+<p><a href="http://oleb.net/media/swift-pattern-matching.playground.zip" target="_blank" rel="external">Download this article as a playground</a> for Xcode 7.</p>
+</blockquote>
+<p>Swift有一个很好的特性，你可以对模式匹配系统进行扩展。<a href="https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/Patterns.html" target="_blank" rel="external">Patterns(模式)</a>是规则值在switch语句中的一个case选项，<code>do-catch</code>语句中的一个<em><code>catch</code></em>分句，或者是一个<em><code>if</code></em>，<em><code>while</code></em>，<em><code>guard</code></em>，<em><code>for-in</code></em>语句中的一个选项。</p>
+<p>举个例子，假设你想判断一个整数是否大于,小于或等于零。你可以使用 <code>if-else</code>的结构，但是我认为这段代码并不漂亮：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> x = <span class="number">10</span></div><div class="line"><span class="keyword">if</span> x &gt; <span class="number">0</span> &#123;</div><div class="line">    <span class="built_in">print</span>(<span class="string">"positive"</span>)</div><div class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> x &lt; <span class="number">0</span> &#123;</div><div class="line">    <span class="built_in">print</span>(<span class="string">"negative"</span>)</div><div class="line">&#125; <span class="keyword">else</span> &#123;</div><div class="line">    <span class="built_in">print</span>(<span class="string">"zero"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>采用<code>switch</code>语句的话会更加好，我更加喜欢这样写代码:</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// 伪代码 </span></div><div class="line"><span class="keyword">switch</span> x &#123;</div><div class="line"><span class="keyword">case</span> &gt; <span class="number">0</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"positive"</span>)</div><div class="line"><span class="keyword">case</span> &lt; <span class="number">0</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"negative"</span>)</div><div class="line"><span class="keyword">case</span> <span class="number">0</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"zero"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>但是使用不等式条件的匹配模式，<code>switch</code>语句中默认是不支持的(注:即不支持<code>case &gt;0</code>这种写法)。看看咱们是否可以解决这个问题。为了方便之后的理解，我将使用<code>case greaterThen(0):print(&quot;positive&quot;)</code>的匹配写法替换之前的<code>case &gt; 0</code>在内的所有条件。不过，我将稍后回过头来自定义这个操作符。</p>
+<h2 id="扩展模式匹配"><a href="#扩展模式匹配" class="headerlink" title="扩展模式匹配"></a>扩展模式匹配</h2><p>Swift中的模式匹配是基于<code>~=</code>操作符。如果表达模式<code>~=</code>返回值为<code>true</code>则匹配成功。</p>
+<p><a href="http://swiftdoc.org/operator/tildeeq/" target="_blank" rel="external">标准库中对<code>~=</code>有四个重载</a>：一个是<code>Equatable</code>类型，一个是<code>optionals</code>，一个是<code>range</code>，最后一个是<code>interval</code>。虽然<code>range</code>和<code>interval</code>挺接近的，但在这篇文章中我们不用，你也可以在这篇文章中了解下<a href="http://oleb.net/blog/2015/09/swift-ranges-and-intervals/" target="_blank" rel="external">Ranges and Intervals</a>。</p>
+<p>所以我们需要实现属于我们自己的<code>~=</code>，函数的形式是这样:</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> ~=<span class="params">(pattern: ???, value: ???)</span></span> -&gt; <span class="type">Bool</span></div></pre></td></tr></table></figure>
+<p>我们知道函数必须返回一个布尔类型(<code>Bool</code>)的结果值，因为我们需要告知传入值是否满足模式匹配条件。接下来还留有一个问题:函数的传入参数类型是什么?</p>
+<p>对于<em>value</em>(传入值)来讲，我们只需使用<code>Int</code>类型即可满足上文例程中的需求。但是这里我们使用泛型，使其能接受任何类型的数据。<code>pattern</code>在实例中将以<code>greaterThan(0)</code>或者是<code>lessThan(0)</code>的形式出现。一般来讲，<code>pattern</code>应该是一个函数，将<em>value</em>做为参数传入，如果匹配成功则返回true，其他则返回false。<em>value</em>的类型为T，所以pattern的类型也应该为<code>T -&gt; Bool</code>:</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> ~=&lt;T&gt;<span class="params">(pattern: T -&gt; Bool, value: T)</span></span> -&gt; <span class="type">Bool</span> &#123;</div><div class="line">    <span class="keyword">return</span> pattern(value)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>现在我们需要定义<code>greaterThan</code>和<code>lessThan</code>函数，用于返回匹配结果。注意:不要将<code>greaterThan(0)</code>中的<code>0</code>值和传入进行比较的值value混淆了。greaterThan的参数是<code>pattern</code>的一部分，应用于等会第二步要用到的值。比如，<code>greaterThan(0) ~= x</code>和<code>greaterThan(0)(x)</code>是一样的。</p>
+<p>我们知道<code>greaterThen(0)</code>函数必须生成一个类型<code>T-&gt;Bool</code>函数作为结果值返回。所以反之，<code>greaterThen</code>必须是一个函数需要另一个值并返回第一个函数。此外，我们对传入参数进行条件约束:必须遵循<code>Comparable</code>协议，这样就能使用<code>Swift</code>中的<code>&gt; 和 &lt;</code>操作符符了。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">greaterThan</span>&lt;T : Comparable&gt;<span class="params">(a: T)</span></span> -&gt; (<span class="type">T</span> -&gt; <span class="type">Bool</span>) &#123;</div><div class="line">    <span class="keyword">return</span> &#123; (b: <span class="type">T</span>) -&gt; <span class="type">Bool</span> <span class="keyword">in</span> b &gt; a &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>对于这类接受一个参数，并且又返回一个可以接受余下参数的函数(以此类推)叫做<a href="https://en.wikipedia.org/wiki/Currying" target="_blank" rel="external">curried functions(柯里化函数)</a>。(这是我去年写的关于柯里化函数的文章:<a href="http://oleb.net/blog/2014/07/swift-instance-methods-curried-functions/" target="_blank" rel="external">instance methods in Swift are a form of (partially) curried functions</a>)。Swift为声明柯里化函数提供了<a href="https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/Declarations.html#//apple_ref/doc/uid/TP40014097-CH34-ID363" target="_blank" rel="external">特殊的语法</a>。使用这样的语句，我们的函数就会像这样：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">greaterThan</span>&lt;T : Comparable&gt;<span class="params">(a: T)</span></span>(<span class="number">_</span> b: <span class="type">T</span>) -&gt; <span class="type">Bool</span> &#123;</div><div class="line">    <span class="keyword">return</span> b &gt; a</div><div class="line">&#125;</div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">lessThan</span>&lt;T : Comparable&gt;<span class="params">(a: T)</span></span>(<span class="number">_</span> b: <span class="type">T</span>) -&gt; <span class="type">Bool</span> &#123;</div><div class="line">    <span class="keyword">return</span> b &lt; a</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这是在我们第一个版本的switch语句中需要写的:</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">switch</span> x &#123;</div><div class="line"><span class="keyword">case</span> greaterThan(<span class="number">0</span>):</div><div class="line">    <span class="built_in">print</span>(<span class="string">"positive"</span>)</div><div class="line"><span class="keyword">case</span> lessThan(<span class="number">0</span>):</div><div class="line">    <span class="built_in">print</span>(<span class="string">"negative"</span>)</div><div class="line"><span class="keyword">case</span> <span class="number">0</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"zero"</span>)</div><div class="line"><span class="keyword">default</span>:</div><div class="line">    <span class="built_in">fatalError</span>(<span class="string">"Should be unreachable"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>相当不错吧，除了<code>default</code>那项语句还不完美。如果让编译器检查完所有的情况是不可能的，所以，编译器总是会让我们提供一个<code>default</code>的情况。当然，如果你确定你的选项能覆盖所有的可能，把fatalError()调用在<code>default</code>情况下也是一个好主意，可以用来记录你预料的这段不会被执行的代码。</p>
+<h2 id="自定义操作符"><a href="#自定义操作符" class="headerlink" title="自定义操作符"></a>自定义操作符</h2><p>滑动到顶部，看一会儿我们之前的伪代码。理想情况下，我们想把<code>greaterThan(0)</code>和<code>lessThan(0)</code>分别换成<code>&gt; 0</code>和<code>&lt; 0</code>。</p>
+<p>自定义操作符是一个有争议的话题，倘若读者不熟悉某个特定的操作符时，大大降低了可读性。回到我们的例子中，类似于<code>greaterThan(0)</code>这样的语句可读性是非常好的，所以可以这样认为，自定义操作符是不需要的。但另一方面，每个人都知道<code>&gt; 0</code>是什么意思，所以我们可以尝试着自定义一个类似于这样的操作符。正如我们将会看到的，它不会是完美的。</p>
+<p>我们自定义的运算符是一元的 — 它们仅有一个操作数，并且是前缀运算符(与之相对的是后缀运算符，紧跟操作数之后)。一元操作符与其操作数中间是没有空格的，原因在于Swift用空格来消除一元运算符和二元运算符之间的歧义。此外，<code>&lt;</code><a href="https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/LexicalStructure.html#//apple_ref/doc/uid/TP40014097-CH30-ID418" target="_blank" rel="external">不允许作为前缀运算作符</a>，所以我们必须退而求其次用其他符号替代之。(<code>&gt;</code>允许作为前缀运算符，但是不能作为后缀运算符。)</p>
+<p>我建议使用<code>~&gt;</code>和<code>~&lt;</code>。虽然不太理想，<code>~&gt;</code>看起来很像一个箭头，但是波浪号形象地表示了约等于(<code>~=</code>)这样的关系。另外，我能想到的其他操作符(<code>&gt;&gt;</code>和<code>&lt;&lt;</code>)与移位操作符很容易混淆在一起，所以不建议使用这两个。</p>
+<blockquote>
+<p><strong>更新9.25.2015</strong>：我从<a href="http://natecook.com/blog/2014/11/swifts-elusive-tilde-gt-operator/" target="_blank" rel="external">Nate Cook的这篇文章中得知</a>操作符<code>~&gt;</code>已经存在于<a href="http://swiftdoc.org/swift-2/operator/tildegt/" target="_blank" rel="external">标准库</a>中了。它并没有任何公开的实现，但是Nate发现它是用来增加集合的索引值的。鉴于有这种用法，完成不同的目的却使用相同的操作符似乎不太合适。我感觉可以随意用其他符号替代。</p>
+</blockquote>
+<p>实现起来也是比较麻烦的。我们需要做的就是声明运算符以及具体函数的实现，这里仅仅只是委托先前定义的<code>greaterThan</code>和<code>lessThan</code>函数来完成运算符的实现。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">prefix</span> <span class="keyword">operator</span> ~&gt; &#123; &#125;</div><div class="line"><span class="keyword">prefix</span> <span class="keyword">operator</span> ~&lt; &#123; &#125;</div><div class="line"></div><div class="line"><span class="keyword">prefix</span> <span class="function"><span class="keyword">func</span> ~&gt; &lt;T : Comparable&gt;<span class="params">(a: T)</span></span>(<span class="number">_</span> b: <span class="type">T</span>) -&gt; <span class="type">Bool</span> &#123;</div><div class="line">    <span class="keyword">return</span> greaterThan(a)(b)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">prefix</span> <span class="function"><span class="keyword">func</span> ~&lt; &lt;T : Comparable&gt;<span class="params">(a: T)</span></span>(<span class="number">_</span> b: <span class="type">T</span>) -&gt; <span class="type">Bool</span> &#123;</div><div class="line">    <span class="keyword">return</span> lessThan(a)(b)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>有了这个，我们的<code>switch</code>语句就变成了：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">switch</span> x &#123;</div><div class="line"><span class="keyword">case</span> ~&gt;<span class="number">0</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"positive"</span>)</div><div class="line"><span class="keyword">case</span> ~&lt;<span class="number">0</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"negative"</span>)</div><div class="line"><span class="keyword">case</span> <span class="number">0</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"zero"</span>)</div><div class="line"><span class="keyword">default</span>:</div><div class="line">    <span class="built_in">fatalError</span>(<span class="string">"Should be unreachable"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>再次提醒，注意运算符和操作数之间是没有空格的。</p>
+<p>这是我们能写得最好的了，非常接近我们之前想要实现的了，但这段代码也并不是完美的了。</p>
+<blockquote>
+<p><strong>2015.9.19更新</strong>：<a href="https://twitter.com/jl_hfl/status/644992487346581504" target="_blank" rel="external">Joseph Lord</a>提醒我，Swift已经有类似语法用于实现先前的的匹配模式：</p>
+</blockquote>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">switch</span> x &#123;</div><div class="line"><span class="keyword">case</span> <span class="number">_</span> <span class="keyword">where</span> x &gt; <span class="number">0</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"positive"</span>)</div><div class="line"><span class="keyword">case</span> <span class="number">_</span> <span class="keyword">where</span> x &lt; <span class="number">0</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"negative"</span>)</div><div class="line"><span class="keyword">case</span> <span class="number">0</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"zero"</span>)</div><div class="line"><span class="keyword">default</span>:</div><div class="line">    <span class="built_in">fatalError</span>(<span class="string">"Should be unreachable"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>(<em><code>default</code>选项仍然是用来确保编译器能安全工作，我已经提交了这个bug，rdar://22765436</em>)</p>
+<p><em>这种语法，尽管没有我们自定义解决方案显得简明，但是它却不需要额外自定义一个运算符，看起来还是不错的。不管怎样，该设计方式非常通用，应用范围广。请继续阅读。</em></p>
+<h2 id="其他方面的应用"><a href="#其他方面的应用" class="headerlink" title="其他方面的应用"></a>其他方面的应用</h2><p>顺便说一句，这里提出的解决方案是非常通用的。我们重载的操作符<code>~=</code>适用于任何类型的<code>T</code>和任何接受一个参数<code>T</code>并且返回一个<code>Bool</code>类型的函数。也就是说,我们使<code>pattern(value)</code>变成了<code>pattern ~=</code>这样的语法糖。同时，通过扩展，把<code>if pattern(value) { ... }</code>变成了<code>switch value { case pattern: ... }</code>这样的语法糖。</p>
+<h2 id="检查一个数字是偶数还是奇数"><a href="#检查一个数字是偶数还是奇数" class="headerlink" title="检查一个数字是偶数还是奇数"></a>检查一个数字是偶数还是奇数</h2><p>下面是一些使用范例。第一个简单示例用于说明知识点，但实际应用意义不大。假设你有一个<code>isEven</code>函数用来检查一个数是否是偶数：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">isEven</span>&lt;T : IntegerType&gt;<span class="params">(a: T)</span></span> -&gt; <span class="type">Bool</span> &#123;</div><div class="line">    <span class="keyword">return</span> a % <span class="number">2</span> == <span class="number">0</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>现在这样:</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">switch</span> isEven(x) &#123;</div><div class="line">	<span class="keyword">case</span> <span class="literal">true</span>: <span class="built_in">print</span>(<span class="string">"even"</span>)</div><div class="line">	<span class="keyword">case</span> <span class="literal">false</span>: <span class="built_in">print</span>(<span class="string">"odd"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>可以写成这样:</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">switch</span> x &#123;</div><div class="line"><span class="keyword">case</span> isEven: <span class="built_in">print</span>(<span class="string">"even"</span>)</div><div class="line"><span class="keyword">default</span>: <span class="built_in">print</span>(<span class="string">"odd"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>再次注意<code>default</code>选项。以下代码无法正常工作：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">switch</span> x &#123;</div><div class="line"><span class="keyword">case</span> isEven: <span class="built_in">print</span>(<span class="string">"even"</span>)</div><div class="line"><span class="keyword">case</span> isOdd: <span class="built_in">print</span>(<span class="string">"odd"</span>)</div><div class="line">&#125;</div><div class="line"><span class="comment">// error: Switch must be exhaustive, consider adding a default clause</span></div></pre></td></tr></table></figure>
+<h1 id="字符串匹配"><a href="#字符串匹配" class="headerlink" title="字符串匹配"></a>字符串匹配</h1><p>这儿有一个更实际的例子，假设你想检查一个字符串是否包含前缀或者是后缀。我们先写两个函数，<code>hasPrefix</code>和<code>hasSuffix</code>，将两个字符串作为它们的参数，检查第一个参数是否是第二个参数的前缀或者后缀。这些只是改变了一下标准库中已经存在的<a href="https://developer.apple.com/library/ios/documentation/Swift/Reference/Swift_String_Structure/index.html#//apple_ref/swift/structm/String/s:FSS9hasPrefixFSSFSSSb" target="_blank" rel="external"><code>String.hasPrefix</code></a>和<a href="https://developer.apple.com/library/ios/documentation/Swift/Reference/Swift_String_Structure/index.html#//apple_ref/swift/structm/String/s:FSS9hasSuffixFSSFSSSb" target="_blank" rel="external"><code>String.hasSuffix</code></a>方法——把参数排了下顺序（前缀/后缀为第一个参数，全字符串为第二个参数）。如果你使用<code>Partial Applied Function</code>（偏应用函数，可以缺少部分参数的函数）传递给其他的函数的情况很多，你会发现你经常得去适配被调用的接口。这可能让人觉得很烦，但这也不会很难。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">hasPrefix</span><span class="params">(<span class="keyword">prefix</span>: String)</span></span>(value: <span class="type">String</span>) -&gt; <span class="type">Bool</span> &#123;</div><div class="line">    <span class="keyword">return</span> value.hasPrefix(<span class="keyword">prefix</span>)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">hasSuffix</span><span class="params">(suffix: String)</span></span>(value: <span class="type">String</span>) -&gt; <span class="type">Bool</span> &#123;</div><div class="line">    <span class="keyword">return</span> value.hasSuffix(suffix)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在我看来，以下实现方式大大提高了代码可读性:</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> str = <span class="string">"ABCDEFGHIJKLMNOPQRSTUVWXYZ"</span></div><div class="line"><span class="keyword">switch</span> str &#123;</div><div class="line"><span class="keyword">case</span> hasPrefix(<span class="string">"B"</span>), hasPrefix(<span class="string">"C"</span>):</div><div class="line">    <span class="built_in">print</span>(<span class="string">"Starts with B or C"</span>)</div><div class="line"><span class="keyword">case</span> hasPrefix(<span class="string">"D"</span>):</div><div class="line">    <span class="built_in">print</span>(<span class="string">"Starts with D"</span>)</div><div class="line"><span class="keyword">case</span> hasSuffix(<span class="string">"Z"</span>):</div><div class="line">    <span class="built_in">print</span>(<span class="string">"Ends with Z"</span>)</div><div class="line"><span class="keyword">default</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"Something else"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>针对我们最初问题的一个通用的解决方案，我们提出了可以应用于很多不同的问题的解决方案。我发现这种情况很普遍：当你将函数作为值时可以到处传递并且通常用于你不想使用它们的地方。函数式编程提高了代码的可组合性，这是在参数使用的一个核心理念。</p>
+<p>在内置的数据类型或者是你自定义的数据类型的基础上，可以给Swift的模式匹配系统扩展出可以非常强大的新功能。但是，请不要过度地去扩展。虽然它看起来比原始的解决方案更加清晰，但是对那些不熟悉它的人来说，自定义的语法会使你的代码可读性变差。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Ole-Begemann/">Ole Begemann</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2015/10/16/swift-pattern-matching/" data-title="Swift中的模式匹配 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2015/10/19/friday-qa-2015-09-04-lets-build-dispatch_queue/" title="Friday Q&amp;A 2015-09-04:让我们来自定义 dispatch_queue">
+  <strong>上一篇</strong><br/>
+  <span>
+  Friday Q&amp;A 2015-09-04:让我们来自定义 dispatch_queue</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2015/10/15/watchos-2-hello-world/"  title="WatchOS 2: Hello, World">
+ <strong>下一篇</strong><br/> 
+ <span>WatchOS 2: Hello, World
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2015/10/16/swift-pattern-matching/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Swift中的模式匹配"><span class="toc-number">1.</span> <span class="toc-text">Swift中的模式匹配</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#扩展模式匹配"><span class="toc-number">1.1.</span> <span class="toc-text">扩展模式匹配</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#自定义操作符"><span class="toc-number">1.2.</span> <span class="toc-text">自定义操作符</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#其他方面的应用"><span class="toc-number">1.3.</span> <span class="toc-text">其他方面的应用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#检查一个数字是偶数还是奇数"><span class="toc-number">1.4.</span> <span class="toc-text">检查一个数字是偶数还是奇数</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#字符串匹配"><span class="toc-number">2.</span> <span class="toc-text">字符串匹配</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">2.1.</span> <span class="toc-text">总结</span></a></li></ol></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

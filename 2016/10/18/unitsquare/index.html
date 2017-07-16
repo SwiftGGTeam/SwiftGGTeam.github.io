@@ -1,0 +1,956 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>使用幽灵类型的Measurements和Units，第四部分 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Ole Begemann，原文链接，原文日期：2016-08-29译者：与狼同行；校对：Cwift；定稿：CMB   本系列其他文章： (1) Measurements 和 Units 概览(2) 乘法和除法(3) 内容提炼(4) 幽灵类型(本文) 我之前撰写了关于标准库里新的度量值的短系列，此文是该系列的额外之作。虽然我很喜欢苹果的 API ，但我觉得探索同一问题的不同解决方案也很有意思">
+<meta name="keywords" content="Swift 进阶">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用幽灵类型的Measurements和Units，第四部分">
+<meta property="og:url" content="https://swift.gg/2016/10/18/unitsquare/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Ole Begemann，原文链接，原文日期：2016-08-29译者：与狼同行；校对：Cwift；定稿：CMB   本系列其他文章： (1) Measurements 和 Units 概览(2) 乘法和除法(3) 内容提炼(4) 幽灵类型(本文) 我之前撰写了关于标准库里新的度量值的短系列，此文是该系列的额外之作。虽然我很喜欢苹果的 API ，但我觉得探索同一问题的不同解决方案也很有意思">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用幽灵类型的Measurements和Units，第四部分">
+<meta name="twitter:description" content="作者：Ole Begemann，原文链接，原文日期：2016-08-29译者：与狼同行；校对：Cwift；定稿：CMB   本系列其他文章： (1) Measurements 和 Units 概览(2) 乘法和除法(3) 内容提炼(4) 幽灵类型(本文) 我之前撰写了关于标准库里新的度量值的短系列，此文是该系列的额外之作。虽然我很喜欢苹果的 API ，但我觉得探索同一问题的不同解决方案也很有意思">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/10/18/unitsquare/" target="_blank" title="使用幽灵类型的Measurements和Units，第四部分" itemprop="url">使用幽灵类型的Measurements和Units，第四部分</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-10-17T16:00:00.000Z" itemprop="datePublished">2016-10-18</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Ole Begemann，<a href="https://oleb.net/blog/2016/08/measurements-and-units-with-phantom-types/" target="_blank" rel="external">原文链接</a>，原文日期：2016-08-29<br>译者：<a href="http://www.jianshu.com/users/1c22b0c065ec/latest_articles" target="_blank" rel="external">与狼同行</a>；校对：<a href="http://weibo.com/277195544" target="_blank" rel="external">Cwift</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>本系列其他文章：</p>
+<p>(1) <a href="http://oleb.net/blog/2016/07/measurements-and-units/" target="_blank" rel="external">Measurements 和 Units 概览</a><br>(2) <a href="http://oleb.net/blog/2016/07/unitproduct/" target="_blank" rel="external">乘法和除法</a><br>(3) <a href="http://swift.gg/2016/09/29/unitsquare/">内容提炼</a><br>(4) 幽灵类型(本文)</p>
+<p>我之前撰写了关于标准库里新的度量值的短系列，此文是该系列的额外之作。虽然我很喜欢苹果的 API ，但我觉得探索同一问题的不同解决方案也很有意思。特别是这个问题，纯 Swift 设计是否能优于苹果的接口呢，因为苹果的接口考虑了 Objective-C 的<a href="https://lists.swift.org/pipermail/swift-corelibs-dev/Week-of-Mon-20160808/000864.html" target="_blank" rel="external">兼容性问题</a>。</p>
+<a id="more"></a>
+<h2 id="苹果的设计"><a href="#苹果的设计" class="headerlink" title="苹果的设计"></a>苹果的设计</h2><p>在苹果的 API 中，开发者主要使用的数据类型是<a href="https://developer.apple.com/reference/foundation/nsmeasurement" target="_blank" rel="external">度量值 <code>Measurement</code> 类型</a>，它包含一个浮点数  <code>value</code> 和用于测值的单位 <code>unit</code> ，并基于单位类型使用了泛型。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">struct Measurement&lt;UnitType: Unit&gt; &#123;</div><div class="line">    let unit: UnitType</div><div class="line">    var value: Double</div><div class="line">&#125;</div><div class="line"></div><div class="line">let length = Measurement(value: 5， unit: UnitLength.meters)</div><div class="line">// 长度表现为一个 Measurement&lt;UnitLength&gt;</div></pre></td></tr></table></figure>
+<p>Measurement 被视为<a href="https://github.com/apple/swift-evolution/blob/master/proposals/0069-swift-mutability-for-foundation.md" target="_blank" rel="external">值类型</a>——它在 Objective-C 中是类，在 Swift 中是结构体。<br>在单位族（Unit Family）中，比如说长度或时长，被建模为类层次结构中的类型:  <a href="https://developer.apple.com/reference/foundation/nsunit" target="_blank" rel="external">Unit</a> &gt; <a href="https://developer.apple.com/reference/foundation/nsdimension" target="_blank" rel="external">Dimension</a> &gt; <a href="https://developer.apple.com/reference/foundation/nsunitlength" target="_blank" rel="external">UnitLength</a> 、 <a href="https://developer.apple.com/reference/foundation/nsunitduration" target="_blank" rel="external">UnitDuration</a>等等。具体的类型如米、千克，分别是它们单位族类的实例。每一个单位都是由单位的符号（如「kg」）和一个 <a href="https://developer.apple.com/reference/foundation/unitconverter" target="_blank" rel="external">单元转换</a>对象组成，该对象通过编码指令来使单位转化为该单位族的基本单位。</p>
+<h2 id="幽灵类型"><a href="#幽灵类型" class="headerlink" title="幽灵类型"></a>幽灵类型</h2><p>如果我们将具体的单位视为一个类型而不是实例呢？假设有一些类型名为米（Meters）、千米（Kilometers），或者英里（Miles），我们可以设计一个泛型的 <code>Measurement</code> 类型，它只有一个存储属性来存放量值，该量值的单位可以被完整编码在自身类型中。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">struct MyMeasurement&lt;UnitType: MyUnit&gt; &#123;</div><div class="line">    var value: Double</div><div class="line"></div><div class="line">    init(_ value: Double) &#123;</div><div class="line">        self.value = value</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">let length = MyMeasurement&lt;Meters&gt;(5)</div><div class="line">// length is a MyMeasurement&lt;Meters&gt;</div></pre></td></tr></table></figure>
+<p>现在我们再次审视两种方式的不同之处，苹果的设计是让单位族 <code>length</code> 作为 <code>Measurement</code> 的参数，让具体的单位 米 作为该值的一部分。而我的设计是让具体的单位 米 成为泛型参数。<br> <code>MyMeasurement</code> 也能被称为<a href="https://wiki.haskell.org/Phantom_type" target="_blank" rel="external">幽灵类型</a>，因为泛型参数 UnitType 没有在类型声明中出现。它的用途仅仅是用于相互区分类似 <code>MyMeasurement &lt;Meters&gt;</code> 和 <code>MyMeasurement &lt;Kilometers&gt;</code> 这样的类型，这样它们就无法互相替换。<br>我们之后将看看这样设计是否真的有用，因为你可能会争辩，用米的度量值应当能与用千米的度量值互相转换。想了解更多关于 Swift 中幽灵类型的例子，可以看 <a href="https://www.objc.io/blog/2014/12/29/functional-snippet-13-phantom-types/" target="_blank" rel="external">objc.org</a> 的文章或 <a href="https://realm.io/news/swift-summit-johannes-weiss-the-type-system-is-your-friend/" target="_blank" rel="external">Johannes Weiß</a> 的谈话。Swift标准库也在使用幽灵类型，例如 <a href="https://developer.apple.com/reference/swift/unsafepointer" target="_blank" rel="external">UnsafePointer <memory></memory></a> 。</p>
+<h2 id="好处"><a href="#好处" class="headerlink" title="好处"></a>好处</h2><p>我的方法最明显的好处是比使用度量值数据类型在大小上要小 50 % ，因为对单位实例的引用不是必要的。（单位实例自身是被所有那个单位的 Measurement 类所共用的，例如 5 米 和 10 米 两个度量值引用的是同一个单位实例。）但大小尺寸上的节省优势会被潜在更大的代码量所抵消，因为编译器会为泛型类型和使用该类型的函数产生更多的特化。</p>
+<p>由于 Unit 在苹果的 API 中为引用类型，将测量值传给函数也会带来 retain 和 release 的开销。这两个因素对一个传统 App 来说都不是很重要，我也没有展开进一步的研究，在探索这些想法的时候，它们对我来说无关紧要。</p>
+<h2 id="具体的设计"><a href="#具体的设计" class="headerlink" title="具体的设计"></a>具体的设计</h2><p>我们现在具体说一下如何在这个系统中定义单位，所有的单位都被封装到不同的单位族中，比如长度、温度、时长。我们开始为单位族定义一个协议：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">/// 表现为一种物理数值 或者 可以认为是 “ 单位之族 ”</div><div class="line">/// 例如: 长度， 温度， 速率.</div><div class="line">protocol UnitFamily &#123;</div><div class="line">    associatedtype BaseUnit</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>正如苹果API中，每个单位族都会定义一个基础单位，它用于同一单位族的不同类型间的相互转换，例如长度单位族的基础单位是米。我们在 <code>UnitFamily</code> 协议中，把该基础单位定义为一个关联类型，这会有一个好处，基础单位会在这个类型系统中被编码，在 Foundation 库中，基础单位必须被单独记录以使得其他人用自定义的单位来扩展这个系统。</p>
+<p>下一步是定义 <code>MyUnit</code> 协议以塑造具体的单位，这些单位在苹果的设计中会被定义为单位族类型的一个实例。（这里我使用 My 作为前缀来避免和苹果类型的命名冲突）</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">/// 表现为度量值的单位</div><div class="line">/// 例如: 米， 公里， 英里， 秒， 小时， 摄氏度.</div><div class="line">protocol MyUnit &#123;</div><div class="line">    associatedtype Family: UnitFamily</div><div class="line"></div><div class="line">    static var symbol: String &#123; get &#125;</div><div class="line">    static var converter: UnitConverter &#123; get &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>单位通过关联类型的方式来进行声明其所属的单位族。用静态属性来保存它的符号（比如米的符号是 m ，磅的符号是 lbs ）和它的单位转化器，转化器描述了如何将该单位转化为该族的基础单位。假如说长度单位族的基础单位是米，那么公里单位的转化器应该就是 <code>UnitConverterLinear(coefficient: 1000)</code>。基础单位自身的转化器系数应该为1。我这里从 Foundation 库中借用了<a href="https://developer.apple.com/reference/foundation/unitconverter" target="_blank" rel="external">UnitConverter</a> 类型。 Foundation 库将没有维度单位的 Unit 和有维度单位的 Dimension 进行了区分。简单起见，我们就不做这些事了，我们所有的单位都是有维度的。<br>基础单位也必须是一个单位类型，这样想当然没错，理想来说在 UnitFamily 协议中的 BaseUnit 应当有一个对应的基础单位约束，那就是 MyUnit 。不过遗憾的是，这样会使得两个协议之间产生循环引用，这样在Swift中肯定是不被许可的。话虽如此说，但即便没有约束，一切也能工作顺利。</p>
+<h2 id="遵守协议"><a href="#遵守协议" class="headerlink" title="遵守协议"></a>遵守协议</h2><p>现在来为协议添加具体的实现。我这里展示一下长度、速度和时长的例子，每个都设置几个单位，再添加更多的单位和单位族也没什么意义。我选择用枚举来作为类型的结构，因为无例枚举不能被实例化，这对我们来说非常完美，因为我们只对类型感兴趣，而不是对类型的实例。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">enum Length: UnitFamily &#123;</div><div class="line">    typealias BaseUnit = Meters</div><div class="line">&#125;</div><div class="line"></div><div class="line">enum Meters: MyUnit &#123;</div><div class="line">    typealias Family = Length</div><div class="line">    static let symbol = &quot;m&quot;</div><div class="line">    static let converter: UnitConverter = UnitConverterLinear(coefficient: 1)</div><div class="line">&#125;</div><div class="line"></div><div class="line">enum Kilometers: MyUnit &#123;</div><div class="line">    typealias Family = Length</div><div class="line">    static let symbol = &quot;km&quot;</div><div class="line">    static let converter: UnitConverter = UnitConverterLinear(coefficient: 1000)</div><div class="line">&#125;</div><div class="line"></div><div class="line">// MARK: - Duration</div><div class="line">enum Duration: UnitFamily &#123;</div><div class="line">    typealias BaseUnit = Seconds</div><div class="line">&#125;</div><div class="line"></div><div class="line">enum Seconds: MyUnit &#123;</div><div class="line">    typealias Family = Duration</div><div class="line">    static let symbol = &quot;s&quot;</div><div class="line">    static let converter: UnitConverter = UnitConverterLinear(coefficient: 1)</div><div class="line">&#125;</div><div class="line"></div><div class="line">enum Minutes: MyUnit &#123;</div><div class="line">    typealias Family = Duration</div><div class="line">    static let symbol = &quot;min&quot;</div><div class="line">    static let converter: UnitConverter = UnitConverterLinear(coefficient: 60)</div><div class="line">&#125;</div><div class="line"></div><div class="line">enum Hours: MyUnit &#123;</div><div class="line">    typealias Family = Duration</div><div class="line">    static let symbol = &quot;hr&quot;</div><div class="line">    static let converter: UnitConverter = UnitConverterLinear(coefficient: 3600)</div><div class="line">&#125;</div><div class="line"></div><div class="line">// MARK: - Speed</div><div class="line">enum Speed: UnitFamily &#123;</div><div class="line">    typealias BaseUnit = MetersPerSecond</div><div class="line">&#125;</div><div class="line"></div><div class="line">enum MetersPerSecond: MyUnit &#123;</div><div class="line">    typealias Family = Speed</div><div class="line">    static let symbol = &quot;m/s&quot;</div><div class="line">    static let converter: UnitConverter = UnitConverterLinear(coefficient: 1)</div><div class="line">&#125;</div><div class="line"></div><div class="line">enum KilometersPerHour: MyUnit &#123;</div><div class="line">    typealias Family = Speed</div><div class="line">    static let symbol = &quot;km/h&quot;</div><div class="line">    static let converter: UnitConverter = UnitConverterLinear(coefficient: 1.0/3.6)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="转换度量值"><a href="#转换度量值" class="headerlink" title="转换度量值"></a>转换度量值</h2><p>现在我们已经可以用不同的单位来表示度量值，接着我们需要让它们相互转换。<code>converted(to:)</code> 方法传入一个目标单位类型的参数并通过单位转换器返回那个单位新的度量值。注意这句约束<code>TargetUnit.Family == UnitType.Family</code>，它限制了转换只能适用于同单位族，编译器不会让你把 <code>Meters</code> 转换为 <code>Seconds</code>。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">extension MyMeasurement &#123;</div><div class="line">    /// Converts self to a measurement that has another unit of the same family.</div><div class="line">    func converted&lt;TargetUnit&gt;(to target: TargetUnit.Type) -&gt; MyMeasurement&lt;TargetUnit&gt;</div><div class="line">        where TargetUnit: MyUnit， TargetUnit.Family == UnitType.Family</div><div class="line">    &#123;</div><div class="line">        let valueInBaseUnit = UnitType.converter.baseUnitValue(fromValue: value)</div><div class="line">        let valueInTargetUnit = TargetUnit.converter.value(fromBaseUnitValue: valueInBaseUnit)</div><div class="line">        return MyMeasurement&lt;TargetUnit&gt;(valueInTargetUnit)</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>我们来为 <code>MyMeasurement</code> 添加一些方便的功能，遵守 <code>CustomStringConvertible</code> 是一个输出调试的良好方案，并通过遵守 <code>ExpressibleByIntegerLiteral</code> 和 <code>ExpressibleByFloatLiteral</code> 协议使得通过字面量创建新的度量值变得更加轻松愉快。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">extension MyMeasurement: CustomStringConvertible &#123;</div><div class="line">    var description: String &#123;</div><div class="line">        return &quot;\(value) \(UnitType.symbol)&quot;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">extension MyMeasurement: ExpressibleByIntegerLiteral &#123;</div><div class="line">    init(integerLiteral value: IntegerLiteralType) &#123;</div><div class="line">        self.value = Double(value)</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">extension MyMeasurement: ExpressibleByFloatLiteral &#123;</div><div class="line">    init(floatLiteral value: FloatLiteralType) &#123;</div><div class="line">        self.value = value</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="用法"><a href="#用法" class="headerlink" title="用法"></a>用法</h2><p>现在我们开始创造一些度量值并把它们转换为其他单位，应用字面量的语法来表达对象创建非常不错。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">let fiveMeters: MyMeasurement&lt;Meters&gt; = 5</div><div class="line">// → 5.0 m</div><div class="line">let threeKilometers: MyMeasurement&lt;Kilometers&gt; = 3</div><div class="line">// → 3.0 km</div><div class="line">threeKilometers.converted(to: Meters.self)</div><div class="line">// → 3000.0 m</div><div class="line">threeKilometers.converted(to: Seconds.self)</div><div class="line">// error: &apos;Family&apos; (aka &apos;Length&apos;) is not convertible to &apos;Family&apos; (aka &apos;Duration&apos;) (as expected)</div></pre></td></tr></table></figure>
+<p>我们再来看看把度量值作为函数参数会怎么样？看一下这个假想的 <code>delay</code> 函数，它以时长和一个闭包作为参数，并在具体时长后执行闭包:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">func delay(after duration: MyMeasurement&lt;Seconds&gt;， block: () -&gt; ()) &#123;</div><div class="line">    // ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这个函数需要以秒为单位的度量值，如果你传入了毫秒作为参数，你必须负责转化值。以 <code>TimeInterval</code> 作为参数可以具有类型安全的优势，编译器不会允许你传入 <code>MyMeasurement&lt;Milliseconds&gt;</code> 作参数，但这样做会比我们使用 <code>Measurement&lt;UnitDuration&gt;</code> 要大大降低灵活性，使用后者将会允许我们传入任意的时长单位。</p>
+<p>我们通过基于单位类型将函数泛型化实现它(并且附上约束，它的单位族必须为时长)</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">func delay&lt;Time&gt;(after duration: MyMeasurement&lt;Time&gt;， block: () -&gt; ())</div><div class="line">    where Time: MyUnit， Time.Family == Duration</div><div class="line">&#123;</div><div class="line">    // ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这种写法会有用，但会大大降低函数签名的可读性，即便是在<a href="https://github.com/apple/swift-evolution/blob/master/proposals/0081-move-where-expression.md" target="_blank" rel="external"> Where 子句的位置被转移</a>之后。</p>
+<p>但就这一条理由来说，苹果将单位设为实例而不是类型的做法可能更为实用，更有意义。毕竟，米和公里只是同一东西的不同说法而已。但探索这个问题并不是很有意义，我们还是先继续。</p>
+<h2 id="加法和标量乘法"><a href="#加法和标量乘法" class="headerlink" title="加法和标量乘法"></a>加法和标量乘法</h2><p>有时候我们需要把同样单位族的两个度量值作加法，即便他们有不同单位。通过使用泛型来重载 <code>+</code> 运算符方法就会容易，并且在习惯上我们会把右边的值转化为左边值得单位，并返回基于那个单位的结果。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">func + &lt;Unit1， Unit2&gt; (lhs: MyMeasurement&lt;Unit1&gt;， rhs: MyMeasurement&lt;Unit2&gt;) -&gt; MyMeasurement&lt;Unit1&gt;</div><div class="line">    where Unit1: MyUnit， Unit2: MyUnit， Unit1.Family == Unit2.Family</div><div class="line">&#123;</div><div class="line">    let rhsConverted = rhs.converted(to: Unit1.self)</div><div class="line">    return MyMeasurement(lhs.value + rhsConverted.value)</div><div class="line">&#125;</div><div class="line"></div><div class="line">fiveMeters + threeKilometers</div><div class="line">// → 3005.0 m</div><div class="line">threeKilometers + fiveMeters</div><div class="line">// → 3.005 km</div></pre></td></tr></table></figure>
+<p>我们再来注意一下这个约束 <code>Unit1.Family == Unit2.Family</code> ，它防止秒和米相加。</p>
+<p>标量乘法就更容易实现了，因为没有单位转换参与。我们简单的把值相乘并创造一个新的度量值，两个重载方法被用于 <code>a * b</code> 和 <code>b * a</code> 两种情况。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">func * &lt;UnitType&gt; (measurement: MyMeasurement&lt;UnitType&gt;， scalar: Double) -&gt; MyMeasurement&lt;UnitType&gt; &#123;</div><div class="line">    var result = measurement</div><div class="line">    result.value *= scalar</div><div class="line">    return result</div><div class="line">&#125;</div><div class="line"></div><div class="line">func * &lt;UnitType&gt; (scalar: Double， measurement: MyMeasurement&lt;UnitType&gt;) -&gt; MyMeasurement&lt;UnitType&gt; &#123;</div><div class="line">    return measurement * scalar</div><div class="line">&#125;</div><div class="line"></div><div class="line">threeKilometers * 2</div><div class="line">// → 6.0 km</div><div class="line">let twoSeconds: MyMeasurement&lt;Seconds&gt; = 2</div><div class="line">60 * twoSeconds</div><div class="line">// → 120.0 s</div></pre></td></tr></table></figure>
+<p>如果你记得这个系列的<a href="https://oleb.net/blog/2016/07/unitproduct/" target="_blank" rel="external">第二部分</a>，我最初的目的是想让单位之间可以被设计得相互依赖，例如  速度 = 路程 / 时间  或者 能量 = 功率 × 时间 。为了做到这些，我要介绍一个协议叫做 <code>UnitProduct</code>，通过遵守该协议和命名作为关联类型的因子，这样单位族可以表示其因子。</p>
+<p>我们又做同样的事，但这次展示不同单位的关系而不是单位族。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">/// Describes this relation between units:</div><div class="line">/// Product = Factor1 * Factor2</div><div class="line">protocol Product: MyUnit &#123;</div><div class="line">    associatedtype Factor1: MyUnit</div><div class="line">    associatedtype Factor2: MyUnit</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>注意一下这样一个简单的协议足以描述乘法性和除法性关系，因为 <code>a = b × c</code> 等价于 <code>b = a / c</code>。选择结果是随意的，这样无论怎么选都会让这个关系看上去不自然。举例来说，假如我们想表示 速度 = 路程 / 时间，我们就得也把它重写为 路程 = 速度 × 时间 。<br>下一步来实现实际计算，即重载作用于遵守协议的类型的乘法和除法运算符方法。我们需要四个变量：<br><code>a = b × c</code><br>泛型约束让它看起来更加复杂了，对于任意遵守 <code>Product</code> 协议的 <code>Result</code> 类型，这个重载方法定义两个度量值的乘法，这两个度量值的单位 <code>Unit1</code> 和 <code>Unit2</code> 有着和 <code>Result</code> 的 <code>Result.Factor1</code> 和 <code>Result.Factor2</code> 同样的单位族。而结果是通过将度量值各自转化为 <code>Result.Factor1</code> 和 <code>Result.Factor2</code> ，然后相乘。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">func * &lt;Unit1， Unit2， Result&gt; (lhs: MyMeasurement&lt;Unit1&gt;， rhs: MyMeasurement&lt;Unit2&gt;) -&gt; MyMeasurement&lt;Result&gt;</div><div class="line">    where Result: Product， Result.Factor1.Family == Unit1.Family， Result.Factor2.Family == Unit2.Family</div><div class="line">&#123;</div><div class="line">    let left = lhs.converted(to: Result.Factor1.self)</div><div class="line">    let right = rhs.converted(to: Result.Factor2.self)</div><div class="line">    return MyMeasurement(left.value * right.value)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>a = c × b</code></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">func * &lt;Unit1， Unit2， Result&gt; (lhs: MyMeasurement&lt;Unit2&gt;， rhs: MyMeasurement&lt;Unit1&gt;) -&gt; MyMeasurement&lt;Result&gt;</div><div class="line">    where Result: Product， Result.Factor1.Family == Unit1.Family， Result.Factor2.Family == Unit2.Family</div><div class="line">&#123;</div><div class="line">    return rhs * lhs</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这和先前的函数不完全类似，它将 lhs和 rhs 置换了。实现方式仅仅是转发给其他重载方法。</p>
+<p><code>b = a / c and c = a / b</code></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">func / &lt;Unit1， Unit2， Result&gt; (lhs: MyMeasurement&lt;Result&gt;， rhs: MyMeasurement&lt;Unit2&gt;) -&gt; MyMeasurement&lt;Unit1&gt;</div><div class="line">    where Result: Product， Result.Factor1.Family == Unit1.Family， Result.Factor2.Family == Unit2.Family</div><div class="line">&#123;</div><div class="line">    let right = rhs.converted(to: Result.Factor2.self)</div><div class="line">    return MyMeasurement(lhs.value / right.value)</div><div class="line">&#125;</div><div class="line"></div><div class="line">func / &lt;Unit1， Unit2， Result&gt; (lhs: MyMeasurement&lt;Result&gt;， rhs: MyMeasurement&lt;Unit1&gt;) -&gt; MyMeasurement&lt;Unit2&gt;</div><div class="line">    where Result: Product， Result.Factor1.Family == Unit1.Family， Result.Factor2.Family == Unit2.Family</div><div class="line">&#123;</div><div class="line">    let right = rhs.converted(to: Result.Factor1.self)</div><div class="line">    return MyMeasurement(lhs.value / right.value)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>同样的方式，不过泛型参数的位置发生了变化。</p>
+<h2 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h2><p>现在它终于可以表示关系 路程 = 速度 × 时间（即 速度 = 路程 / 时间）</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">extension Meters: Product &#123;</div><div class="line">    typealias Factor1 = MetersPerSecond</div><div class="line">    typealias Factor2 = Seconds</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>它可以这样用:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">let tenMeters: MyMeasurement&lt;Meters&gt; = 10</div><div class="line">let fourSeconds: MyMeasurement&lt;Seconds&gt; = 4</div><div class="line">let speed: MyMeasurement&lt;MetersPerSecond&gt; = tenMeters / fourSeconds</div><div class="line">// → 2.5 m/s</div><div class="line"></div><div class="line">let thirtyKilometersPerHour: MyMeasurement&lt;KilometersPerHour&gt; = 30</div><div class="line">let twoHours: MyMeasurement&lt;Hours&gt; = 2</div><div class="line">let tripLength: MyMeasurement&lt;Meters&gt; = thirtyKilometersPerHour * twoHours</div><div class="line">// → 60000.0 m</div><div class="line">tripLength.converted(to: Kilometers.self)</div><div class="line">// → 60.0 km</div></pre></td></tr></table></figure>
+<p>它的工作效果不错，但是有两个明显的缺点。第一个是目前的编译器无法推断出自动计算的返回类型，我不知道是否今后的编译器可以解决这个问题，也许我可以通过在函数中设置更好的泛型约束的方式提供一些帮助，但是尝试之后，依然没能解决问题。<br>第二点是参数的单位需要有正确的单位族，返回类型的单位会被使用 <code>Product</code> 协议的具体单位所限制。因此类似 <code>let tripLength: MyMeasurement&lt;Kilometers&gt; = ...</code> 并不会起作用，你必须先提供以米形式的结果，然后再把它转换。这是一个非常大的限制。</p>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>忽略这个设计的缺陷（确实存在），你得注意不止一行可执行代码需要为类型系统增加数学关系！仅仅通过添加协议一致（即定义两个关联类型），我们就可以从字面上把任务 1 meter = 1 m/s × 1 s 添加给编译器的“真理”池。但如果你要添加其他数学关系（比如1 J = 1 W × 1 s），那么我们就必须再添加一个协议一致。<br>我觉得这种写法非常吸引我。但尽管如此，我不认为这个基于幽灵类型的 API 优于苹果基础库中的 API，基于单位族而不是单位的度量值其实只会更加有意义。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Ole-Begemann/">Ole Begemann</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/10/18/unitsquare/" data-title="使用幽灵类型的Measurements和Units，第四部分 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/10/19/how-to-reuse-paging-interfacecontrollers-in-watchos/" title="如何在 watchOS 中复用分页界面控制器">
+  <strong>上一篇</strong><br/>
+  <span>
+  如何在 watchOS 中复用分页界面控制器</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/10/17/working-with-mysql-databases-using-swift-3-0/"  title="使用 Swift 3.0 操作 MySQL 数据库">
+ <strong>下一篇</strong><br/> 
+ <span>使用 Swift 3.0 操作 MySQL 数据库
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/10/18/unitsquare/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#苹果的设计"><span class="toc-number">1.</span> <span class="toc-text">苹果的设计</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#幽灵类型"><span class="toc-number">2.</span> <span class="toc-text">幽灵类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#好处"><span class="toc-number">3.</span> <span class="toc-text">好处</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#具体的设计"><span class="toc-number">4.</span> <span class="toc-text">具体的设计</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#遵守协议"><span class="toc-number">5.</span> <span class="toc-text">遵守协议</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#转换度量值"><span class="toc-number">6.</span> <span class="toc-text">转换度量值</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#用法"><span class="toc-number">7.</span> <span class="toc-text">用法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#加法和标量乘法"><span class="toc-number">8.</span> <span class="toc-text">加法和标量乘法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#具体实现"><span class="toc-number">9.</span> <span class="toc-text">具体实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结论"><span class="toc-number">10.</span> <span class="toc-text">结论</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

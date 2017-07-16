@@ -1,0 +1,947 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>在 Swift 2.0 当中使用 C 语言回调 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Ole Begemann，原文链接，原文日期：2015-06-22译者：小锅；校对：shanks；定稿：shanks    更新:   2015-06-25增加关于传递另一个（可以捕获外部变量的）闭包到 userInfo 参数的备注。  2015-07-01针对 Xcode 7 beta 2 更新从 CGPathElement 创建一个 PathElement 类型的代码。   几年前，我">
+<meta name="keywords" content="Swift 进阶">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在 Swift 2.0 当中使用 C 语言回调">
+<meta property="og:url" content="https://swift.gg/2015/11/11/c-callbacks-in-swift/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Ole Begemann，原文链接，原文日期：2015-06-22译者：小锅；校对：shanks；定稿：shanks    更新:   2015-06-25增加关于传递另一个（可以捕获外部变量的）闭包到 userInfo 参数的备注。  2015-07-01针对 Xcode 7 beta 2 更新从 CGPathElement 创建一个 PathElement 类型的代码。   几年前，我">
+<meta property="og:image" content="https://swift.gg/img/articles/c-callbacks-in-swift/uibezierpath-example.png1447203254.48282">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="在 Swift 2.0 当中使用 C 语言回调">
+<meta name="twitter:description" content="作者：Ole Begemann，原文链接，原文日期：2015-06-22译者：小锅；校对：shanks；定稿：shanks    更新:   2015-06-25增加关于传递另一个（可以捕获外部变量的）闭包到 userInfo 参数的备注。  2015-07-01针对 Xcode 7 beta 2 更新从 CGPathElement 创建一个 PathElement 类型的代码。   几年前，我">
+<meta name="twitter:image" content="https://swift.gg/img/articles/c-callbacks-in-swift/uibezierpath-example.png1447203254.48282">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2015/11/11/c-callbacks-in-swift/" target="_blank" title="在 Swift 2.0 当中使用 C 语言回调" itemprop="url">在 Swift 2.0 当中使用 C 语言回调</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2015-11-11T01:00:00.000Z" itemprop="datePublished">2015-11-11</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Ole Begemann，<a href="http://oleb.net/blog/2015/06/c-callbacks-in-swift/" target="_blank" rel="external">原文链接</a>，原文日期：2015-06-22<br>译者：<a href="http://www.swiftyper.com" target="_blank" rel="external">小锅</a>；校对：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
+</blockquote>
+<!--此处开始正文-->
+<blockquote>
+<p>更新:</p>
+</blockquote>
+<ul>
+<li><p>2015-06-25<br>增加关于传递另一个（可以捕获外部变量的）闭包到 <code>userInfo</code> 参数的备注。</p>
+</li>
+<li><p>2015-07-01<br>针对 Xcode 7 beta 2 更新从 <code>CGPathElement</code> 创建一个 <code>PathElement</code> 类型的代码。</p>
+</li>
+</ul>
+<p>几年前，我曾经写过一篇关于如何获取 <code>CGPath</code> 和 <code>UIBezierPath</code> 中元素的<a href="http://oleb.net/blog/2012/12/accessing-pretty-printing-cgpath-elements/" target="_blank" rel="external">文章</a>。可以通过调用 <a href="https://developer.apple.com/library/ios/documentation/GraphicsImaging/Reference/CGPath/index.html#//apple_ref/c/func/CGPathApply" target="_blank" rel="external">CGPathApply</a> 函数，并给这个函数传入一个回调的函数指针来达到这个目的。 随后 <code>CGPathApply</code> 会对 path(CGPath 或 UIBezierPath) 中的每一个元素调用这个回调函数。  </p>
+<a id="more"></a>
+<p>很不幸，我们无法在 Swift 1.x 中做到这件事，因为我们没办法将 Swift 函数桥接到 C 语言函数。我们需要使用 C 或者 Objective-C 写一个小小的包装层来对这个回调函数进行封装。</p>
+<p>而在 Swift 2 当中，可以直接使用原生的 Swift 来完成这件事。Swift 将 C 语言的函数指针<a href="https://developer.apple.com/library/prerelease/ios/documentation/Swift/Conceptual/BuildingCocoaApps/InteractingWithCAPIs.html" target="_blank" rel="external">作为闭包来导入</a>。在任何需要传入 C 语言函数指针的地方，我们都可以传入与该函数指针参数相匹配的 Swift 闭包或者函数 —— 除了一个特殊情况：与闭包不同的是，C 语言的函数指针没有捕获状态(capturing state)的概念。因此，编译器只允许传入不捕获任何外部变量的 Swift 闭包来对C语言函数指针进行桥接。Swift 使用了新的 <code>@convention(c)</code> 注解来标识这一约定。</p>
+<blockquote>
+<p>下载本篇文章的<a href="http://oleb.net/media/c-callbacks-in-swift.playground.zip" target="_blank" rel="external">playground</a>，要求 Swift 2/Xcode 7。</p>
+</blockquote>
+<h2 id="获取-UIBezierPath-中的元素"><a href="#获取-UIBezierPath-中的元素" class="headerlink" title="获取 UIBezierPath 中的元素"></a>获取 UIBezierPath 中的元素</h2><p>让我们使用迭代一个 path 中元素这个熟悉的任务来作为例子。</p>
+<h3 id="一个-Swift-化后的数据结构"><a href="#一个-Swift-化后的数据结构" class="headerlink" title="一个 Swift 化后的数据结构"></a>一个 Swift 化后的数据结构</h3><p>首先，考虑一下我们必须处理的数据结构。<code>CGPathApply</code> 会将一个 <a href="https://developer.apple.com/library/ios/documentation/GraphicsImaging/Reference/CGPath/index.html#//apple_ref/c/tdef/CGPathElement" target="_blank" rel="external">CGPathElement</a> 的指针传递给回调函数（或者闭包）。<code>CGPathElement</code> 是一个结构体，这个结构体包含了一个标识 path 元素类型的的常量，以及一个 <code>CGPoint</code> 类型的C语言数组。这个数组中的点(point)的个数将在 0 到 3 之间，取决于元素的类型。</p>
+<p>在 Swift 当中直接使用 <code>CGPathElement</code> 很不方便。C语言数组在 Swift 中是被当作 <code>UnsafeMutablePointer&lt;CGPoint&gt;</code> 来导入的，并且它的生命周期被限制在该回调函数中，因此，如果想在别的地方使用这个数组，我们就得将它的内容复制并保存。更进一步地，如果有一个更安全的方式来获取每个元素中点(point)的个数就更好了。</p>
+<p>一个关联了点(point)个数的 Swift 枚举，会是达到这个目的的理想类型。我们同时还要定义一个从 <code>CGPathElement</code> 转换的自定义构造器。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">/// A Swiftified representation of a `CGPathElement`</span></div><div class="line"><span class="comment">///</span></div><div class="line"><span class="comment">/// Simpler and safer than `CGPathElement` because it doesn’t use a</span></div><div class="line"><span class="comment">/// C array for the associated points.</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">enum</span> <span class="title">PathElement</span> </span>&#123;</div><div class="line">    <span class="keyword">case</span> <span class="type">MoveToPoint</span>(<span class="type">CGPoint</span>)</div><div class="line">    <span class="keyword">case</span> <span class="type">AddLineToPoint</span>(<span class="type">CGPoint</span>)</div><div class="line">    <span class="keyword">case</span> <span class="type">AddQuadCurveToPoint</span>(<span class="type">CGPoint</span>, <span class="type">CGPoint</span>)</div><div class="line">    <span class="keyword">case</span> <span class="type">AddCurveToPoint</span>(<span class="type">CGPoint</span>, <span class="type">CGPoint</span>, <span class="type">CGPoint</span>)</div><div class="line">    <span class="keyword">case</span> <span class="type">CloseSubpath</span></div><div class="line"></div><div class="line">    <span class="keyword">init</span>(element: <span class="type">CGPathElement</span>) &#123;</div><div class="line">        <span class="keyword">switch</span> element.type &#123;</div><div class="line">        <span class="keyword">case</span> .<span class="type">MoveToPoint</span>:</div><div class="line">            <span class="keyword">self</span> = .<span class="type">MoveToPoint</span>(element.points[<span class="number">0</span>])</div><div class="line">        <span class="keyword">case</span> .<span class="type">AddLineToPoint</span>:</div><div class="line">            <span class="keyword">self</span> = .<span class="type">AddLineToPoint</span>(element.points[<span class="number">0</span>])</div><div class="line">        <span class="keyword">case</span> .<span class="type">AddQuadCurveToPoint</span>:</div><div class="line">            <span class="keyword">self</span> = .<span class="type">AddQuadCurveToPoint</span>(element.points[<span class="number">0</span>], element.points[<span class="number">1</span>])</div><div class="line">        <span class="keyword">case</span> .<span class="type">AddCurveToPoint</span>:</div><div class="line">            <span class="keyword">self</span> = .<span class="type">AddCurveToPoint</span>(element.points[<span class="number">0</span>], element.points[<span class="number">1</span>], element.points[<span class="number">2</span>])</div><div class="line">        <span class="keyword">case</span> .<span class="type">CloseSubpath</span>:</div><div class="line">            <span class="keyword">self</span> = .<span class="type">CloseSubpath</span></div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>接下来，为我们的新数据类型定义一个格式化的输出，这将使我们调试时更加方便：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">PathElement</span> : <span class="title">CustomDebugStringConvertible</span> </span>&#123;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">var</span> debugDescription: <span class="type">String</span> &#123;</div><div class="line">        <span class="keyword">switch</span> <span class="keyword">self</span> &#123;</div><div class="line">        <span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">MoveToPoint</span>(point):</div><div class="line">            <span class="keyword">return</span> <span class="string">"<span class="subst">\(point.x)</span> <span class="subst">\(point.y)</span> moveto"</span></div><div class="line">        <span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">AddLineToPoint</span>(point):</div><div class="line">            <span class="keyword">return</span> <span class="string">"<span class="subst">\(point.x)</span> <span class="subst">\(point.y)</span> lineto"</span></div><div class="line">        <span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">AddQuadCurveToPoint</span>(point1, point2):</div><div class="line">            <span class="keyword">return</span> <span class="string">"<span class="subst">\(point1.x)</span> <span class="subst">\(point1.y)</span> <span class="subst">\(point2.x)</span> <span class="subst">\(point2.y)</span> quadcurveto"</span></div><div class="line">        <span class="keyword">case</span> <span class="keyword">let</span> .<span class="type">AddCurveToPoint</span>(point1, point2, point3):</div><div class="line">            <span class="keyword">return</span> <span class="string">"<span class="subst">\(point1.x)</span> <span class="subst">\(point1.y)</span> <span class="subst">\(point2.x)</span> <span class="subst">\(point2.y)</span> <span class="subst">\(point3.x)</span> <span class="subst">\(point3.y)</span> curveto"</span></div><div class="line">        <span class="keyword">case</span> .<span class="type">CloseSubpath</span>:</div><div class="line">            <span class="keyword">return</span> <span class="string">"closepath"</span></div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>再接再厉，来将 <code>PathElement</code> 实现为可比较的(Equatable)（因为我们<a href="https://developer.apple.com/videos/wwdc/2015/?id=414" target="_blank" rel="external">始终应该这样做</a>）</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">PathElement</span> : <span class="title">Equatable</span> </span>&#123; &#125;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> ==<span class="params">(lhs: PathElement, rhs: PathElement)</span></span> -&gt; <span class="type">Bool</span> &#123;</div><div class="line">    <span class="keyword">switch</span>(lhs, rhs) &#123;</div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> (.<span class="type">MoveToPoint</span>(l), .<span class="type">MoveToPoint</span>(r)):</div><div class="line">        <span class="keyword">return</span> l == r</div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> (.<span class="type">AddLineToPoint</span>(l), .<span class="type">AddLineToPoint</span>(r)):</div><div class="line">        <span class="keyword">return</span> l == r</div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> (.<span class="type">AddQuadCurveToPoint</span>(l1, l2), .<span class="type">AddQuadCurveToPoint</span>(r1, r2)):</div><div class="line">        <span class="keyword">return</span> l1 == r1 &amp;&amp; l2 == r2</div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> (.<span class="type">AddCurveToPoint</span>(l1, l2, l3), .<span class="type">AddCurveToPoint</span>(r1, r2, r3)):</div><div class="line">        <span class="keyword">return</span> l1 == r1 &amp;&amp; l2 == r2 &amp;&amp; l3 == r3</div><div class="line">    <span class="keyword">case</span> (.<span class="type">CloseSubpath</span>, .<span class="type">CloseSubpath</span>):</div><div class="line">        <span class="keyword">return</span> <span class="literal">true</span></div><div class="line">    <span class="keyword">case</span> (<span class="number">_</span>, <span class="number">_</span>):</div><div class="line">        <span class="keyword">return</span> <span class="literal">false</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="枚举-Path-元素"><a href="#枚举-Path-元素" class="headerlink" title="枚举 Path 元素"></a>枚举 Path 元素</h3><p>现在到了有趣的部分了。我们要对 <code>UIBezierPath</code> 增加一个名为 <code>elements</code> 的计算属性，它会迭代 path 并且返回一个 <code>PathElement</code> 类型的数组。我们需要调用 <code>CGPathApply()</code> 并传递给它一个闭包参数，它会对每个元素都调用这个闭包。在这个闭包内部，我们需要将 <code>CGPathElement</code> 转化为 <code>PathElement</code> 并将它存储在一个数组当中。 最后一部分的实现并不像听起来的那么简单，因为 C 函数指针的调用约定不允许我们对外部上下文中的变量进行捕获。</p>
+<p>这个 API 的纯 C 实现也面临着同样的问题，因此 <code>CGPathApply</code> 接收了一个额外的 <code>void *</code> 类型的参数并将这个指针传递给回调函数。这使得调用者可以传递一个任意类型的数据（比如一个指向数组的指针）给回调函数 —— 这正是我们所需要的。</p>
+<p><code>void *</code> 类型在 Swift 当中是被作为 <a href="https://developer.apple.com/library/prerelease/ios/documentation/Swift/Reference/Swift_UnsafeMutablePointer_Structure/" target="_blank" rel="external">UnsafeMutablePointer<void></void></a> 引入的。我们先创建一个 Swift 数组用于存储 <code>PathElement</code> 的值，然后使用 <a href="https://developer.apple.com/library/prerelease/ios/documentation/Swift/Reference/Swift_StandardLibrary_Functions/index.html#//apple_ref/swift/func/s:FSs24withUnsafeMutablePointeru0_rFTRq_FGVSs20UnsafeMutablePointerq__q0__q0_" target="_blank" rel="external">withUnsafeMutablePointer()</a> 来获得指向这个数组的指针，这个指针会作为参数传递到该函数的闭包中。在该闭包当中，我们就可以开始调用 <code>CGPathApply</code>。在 <code>CGPathApply</code> 的内部闭包中最后一步是要将 void 指针转型回 <code>UnsafeMutablePointer&lt;[PathElement]&gt;</code>，并通过 <code>memory</code> 属性来直接获取底层的数组。（注：我不是很确定这是不是将一个数组传递到闭包中的最好方法，如果你知道有更好的方法，请让我知道）</p>
+<p>完整的实现看起来是这样子的：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">extension UIBezierPath &#123;</div><div class="line">    var elements: [PathElement] &#123;</div><div class="line">        var pathElements = [PathElement]()</div><div class="line">        withUnsafeMutablePointer(&amp;pathElements) &#123; elementsPointer in</div><div class="line">            CGPathApply(CGPath, elementsPointer) &#123; (userInfo, nextElementPointer) in</div><div class="line">                let nextElement = PathElement(element: nextElementPointer.memory)</div><div class="line">                let elementsPointer = UnsafeMutablePointer&lt;[PathElement]&gt;(userInfo)</div><div class="line">                elementsPointer.memory.append(nextElement)</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        return pathElements</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>更新：在<a href="https://forums.developer.apple.com/message/15725#15725" target="_blank" rel="external">苹果开发者论坛中的一个帖子</a>里，苹果员工 Quinn “The Eskimo!” 提出了一个稍微不同的方法：我们可以传递指向另一个闭包的指针给 <code>userInfo</code> 参数，而非我们想要操作的数组的指针。因为这个闭包没有被C调用约定所限制，因此它是可以捕获外部变量的。</p>
+<p>创建一个闭包的指针会涉及到丑陋的 <code>@convention(block)</code> 注解和 <code>unsafeBitCast</code> 魔法（或者是将闭包包装到一个包装类型中），我不太确定我是否会喜欢这种形式。不过使用这种方法确实是相当方便的。</p>
+<h2 id="收尾"><a href="#收尾" class="headerlink" title="收尾"></a>收尾</h2><p>现在，我们有了一个包含 path 元素的数组，很自然地，我们会想要将 UIBezierPath 转化成一个序列。这使得用户可以使用 <code>for-in</code> 循环来对 path 进行迭代，或者直接对它调用 <code>map</code> 或 <code>filter</code> 方法。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UIBezierPath</span> : <span class="title">SequenceType</span> </span>&#123;</div><div class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">generate</span><span class="params">()</span></span> -&gt; <span class="type">AnyGenerator</span>&lt;<span class="type">PathElement</span>&gt; &#123;</div><div class="line">        <span class="keyword">return</span> <span class="built_in">anyGenerator</span>(elements.generate())</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>最后，这是一个便于 UIBezierPath 调试的格式化输出的实现，这个实现参考了 OS X 上的 NSBezierPath 的输出格式。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UIBezierPath</span> : <span class="title">CustomDebugStringConvertible</span> </span>&#123;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">var</span> debugDescription: <span class="type">String</span> &#123;</div><div class="line">        <span class="keyword">let</span> cgPath = <span class="keyword">self</span>.<span class="type">CGPath</span>;</div><div class="line">        <span class="keyword">let</span> bounds = <span class="type">CGPathGetPathBoundingBox</span>(cgPath);</div><div class="line">        <span class="keyword">let</span> controlPointBounds = <span class="type">CGPathGetBoundingBox</span>(cgPath);</div><div class="line"></div><div class="line">        <span class="keyword">let</span> description = <span class="string">"<span class="subst">\(<span class="keyword">self</span>.<span class="keyword">dynamicType</span>)</span>\n"</span></div><div class="line">            + <span class="string">"    Bounds: <span class="subst">\(bounds)</span>\n"</span></div><div class="line">            + <span class="string">"    Control Point Bounds: <span class="subst">\(controlPointBounds)</span>"</span></div><div class="line">            + elements.<span class="built_in">reduce</span>(<span class="string">""</span>, combine: &#123; (acc, element) <span class="keyword">in</span></div><div class="line">                acc + <span class="string">"\n    <span class="subst">\(String(reflecting: element)</span>)"</span></div><div class="line">            &#125;)</div><div class="line">        <span class="keyword">return</span> description</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>现在用一个示例 path 来进行一下试验：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> path = <span class="type">UIBezierPath</span>()</div><div class="line">path.moveToPoint(<span class="type">CGPoint</span>(x: <span class="number">0</span>, y: <span class="number">0</span>))</div><div class="line">path.addLineToPoint(<span class="type">CGPoint</span>(x: <span class="number">100</span>, y: <span class="number">0</span>))</div><div class="line">path.addLineToPoint(<span class="type">CGPoint</span>(x: <span class="number">50</span>, y: <span class="number">100</span>))</div><div class="line">path.closePath()</div><div class="line">path.moveToPoint(<span class="type">CGPoint</span>(x: <span class="number">0</span>, y: <span class="number">100</span>))</div><div class="line">path.addQuadCurveToPoint(<span class="type">CGPoint</span>(x: <span class="number">100</span>, y: <span class="number">100</span>),</div><div class="line">    controlPoint: <span class="type">CGPoint</span>(x: <span class="number">50</span>, y: <span class="number">200</span>))</div><div class="line">path.closePath()</div><div class="line">path.moveToPoint(<span class="type">CGPoint</span>(x: <span class="number">100</span>, y: <span class="number">0</span>))</div><div class="line">path.addCurveToPoint(<span class="type">CGPoint</span>(x: <span class="number">200</span>, y: <span class="number">0</span>),</div><div class="line">    controlPoint1: <span class="type">CGPoint</span>(x: <span class="number">125</span>, y: <span class="number">100</span>),</div><div class="line">    controlPoint2: <span class="type">CGPoint</span>(x: <span class="number">175</span>, y: -<span class="number">100</span>))</div><div class="line">path.closePath()</div></pre></td></tr></table></figure>
+<p><img src="/img/articles/c-callbacks-in-swift/uibezierpath-example.png1447203254.48282" alt="The example path"></p>
+<p>也可以迭代 path 中的每一个元素，然后打印出每个元素的描述(description)字符串：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">for</span> element <span class="keyword">in</span> path &#123;</div><div class="line">    <span class="built_in">debugPrint</span>(element)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/* Output:</span></div><div class="line">0.0 0.0 moveto</div><div class="line">100.0 0.0 lineto</div><div class="line">50.0 100.0 lineto</div><div class="line">closepath</div><div class="line">0.0 100.0 moveto</div><div class="line">50.0 200.0 100.0 100.0 quadcurveto</div><div class="line">closepath</div><div class="line">100.0 0.0 moveto</div><div class="line">125.0 100.0 175.0 -100.0 200.0 0.0 curveto</div><div class="line">closepath</div><div class="line">*/</div></pre></td></tr></table></figure>
+<p>或者，我们也可以计算 path 中的闭合路径(closepath)的个数：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> closePathCount = path.<span class="built_in">filter</span> &#123;</div><div class="line">        element <span class="keyword">in</span> element == <span class="type">PathElement</span>.<span class="type">CloseSubpath</span></div><div class="line">    &#125;.<span class="built_in">count</span></div><div class="line"><span class="comment">// -&gt; 3</span></div></pre></td></tr></table></figure>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Swift 2 中自动地将 C 语言函数指针桥接到为闭包。这使得对大量的接收函数指针的 C 语言API 进行操作成为可能（并且相当方便）。因为 C 语言的调用约定，这种类型的闭包无法捕获外部的状态，所以我们经常需要将回调闭包中需要用到的数据通过一个外部的 <code>void</code> 类型的指针传入，而这正是很多基于C语言的 API 的做法。在 Swift 当中进行这样的操作会有点绕，不过却是完全可能的。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Ole-Begemann/">Ole Begemann</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2015/11/11/c-callbacks-in-swift/" data-title="在 Swift 2.0 当中使用 C 语言回调 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2015/11/12/naming-methods-and-functions/" title="函数和方法命名规范">
+  <strong>上一篇</strong><br/>
+  <span>
+  函数和方法命名规范</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2015/11/10/ios-undo-and-redo-with-nsundomanager/"  title="使用 NSUndoManager 来进行撤销和重做">
+ <strong>下一篇</strong><br/> 
+ <span>使用 NSUndoManager 来进行撤销和重做
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2015/11/11/c-callbacks-in-swift/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#获取-UIBezierPath-中的元素"><span class="toc-number">1.</span> <span class="toc-text">获取 UIBezierPath 中的元素</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#一个-Swift-化后的数据结构"><span class="toc-number">1.1.</span> <span class="toc-text">一个 Swift 化后的数据结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#枚举-Path-元素"><span class="toc-number">1.2.</span> <span class="toc-text">枚举 Path 元素</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#收尾"><span class="toc-number">2.</span> <span class="toc-text">收尾</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

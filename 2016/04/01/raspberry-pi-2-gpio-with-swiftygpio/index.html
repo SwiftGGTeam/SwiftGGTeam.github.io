@@ -1,0 +1,934 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>树莓派2 GPIO 和 SwiftyGPIO | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="树莓派2 gpio,raspberry pi 2 gpio,SwiftyGPIO,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="Swift 开源后发展很快，现在用 SwiftyGPIO 库都能和 ARM 设备上的 GPIO 接口进行交互了。">
+<meta name="keywords" content="树莓派2 gpio,raspberry pi 2 gpio,SwiftyGPIO">
+<meta property="og:type" content="article">
+<meta property="og:title" content="树莓派2 GPIO 和 SwiftyGPIO">
+<meta property="og:url" content="https://swift.gg/2016/04/01/raspberry-pi-2-gpio-with-swiftygpio/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="Swift 开源后发展很快，现在用 SwiftyGPIO 库都能和 ARM 设备上的 GPIO 接口进行交互了。">
+<meta property="og:image" content="https://swift.gg/img/articles/raspberry-pi-2-gpio-with-swiftygpio/SwiftLEDs.png1459473018.7848978">
+<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="树莓派2 GPIO 和 SwiftyGPIO">
+<meta name="twitter:description" content="Swift 开源后发展很快，现在用 SwiftyGPIO 库都能和 ARM 设备上的 GPIO 接口进行交互了。">
+<meta name="twitter:image" content="https://swift.gg/img/articles/raspberry-pi-2-gpio-with-swiftygpio/SwiftLEDs.png1459473018.7848978">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/04/01/raspberry-pi-2-gpio-with-swiftygpio/" target="_blank" title="树莓派2 GPIO 和 SwiftyGPIO" itemprop="url">树莓派2 GPIO 和 SwiftyGPIO</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-03-31T16:00:00.000Z" itemprop="datePublished">2016-04-01</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Joe，<a href="http://dev.iachieved.it/iachievedit/raspberry-pi-2-gpio-with-swiftygpio/" target="_blank" rel="external">原文链接</a>，原文日期：2016-02-08<br>译者：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="external">numbbbbb</a>；定稿：<a href="undefined">littledogboy</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>和全球的开源项目开发者一起工作非常有趣并且可以从中获得很多经验。随着计算机设备和宽带成本逐渐降低，给全世界的人带来了新技术，来自不同文化、不同背景的开发者们走到一起努力合作，共同创造了不起的成就。</p>
+<p>自从苹果去年开源 Swift 编程语言以来，热心人们已经<a href="http://dev.iachieved.it/iachievedit/ubuntu-packages-for-open-source-swift/" target="_blank" rel="external">创建了 Ubuntu 安装包</a>，<a href="http://www.housedillon.com/?p=2287" target="_blank" rel="external">移植到 ARM 设备上如 Raspberry Pi 2</a>，创建了<a href="http://dev.iachieved.it/iachievedit/building-rest-apis-with-zewo/" target="_blank" rel="external">网页开发框架</a>，而现在<a href="https://www.uraimo.com" target="_blank" rel="external">Umberto Raimondi</a> 发布了 <a href="https://github.com/uraimo/SwiftyGPIO" target="_blank" rel="external">SwiftyGPIO</a>,一个 Swift 库，能够和 ARM 设备（如 Raspberry Pi 和 BeagleBone Black）上的 GPIO 接口进行交互。</p>
+<a id="more"></a>
+<p><a href="https://github.com/uraimo/SwiftyGPIO/blob/master/README.md" target="_blank" rel="external">SwiftyGPIO README</a> 详细解释了如何使用模块。正如 Umberto 所说，Swift Package Manager 目前还不能在 ARM 上使用（我曾经尝试进行编译，不过有时候发生抢占），所以我们还是下载 <code>SwiftyGPIO.swift</code> 文件，通过 wget 和 swiftc  来进行编译，将所有的东西连起来。</p>
+<h2 id="Rock-Chalk-加油"><a href="#Rock-Chalk-加油" class="headerlink" title="Rock Chalk 加油"></a>Rock Chalk 加油</h2><p>去年，我参与过<a href="http://dev.iachieved.it/iachievedit/getting-started-with-arduino-and-xcode/" target="_blank" rel="external">使用 Xcode 开发 Arduino 项目</a>，写过一些关于 LED 灯闪烁的代码。这次我们在 Raspberry Pi 2 上用 Swift 语言再实现一次。</p>
+<p>如果你打算尝试一下，我们需要：</p>
+<ul>
+<li>一个 Raspberry Pi 2</li>
+<li>一对 LED 灯</li>
+<li>连接用的电线</li>
+<li><a href="http://dev.iachieved.it/iachievedit/open-source-swift-on-raspberry-pi-2/" target="_blank" rel="external">把 Swift 安装到你的 Pi 2 上</a></li>
+</ul>
+<p>我们会用到 GPIO4 针脚 和 GPIO27针脚，因为这两个在 Pi 2 GPIO 数据头中靠的很近。</p>
+<p>下面是 main.swift 文件，能够让两个 LED 灯来回闪烁。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> Glibc</div><div class="line"> </div><div class="line"><span class="keyword">let</span> gpios = <span class="type">SwiftyGPIO</span>.getGPIOsForBoard(.<span class="type">RaspberryPiPlus2Zero</span>)</div><div class="line"> </div><div class="line"><span class="comment">// GPIO4 and GPIO27</span></div><div class="line"><span class="keyword">let</span> leds = [gpios[.<span class="type">P4</span>]!, gpios[.<span class="type">P27</span>]!]</div><div class="line"> </div><div class="line"><span class="comment">// Initialize our GPIOs</span></div><div class="line"><span class="keyword">for</span> led <span class="keyword">in</span> leds &#123;</div><div class="line">  led.direction = .<span class="type">OUT</span></div><div class="line">  led.value     = <span class="number">0</span></div><div class="line">&#125;</div><div class="line"> </div><div class="line"><span class="comment">// Blink</span></div><div class="line"><span class="keyword">while</span> <span class="literal">true</span> &#123;</div><div class="line">  <span class="keyword">for</span> led <span class="keyword">in</span> leds &#123;</div><div class="line">    led.value = <span class="number">1</span></div><div class="line">    sleep(<span class="number">1</span>)</div><div class="line">    led.value = <span class="number">0</span></div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>直到 SwiftPM for ARM 被修复之前，为了能够完成编译成功运行这段代码，我们需要这样做：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"># wget https:<span class="comment">//raw.githubusercontent.com/uraimo/SwiftyGPIO/master/Sources/SwiftyGPIO.swift</span></div><div class="line"># swiftc main.swift <span class="type">SwiftyGPIO</span>.swift</div><div class="line"># ./main</div></pre></td></tr></table></figure>
+<p>正确连接 LED 灯后，这两个灯会来回闪烁！</p>
+<p><img src="/img/articles/raspberry-pi-2-gpio-with-swiftygpio/SwiftLEDs.png1459473018.7848978" alt="闪烁 闪烁"></p>
+<h2 id="选择颜色"><a href="#选择颜色" class="headerlink" title="选择颜色"></a>选择颜色</h2><p>我有一个闲置的 <a href="http://www.amazon.com/Linrose-B4361H1-Green-Amber-Tricolor/dp/B008K1SWEC" target="_blank" rel="external">Linrose Tricolor</a> LED 灯，我打算物尽其用。在这段示例代码中，我们已经写了一条命令行程序，允许你设置 LED 灯的颜色（或者关灯）。我在代码中用 //1, //2 标注出来了。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> Glibc</div><div class="line"> </div><div class="line"><span class="comment">// 1</span></div><div class="line"><span class="keyword">let</span> gpiodefs = <span class="type">SwiftyGPIO</span>.getGPIOsForBoard(.<span class="type">RaspberryPiPlus2Zero</span>)</div><div class="line"> </div><div class="line"><span class="comment">// 2</span></div><div class="line"><span class="class"><span class="keyword">enum</span> <span class="title">GPIOState</span>:<span class="title">Int</span> </span>&#123;</div><div class="line"><span class="keyword">case</span> <span class="type">Off</span> = <span class="number">0</span></div><div class="line"><span class="keyword">case</span> <span class="type">On</span> </div><div class="line">&#125;</div><div class="line"> </div><div class="line"><span class="comment">// 3</span></div><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">LedColor</span> </span>&#123;</div><div class="line"> <span class="keyword">static</span> <span class="keyword">let</span> <span class="type">Off</span>    = (<span class="type">GPIOState</span>.<span class="type">Off</span>, <span class="type">GPIOState</span>.<span class="type">Off</span>) </div><div class="line"> <span class="keyword">static</span> <span class="keyword">let</span> <span class="type">Green</span>  = (<span class="type">GPIOState</span>.<span class="type">On</span>,  <span class="type">GPIOState</span>.<span class="type">Off</span>)</div><div class="line"> <span class="keyword">static</span> <span class="keyword">let</span> <span class="type">Orange</span> = (<span class="type">GPIOState</span>.<span class="type">On</span>,  <span class="type">GPIOState</span>.<span class="type">On</span>)</div><div class="line"> <span class="keyword">static</span> <span class="keyword">let</span> <span class="type">Red</span>    = (<span class="type">GPIOState</span>.<span class="type">Off</span>, <span class="type">GPIOState</span>.<span class="type">On</span>)</div><div class="line">&#125;</div><div class="line"> </div><div class="line"><span class="comment">// 4</span></div><div class="line"><span class="keyword">let</span> gpios = [gpiodefs[.<span class="type">P4</span>]!, gpiodefs[.<span class="type">P27</span>]!]</div><div class="line"><span class="keyword">for</span> gpio <span class="keyword">in</span> gpios &#123;</div><div class="line">  gpio.direction = .<span class="type">OUT</span></div><div class="line">  gpio.value     = <span class="type">GPIOState</span>.<span class="type">Off</span>.rawValue</div><div class="line">&#125;</div><div class="line"> </div><div class="line"><span class="comment">// 5</span></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">setLedColor</span><span class="params">(color:<span class="params">(GPIOState,GPIOState)</span></span></span>, gpios:[<span class="type">GPIO</span>]) &#123;</div><div class="line">  gpios[<span class="number">0</span>].value = color.<span class="number">0</span>.rawValue</div><div class="line">  gpios[<span class="number">1</span>].value = color.<span class="number">1</span>.rawValue</div><div class="line">&#125;</div><div class="line"> </div><div class="line"><span class="comment">// 6</span></div><div class="line"><span class="keyword">guard</span> <span class="type">Process</span>.arguments.<span class="built_in">count</span> == <span class="number">2</span> <span class="keyword">else</span> &#123;</div><div class="line">  <span class="built_in">print</span>(<span class="string">"Usage:  ./main off|green|orange|red"</span>)</div><div class="line">  exit(<span class="number">0</span>)</div><div class="line">&#125;</div><div class="line"> </div><div class="line"><span class="keyword">let</span> color = <span class="type">Process</span>.arguments[<span class="number">1</span>]</div><div class="line"> </div><div class="line"><span class="comment">// 7</span></div><div class="line"><span class="keyword">switch</span> color &#123;</div><div class="line">  <span class="keyword">case</span> <span class="string">"off"</span>:</div><div class="line">    setLedColor(<span class="type">LedColor</span>.<span class="type">Off</span>, gpios:gpios)</div><div class="line">  <span class="keyword">case</span> <span class="string">"green"</span>:</div><div class="line">    setLedColor(<span class="type">LedColor</span>.<span class="type">Green</span>, gpios:gpios)</div><div class="line">  <span class="keyword">case</span> <span class="string">"orange"</span>:</div><div class="line">    setLedColor(<span class="type">LedColor</span>.<span class="type">Orange</span>, gpios:gpios)</div><div class="line">  <span class="keyword">case</span> <span class="string">"red"</span>:</div><div class="line">    setLedColor(<span class="type">LedColor</span>.<span class="type">Red</span>, gpios:gpios)</div><div class="line">  <span class="keyword">default</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"Invalid color"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ol>
+<li>SwiftGPIO 为比较流行的板子提供了封装好的 GPIO。在我们的例子中，我们用的是 Raspberry Pi 2。</li>
+<li>纯粹就是描述 GPIO 状态的语法，比如 On 或者 Off。如果我们删掉这部分，估计整个代码看起来会整洁一些。</li>
+<li>LedColor 是个结构体，定义 off, Green, Ogrange 和 Red。</li>
+<li>三色 LED 灯有两个正极接口，我们将其中一个接口连接到 GPIO4 上，另外一个连接到 GPIO27 上，应用启动后会先将接口方向设置为 .OUT 和 OFF。然后，因为我们用枚举创建的 GPIOState ,所以我们应该用 .rawValue 。</li>
+<li>setLedColor 方法通过一个元组(GPIOState,GPIOState)和 一个数组 [GPIO] 把 一对儿 GPIO 接口设置为肯定状态。 </li>
+<li>我们的应用只有一个参数，所以 guard 方法中只有两个，一个是应用名字，另外一个是颜色。</li>
+<li>使用 switch 语句来转换颜色，通过调用 setLedColor 来设置颜色。</li>
+</ol>
+<h2 id="结束语"><a href="#结束语" class="headerlink" title="结束语"></a>结束语</h2><p><a href="https://github.com/uraimo/SwiftyGPIO" target="_blank" rel="external">SwiftyGPIO</a> 这个 API 能让你在 ARM 板子上用 Swift 使用 GPIO 。随着 Swift 语言的日新月异、与时俱进，Swift 俨然已进军制造业，很有可能成为单板计算机开发项目的不二选择。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/iAchieved-it/">iAchieved.it</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/04/01/raspberry-pi-2-gpio-with-swiftygpio/" data-title="树莓派2 GPIO 和 SwiftyGPIO | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/04/05/Swift2.1-Function-Types-Conversion-Covariance-Contravariance/" title="Swift 2.1 函数类型转换：协变与逆变">
+  <strong>上一篇</strong><br/>
+  <span>
+  Swift 2.1 函数类型转换：协变与逆变</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/03/31/ios9-uistackview-guide-swift/"  title="iOS9 UIStackView 简介">
+ <strong>下一篇</strong><br/> 
+ <span>iOS9 UIStackView 简介
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/04/01/raspberry-pi-2-gpio-with-swiftygpio/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Rock-Chalk-加油"><span class="toc-number">1.</span> <span class="toc-text">Rock Chalk 加油</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#选择颜色"><span class="toc-number">2.</span> <span class="toc-text">选择颜色</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结束语"><span class="toc-number">3.</span> <span class="toc-text">结束语</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>71</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift发展/" title="Swift发展">Swift发展<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/3D-Touch/" title="3D Touch">3D Touch<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
