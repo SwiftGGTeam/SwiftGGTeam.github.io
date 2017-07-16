@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://swift.gg/"/>
-  <updated>2017-07-16T09:11:47.000Z</updated>
+  <updated>2017-07-16T09:55:51.000Z</updated>
   <id>https://swift.gg/</id>
   
   <author>
@@ -20,7 +20,7 @@
     <link href="https://swift.gg/2017/07/16/swift_weekly_issue_74/"/>
     <id>https://swift.gg/2017/07/16/swift_weekly_issue_74/</id>
     <published>2017-07-15T16:00:00.000Z</published>
-    <updated>2017-07-16T09:11:47.000Z</updated>
+    <updated>2017-07-16T09:55:51.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
 <p>作者：Jesse Squires，<a href="https://swiftweekly.github.io/issue-74/" target="_blank" rel="external">原文链接</a>，原文日期：2017-06-15<br>译者：<a href="https://kemchenj.github.io" target="_blank" rel="external">四娘</a>；校对：<a href="http://weibo.com/277195544" target="_blank" rel="external">Cwift</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
@@ -261,6 +261,49 @@
   </entry>
   
   <entry>
+    <title>把代码迁移到协调器上</title>
+    <link href="https://swift.gg/2017/06/09/migrating-to-coordinators/"/>
+    <id>https://swift.gg/2017/06/09/migrating-to-coordinators/</id>
+    <published>2017-06-08T16:00:00.000Z</published>
+    <updated>2017-07-16T00:49:14.000Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote>
+<p>作者：Soroush Khanlou，<a href="http://khanlou.com/2017/04/migrating-to-coordinators/" target="_blank" rel="external">原文链接</a>，原文日期：2017-4-25<br>译者：<a href="http://weibo.com/277195544" target="_blank" rel="external">Cwift</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>这篇文章是 <a href="http://khanlou.com/tag/advanced-coordinators/" target="_blank" rel="external">Coordinators（协调器）进阶教程系列</a>的第一篇。如果你没有阅读过<a href="http://khanlou.com/2015/01/the-coordinator/" target="_blank" rel="external">原始的帖子</a>及其<a href="http://khanlou.com/2015/10/coordinators-redux/" target="_blank" rel="external">后续</a>，请务必首先查阅这些文章。该系列将涵盖几项进阶的 Coordinator 使用技巧、疑点、常见问题以及其他细碎的内容。让我们开始吧。</p>
+<a id="more"></a>
+<p>常有人问我，如何把一个使用 Storyboard 构建或者是使用纯代码编写 ViewController 构建的应用重构成使用 Coordinators 的应用。只要方法正确，重构可以逐步完成。即使重构未完成，你的应用仍旧可以部署。</p>
+<p>要实现这个目标，最好的做法是从根路径出发，在 Coordinators 中称之为 “AppCoordinator”。AppDelegate 持有该 AppCoordinator，AppCoordinator 调度 App 可以加载的所有 ViewController。</p>
+<p>想要理解为什么从 App 的根路径开始，可以从反面来思考。如果从一些叶子流程开始（比如，一个 <code>CheckoutCoordinator</code>），那么需要保持对该 Coordinator 的强引用，以防它被释放。如果 Coordinator 被释放，它内部的代码就都不能执行了。所以，深入一个 App 中去，如果我们创建一个 Coordinator，必须让某个对象长久地持有它。</p>
+<p>有两种方案可以防止对象被释放。第一种方案是使用静态引用。因为系统里可能只有一个 <code>CheckoutCoordinator</code>，所以很容易将其填充到一个全局变量中。虽然这种方案有效果，但是不是一个理想的选择，因为全局变量阻碍了可测试性和灵活性。第二种方案是让当前展示的 ViewController 持有 Coordinator。这将迫使当前的 ViewController 变得复杂一些，但是可以降低 Coordinator 所管理的所有 ViewController 的复杂性。然而，这种关系本质上是有缺陷的。ViewController 是 Coordinator 的“孩子”，编程时，孩子们不应该不知道他们的父母是谁。类似于一个 <code>UIView</code> 持有了一个 <code>UIViewController</code> 的引用：这种事是不该发生的。</p>
+<p>如果你遇到了必须从子流程开始的情况，你可以使用上述两种方法之一。但是，如果可以选择，我的建议是从根路径开始。</p>
+<p>从根路径开始的另一个好处是认证流程通常更靠近 App 的根路径。身份认证是一个很好的流程，可以抽象成单独的对象，很适合用来验证 App 中的 Coordinator。</p>
+<p>将 App 的 RootViewController 交付给 <code>AppCoordinator</code> 之后，你可以对代码进行 Commit/Pull Request/Code Review。因为其他的 ViewController 仍在正常运转，所以 App 可以在这个未完工的状态下继续工作。基于这点，逐步改造，你可以将更多的 ViewController 交付给 Coordinator。将每个“流程”都交付给 Coordinator 之后，你可以提交代码或者创建一个 pr，不会影响 App 的正常工作。正如最佳重构一样，这些步骤只是移动代码，有时根据需要创建新的 Coordinator。</p>
+<p>一旦所有的场景切换都转移到了 Coordinator 中，你就可以开始下一步的重构了，例如将 iPhone 和 iPad 的 Coordinator 封装到单独的对象（而不是一个切换状态的 Coordinator），让子流程可复用，更好地依赖注入，这些都可以应用到你的新架构中。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;作者：Soroush Khanlou，&lt;a href=&quot;http://khanlou.com/2017/04/migrating-to-coordinators/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;原文链接&lt;/a&gt;，原文日期：2017-4-25&lt;br&gt;译者：&lt;a href=&quot;http://weibo.com/277195544&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Cwift&lt;/a&gt;；校对：&lt;a href=&quot;http://www.jianshu.com/users/7a2d2cc38444/latest_articles&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Crystal Sun&lt;/a&gt;；定稿：&lt;a href=&quot;https://github.com/chenmingbiao&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;CMB&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;!--此处开始正文--&gt;
+&lt;p&gt;这篇文章是 &lt;a href=&quot;http://khanlou.com/tag/advanced-coordinators/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Coordinators（协调器）进阶教程系列&lt;/a&gt;的第一篇。如果你没有阅读过&lt;a href=&quot;http://khanlou.com/2015/01/the-coordinator/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;原始的帖子&lt;/a&gt;及其&lt;a href=&quot;http://khanlou.com/2015/10/coordinators-redux/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;后续&lt;/a&gt;，请务必首先查阅这些文章。该系列将涵盖几项进阶的 Coordinator 使用技巧、疑点、常见问题以及其他细碎的内容。让我们开始吧。&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="KHANLOU" scheme="https://swift.gg/categories/KHANLOU/"/>
+    
+    
+      <category term="iOS 开发" scheme="https://swift.gg/tags/iOS-%E5%BC%80%E5%8F%91/"/>
+    
+  </entry>
+  
+  <entry>
     <title>Table View 中开启文本菜单功能</title>
     <link href="https://swift.gg/2017/06/09/use-context-menu-with-table-view-tutorial-ios10/"/>
     <id>https://swift.gg/2017/06/09/use-context-menu-with-table-view-tutorial-ios10/</id>
@@ -319,49 +362,6 @@
     </summary>
     
       <category term="IOSCREATOR" scheme="https://swift.gg/categories/IOSCREATOR/"/>
-    
-    
-      <category term="iOS 开发" scheme="https://swift.gg/tags/iOS-%E5%BC%80%E5%8F%91/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>把代码迁移到协调器上</title>
-    <link href="https://swift.gg/2017/06/09/migrating-to-coordinators/"/>
-    <id>https://swift.gg/2017/06/09/migrating-to-coordinators/</id>
-    <published>2017-06-08T16:00:00.000Z</published>
-    <updated>2017-07-16T00:49:14.000Z</updated>
-    
-    <content type="html"><![CDATA[<blockquote>
-<p>作者：Soroush Khanlou，<a href="http://khanlou.com/2017/04/migrating-to-coordinators/" target="_blank" rel="external">原文链接</a>，原文日期：2017-4-25<br>译者：<a href="http://weibo.com/277195544" target="_blank" rel="external">Cwift</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
-</blockquote>
-<!--此处开始正文-->
-<p>这篇文章是 <a href="http://khanlou.com/tag/advanced-coordinators/" target="_blank" rel="external">Coordinators（协调器）进阶教程系列</a>的第一篇。如果你没有阅读过<a href="http://khanlou.com/2015/01/the-coordinator/" target="_blank" rel="external">原始的帖子</a>及其<a href="http://khanlou.com/2015/10/coordinators-redux/" target="_blank" rel="external">后续</a>，请务必首先查阅这些文章。该系列将涵盖几项进阶的 Coordinator 使用技巧、疑点、常见问题以及其他细碎的内容。让我们开始吧。</p>
-<a id="more"></a>
-<p>常有人问我，如何把一个使用 Storyboard 构建或者是使用纯代码编写 ViewController 构建的应用重构成使用 Coordinators 的应用。只要方法正确，重构可以逐步完成。即使重构未完成，你的应用仍旧可以部署。</p>
-<p>要实现这个目标，最好的做法是从根路径出发，在 Coordinators 中称之为 “AppCoordinator”。AppDelegate 持有该 AppCoordinator，AppCoordinator 调度 App 可以加载的所有 ViewController。</p>
-<p>想要理解为什么从 App 的根路径开始，可以从反面来思考。如果从一些叶子流程开始（比如，一个 <code>CheckoutCoordinator</code>），那么需要保持对该 Coordinator 的强引用，以防它被释放。如果 Coordinator 被释放，它内部的代码就都不能执行了。所以，深入一个 App 中去，如果我们创建一个 Coordinator，必须让某个对象长久地持有它。</p>
-<p>有两种方案可以防止对象被释放。第一种方案是使用静态引用。因为系统里可能只有一个 <code>CheckoutCoordinator</code>，所以很容易将其填充到一个全局变量中。虽然这种方案有效果，但是不是一个理想的选择，因为全局变量阻碍了可测试性和灵活性。第二种方案是让当前展示的 ViewController 持有 Coordinator。这将迫使当前的 ViewController 变得复杂一些，但是可以降低 Coordinator 所管理的所有 ViewController 的复杂性。然而，这种关系本质上是有缺陷的。ViewController 是 Coordinator 的“孩子”，编程时，孩子们不应该不知道他们的父母是谁。类似于一个 <code>UIView</code> 持有了一个 <code>UIViewController</code> 的引用：这种事是不该发生的。</p>
-<p>如果你遇到了必须从子流程开始的情况，你可以使用上述两种方法之一。但是，如果可以选择，我的建议是从根路径开始。</p>
-<p>从根路径开始的另一个好处是认证流程通常更靠近 App 的根路径。身份认证是一个很好的流程，可以抽象成单独的对象，很适合用来验证 App 中的 Coordinator。</p>
-<p>将 App 的 RootViewController 交付给 <code>AppCoordinator</code> 之后，你可以对代码进行 Commit/Pull Request/Code Review。因为其他的 ViewController 仍在正常运转，所以 App 可以在这个未完工的状态下继续工作。基于这点，逐步改造，你可以将更多的 ViewController 交付给 Coordinator。将每个“流程”都交付给 Coordinator 之后，你可以提交代码或者创建一个 pr，不会影响 App 的正常工作。正如最佳重构一样，这些步骤只是移动代码，有时根据需要创建新的 Coordinator。</p>
-<p>一旦所有的场景切换都转移到了 Coordinator 中，你就可以开始下一步的重构了，例如将 iPhone 和 iPad 的 Coordinator 封装到单独的对象（而不是一个切换状态的 Coordinator），让子流程可复用，更好地依赖注入，这些都可以应用到你的新架构中。</p>
-<blockquote>
-<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
-</blockquote>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;blockquote&gt;
-&lt;p&gt;作者：Soroush Khanlou，&lt;a href=&quot;http://khanlou.com/2017/04/migrating-to-coordinators/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;原文链接&lt;/a&gt;，原文日期：2017-4-25&lt;br&gt;译者：&lt;a href=&quot;http://weibo.com/277195544&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Cwift&lt;/a&gt;；校对：&lt;a href=&quot;http://www.jianshu.com/users/7a2d2cc38444/latest_articles&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Crystal Sun&lt;/a&gt;；定稿：&lt;a href=&quot;https://github.com/chenmingbiao&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;CMB&lt;/a&gt;&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;!--此处开始正文--&gt;
-&lt;p&gt;这篇文章是 &lt;a href=&quot;http://khanlou.com/tag/advanced-coordinators/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Coordinators（协调器）进阶教程系列&lt;/a&gt;的第一篇。如果你没有阅读过&lt;a href=&quot;http://khanlou.com/2015/01/the-coordinator/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;原始的帖子&lt;/a&gt;及其&lt;a href=&quot;http://khanlou.com/2015/10/coordinators-redux/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;后续&lt;/a&gt;，请务必首先查阅这些文章。该系列将涵盖几项进阶的 Coordinator 使用技巧、疑点、常见问题以及其他细碎的内容。让我们开始吧。&lt;/p&gt;
-    
-    </summary>
-    
-      <category term="KHANLOU" scheme="https://swift.gg/categories/KHANLOU/"/>
     
     
       <category term="iOS 开发" scheme="https://swift.gg/tags/iOS-%E5%BC%80%E5%8F%91/"/>
