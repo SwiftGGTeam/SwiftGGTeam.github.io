@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://swift.gg/"/>
-  <updated>2017-07-18T01:30:41.000Z</updated>
+  <updated>2017-07-19T05:24:14.000Z</updated>
   <id>https://swift.gg/</id>
   
   <author>
@@ -16,11 +16,67 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>TableViewController 的最佳实践</title>
+    <link href="https://swift.gg/2017/07/19/the-best-table-view-controller-mar-2016-edition/"/>
+    <id>https://swift.gg/2017/07/19/the-best-table-view-controller-mar-2016-edition/</id>
+    <published>2017-07-18T16:00:00.000Z</published>
+    <updated>2017-07-19T05:24:14.000Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote>
+<p>作者：Dominik Hauser，<a href="http://swiftandpainless.com/the-best-table-view-controller-mar-2016-edition/" target="_blank" rel="external">原文链接</a>，原文日期：2016-03-28<br>译者：<a href="undefined">Doye</a>；校对：<a href="undefined">way</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>在阅读 <a href="https://www.objc.io/issues/1-view-controllers/lighter-view-controllers/" target="_blank" rel="external">obc.io关于轻量级的viewConroller相关讨论</a>之后，每隔几个月我都会反思怎样做才是TableviewController 的最佳实践，我曾经尝试过几种不同的方法包括把 datasource 和 delefate 放到一个独立的类中或者使用 MVVM 架构来对 Cell 进行定制。</p>
+<p>本篇是在 2016 年我对这个问题的思索，而且我对这个方案十分满意，方案涉及到了泛型，协议，和值类型。<br><a id="more"></a></p>
+<p>最主要的一部分是 TableviewController 的基类，它管理着模型数据存储的数组，还需要注册 Cell 类和实现 tableView 所需要的 datasoure 相关的函数。</p>
+<p>我们的类定义如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> UIKit</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">TableViewController</span>&lt;<span class="title">T</span>, <span class="title">Cell</span>: <span class="title">UITableViewCell</span> <span class="title">where</span> <span class="title">Cell</span>: <span class="title">Configurable</span>&gt;: <span class="title">UITableViewController</span> </span>&#123;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这个我们设计的基类是一个 <strong>UITableViewController</strong> 的子类，形参 <em>Cell<strong> 是一个遵循 </strong>Configurable<strong> 协议的 </strong>UITableViewCell*</em>，这个协议十分简单：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> Foundation</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">Configurable</span> </span>&#123;</div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">config</span><span class="params">(withItem item: Any)</span></span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这个 Cell 将会在 <strong>TableViewController</strong> 中注册然后塞进队列，对于这个 Cell 的 identifier 我们可以有一个私有属性的对应：</p>
+<p>然后我们需要一个数组来存储要在 table View 中要展示的数据：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> data = [<span class="type">T</span>]() &#123;</div><div class="line">  <span class="keyword">didSet</span> &#123;</div><div class="line">    tableView.reloadData()</div><div class="line">    <span class="keyword">if</span> tableView.numberOfRowsInSection(<span class="number">0</span>) &gt; <span class="number">0</span> &#123;</div><div class="line">      tableView.scrollToRowAtIndexPath(<span class="type">NSIndexPath</span>(forRow: <span class="number">0</span>,inSection: <span class="number">0</span>),</div><div class="line">                                       atScrollPosition: .<span class="type">Top</span>,</div><div class="line">                                       animated: <span class="literal">true</span>)</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>无论数据什么时候被更新，在列表视图中的 <strong>reloadData()</strong> 方法会被调用，而且整个列表视图将上滑至顶部，下面我们定义初始化方法：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">init</span>() &#123; <span class="keyword">super</span>.<span class="keyword">init</span>(nibName: <span class="literal">nil</span>, bundle: <span class="literal">nil</span>) &#125;</div></pre></td></tr></table></figure>
+<p>在 <strong>viewDidLoad()</strong> 之中我们对于 TableView 进行设置：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</div><div class="line">  <span class="keyword">super</span>.viewDidLoad()</div><div class="line">  tableView.registerClass(<span class="type">Cell</span>.<span class="keyword">self</span>, forCellReuseIdentifier: cellIdentifier)</div><div class="line">  tableView.rowHeight = <span class="type">UITableViewAutomaticDimension</span></div><div class="line">  tableView.estimatedRowHeight = <span class="number">60</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>剩下的就是对 <strong>UITableViewDataSource</strong> 进行补全：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">tableView</span><span class="params">(tableView: UITableView, numberOfRowsInSection section: Int)</span></span> -&gt; <span class="type">Int</span> &#123;</div><div class="line">  <span class="keyword">return</span> data.<span class="built_in">count</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">tableView</span><span class="params">(tableView: UITableView,</span></span></div><div class="line">                        cellForRowAtIndexPath indexPath: NSIndexPath) -&gt; <span class="type">UITableViewCell</span> &#123;</div><div class="line">  <span class="keyword">let</span> cell = tableView.dequeueReusableCellWithIdentifier(cellIdentifier,</div><div class="line">                                                         forIndexPath: indexPath) <span class="keyword">as</span>! <span class="type">Cell</span></div><div class="line">  cell.config(withItem: data[indexPath.row])</div><div class="line">  <span class="keyword">return</span> cell</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里一个需要注意的部分是 <strong>cell.config(withItem: data[indexPath.row])</strong> 这意味着 cell 将负责其内部各种控件展示的内容的填充。</p>
+<p>这里是完整的基类的代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> UIKit</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">TableViewController</span>&lt;<span class="title">T</span>, <span class="title">Cell</span>: <span class="title">UITableViewCell</span> <span class="title">where</span> <span class="title">Cell</span>: <span class="title">Configurable</span>&gt;: <span class="title">UITableViewController</span> </span>&#123;</div><div class="line">  </div><div class="line">  <span class="keyword">private</span> <span class="keyword">let</span> cellIdentifier = <span class="type">String</span>(<span class="type">Cell</span>)</div><div class="line">  <span class="keyword">var</span> data = [<span class="type">T</span>]() &#123;</div><div class="line">    <span class="keyword">didSet</span> &#123;</div><div class="line">      tableView.reloadData()</div><div class="line">      <span class="keyword">if</span> tableView.numberOfRowsInSection(<span class="number">0</span>) &gt; <span class="number">0</span> &#123;</div><div class="line">        tableView.scrollToRowAtIndexPath(<span class="type">NSIndexPath</span>(forRow: <span class="number">0</span>,inSection: <span class="number">0</span>),</div><div class="line">                                         atScrollPosition: .<span class="type">Top</span>,</div><div class="line">                                         animated: <span class="literal">true</span>)</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="keyword">init</span>() &#123; <span class="keyword">super</span>.<span class="keyword">init</span>(nibName: <span class="literal">nil</span>, bundle: <span class="literal">nil</span>) &#125;</div><div class="line">  </div><div class="line">  <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</div><div class="line">    <span class="keyword">super</span>.viewDidLoad()</div><div class="line">    tableView.registerClass(<span class="type">Cell</span>.<span class="keyword">self</span>, forCellReuseIdentifier: cellIdentifier)</div><div class="line">    tableView.rowHeight = <span class="type">UITableViewAutomaticDimension</span></div><div class="line">    tableView.estimatedRowHeight = <span class="number">60</span></div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="comment">// MARK: - Table view data source</span></div><div class="line">  <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">tableView</span><span class="params">(tableView: UITableView, numberOfRowsInSection section: Int)</span></span> -&gt; <span class="type">Int</span> &#123;</div><div class="line">    <span class="keyword">return</span> data.<span class="built_in">count</span></div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">tableView</span><span class="params">(tableView: UITableView,</span></span></div><div class="line">                          cellForRowAtIndexPath indexPath: NSIndexPath) -&gt; <span class="type">UITableViewCell</span> &#123;</div><div class="line">    <span class="keyword">let</span> cell = tableView.dequeueReusableCellWithIdentifier(cellIdentifier,</div><div class="line">                                                           forIndexPath: indexPath) <span class="keyword">as</span>! <span class="type">Cell</span></div><div class="line">    cell.config(withItem: data[indexPath.row])</div><div class="line">    <span class="keyword">return</span> cell</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>我们可以利用这个基类来定义一个 TableViewController 来实现让用户输入一个字符串对于 Github 的用户来进行匹配查找：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">UserSearchTableViewController</span>&lt;<span class="title">T</span>: <span class="title">protocol</span>&lt;<span class="title">DictCreatable</span>, <span class="title">LabelsPresentable</span>, <span class="title">UserProtocol</span>&gt;&gt;: <span class="title">TableViewController</span>&lt;<span class="title">T</span>, <span class="title">TwoLabelCell</span>&gt;, <span class="title">UISearchBarDelegate</span> </span>&#123;</div><div class="line"></div><div class="line">  <span class="keyword">var</span> searchString: <span class="type">String</span>? &#123;</div><div class="line">    <span class="keyword">didSet</span> &#123;</div><div class="line">      <span class="keyword">guard</span> <span class="keyword">let</span> searchString = searchString <span class="keyword">where</span> searchString.characters.<span class="built_in">count</span> &gt; <span class="number">0</span> <span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</div><div class="line">      <span class="keyword">let</span> fetch = <span class="type">APIClient</span>&lt;<span class="type">T</span>&gt;().fetchUsers(forSearchString: searchString)</div><div class="line">      fetch &#123; (items, error) -&gt; <span class="type">Void</span> <span class="keyword">in</span></div><div class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> theItems = items <span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</div><div class="line">        <span class="keyword">self</span>.data = theItems.<span class="built_in">map</span> &#123; $<span class="number">0</span> &#125;</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</div><div class="line">    <span class="keyword">super</span>.viewDidLoad()</div><div class="line">    </div><div class="line">    title = <span class="string">"User"</span></div><div class="line">    </div><div class="line">    <span class="keyword">let</span> searchBar = <span class="type">UISearchBar</span>(frame: <span class="type">CGRect</span>(x: <span class="number">0</span>, y: <span class="number">0</span>, width: view.frame.size.width, height: <span class="number">40</span>))</div><div class="line">    searchBar.placeholder = <span class="string">"Github username"</span></div><div class="line">    searchBar.delegate = <span class="keyword">self</span></div><div class="line">    tableView.tableHeaderView = searchBar</div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">searchBarSearchButtonClicked</span><span class="params">(searchBar: UISearchBar)</span></span> &#123;</div><div class="line">    searchBar.resignFirstResponder()</div><div class="line">    searchString = searchBar.text</div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">tableView</span><span class="params">(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath)</span></span> &#123;</div><div class="line">    <span class="keyword">let</span> next = <span class="type">RepositoriesTableViewController</span>&lt;<span class="type">Repository</span>&gt;()</div><div class="line">    next.username = <span class="keyword">self</span>.data[indexPath.row].name</div><div class="line">    navigationController?.pushViewController(next, animated: <span class="literal">true</span>)</div><div class="line">    </div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>以上便是一个完整的 TableViewController，大部分的代码对于 searchBar 的展示和逻辑处理，是不是很简洁？</p>
+<p>我们会这样来初始化 <strong>UserSearchTableViewController</strong>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> viewController = <span class="type">UserSearchTableViewController</span>&lt;<span class="type">User</span>&gt;()</div></pre></td></tr></table></figure>
+<p>最后，这里是 <strong>TwoLabelCell</strong> 我自己的实现</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> UIKit</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">TwoLabelCell</span>: <span class="title">UITableViewCell</span>, <span class="title">Configurable</span> </span>&#123;</div><div class="line"></div><div class="line">  <span class="keyword">let</span> nameLabel: <span class="type">UILabel</span></div><div class="line">  <span class="keyword">let</span> descriptionLabel: <span class="type">UILabel</span></div><div class="line">  </div><div class="line">  <span class="keyword">override</span> <span class="keyword">init</span>(style: <span class="type">UITableViewCellStyle</span>, reuseIdentifier: <span class="type">String</span>?) &#123;</div><div class="line">    nameLabel = <span class="type">UILabel</span>()</div><div class="line">    nameLabel.font = <span class="type">UIFont</span>.preferredFontForTextStyle(<span class="type">UIFontTextStyleHeadline</span>)</div><div class="line">    </div><div class="line">    descriptionLabel = <span class="type">UILabel</span>()</div><div class="line">    descriptionLabel.font = <span class="type">UIFont</span>.preferredFontForTextStyle(<span class="type">UIFontTextStyleSubheadline</span>)</div><div class="line">    descriptionLabel.numberOfLines = <span class="number">2</span></div><div class="line">    </div><div class="line">    <span class="keyword">let</span> stackView = <span class="type">UIStackView</span>(arrangedSubviews: [nameLabel, descriptionLabel])</div><div class="line">    stackView.translatesAutoresizingMaskIntoConstraints = <span class="literal">false</span></div><div class="line">    stackView.axis = .<span class="type">Vertical</span></div><div class="line">    </div><div class="line">    <span class="keyword">super</span>.<span class="keyword">init</span>(style: style, reuseIdentifier: reuseIdentifier)</div><div class="line">    </div><div class="line">    addSubview(stackView)</div><div class="line">    </div><div class="line">    <span class="keyword">let</span> views = [<span class="string">"stackView"</span>: stackView]</div><div class="line">    <span class="keyword">var</span> layoutConstraints = [<span class="type">NSLayoutConstraint</span>]()</div><div class="line">    layoutConstraints += <span class="type">NSLayoutConstraint</span>.constraintsWithVisualFormat(<span class="string">"|-[stackView]-|"</span>, options: [], metrics: <span class="literal">nil</span>, views: views)</div><div class="line">    layoutConstraints += <span class="type">NSLayoutConstraint</span>.constraintsWithVisualFormat(<span class="string">"V:|-[stackView]-|"</span>, options: [], metrics: <span class="literal">nil</span>, views: views)</div><div class="line">    <span class="type">NSLayoutConstraint</span>.activateConstraints(layoutConstraints)</div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="keyword">required</span> <span class="keyword">init</span>?(coder aDecoder: <span class="type">NSCoder</span>) &#123;</div><div class="line">    <span class="built_in">fatalError</span>(<span class="string">"init(coder:) has not been implemented"</span>)</div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">config</span><span class="params">(withItem item: Any)</span></span> &#123;</div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> item = item <span class="keyword">as</span>? <span class="type">LabelsPresentable</span> <span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</div><div class="line">    <span class="keyword">let</span> texts = item.texts</div><div class="line">    <span class="keyword">if</span> texts.<span class="built_in">count</span> &gt; <span class="number">0</span> &#123;</div><div class="line">      nameLabel.text = texts[<span class="number">0</span>]</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">if</span> texts.<span class="built_in">count</span> &gt; <span class="number">1</span> &amp;&amp; texts[<span class="number">1</span>].characters.<span class="built_in">count</span> &gt; <span class="number">0</span> &#123;</div><div class="line">      descriptionLabel.text = texts[<span class="number">1</span>]</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在<a href="https://github.com/dasdom/TableViewMarch2016" target="_blank" rel="external">Github</a>有源码还有另一个遵循类似架构的 TableViewController 实例</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+]]></content>
+    
+    <summary type="html">
+    
+      TableViewController的最佳实践
+    
+    </summary>
+    
+      <category term="iOS 开发" scheme="https://swift.gg/categories/iOS-%E5%BC%80%E5%8F%91/"/>
+    
+    
+      <category term="Swift And Painless" scheme="https://swift.gg/tags/Swift-And-Painless/"/>
+    
+  </entry>
+  
+  <entry>
     <title>如何检测摇一摇手势</title>
     <link href="https://swift.gg/2017/07/18/detect-shake-gestures-ios-tutorial-ios10/"/>
     <id>https://swift.gg/2017/07/18/detect-shake-gestures-ios-tutorial-ios10/</id>
     <published>2017-07-17T16:00:00.000Z</published>
-    <updated>2017-07-18T01:30:41.000Z</updated>
+    <updated>2017-07-19T05:24:14.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
 <p>作者：Arthur Knopper，<a href="https://www.ioscreator.com/tutorials/detect-shake-gestures-ios-tutorial-ios10" target="_blank" rel="external">原文链接</a>，原文日期：2017-04-18<br>译者：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；校对：<a href="undefined">way</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
@@ -69,7 +125,7 @@
     <link href="https://swift.gg/2017/07/17/attributed-strings-ios-tutorial-ios10/"/>
     <id>https://swift.gg/2017/07/17/attributed-strings-ios-tutorial-ios10/</id>
     <published>2017-07-16T16:00:00.000Z</published>
-    <updated>2017-07-18T01:30:41.000Z</updated>
+    <updated>2017-07-19T05:24:14.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
 <p>作者：Arthur Knopper，<a href="https://www.ioscreator.com/tutorials/attributed-strings-ios-tutorial-ios10" target="_blank" rel="external">原文链接</a>，原文日期：2017-04-04<br>译者：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；校对：<a href="undefined">way</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
@@ -125,7 +181,7 @@
     <link href="https://swift.gg/2017/07/16/swift_weekly_issue_74/"/>
     <id>https://swift.gg/2017/07/16/swift_weekly_issue_74/</id>
     <published>2017-07-15T16:00:00.000Z</published>
-    <updated>2017-07-18T01:30:41.000Z</updated>
+    <updated>2017-07-19T05:24:14.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
 <p>作者：Jesse Squires，<a href="https://swiftweekly.github.io/issue-74/" target="_blank" rel="external">原文链接</a>，原文日期：2017-06-15<br>译者：<a href="https://kemchenj.github.io" target="_blank" rel="external">四娘</a>；校对：<a href="http://weibo.com/277195544" target="_blank" rel="external">Cwift</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
@@ -366,49 +422,6 @@
   </entry>
   
   <entry>
-    <title>把代码迁移到协调器上</title>
-    <link href="https://swift.gg/2017/06/09/migrating-to-coordinators/"/>
-    <id>https://swift.gg/2017/06/09/migrating-to-coordinators/</id>
-    <published>2017-06-08T16:00:00.000Z</published>
-    <updated>2017-07-16T00:49:14.000Z</updated>
-    
-    <content type="html"><![CDATA[<blockquote>
-<p>作者：Soroush Khanlou，<a href="http://khanlou.com/2017/04/migrating-to-coordinators/" target="_blank" rel="external">原文链接</a>，原文日期：2017-4-25<br>译者：<a href="http://weibo.com/277195544" target="_blank" rel="external">Cwift</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
-</blockquote>
-<!--此处开始正文-->
-<p>这篇文章是 <a href="http://khanlou.com/tag/advanced-coordinators/" target="_blank" rel="external">Coordinators（协调器）进阶教程系列</a>的第一篇。如果你没有阅读过<a href="http://khanlou.com/2015/01/the-coordinator/" target="_blank" rel="external">原始的帖子</a>及其<a href="http://khanlou.com/2015/10/coordinators-redux/" target="_blank" rel="external">后续</a>，请务必首先查阅这些文章。该系列将涵盖几项进阶的 Coordinator 使用技巧、疑点、常见问题以及其他细碎的内容。让我们开始吧。</p>
-<a id="more"></a>
-<p>常有人问我，如何把一个使用 Storyboard 构建或者是使用纯代码编写 ViewController 构建的应用重构成使用 Coordinators 的应用。只要方法正确，重构可以逐步完成。即使重构未完成，你的应用仍旧可以部署。</p>
-<p>要实现这个目标，最好的做法是从根路径出发，在 Coordinators 中称之为 “AppCoordinator”。AppDelegate 持有该 AppCoordinator，AppCoordinator 调度 App 可以加载的所有 ViewController。</p>
-<p>想要理解为什么从 App 的根路径开始，可以从反面来思考。如果从一些叶子流程开始（比如，一个 <code>CheckoutCoordinator</code>），那么需要保持对该 Coordinator 的强引用，以防它被释放。如果 Coordinator 被释放，它内部的代码就都不能执行了。所以，深入一个 App 中去，如果我们创建一个 Coordinator，必须让某个对象长久地持有它。</p>
-<p>有两种方案可以防止对象被释放。第一种方案是使用静态引用。因为系统里可能只有一个 <code>CheckoutCoordinator</code>，所以很容易将其填充到一个全局变量中。虽然这种方案有效果，但是不是一个理想的选择，因为全局变量阻碍了可测试性和灵活性。第二种方案是让当前展示的 ViewController 持有 Coordinator。这将迫使当前的 ViewController 变得复杂一些，但是可以降低 Coordinator 所管理的所有 ViewController 的复杂性。然而，这种关系本质上是有缺陷的。ViewController 是 Coordinator 的“孩子”，编程时，孩子们不应该不知道他们的父母是谁。类似于一个 <code>UIView</code> 持有了一个 <code>UIViewController</code> 的引用：这种事是不该发生的。</p>
-<p>如果你遇到了必须从子流程开始的情况，你可以使用上述两种方法之一。但是，如果可以选择，我的建议是从根路径开始。</p>
-<p>从根路径开始的另一个好处是认证流程通常更靠近 App 的根路径。身份认证是一个很好的流程，可以抽象成单独的对象，很适合用来验证 App 中的 Coordinator。</p>
-<p>将 App 的 RootViewController 交付给 <code>AppCoordinator</code> 之后，你可以对代码进行 Commit/Pull Request/Code Review。因为其他的 ViewController 仍在正常运转，所以 App 可以在这个未完工的状态下继续工作。基于这点，逐步改造，你可以将更多的 ViewController 交付给 Coordinator。将每个“流程”都交付给 Coordinator 之后，你可以提交代码或者创建一个 pr，不会影响 App 的正常工作。正如最佳重构一样，这些步骤只是移动代码，有时根据需要创建新的 Coordinator。</p>
-<p>一旦所有的场景切换都转移到了 Coordinator 中，你就可以开始下一步的重构了，例如将 iPhone 和 iPad 的 Coordinator 封装到单独的对象（而不是一个切换状态的 Coordinator），让子流程可复用，更好地依赖注入，这些都可以应用到你的新架构中。</p>
-<blockquote>
-<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
-</blockquote>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;blockquote&gt;
-&lt;p&gt;作者：Soroush Khanlou，&lt;a href=&quot;http://khanlou.com/2017/04/migrating-to-coordinators/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;原文链接&lt;/a&gt;，原文日期：2017-4-25&lt;br&gt;译者：&lt;a href=&quot;http://weibo.com/277195544&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Cwift&lt;/a&gt;；校对：&lt;a href=&quot;http://www.jianshu.com/users/7a2d2cc38444/latest_articles&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Crystal Sun&lt;/a&gt;；定稿：&lt;a href=&quot;https://github.com/chenmingbiao&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;CMB&lt;/a&gt;&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;!--此处开始正文--&gt;
-&lt;p&gt;这篇文章是 &lt;a href=&quot;http://khanlou.com/tag/advanced-coordinators/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Coordinators（协调器）进阶教程系列&lt;/a&gt;的第一篇。如果你没有阅读过&lt;a href=&quot;http://khanlou.com/2015/01/the-coordinator/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;原始的帖子&lt;/a&gt;及其&lt;a href=&quot;http://khanlou.com/2015/10/coordinators-redux/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;后续&lt;/a&gt;，请务必首先查阅这些文章。该系列将涵盖几项进阶的 Coordinator 使用技巧、疑点、常见问题以及其他细碎的内容。让我们开始吧。&lt;/p&gt;
-    
-    </summary>
-    
-      <category term="KHANLOU" scheme="https://swift.gg/categories/KHANLOU/"/>
-    
-    
-      <category term="iOS 开发" scheme="https://swift.gg/tags/iOS-%E5%BC%80%E5%8F%91/"/>
-    
-  </entry>
-  
-  <entry>
     <title>Table View 中开启文本菜单功能</title>
     <link href="https://swift.gg/2017/06/09/use-context-menu-with-table-view-tutorial-ios10/"/>
     <id>https://swift.gg/2017/06/09/use-context-menu-with-table-view-tutorial-ios10/</id>
@@ -467,6 +480,49 @@
     </summary>
     
       <category term="IOSCREATOR" scheme="https://swift.gg/categories/IOSCREATOR/"/>
+    
+    
+      <category term="iOS 开发" scheme="https://swift.gg/tags/iOS-%E5%BC%80%E5%8F%91/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>把代码迁移到协调器上</title>
+    <link href="https://swift.gg/2017/06/09/migrating-to-coordinators/"/>
+    <id>https://swift.gg/2017/06/09/migrating-to-coordinators/</id>
+    <published>2017-06-08T16:00:00.000Z</published>
+    <updated>2017-07-16T00:49:14.000Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote>
+<p>作者：Soroush Khanlou，<a href="http://khanlou.com/2017/04/migrating-to-coordinators/" target="_blank" rel="external">原文链接</a>，原文日期：2017-4-25<br>译者：<a href="http://weibo.com/277195544" target="_blank" rel="external">Cwift</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>这篇文章是 <a href="http://khanlou.com/tag/advanced-coordinators/" target="_blank" rel="external">Coordinators（协调器）进阶教程系列</a>的第一篇。如果你没有阅读过<a href="http://khanlou.com/2015/01/the-coordinator/" target="_blank" rel="external">原始的帖子</a>及其<a href="http://khanlou.com/2015/10/coordinators-redux/" target="_blank" rel="external">后续</a>，请务必首先查阅这些文章。该系列将涵盖几项进阶的 Coordinator 使用技巧、疑点、常见问题以及其他细碎的内容。让我们开始吧。</p>
+<a id="more"></a>
+<p>常有人问我，如何把一个使用 Storyboard 构建或者是使用纯代码编写 ViewController 构建的应用重构成使用 Coordinators 的应用。只要方法正确，重构可以逐步完成。即使重构未完成，你的应用仍旧可以部署。</p>
+<p>要实现这个目标，最好的做法是从根路径出发，在 Coordinators 中称之为 “AppCoordinator”。AppDelegate 持有该 AppCoordinator，AppCoordinator 调度 App 可以加载的所有 ViewController。</p>
+<p>想要理解为什么从 App 的根路径开始，可以从反面来思考。如果从一些叶子流程开始（比如，一个 <code>CheckoutCoordinator</code>），那么需要保持对该 Coordinator 的强引用，以防它被释放。如果 Coordinator 被释放，它内部的代码就都不能执行了。所以，深入一个 App 中去，如果我们创建一个 Coordinator，必须让某个对象长久地持有它。</p>
+<p>有两种方案可以防止对象被释放。第一种方案是使用静态引用。因为系统里可能只有一个 <code>CheckoutCoordinator</code>，所以很容易将其填充到一个全局变量中。虽然这种方案有效果，但是不是一个理想的选择，因为全局变量阻碍了可测试性和灵活性。第二种方案是让当前展示的 ViewController 持有 Coordinator。这将迫使当前的 ViewController 变得复杂一些，但是可以降低 Coordinator 所管理的所有 ViewController 的复杂性。然而，这种关系本质上是有缺陷的。ViewController 是 Coordinator 的“孩子”，编程时，孩子们不应该不知道他们的父母是谁。类似于一个 <code>UIView</code> 持有了一个 <code>UIViewController</code> 的引用：这种事是不该发生的。</p>
+<p>如果你遇到了必须从子流程开始的情况，你可以使用上述两种方法之一。但是，如果可以选择，我的建议是从根路径开始。</p>
+<p>从根路径开始的另一个好处是认证流程通常更靠近 App 的根路径。身份认证是一个很好的流程，可以抽象成单独的对象，很适合用来验证 App 中的 Coordinator。</p>
+<p>将 App 的 RootViewController 交付给 <code>AppCoordinator</code> 之后，你可以对代码进行 Commit/Pull Request/Code Review。因为其他的 ViewController 仍在正常运转，所以 App 可以在这个未完工的状态下继续工作。基于这点，逐步改造，你可以将更多的 ViewController 交付给 Coordinator。将每个“流程”都交付给 Coordinator 之后，你可以提交代码或者创建一个 pr，不会影响 App 的正常工作。正如最佳重构一样，这些步骤只是移动代码，有时根据需要创建新的 Coordinator。</p>
+<p>一旦所有的场景切换都转移到了 Coordinator 中，你就可以开始下一步的重构了，例如将 iPhone 和 iPad 的 Coordinator 封装到单独的对象（而不是一个切换状态的 Coordinator），让子流程可复用，更好地依赖注入，这些都可以应用到你的新架构中。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;作者：Soroush Khanlou，&lt;a href=&quot;http://khanlou.com/2017/04/migrating-to-coordinators/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;原文链接&lt;/a&gt;，原文日期：2017-4-25&lt;br&gt;译者：&lt;a href=&quot;http://weibo.com/277195544&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Cwift&lt;/a&gt;；校对：&lt;a href=&quot;http://www.jianshu.com/users/7a2d2cc38444/latest_articles&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Crystal Sun&lt;/a&gt;；定稿：&lt;a href=&quot;https://github.com/chenmingbiao&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;CMB&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;!--此处开始正文--&gt;
+&lt;p&gt;这篇文章是 &lt;a href=&quot;http://khanlou.com/tag/advanced-coordinators/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Coordinators（协调器）进阶教程系列&lt;/a&gt;的第一篇。如果你没有阅读过&lt;a href=&quot;http://khanlou.com/2015/01/the-coordinator/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;原始的帖子&lt;/a&gt;及其&lt;a href=&quot;http://khanlou.com/2015/10/coordinators-redux/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;后续&lt;/a&gt;，请务必首先查阅这些文章。该系列将涵盖几项进阶的 Coordinator 使用技巧、疑点、常见问题以及其他细碎的内容。让我们开始吧。&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="KHANLOU" scheme="https://swift.gg/categories/KHANLOU/"/>
     
     
       <category term="iOS 开发" scheme="https://swift.gg/tags/iOS-%E5%BC%80%E5%8F%91/"/>
@@ -1346,81 +1402,6 @@
     </summary>
     
       <category term="Natasha The Robot" scheme="https://swift.gg/categories/Natasha-The-Robot/"/>
-    
-    
-      <category term="iOS 开发" scheme="https://swift.gg/tags/iOS-%E5%BC%80%E5%8F%91/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>使用 MapKit 绘制路线</title>
-    <link href="https://swift.gg/2017/05/02/draw-route-mapkit-tutorial/"/>
-    <id>https://swift.gg/2017/05/02/draw-route-mapkit-tutorial/</id>
-    <published>2017-05-01T16:00:00.000Z</published>
-    <updated>2017-07-16T00:49:14.000Z</updated>
-    
-    <content type="html"><![CDATA[<blockquote>
-<p>作者：Arthur Knopper，<a href="https://www.ioscreator.com/tutorials/draw-route-mapkit-tutorial" target="_blank" rel="external">原文链接</a>，原文日期：2016-02-29<br>译者：<a href="undefined">TonyHan</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
-</blockquote>
-<!--此处开始正文-->
-<p>在本节教程中，将学习如何在纽约市的两个地标之间绘制一条线路。这条线路绘制在 Map 图层的上面，使用折线绘制。本教程使用 Xcode 7.2 和 iOS 9.2。</p>
-<a id="more"></a>
-<blockquote>
-<p>译者注：由于目前主流版本为 Xcode 8（iOS 10），因此图示可能会有所不同，不过不影响对于文章的理解。基于此版本的项目可以在<a href="https://github.com/lettleprince/IOS9DrawRouteMapKitTutorial" target="_blank" rel="external">这里</a>下载到。</p>
-</blockquote>
-<p>打开 Xcode 创建 Single View Application。使用 <strong>IOS9DrawRouteMapKitTutorial</strong> 作为项目名，然后根据实际情况填写 Organization Name 和 Organization Identifier。选择 Swift 作为编程语言，Devices 选择只适配 iPhone。</p>
-<p><img src="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/56cc46ad4d088ea899578483/1456228023320/?format=1500w" alt="image1"></p>
-<p>在项目导航栏中，选择 Prokect Settings 图标。点击 Capabilities 栏并启用 Map framework。</p>
-<p><img src="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/56cc4fc61bbee05e52d974ec/1456230356683/?format=2500w" alt="image2"></p>
-<p>打开 <strong>Storyboard</strong>，选择  View Controller，打开 Editor 菜单并选择 Embed in -&gt; Navigation Controller。双击 View Controller 的 Navigation Bar 并输入 “Route Tutorial”。接下来，从视图对象库中拖拽 Map Kit View 到主视图中。重新设置尺寸，让其填充整个屏幕。现在 Storyboard 如下图所示：</p>
-<p><img src="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/56cc4be70442621c56ee71f0/1456229367115/?format=2500w" alt="image3"></p>
-<p>打开 Assistant Editor，确保 <strong>ViewController.swift</strong> 文件可见。按住 control 键将 Map Kit View 拖动到 ViewController 类中，创建如下图所示的 Outlet：</p>
-<p><img src="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/56d3303d7da24f7ba20e325d/1456681028709/?format=750w" alt="image4"></p>
-<p>选择 Map Kit View，并点击在 Interface Builder 右下角的 Pin 图标（左边起第三个）。四边都设置约束，并反选 “Constrain to margins”。点击 “Add 4 Constraints” 按钮，于是 Map Kit View 在各方向上边缘都与主视图对齐。</p>
-<p><img src="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/56cc4adb59827e2cba96ca38/1456229089944/?format=750w" alt="image5"></p>
-<p>打开 Assistant Editor，确保 ViewController.swift 文件可见。选择 Map Kit View。按住 control 键将 Map Kit View 拖动到 ViewController 类中，创建的 Outlet。</p>
-<blockquote>
-<p>译者注：这一段内容与上面的创建 Outlet 内容有重复，上面那一段及后面的图片应该在此处。因原文如此，故在此未改。</p>
-</blockquote>
-<p>打开 <strong>ViewController.swift</strong>，添加 MapKit framework。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> MapKit</div></pre></td></tr></table></figure>
-<p>View Controller 需要遵循 MKMapViewDelegate 协议，才能实现路线的绘制。将类声明的代码修改为：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">ViewController</span>: <span class="title">UIViewController</span>, <span class="title">MKMapViewDelegate</span> </span>&#123;</div></pre></td></tr></table></figure>
-<p>然后，将 <strong>viewDidLoad</strong> 方法修改为：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</div><div class="line">    <span class="keyword">super</span>.viewDidLoad()</div><div class="line">    </div><div class="line">    <span class="comment">// 1.</span></div><div class="line">    mapView.delegate = <span class="keyword">self</span></div><div class="line">    </div><div class="line">    <span class="comment">// 2.</span></div><div class="line">    <span class="keyword">let</span> sourceLocation = <span class="type">CLLocationCoordinate2D</span>(latitude: <span class="number">40.759011</span>, longitude: -<span class="number">73.984472</span>)</div><div class="line">    <span class="keyword">let</span> destinationLocation = <span class="type">CLLocationCoordinate2D</span>(latitude: <span class="number">40.748441</span>, longitude: -<span class="number">73.985564</span>)</div><div class="line">    </div><div class="line">    <span class="comment">// 3.</span></div><div class="line">    <span class="keyword">let</span> sourcePlacemark = <span class="type">MKPlacemark</span>(coordinate: sourceLocation, addressDictionary: <span class="literal">nil</span>)</div><div class="line">    <span class="keyword">let</span> destinationPlacemark = <span class="type">MKPlacemark</span>(coordinate: destinationLocation, addressDictionary: <span class="literal">nil</span>)</div><div class="line">    </div><div class="line">    <span class="comment">// 4.</span></div><div class="line">    <span class="keyword">let</span> sourceMapItem = <span class="type">MKMapItem</span>(placemark: sourcePlacemark)</div><div class="line">    <span class="keyword">let</span> destinationMapItem = <span class="type">MKMapItem</span>(placemark: destinationPlacemark)</div><div class="line">    </div><div class="line">    <span class="comment">// 5.</span></div><div class="line">    <span class="keyword">let</span> sourceAnnotation = <span class="type">MKPointAnnotation</span>()</div><div class="line">    sourceAnnotation.title = <span class="string">"Times Square"</span></div><div class="line">    </div><div class="line">    <span class="keyword">if</span> <span class="keyword">let</span> location = sourcePlacemark.location &#123;</div><div class="line">        sourceAnnotation.coordinate = location.coordinate</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    </div><div class="line">    <span class="keyword">let</span> destinationAnnotation = <span class="type">MKPointAnnotation</span>()</div><div class="line">    destinationAnnotation.title = <span class="string">"Empire State Building"</span></div><div class="line">    </div><div class="line">    <span class="keyword">if</span> <span class="keyword">let</span> location = destinationPlacemark.location &#123;</div><div class="line">        destinationAnnotation.coordinate = location.coordinate</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="comment">// 6.</span></div><div class="line">    <span class="keyword">self</span>.mapView.showAnnotations([sourceAnnotation,destinationAnnotation], animated: <span class="literal">true</span> )</div><div class="line">    </div><div class="line">    <span class="comment">// 7.</span></div><div class="line">    <span class="keyword">let</span> directionRequest = <span class="type">MKDirectionsRequest</span>()</div><div class="line">    directionRequest.source = sourceMapItem</div><div class="line">    directionRequest.destination = destinationMapItem</div><div class="line">    directionRequest.transportType = .<span class="type">Automobile</span></div><div class="line">    </div><div class="line">    <span class="comment">// 计算方向</span></div><div class="line">    <span class="keyword">let</span> directions = <span class="type">MKDirections</span>(request: directionRequest)</div><div class="line">    </div><div class="line">    <span class="comment">// 8.</span></div><div class="line">    directions.calculateDirectionsWithCompletionHandler &#123;</div><div class="line">        (response, error) -&gt; <span class="type">Void</span> <span class="keyword">in</span></div><div class="line">        </div><div class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> response = response <span class="keyword">else</span> &#123;</div><div class="line">            <span class="keyword">if</span> <span class="keyword">let</span> error = error &#123;</div><div class="line">                <span class="built_in">print</span>(<span class="string">"Error: <span class="subst">\(error)</span>"</span>)</div><div class="line">            &#125;</div><div class="line">            </div><div class="line">            <span class="keyword">return</span></div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        <span class="keyword">let</span> route = response.routes[<span class="number">0</span>]</div><div class="line">        <span class="keyword">self</span>.mapView.addOverlay((route.polyline), level: <span class="type">MKOverlayLevel</span>.<span class="type">AboveRoads</span>)</div><div class="line">        </div><div class="line">        <span class="keyword">let</span> rect = route.polyline.boundingMapRect</div><div class="line">        <span class="keyword">self</span>.mapView.setRegion(<span class="type">MKCoordinateRegionForMapRect</span>(rect), animated: <span class="literal">true</span>)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<ol>
-<li>ViewController 作为 MKMapViewDelegate 协议的代理</li>
-<li>设置地点的经纬度</li>
-<li>创建包含地点坐标的地标对象</li>
-<li>使用 MKMapitems 标记路径。该类封装了有关地图上特定点的信息</li>
-<li>添加显示地标名字的大头针</li>
-<li>在地图上显示大头针</li>
-<li>使用 MKDirectionsRequest 类计算路径</li>
-<li>使用折线在地图图层上面绘制出路径。该区域设置为两个位置都可见</li>
-</ol>
-<p>接下来，实现代理方法 <code>mapView(rendererForrOverlay:)</code>：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">mapView</span><span class="params">(mapView: MKMapView, rendererForOverlay overlay: MKOverlay)</span></span> -&gt; <span class="type">MKOverlayRenderer</span> &#123;</div><div class="line">    <span class="keyword">let</span> renderer = <span class="type">MKPolylineRenderer</span>(overlay: overlay)</div><div class="line">    renderer.strokeColor = <span class="type">UIColor</span>.redColor()</div><div class="line">    renderer.lineWidth = <span class="number">4.0</span></div><div class="line"></div><div class="line">    <span class="keyword">return</span> renderer</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这个方法返回用于返回绘制在地图上的渲染对象。使用宽度为 4 的红色线条。</p>
-<p><strong>运行</strong> 项目，展示出两个地点及其之间的路线。</p>
-<p><img src="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/56d3300c59827e6585c69352/1456680990852/?format=1500w" alt="image6"></p>
-<p>可以从 <a href="">Github</a> 上 ioscreator 的仓库中下载 <strong>IOS9DrawRouteMapKitTutorial</strong> 项目的源代码作为参考。</p>
-<blockquote>
-<p>译者注：由于目前主流版本为 Xcode 8（iOS 10），因此图示可能会有所不同，不过不影响对于文章的理解。基于此版本的项目可以在<a href="https://github.com/lettleprince/IOS9DrawRouteMapKitTutorial" target="_blank" rel="external">这里</a>下载到。</p>
-<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
-</blockquote>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;blockquote&gt;
-&lt;p&gt;作者：Arthur Knopper，&lt;a href=&quot;https://www.ioscreator.com/tutorials/draw-route-mapkit-tutorial&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;原文链接&lt;/a&gt;，原文日期：2016-02-29&lt;br&gt;译者：&lt;a href=&quot;undefined&quot;&gt;TonyHan&lt;/a&gt;；校对：&lt;a href=&quot;http://www.jianshu.com/users/7a2d2cc38444/latest_articles&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Crystal Sun&lt;/a&gt;；定稿：&lt;a href=&quot;https://github.com/chenmingbiao&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;CMB&lt;/a&gt;&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;!--此处开始正文--&gt;
-&lt;p&gt;在本节教程中，将学习如何在纽约市的两个地标之间绘制一条线路。这条线路绘制在 Map 图层的上面，使用折线绘制。本教程使用 Xcode 7.2 和 iOS 9.2。&lt;/p&gt;
-    
-    </summary>
-    
-      <category term="IOSCREATOR" scheme="https://swift.gg/categories/IOSCREATOR/"/>
     
     
       <category term="iOS 开发" scheme="https://swift.gg/tags/iOS-%E5%BC%80%E5%8F%91/"/>
