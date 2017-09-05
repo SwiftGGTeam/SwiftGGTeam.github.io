@@ -338,11 +338,11 @@
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> lumpName2 = nameData.withUnsafeBytes(&#123; (pointer: <span class="type">UnsafePointer</span>&lt;<span class="type">UInt8</span>&gt;) -&gt; <span class="type">String</span>? <span class="keyword">in</span></div><div class="line">    <span class="keyword">return</span> <span class="type">String</span>(cString: <span class="type">UnsafePointer</span>&lt;<span class="type">CChar</span>&gt;(pointer), encoding: <span class="type">String</span>.<span class="type">Encoding</span>.ascii)</div><div class="line">&#125;)</div></pre></td></tr></table></figure>
 <p>以上方法依然不能得到我们想要的结果。在 Doom 的名字长度小于 8 字符的情况下，这段代码都能完美运行。但是只要某个名字长度达到 8 字节而没有一个空结束符时，这会继续读取（变成一个 16 字节片段），直到找到下一个有效的空结束符。 这就带来一些不确定长度的长字符串。</p>
 <p>这个逻辑是 Doom 自定义的，因此我们需要自己来实现相应的代码。<code>Data</code> 支持 Swift 的集合和序列操作，因此我们可以直接用 reduce 来解决。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> lumpName3Bytes = <span class="keyword">try</span> nameData.<span class="built_in">reduce</span>([<span class="type">UInt8</span>](), &#123; (a: [<span class="type">UInt8</span>], b: <span class="type">UInt8</span>) <span class="keyword">throws</span> -&gt; [<span class="type">UInt8</span>] <span class="keyword">in</span></div><div class="line">    <span class="keyword">guard</span> b &gt; <span class="number">0</span> <span class="keyword">else</span> &#123; <span class="keyword">return</span> a &#125;</div><div class="line">    <span class="keyword">guard</span> a.<span class="built_in">count</span> &lt;= <span class="number">8</span> <span class="keyword">else</span> &#123; <span class="keyword">return</span> a &#125;</div><div class="line">    <span class="keyword">return</span> a + [b]</div><div class="line">&#125;)</div><div class="line"><span class="keyword">guard</span> <span class="keyword">let</span> lumpName3 = <span class="type">String</span>(bytes: lumpName3Bytes, encoding: <span class="type">String</span>.<span class="type">Encoding</span>.ascii)</div><div class="line">    <span class="keyword">else</span> &#123;</div><div class="line">	<span class="keyword">throw</span> <span class="type">WadReaderError</span>.invalidLup(reason: <span class="string">"Could not decode lump name for bytes <span class="subst">\(lumpName3Bytes)</span>"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> lumpName3Bytes = <span class="keyword">try</span> nameData.<span class="built_in">reduce</span>([<span class="type">UInt8</span>](), &#123; (a: [<span class="type">UInt8</span>], b: <span class="type">UInt8</span>) <span class="keyword">throws</span> -&gt; [<span class="type">UInt8</span>] <span class="keyword">in</span></div><div class="line">    <span class="keyword">guard</span> b &gt; <span class="number">0</span> <span class="keyword">else</span> &#123; <span class="keyword">return</span> a &#125;</div><div class="line">    <span class="keyword">guard</span> a.<span class="built_in">count</span> &lt;= <span class="number">8</span> <span class="keyword">else</span> &#123; <span class="keyword">return</span> a &#125;</div><div class="line">    <span class="keyword">return</span> a + [b]</div><div class="line">&#125;)</div><div class="line"><span class="keyword">guard</span> <span class="keyword">let</span> lumpName3 = <span class="type">String</span>(bytes: lumpName3Bytes, encoding: <span class="type">String</span>.<span class="type">Encoding</span>.ascii)</div><div class="line">    <span class="keyword">else</span> &#123;</div><div class="line">	<span class="keyword">throw</span> <span class="type">WadReaderError</span>.invalidLup(reason: <span class="string">"Could not decode lump name for bytes \(lumpName3Bytes)"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>这段代码把数据以 <code>UInt8</code> 字节 reduce，并检查数据是否含有提前的空结束符。一切工作正常，虽然数据需要进行几次抽象，执行速度并不是很快。</p>
 <p>不过如果我们能以 Doom 引擎类似的方法来解决的话，效果会更好。Doom 仅移动了 <code>char*</code> 的指针，并根据字符是否为空结束符判断是否需要提前跳出。Doom 是用 C 语言写的，因此它能在裸指针层面上迭代。</p>
 <p>那么我们要怎样在 Swift 里实现这个逻辑呢？事实上，可以再次借助 <code>withUnsafeBytes</code> 实现类似的效果。来看看代码：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> finalLumpName = nameData.withUnsafeBytes(&#123; (pointer: <span class="type">UnsafePointer</span>&lt;<span class="type">CChar</span>&gt;) -&gt; <span class="type">String</span>? <span class="keyword">in</span></div><div class="line">    <span class="keyword">var</span> localPointer = pointer</div><div class="line">    <span class="keyword">for</span> <span class="number">_</span> <span class="keyword">in</span> <span class="number">0</span>..&lt;<span class="number">8</span> &#123;</div><div class="line">	<span class="keyword">guard</span> localPointer.pointee != <span class="type">CChar</span>(<span class="number">0</span>) <span class="keyword">else</span> &#123; <span class="keyword">break</span> &#125;</div><div class="line">	localPointer = localPointer.successor()</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">let</span> position = pointer.<span class="built_in">distance</span>(to: localPointer)</div><div class="line">    <span class="keyword">return</span> <span class="type">String</span>(data: nameData.subdata(<span class="keyword">in</span>: <span class="number">0</span>..&lt;position),</div><div class="line">		  encoding: <span class="type">String</span>.<span class="type">Encoding</span>.ascii)</div><div class="line">&#125;)</div><div class="line"><span class="keyword">guard</span> <span class="keyword">let</span> lumpName4 = finalLumpName <span class="keyword">else</span> &#123;</div><div class="line">    <span class="keyword">throw</span> <span class="type">WadReaderError</span>.invalidLup(reason: <span class="string">"Could not decode lump name for bytes <span class="subst">\(lumpName3Bytes)</span>"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> finalLumpName = nameData.withUnsafeBytes(&#123; (pointer: <span class="type">UnsafePointer</span>&lt;<span class="type">CChar</span>&gt;) -&gt; <span class="type">String</span>? <span class="keyword">in</span></div><div class="line">    <span class="keyword">var</span> localPointer = pointer</div><div class="line">    <span class="keyword">for</span> <span class="number">_</span> <span class="keyword">in</span> <span class="number">0</span>..&lt;<span class="number">8</span> &#123;</div><div class="line">	<span class="keyword">guard</span> localPointer.pointee != <span class="type">CChar</span>(<span class="number">0</span>) <span class="keyword">else</span> &#123; <span class="keyword">break</span> &#125;</div><div class="line">	localPointer = localPointer.successor()</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">let</span> position = pointer.<span class="built_in">distance</span>(to: localPointer)</div><div class="line">    <span class="keyword">return</span> <span class="type">String</span>(data: nameData.subdata(<span class="keyword">in</span>: <span class="number">0</span>..&lt;position),</div><div class="line">		  encoding: <span class="type">String</span>.<span class="type">Encoding</span>.ascii)</div><div class="line">&#125;)</div><div class="line"><span class="keyword">guard</span> <span class="keyword">let</span> lumpName4 = finalLumpName <span class="keyword">else</span> &#123;</div><div class="line">    <span class="keyword">throw</span> <span class="type">WadReaderError</span>.invalidLup(reason: <span class="string">"Could not decode lump name for bytes \(lumpName3Bytes)"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p><code>withUnsafeBytes</code> 的用法与之前相似，我们接受一个指向原始内存的指针。 <code>指针</code> 是一个 <code>let</code> 常数，但是由于我们需要对它做修改，因此我们在第一行创建了一个可变的拷贝<sup><a id="fnr.5" name="fnr.5" class="footref" href="#fn.5">5</a></sup>。</p>
 <p>接着，开始我们的主要工作。从 0 到 8 循环，每次循环都检测指针指向的字符（<code>pointee</code>）是否为空结束符（<code>CChar(0)</code>）。是空结束符的话就表明提前找到了空结束符，需要跳出循环。否则将 <code>localPointer</code> 重载为下一位，即就是，当前指针内存中的下一个位置。这样，我们就能逐字节地读取内存中的所有内容了。</p>
 <p>完成之后 ，就计算一下我们原始<code>指针</code>和<code>本地指针</code>的距离。如果在找到空结束符之前我们仅前移了三次，那么两个指针之前的距离为 3。最后，这个距离能让我们通过实际 C 字符串的子数据创建一个新的 String 实例。</p>
@@ -615,7 +615,7 @@
 		  
 		
 		  
-			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
 		  
 		
 		  
@@ -660,11 +660,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
 			
 		
 			
@@ -684,15 +684,19 @@
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
 			
 		
 			
@@ -704,15 +708,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Apple-Watch/" title="Apple Watch">Apple Watch<sup>1</sup></a></li>
+				<li><a href="/tags/WWDC/" title="WWDC">WWDC<sup>1</sup></a></li>
 			
 		
 			
@@ -720,7 +720,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
 			
 		
 		</ul>

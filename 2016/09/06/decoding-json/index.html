@@ -129,9 +129,9 @@
 <p><code>fetch</code> 函数开始显得有点复杂了。我们来一行一行地进行解释。类中的每个方法都可以类型参数化，以充分利用类型推断带来的便利。此外，这个函数会抛出错误，以使我们能够获得处理失败的数据：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">fetch</span>&lt;T&gt;<span class="params">(key: String)</span></span> <span class="keyword">throws</span> -&gt; <span class="type">T</span> &#123;</div></pre></td></tr></table></figure>
 <p>下一步是获取键对应的对象，并保证它不是空的，否则抛出一个错误。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> fetchedOptional = dictionary?[key]</div><div class="line"><span class="keyword">guard</span> <span class="keyword">let</span> fetched = fetchedOptional <span class="keyword">else</span> &#123;</div><div class="line">    <span class="keyword">throw</span> <span class="type">ParserError</span>(message: <span class="string">"The key \"<span class="subst">\(key)</span>\" was not found."</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> fetchedOptional = dictionary?[key]</div><div class="line"><span class="keyword">guard</span> <span class="keyword">let</span> fetched = fetchedOptional <span class="keyword">else</span> &#123;</div><div class="line">    <span class="keyword">throw</span> <span class="type">ParserError</span>(message: <span class="string">"The key \"\(key)\" was not found."</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>最后一步是，给获得的值加上类型信息。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">guard</span> <span class="keyword">let</span> typed = fetched <span class="keyword">as</span>? <span class="type">T</span> <span class="keyword">else</span> &#123;</div><div class="line">    <span class="keyword">throw</span> <span class="type">ParserError</span>(message: <span class="string">"The key \"<span class="subst">\(key)</span>\" was not the correct type. It had value \"<span class="subst">\(fetched)</span>.\""</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">guard</span> <span class="keyword">let</span> typed = fetched <span class="keyword">as</span>? <span class="type">T</span> <span class="keyword">else</span> &#123;</div><div class="line">    <span class="keyword">throw</span> <span class="type">ParserError</span>(message: <span class="string">"The key \"\(key)\" was not the correct type. It had value \"\(fetched).\""</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>最终，返回带类型的非空值。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">    <span class="keyword">return</span> typed</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>（我将会在文末附上包含所有代码的 gist 和 playground）</p>
@@ -141,7 +141,7 @@
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">fetchOptional</span>&lt;T&gt;<span class="params">(key: String)</span></span> -&gt; <span class="type">T</span>? &#123;</div><div class="line">    <span class="keyword">return</span> dictionary?[key] <span class="keyword">as</span>? <span class="type">T</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>（如果键存在，但是并非你所期望的类型，则可以抛出一个错误。为了简略起见，我就不写了）</p>
 <p>另外一件事就是，在字典中取出一个对象后，有时需要对它进行一些额外的转换。我们可能得到一个枚举的 <code>rawValue</code>，需要构建出对应的枚举，或者是一个嵌套的字典，需要处理它包含的对象。我们可以在 <code>fetch</code> 函数中接收一个闭包作为参数，作进一步地类型转换，并在转换失败的情况下抛出错误。泛型中 <code>U</code> 参数类型能够帮助我们明确 <code>transformation</code> 闭包转换得到的结果值类型和 <code>fetch</code> 方法得到的值类型一致。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">fetch</span>&lt;T, U&gt;<span class="params">(key: String, transformation: <span class="params">(T)</span></span></span> -&gt; (<span class="type">U</span>?)) <span class="keyword">throws</span> -&gt; <span class="type">U</span> &#123;</div><div class="line">    <span class="keyword">let</span> fetched: <span class="type">T</span> = <span class="keyword">try</span> fetch(key)</div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> transformed = transformation(fetched) <span class="keyword">else</span> &#123;</div><div class="line">        <span class="keyword">throw</span> <span class="type">ParserError</span>(message: <span class="string">"The value \"<span class="subst">\(fetched)</span>\" at key \"<span class="subst">\(key)</span>\" could not be transformed."</span>)</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> transformed</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">fetch</span>&lt;T, U&gt;<span class="params">(key: String, transformation: <span class="params">(T)</span></span></span> -&gt; (<span class="type">U</span>?)) <span class="keyword">throws</span> -&gt; <span class="type">U</span> &#123;</div><div class="line">    <span class="keyword">let</span> fetched: <span class="type">T</span> = <span class="keyword">try</span> fetch(key)</div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> transformed = transformation(fetched) <span class="keyword">else</span> &#123;</div><div class="line">        <span class="keyword">throw</span> <span class="type">ParserError</span>(message: <span class="string">"The value \"\(fetched)\" at key \"\(key)\" could not be transformed."</span>)</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> transformed</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>最后，我们希望 <code>fetchOptional</code> 也能接受一个转换闭包作为参数。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">fetchOptional</span>&lt;T, U&gt;<span class="params">(key: String, transformation: <span class="params">(T)</span></span></span> -&gt; (<span class="type">U</span>?)) -&gt; <span class="type">U</span>? &#123;</div><div class="line">    <span class="keyword">return</span> (dictionary?[key] <span class="keyword">as</span>? <span class="type">T</span>).flatMap(transformation)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>看啊！<code>flatMap</code> 的力量！注意，转换闭包 <code>transformation</code> 和 <code>flatMap</code> 接收的闭包有着一样的形式：<code>T -&gt; U?</code></p>
@@ -411,7 +411,7 @@
 		  
 		
 		  
-			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
 		  
 		
 		  
@@ -456,11 +456,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
 			
 		
 			
@@ -480,15 +480,19 @@
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
 			
 		
 			
@@ -500,15 +504,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Apple-Watch/" title="Apple Watch">Apple Watch<sup>1</sup></a></li>
+				<li><a href="/tags/WWDC/" title="WWDC">WWDC<sup>1</sup></a></li>
 			
 		
 			
@@ -516,7 +516,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
 			
 		
 		</ul>

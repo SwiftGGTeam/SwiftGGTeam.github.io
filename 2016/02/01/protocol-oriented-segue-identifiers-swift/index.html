@@ -116,13 +116,13 @@
 <p>当我们处理 <code>prepareForSegue</code> 时，这个问题就更加明显了：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// ViewController.swift</span></div><div class="line"> </div><div class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">prepareForSegue</span><span class="params">(segue: UIStoryboardSegue, sender: AnyObject?)</span></span> &#123;</div><div class="line">        </div><div class="line">        <span class="comment">// 解包所有东西！！！</span></div><div class="line">        <span class="keyword">if</span> <span class="keyword">let</span> identifier = segue.identifier &#123;</div><div class="line">            <span class="keyword">if</span> <span class="keyword">let</span> segueIdentifier = <span class="type">SegueIdentifier</span>(rawValue: identifier) &#123;</div><div class="line">                <span class="keyword">switch</span> segueIdentifier &#123;</div><div class="line">                <span class="keyword">case</span> .<span class="type">TheRedPillExperience</span>:</div><div class="line">                    <span class="built_in">print</span>(<span class="string">"😈"</span>)</div><div class="line">                <span class="keyword">case</span> .<span class="type">TheBluePillExperience</span>:</div><div class="line">                    <span class="built_in">print</span>(<span class="string">"👼"</span>)</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
 <p>这是我在 Swift 2.0 之前实际使用过的方式。现在我们至少可以使用 guard 关键字来避免所谓的“金字塔噩梦”，但是这依然还是不够好：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// ViewController.swift</span></div><div class="line"></div><div class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">prepareForSegue</span><span class="params">(segue: UIStoryboardSegue, sender: AnyObject?)</span></span> &#123;</div><div class="line">        </div><div class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> identifier = segue.identifier,</div><div class="line">            segueIdentifier = <span class="type">SegueIdentifier</span>(rawValue: identifier) <span class="keyword">else</span> &#123;</div><div class="line">            <span class="built_in">fatalError</span>(<span class="string">"Invalid segue identifier <span class="subst">\(segue.identifier)</span>."</span></div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        <span class="keyword">switch</span> segueIdentifier &#123;</div><div class="line">        <span class="keyword">case</span> .<span class="type">TheRedPillExperience</span>:</div><div class="line">            <span class="built_in">print</span>(<span class="string">"😈"</span>)</div><div class="line">        <span class="keyword">case</span> .<span class="type">TheBluePillExperience</span>:</div><div class="line">            <span class="built_in">print</span>(<span class="string">"👼"</span>)</div><div class="line">        &#125;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// ViewController.swift</span></div><div class="line"></div><div class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">prepareForSegue</span><span class="params">(segue: UIStoryboardSegue, sender: AnyObject?)</span></span> &#123;</div><div class="line">        </div><div class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> identifier = segue.identifier,</div><div class="line">            segueIdentifier = <span class="type">SegueIdentifier</span>(rawValue: identifier) <span class="keyword">else</span> &#123;</div><div class="line">            <span class="built_in">fatalError</span>(<span class="string">"Invalid segue identifier \(segue.identifier)."</span></div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        <span class="keyword">switch</span> segueIdentifier &#123;</div><div class="line">        <span class="keyword">case</span> .<span class="type">TheRedPillExperience</span>:</div><div class="line">            <span class="built_in">print</span>(<span class="string">"😈"</span>)</div><div class="line">        <span class="keyword">case</span> .<span class="type">TheBluePillExperience</span>:</div><div class="line">            <span class="built_in">print</span>(<span class="string">"👼"</span>)</div><div class="line">        &#125;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
 <p>毕竟，在整个app中的每个视图控制器都会碰到这个问题。你会如何来让这些代码更加整洁呢？机智如你，应该已经猜到了，协议可以用来解决这个问题。</p>
 <h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><p>这是一个靠我自己无法想出的优雅解决方案。感谢苹果在今年 WWDC 中关于架构的超赞演讲。我是认真的，真的超赞。</p>
 <p>首先，创建一个 SegueHandlerType 来将 Segueidentifier 枚举标识为一个类型：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">//  SegueHandlerType.swift</span></div><div class="line"> </div><div class="line"><span class="keyword">import</span> UIKit</div><div class="line"><span class="keyword">import</span> Foundation</div><div class="line"> </div><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">SegueHandlerType</span> </span>&#123;</div><div class="line">    <span class="keyword">typealias</span> <span class="type">SegueIdentifier</span>: <span class="type">RawRepresentable</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>现在可以使用协议扩展的功能来为 UIViewController 创建基于字符串的 Segueidentifer 枚举：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">//  SegueHandlerType.swift</span></div><div class="line"> </div><div class="line"><span class="comment">// 注意这里我们使用了 where 来让这个方法只适用于特定的类 😍</span></div><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">SegueHandlerType</span> <span class="title">where</span> <span class="title">Self</span>: <span class="title">UIViewController</span>,</span></div><div class="line">    <span class="title">SegueIdentifier</span>.<span class="title">RawValue</span> == <span class="title">String</span></div><div class="line">&#123;</div><div class="line">    </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">performSegueWithIdentifier</span><span class="params">(segueIdentifier: SegueIdentifier,</span></span></div><div class="line">        sender: AnyObject?) &#123;</div><div class="line">        </div><div class="line">        performSegueWithIdentifier(segueIdentifier.rawValue, sender: sender)</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">segueIdentifierForSegue</span><span class="params">(segue: UIStoryboardSegue)</span></span> -&gt; <span class="type">SegueIdentifier</span> &#123;</div><div class="line">        </div><div class="line">        <span class="comment">// 这里还是需要使用 guard 语句，但是至少我们可以获取到变量的值  </span></div><div class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> identifier = segue.identifier,</div><div class="line">            segueIdentifier = <span class="type">SegueIdentifier</span>(rawValue: identifier) <span class="keyword">else</span> &#123; </div><div class="line">                <span class="built_in">fatalError</span>(<span class="string">"Invalid segue identifier <span class="subst">\(segue.identifier)</span>."</span>) &#125;</div><div class="line">        </div><div class="line">        <span class="keyword">return</span> segueIdentifier</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">//  SegueHandlerType.swift</span></div><div class="line"> </div><div class="line"><span class="comment">// 注意这里我们使用了 where 来让这个方法只适用于特定的类 😍</span></div><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">SegueHandlerType</span> <span class="title">where</span> <span class="title">Self</span>: <span class="title">UIViewController</span>,</span></div><div class="line">    <span class="title">SegueIdentifier</span>.<span class="title">RawValue</span> == <span class="title">String</span></div><div class="line">&#123;</div><div class="line">    </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">performSegueWithIdentifier</span><span class="params">(segueIdentifier: SegueIdentifier,</span></span></div><div class="line">        sender: AnyObject?) &#123;</div><div class="line">        </div><div class="line">        performSegueWithIdentifier(segueIdentifier.rawValue, sender: sender)</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">segueIdentifierForSegue</span><span class="params">(segue: UIStoryboardSegue)</span></span> -&gt; <span class="type">SegueIdentifier</span> &#123;</div><div class="line">        </div><div class="line">        <span class="comment">// 这里还是需要使用 guard 语句，但是至少我们可以获取到变量的值  </span></div><div class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> identifier = segue.identifier,</div><div class="line">            segueIdentifier = <span class="type">SegueIdentifier</span>(rawValue: identifier) <span class="keyword">else</span> &#123; </div><div class="line">                <span class="built_in">fatalError</span>(<span class="string">"Invalid segue identifier \(segue.identifier)."</span>) &#125;</div><div class="line">        </div><div class="line">        <span class="keyword">return</span> segueIdentifier</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>可以注意到，协议扩展中的方法并没有在协议中声明，它们不是用于被重写的。这是我见过的关于这个用例的最好的使用方法。</p>
 <p>现在这样，使用起来就更加的简单和漂亮了：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// ViewController.swift</span></div><div class="line"> </div><div class="line"><span class="keyword">import</span> UIKit</div><div class="line"> </div><div class="line"><span class="comment">// 只需要让 UIViewController 遵守 SegueHandlerType，简直太 easy 了有没有 🎂</span></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">ViewController</span>: <span class="title">UIViewController</span>, <span class="title">SegueHandlerType</span> </span>&#123;</div><div class="line"> </div><div class="line">    <span class="comment">// 现在你如果不实现这个方法，编译器就会报错</span></div><div class="line">    <span class="comment">// 遵守 SegueHandlerType 协议需要实现这个方法</span></div><div class="line">    <span class="class"><span class="keyword">enum</span> <span class="title">SegueIdentifier</span>: <span class="title">String</span> </span>&#123;</div><div class="line">        <span class="keyword">case</span> <span class="type">TheRedPillExperience</span></div><div class="line">        <span class="keyword">case</span> <span class="type">TheBluePillExperience</span></div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</div><div class="line">        <span class="keyword">super</span>.viewDidLoad()</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">prepareForSegue</span><span class="params">(segue: UIStoryboardSegue, sender: AnyObject?)</span></span> &#123;</div><div class="line">        </div><div class="line">        <span class="comment">// 🎉 再见！金字塔噩梦！</span></div><div class="line">        <span class="keyword">switch</span> segueIdentifierForSegue(segue) &#123;</div><div class="line">        <span class="keyword">case</span> .<span class="type">TheRedPillExperience</span>:</div><div class="line">            <span class="built_in">print</span>(<span class="string">"😈"</span>)</div><div class="line">        <span class="keyword">case</span> .<span class="type">TheBluePillExperience</span>:</div><div class="line">            <span class="built_in">print</span>(<span class="string">"👼"</span>)</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="meta">@IBAction</span> <span class="function"><span class="keyword">func</span> <span class="title">onRedPillButtonTap</span><span class="params">(sender: AnyObject)</span></span> &#123;</div><div class="line">        <span class="comment">// ✅ 这才是我想写的代码！太优雅了！</span></div><div class="line">        performSegueWithIdentifier(.<span class="type">TheRedPillExperience</span>, sender: <span class="keyword">self</span>)</div><div class="line">    &#125;</div><div class="line"> </div><div class="line">    <span class="meta">@IBAction</span> <span class="function"><span class="keyword">func</span> <span class="title">onBluePillButtonTap</span><span class="params">(sender: AnyObject)</span></span> &#123;</div><div class="line">        performSegueWithIdentifier(.<span class="type">TheBluePillExperience</span>, sender: <span class="keyword">self</span>)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
@@ -391,7 +391,7 @@
 		  
 		
 		  
-			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
 		  
 		
 		  
@@ -436,11 +436,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
 			
 		
 			
@@ -460,15 +460,19 @@
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
 			
 		
 			
@@ -480,15 +484,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Apple-Watch/" title="Apple Watch">Apple Watch<sup>1</sup></a></li>
+				<li><a href="/tags/WWDC/" title="WWDC">WWDC<sup>1</sup></a></li>
 			
 		
 			
@@ -496,7 +496,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
 			
 		
 		</ul>

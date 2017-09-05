@@ -102,19 +102,19 @@
 </blockquote>
 <!--此处开始正文-->
 <p>昨天，我在代码库中找到一段我所认为的极具 Swift 风格的代码。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> minionImages = [<span class="type">UIImage</span>]()</div><div class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="number">1</span>...<span class="number">7</span> &#123;</div><div class="line">    <span class="keyword">if</span> <span class="keyword">let</span> minionImage = <span class="type">UIImage</span>(named: <span class="string">"minionIcon-<span class="subst">\(i)</span>"</span>) &#123;</div><div class="line">        minionImages.append(minionImage)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> minionImages = [<span class="type">UIImage</span>]()</div><div class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="number">1</span>...<span class="number">7</span> &#123;</div><div class="line">    <span class="keyword">if</span> <span class="keyword">let</span> minionImage = <span class="type">UIImage</span>(named: <span class="string">"minionIcon-\(i)"</span>) &#123;</div><div class="line">        minionImages.append(minionImage)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>这真是使用函数式编程进行重构的绝佳机会，哦吼吼！我可以做函数式编程了！！！是的，我非常激动。</p>
 <a id="more"></a>
 <p>那么，明显的解决方案是在这儿使用 map：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> minionImagesMapped = (<span class="number">1</span>...<span class="number">7</span>)</div><div class="line">    .<span class="built_in">map</span> &#123; <span class="type">UIImage</span>(named: <span class="string">"minionIcon-<span class="subst">\($<span class="number">0</span>)</span>"</span>) &#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> minionImagesMapped = (<span class="number">1</span>...<span class="number">7</span>)</div><div class="line">    .<span class="built_in">map</span> &#123; <span class="type">UIImage</span>(named: <span class="string">"minionIcon-\($0)"</span>) &#125;</div></pre></td></tr></table></figure>
 <p>我对自己感到很满意，这段代码只有一行。但这样做无法满足之前的一个必要条件 - 我需要<code>[UIImage]</code>数组，但是这段代码返回的是可选类型<code>[UIImage?]</code>数组。</p>
 <p>所以我 google 了下，为了得到非可选类型的<code>UIImages</code>数组，可以使用如下方法：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> minionImagesFiltered = (<span class="number">1</span>...<span class="number">7</span>)</div><div class="line">    .<span class="built_in">map</span> &#123; <span class="type">UIImage</span>(named: <span class="string">"minionIcon-<span class="subst">\($<span class="number">0</span>)</span>"</span>) &#125;</div><div class="line">    .<span class="built_in">filter</span> &#123; $<span class="number">0</span> != <span class="literal">nil</span>&#125;</div><div class="line">    .<span class="built_in">map</span> &#123; $<span class="number">0</span>! &#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> minionImagesFiltered = (<span class="number">1</span>...<span class="number">7</span>)</div><div class="line">    .<span class="built_in">map</span> &#123; <span class="type">UIImage</span>(named: <span class="string">"minionIcon-\($0)"</span>) &#125;</div><div class="line">    .<span class="built_in">filter</span> &#123; $<span class="number">0</span> != <span class="literal">nil</span>&#125;</div><div class="line">    .<span class="built_in">map</span> &#123; $<span class="number">0</span>! &#125;</div></pre></td></tr></table></figure>
 <p>这样的确有用，但是我并不开森。这段代码又长又拙笨，而且我讨厌强制解包可选类型，虽然这里不会出错。不过这都是小事，主要的原因是这样看起来并不像原生for循环那样简单有效。如下图所示：</p>
 <p><img src="/img/articles/swift_when_the_functional_approach_is_not_right/MyPlayground_playground1.png" alt=""></p>
 <p>可能这样做是错的，但是我最后还是选择了<code>for</code>循环。我的结论是：在 Swift 中偶尔使用<code>for</code>循环是可以的。当然我可能遗漏了一些东西，如果有，请在评论中告诉我！</p>
 <h2 id="升级"><a href="#升级" class="headerlink" title="升级"></a>升级</h2><p>由于有些童鞋在下面的评论中以及<a href="https://twitter.com/NatashaTheRobot/status/624609007043391488" target="_blank" rel="external">Twitter</a>上指出，可以在这里使用 Swift 2.0 的<code>flatMap</code>，我进行了修改：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> minionImagesFlattened = (<span class="number">1</span>...<span class="number">7</span>).flatMap &#123; <span class="type">UIImage</span>(named: <span class="string">"minionIcon-<span class="subst">\($<span class="number">0</span>)</span>"</span>) &#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> minionImagesFlattened = (<span class="number">1</span>...<span class="number">7</span>).flatMap &#123; <span class="type">UIImage</span>(named: <span class="string">"minionIcon-\($0)"</span>) &#125;</div></pre></td></tr></table></figure>
 <p>在这里，我不得不诚实的说，每次看到<code>flatMap</code>时，我都无法完全理解它做了什么或是怎么做的。它并不像<code>map</code>以及<code>filter</code>那样自然。我不懂它在这儿是怎么做的，所以必须要去搜索一下。</p>
 <p>由此，我再次得出结论：使用<code>flatmap</code>不能提高代码可读性。如果那些对 Swift 和函数式编程了解不多的人看到这段代码，他们能理解发生了神马吗？相反，我可以确定，每个人只需看一眼就能够理解for循环。</p>
 <blockquote>
@@ -369,7 +369,7 @@
 		  
 		
 		  
-			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
 		  
 		
 		  
@@ -414,11 +414,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
 			
 		
 			
@@ -438,15 +438,19 @@
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
 			
 		
 			
@@ -458,15 +462,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Apple-Watch/" title="Apple Watch">Apple Watch<sup>1</sup></a></li>
+				<li><a href="/tags/WWDC/" title="WWDC">WWDC<sup>1</sup></a></li>
 			
 		
 			
@@ -474,7 +474,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
 			
 		
 		</ul>

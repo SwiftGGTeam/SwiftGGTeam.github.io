@@ -122,10 +122,10 @@
 <p>在这个<code>if</code>判断中，还需要添加判断当前设备是否支持 3D Touch 的代码。如果你只是做来玩，那就没必要验证。但是，如果是要上架的 App，那就必须要判断，毕竟像 iPhone6 这些旧设备不支持 3D Touch。</p>
 <p>除此之外，我还使用了<code>#available</code>语句（Swift 2.0）对当前系统是否是 iOS9+ 做了判断。（如果你想学习更多 Swift 2.0 相关的知识，我就更加推荐你阅读这篇文章了。）同样，如果你的编译环境是 iOS9.0+，那么这个判断可以省略。</p>
 <p>要得到按压百分比？那太简单了，只需要用<code>force</code>属性除以<code>maximumPossibleForce</code>就可以了（例如：<code>touch.maximumPossibleForce</code>），<code>maximumPossibleForce</code>表示能承受的最大压力值。然后，更新文本：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">touchesMoved</span><span class="params">(touches: Set&lt;UITouch&gt;, withEvent event: UIEvent?)</span></span> &#123;</div><div class="line">    <span class="keyword">if</span> <span class="keyword">let</span> touch = touches.first &#123;</div><div class="line">        <span class="keyword">if</span> #available(iOS <span class="number">9.0</span>, *) &#123;</div><div class="line">            <span class="keyword">if</span> traitCollection.forceTouchCapability == <span class="type">UIForceTouchCapability</span>.<span class="type">Available</span> &#123;</div><div class="line">                <span class="comment">// 3D Touch capable</span></div><div class="line">                <span class="keyword">let</span> force = touch.force/touch.maximumPossibleForce</div><div class="line">                forceLabel.text = <span class="string">"<span class="subst">\(force)</span>% force"</span></div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">touchesMoved</span><span class="params">(touches: Set&lt;UITouch&gt;, withEvent event: UIEvent?)</span></span> &#123;</div><div class="line">    <span class="keyword">if</span> <span class="keyword">let</span> touch = touches.first &#123;</div><div class="line">        <span class="keyword">if</span> #available(iOS <span class="number">9.0</span>, *) &#123;</div><div class="line">            <span class="keyword">if</span> traitCollection.forceTouchCapability == <span class="type">UIForceTouchCapability</span>.<span class="type">Available</span> &#123;</div><div class="line">                <span class="comment">// 3D Touch capable</span></div><div class="line">                <span class="keyword">let</span> force = touch.force/touch.maximumPossibleForce</div><div class="line">                forceLabel.text = <span class="string">"\(force)% force"</span></div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>如果你在 iPhone6s/6s Plus 上跑这个程序，按屏幕时就能看到压力百分比了。但是，其实我们更想知道放在 iPhone 上物体的重量，而不是百分比。根据<a href="https://medium.com/swlh/turning-the-iphone-6s-into-a-digital-scale-f2197dc2b6e7" target="_blank" rel="external">Ryan McLeod</a>的 App 可以知道，传感器的计量范围的最大值是 385g。因此，<code>maximumPossibleForce</code>就相当于 385g（相当于3.8N）。通过简单的计算，就可以把压力百分比转为克。需要做的仅仅是用百分比*385。对于重于 385g 的物体，就把  label 改成类似于“385+ grams”这样的文本好了。</p>
 <p>到此，<code>touchesMoved</code>方法中的代码更新为：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">touchesMoved</span><span class="params">(touches: Set&lt;UITouch&gt;, withEvent event: UIEvent?)</span></span> &#123;        </div><div class="line">    <span class="keyword">if</span> <span class="keyword">let</span> touch = touches.first &#123;</div><div class="line">        <span class="keyword">if</span> #available(iOS <span class="number">9.0</span>, *) &#123;</div><div class="line">            <span class="keyword">if</span> traitCollection.forceTouchCapability == <span class="type">UIForceTouchCapability</span>.<span class="type">Available</span> &#123;</div><div class="line">                <span class="keyword">if</span> touch.force &gt;= touch.maximumPossibleForce &#123;</div><div class="line">                    forceLabel.text = <span class="string">"385+ grams"</span></div><div class="line">                &#125; <span class="keyword">else</span> &#123;</div><div class="line">                    <span class="keyword">let</span> force = touch.force/touch.maximumPossibleForce</div><div class="line">                    <span class="keyword">let</span> grams = force * <span class="number">385</span></div><div class="line">                    <span class="keyword">let</span> roundGrams = <span class="type">Int</span>(grams)</div><div class="line">                    forceLabel.text = <span class="string">"<span class="subst">\(roundGrams)</span> grams"</span></div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">touchesMoved</span><span class="params">(touches: Set&lt;UITouch&gt;, withEvent event: UIEvent?)</span></span> &#123;        </div><div class="line">    <span class="keyword">if</span> <span class="keyword">let</span> touch = touches.first &#123;</div><div class="line">        <span class="keyword">if</span> #available(iOS <span class="number">9.0</span>, *) &#123;</div><div class="line">            <span class="keyword">if</span> traitCollection.forceTouchCapability == <span class="type">UIForceTouchCapability</span>.<span class="type">Available</span> &#123;</div><div class="line">                <span class="keyword">if</span> touch.force &gt;= touch.maximumPossibleForce &#123;</div><div class="line">                    forceLabel.text = <span class="string">"385+ grams"</span></div><div class="line">                &#125; <span class="keyword">else</span> &#123;</div><div class="line">                    <span class="keyword">let</span> force = touch.force/touch.maximumPossibleForce</div><div class="line">                    <span class="keyword">let</span> grams = force * <span class="number">385</span></div><div class="line">                    <span class="keyword">let</span> roundGrams = <span class="type">Int</span>(grams)</div><div class="line">                    forceLabel.text = <span class="string">"\(roundGrams) grams"</span></div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>然后…你就有了一个电子秤 App…</p>
 <p><img src="http://www.appcoda.com/wp-content/uploads/2015/11/3d-touch-scale-app-492x1024.png" alt=""></p>
 <p>还有一个小问题：当物体或者触摸事件结束之后，文本没有重置。你可以实现<code>touchesEnded</code>方法来达到效果：</p>
@@ -417,7 +417,7 @@
 		  
 		
 		  
-			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
 		  
 		
 		  
@@ -462,11 +462,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
 			
 		
 			
@@ -486,15 +486,19 @@
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
 			
 		
 			
@@ -506,15 +510,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Apple-Watch/" title="Apple Watch">Apple Watch<sup>1</sup></a></li>
+				<li><a href="/tags/WWDC/" title="WWDC">WWDC<sup>1</sup></a></li>
 			
 		
 			
@@ -522,7 +522,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
 			
 		
 		</ul>

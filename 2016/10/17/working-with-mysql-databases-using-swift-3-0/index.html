@@ -114,14 +114,14 @@
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> Glibc</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Random</span> </span>&#123;</div><div class="line">  <span class="keyword">static</span> <span class="keyword">let</span> initialize:<span class="type">Void</span> = &#123;</div><div class="line">    srandom(<span class="type">UInt32</span>(time(<span class="literal">nil</span>)))</div><div class="line">    <span class="keyword">return</span> ()</div><div class="line">  &#125;()</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">randomString</span><span class="params">(ofLength length:Int)</span></span> -&gt; <span class="type">String</span> &#123;</div><div class="line">  <span class="type">Random</span>.initialize</div><div class="line">  <span class="keyword">let</span> charactersString = <span class="string">"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"</span></div><div class="line">  <span class="keyword">let</span> charactersArray:[<span class="type">Character</span>] = <span class="type">Array</span>(charactersString.characters)</div><div class="line">  </div><div class="line">  <span class="keyword">var</span> string = <span class="string">""</span></div><div class="line">  <span class="keyword">for</span> <span class="number">_</span> <span class="keyword">in</span> <span class="number">0</span>..&lt;length &#123;</div><div class="line">    string.append(charactersArray[<span class="type">Int</span>(random()) % charactersArray.<span class="built_in">count</span>])</div><div class="line">  &#125;</div><div class="line">               </div><div class="line">  <span class="keyword">return</span> string</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">randomInt</span><span class="params">()</span></span> -&gt; <span class="type">Int</span> &#123;</div><div class="line">  <span class="type">Random</span>.initialize</div><div class="line">  <span class="keyword">return</span> <span class="type">Int</span>(random() % <span class="number">10000</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <h2 id="Vapor-MySQL"><a href="#Vapor-MySQL" class="headerlink" title="Vapor MySQL"></a>Vapor MySQL</h2><p>接下来是真正的代码，我们的 main.swift 文件使用了 Vapor MySQL 模块。</p>
 <h3 id="连接数据库"><a href="#连接数据库" class="headerlink" title="连接数据库"></a>连接数据库</h3><p>添加以下代码到 <code>Sources/main.swift</code> 中：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> Glibc</div><div class="line"><span class="keyword">import</span> MySQL</div><div class="line"></div><div class="line"><span class="keyword">var</span> mysql:<span class="type">Database</span></div><div class="line"><span class="keyword">do</span> &#123;</div><div class="line">  mysql = <span class="keyword">try</span> <span class="type">Database</span>(host:<span class="string">"localhost"</span>,</div><div class="line">                       user:<span class="string">"swift"</span>,</div><div class="line">                       password:<span class="string">"swiftpass"</span>,</div><div class="line">                       database:<span class="string">"swift_test"</span>)</div><div class="line">  <span class="keyword">try</span> mysql.execute(<span class="string">"SELECT @@version"</span>)</div><div class="line">&#125; <span class="keyword">catch</span> &#123;</div><div class="line">  <span class="built_in">print</span>(<span class="string">"Unable to connect to MySQL:  <span class="subst">\(error)</span>"</span>)</div><div class="line">  exit(-<span class="number">1</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> Glibc</div><div class="line"><span class="keyword">import</span> MySQL</div><div class="line"></div><div class="line"><span class="keyword">var</span> mysql:<span class="type">Database</span></div><div class="line"><span class="keyword">do</span> &#123;</div><div class="line">  mysql = <span class="keyword">try</span> <span class="type">Database</span>(host:<span class="string">"localhost"</span>,</div><div class="line">                       user:<span class="string">"swift"</span>,</div><div class="line">                       password:<span class="string">"swiftpass"</span>,</div><div class="line">                       database:<span class="string">"swift_test"</span>)</div><div class="line">  <span class="keyword">try</span> mysql.execute(<span class="string">"SELECT @@version"</span>)</div><div class="line">&#125; <span class="keyword">catch</span> &#123;</div><div class="line">  <span class="built_in">print</span>(<span class="string">"Unable to connect to MySQL:  \(error)"</span>)</div><div class="line">  exit(-<span class="number">1</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>以上代码设置数据库并且处理 mysql。构造器 <code>Database(host:String, user:String, password:String, database:String)</code> 一目了然。<br>语句 <code>try mysql.execute(&quot;SELECT @@version”)</code> 是用来测试保证我们连接正确，并成功连接到了数据库。如果 do 代码块运行无错误，接下来就可以开始操作数据库了！</p>
 <h3 id="整型和字符串"><a href="#整型和字符串" class="headerlink" title="整型和字符串"></a>整型和字符串</h3><p>所有对 MySQL 的调用都将通过 <code>execute(_:String)</code> 方法。需要注意的是该方法和一些抽象 API 的方法不同，比如 <code>.create(table:String, ...)</code> 或者 <code>.insert(table:String, …</code>。<code>execute</code> 获取原始的 SQL 语句并传给 MySQL 连接器。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">do</span> &#123;</div><div class="line">  <span class="keyword">try</span> mysql.execute(<span class="string">"DROP TABLE IF EXISTS foo"</span>)</div><div class="line">  <span class="keyword">try</span> mysql.execute(<span class="string">"CREATE TABLE foo (bar INT(4), baz VARCHAR(16))"</span>)</div><div class="line"></div><div class="line">  <span class="keyword">for</span> i <span class="keyword">in</span> <span class="number">1</span>...<span class="number">10</span> &#123;</div><div class="line">    <span class="keyword">let</span> int    = randomInt()</div><div class="line">    <span class="keyword">let</span> string = randomString(ofLength:<span class="number">16</span>)</div><div class="line">    <span class="keyword">try</span> mysql.execute(<span class="string">"INSERT INTO foo VALUES (<span class="subst">\(int)</span>, '<span class="subst">\(string)</span>')"</span>)</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="comment">// Query</span></div><div class="line">  <span class="keyword">let</span> results = <span class="keyword">try</span> mysql.execute(<span class="string">"SELECT * FROM foo"</span>)</div><div class="line">  <span class="keyword">for</span> result <span class="keyword">in</span> results &#123;</div><div class="line">    <span class="keyword">if</span> <span class="keyword">let</span> bar = result[<span class="string">"bar"</span>]?.int,</div><div class="line">       <span class="keyword">let</span> baz = result[<span class="string">"baz"</span>]?.string &#123;</div><div class="line">      <span class="built_in">print</span>(<span class="string">"<span class="subst">\(bar)</span>\t<span class="subst">\(baz)</span>"</span>)</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125; <span class="keyword">catch</span> &#123;</div><div class="line">  <span class="built_in">print</span>(<span class="string">"Error:  <span class="subst">\(error)</span>"</span>)</div><div class="line">  exit(-<span class="number">1</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">do</span> &#123;</div><div class="line">  <span class="keyword">try</span> mysql.execute(<span class="string">"DROP TABLE IF EXISTS foo"</span>)</div><div class="line">  <span class="keyword">try</span> mysql.execute(<span class="string">"CREATE TABLE foo (bar INT(4), baz VARCHAR(16))"</span>)</div><div class="line"></div><div class="line">  <span class="keyword">for</span> i <span class="keyword">in</span> <span class="number">1</span>...<span class="number">10</span> &#123;</div><div class="line">    <span class="keyword">let</span> int    = randomInt()</div><div class="line">    <span class="keyword">let</span> string = randomString(ofLength:<span class="number">16</span>)</div><div class="line">    <span class="keyword">try</span> mysql.execute(<span class="string">"INSERT INTO foo VALUES (\(int), '\(string)')"</span>)</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="comment">// Query</span></div><div class="line">  <span class="keyword">let</span> results = <span class="keyword">try</span> mysql.execute(<span class="string">"SELECT * FROM foo"</span>)</div><div class="line">  <span class="keyword">for</span> result <span class="keyword">in</span> results &#123;</div><div class="line">    <span class="keyword">if</span> <span class="keyword">let</span> bar = result[<span class="string">"bar"</span>]?.int,</div><div class="line">       <span class="keyword">let</span> baz = result[<span class="string">"baz"</span>]?.string &#123;</div><div class="line">      <span class="built_in">print</span>(<span class="string">"\(bar)\t\(baz)"</span>)</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125; <span class="keyword">catch</span> &#123;</div><div class="line">  <span class="built_in">print</span>(<span class="string">"Error:  \(error)"</span>)</div><div class="line">  exit(-<span class="number">1</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>查询结果也是使用的 <code>execute(_:String)</code> 方法。但是返回的结果是一个 <code>[String:Node]</code> 字典。字典的 key 对应着数据库的列名。</p>
 <p><code>Node</code> 类型是 Vapor 中的数据结构，用于转化为不同的类型。你可以从<a href="https://github.com/vapor/node" target="_blank" rel="external">这里</a>获取更多的信息。使用 <code>Node</code> 类型来表达 MySQL 可以方便的转换成对应的 Swift 类型。比如：<code>let bar = result[&quot;bar&quot;]?.int</code> 给我们一个整型。</p>
 <h3 id="继续"><a href="#继续" class="headerlink" title="继续"></a>继续</h3><p>接着我们来看一些更复杂的例子，比如创建一个表，包含了 MySQL 的 DATE， POINT 和 JSON 数据类型。我们的表名叫 <code>samples</code>。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">do</span> &#123;</div><div class="line">  <span class="keyword">try</span> mysql.execute(<span class="string">"DROP TABLE IF EXISTS samples"</span>)</div><div class="line">  <span class="keyword">try</span> mysql.execute(<span class="string">"CREATE TABLE samples (id INT PRIMARY KEY AUTO_INCREMENT, created_at DATETIME, location POINT, reading JSON)"</span>)</div><div class="line"></div><div class="line">  <span class="comment">// ... Date</span></div><div class="line">  <span class="comment">// ... Point</span></div><div class="line">  <span class="comment">// ... Sample</span></div><div class="line">  <span class="comment">// ... Insert</span></div><div class="line">  <span class="comment">// ... Query</span></div><div class="line">&#125; <span class="keyword">catch</span> &#123;</div><div class="line">  <span class="built_in">print</span>(<span class="string">"Error:  <span class="subst">\(error)</span>"</span>)</div><div class="line">  exit(-<span class="number">1</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">do</span> &#123;</div><div class="line">  <span class="keyword">try</span> mysql.execute(<span class="string">"DROP TABLE IF EXISTS samples"</span>)</div><div class="line">  <span class="keyword">try</span> mysql.execute(<span class="string">"CREATE TABLE samples (id INT PRIMARY KEY AUTO_INCREMENT, created_at DATETIME, location POINT, reading JSON)"</span>)</div><div class="line"></div><div class="line">  <span class="comment">// ... Date</span></div><div class="line">  <span class="comment">// ... Point</span></div><div class="line">  <span class="comment">// ... Sample</span></div><div class="line">  <span class="comment">// ... Insert</span></div><div class="line">  <span class="comment">// ... Query</span></div><div class="line">&#125; <span class="keyword">catch</span> &#123;</div><div class="line">  <span class="built_in">print</span>(<span class="string">"Error:  \(error)"</span>)</div><div class="line">  exit(-<span class="number">1</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>要插入一个日期到数据库中，需要正确的 SQL 语句：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// ... Date</span></div><div class="line"><span class="keyword">let</span> now              = <span class="type">Date</span>()</div><div class="line"><span class="keyword">let</span> formatter        = <span class="type">DateFormatter</span>()</div><div class="line">formatter.dateFormat = <span class="string">"yyyy-MM-dd HH:mm:ss"</span> <span class="comment">// MySQL will accept this format</span></div><div class="line"><span class="keyword">let</span> created_at       = formatter.string(from:date)</div></pre></td></tr></table></figure>
 <p>接下来使用 Swift 元组来创建一个 <code>POINT</code>：</p>
@@ -131,7 +131,7 @@
 <p>提示：你不需要显式在 Package.swift 中声明对 Jay 的依赖，因为在 MySQL 的包中已经包含了这个依赖。<br>接下来我们把 JSON 数据转换为 String，用来拼凑 MySQL 语句。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> sampleData = <span class="keyword">try</span> <span class="type">Jay</span>(formatting:.minified).dataFromJson(any:sample) <span class="comment">// [UInt8]</span></div><div class="line"><span class="keyword">let</span> sampleJSON = <span class="type">String</span>(data:<span class="type">Data</span>(sampleData), encoding:.utf8)</div></pre></td></tr></table></figure>
 <p>这样我们就有了 date， point 和 JSON 字符串（sample) 了， 现在添加数据到 sample 表中：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// ... Insert</span></div><div class="line"><span class="keyword">let</span> stmt = <span class="string">"INSERT INTO samples (created_at, location, sample) VALUES ('<span class="subst">\(created_at)</span>', POINT<span class="subst">\(point)</span>, '<span class="subst">\(sampleJSON)</span>')"</span></div><div class="line"><span class="keyword">try</span> mysql.execute(stmt)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// ... Insert</span></div><div class="line"><span class="keyword">let</span> stmt = <span class="string">"INSERT INTO samples (created_at, location, sample) VALUES ('\(created_at)', POINT\(point), '\(sampleJSON)')"</span></div><div class="line"><span class="keyword">try</span> mysql.execute(stmt)</div></pre></td></tr></table></figure>
 <p>请注意我们在处理 POINT 时候，使用了一些技巧。在对  (point) 展开为字符串 (37.20262, -112.98785) 后，完整的字符串是 POINT(37.20262, -112.98785)，这是 MySQL 所需要的数据，整个语句的字符串如下：</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">INSERT INTO samples (created_at, location, sample) VALUES (&apos;2016-09-21 22:28:44&apos;, POINT(37.202620000000003, -112.98784999999999), &apos;&#123;&quot;gps&quot;:&#123;&quot;latitude&quot;:37.20262,&quot;longitude&quot;:-112.98785&#125;,&quot;heading&quot;:90,&quot;speed&quot;:82,&quot;temperature&quot;:200&#125;&apos;)</div></pre></td></tr></table></figure>
 <h3 id="获取结果"><a href="#获取结果" class="headerlink" title="获取结果"></a>获取结果</h3><p>警告：在写这篇文章的时候(2016-09-22), Vapor MySQL 1.0.0 有一个 bug：在读取 POINT 数据类型时会 crash 掉，所以不得不在下面代码中加入 do 代码块，然后不使用 select 语句。<br>我们在 Vapor MySQL 中记录了这个 issue，等这个 issue 修复以后，我们将更新文章。</p>
@@ -393,7 +393,7 @@
 		  
 		
 		  
-			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
 		  
 		
 		  
@@ -438,11 +438,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
 			
 		
 			
@@ -462,15 +462,19 @@
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
 			
 		
 			
@@ -482,15 +486,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Apple-Watch/" title="Apple Watch">Apple Watch<sup>1</sup></a></li>
+				<li><a href="/tags/WWDC/" title="WWDC">WWDC<sup>1</sup></a></li>
 			
 		
 			
@@ -498,7 +498,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
 			
 		
 		</ul>

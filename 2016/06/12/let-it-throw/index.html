@@ -127,7 +127,7 @@
 <li>可以使用 <code>do { … } catch { … }</code> 这样的结构用来捕获并处理错误。</li>
 </ul>
 <p>看起来像这样：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// 定义一个可以抛错误的方法…</span></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">someFunctionWhichCanFail</span><span class="params">(param: Int)</span></span> <span class="keyword">throws</span> -&gt; <span class="type">String</span> &#123;</div><div class="line">  ...</div><div class="line">  <span class="keyword">if</span> (param &gt; <span class="number">0</span>) &#123;</div><div class="line">	<span class="keyword">return</span> <span class="string">"somestring"</span></div><div class="line">  &#125;</div><div class="line">  <span class="keyword">else</span> &#123;</div><div class="line">	<span class="keyword">throw</span> <span class="type">NSError</span>(domain: <span class="string">"MyDomain"</span>, code: <span class="number">500</span>, userInfo: <span class="literal">nil</span>)</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">// … 然后调用这个方法</span></div><div class="line"><span class="keyword">do</span> &#123;</div><div class="line">  <span class="keyword">let</span> result: <span class="type">String</span> = <span class="keyword">try</span> someFunctionWhichCanFail(-<span class="number">2</span>)</div><div class="line">  <span class="built_in">print</span>(<span class="string">"success! <span class="subst">\(result)</span>"</span>)</div><div class="line">&#125;</div><div class="line"><span class="keyword">catch</span> &#123;</div><div class="line">  <span class="built_in">print</span>(<span class="string">"Oops: <span class="subst">\(error)</span>"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// 定义一个可以抛错误的方法…</span></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">someFunctionWhichCanFail</span><span class="params">(param: Int)</span></span> <span class="keyword">throws</span> -&gt; <span class="type">String</span> &#123;</div><div class="line">  ...</div><div class="line">  <span class="keyword">if</span> (param &gt; <span class="number">0</span>) &#123;</div><div class="line">	<span class="keyword">return</span> <span class="string">"somestring"</span></div><div class="line">  &#125;</div><div class="line">  <span class="keyword">else</span> &#123;</div><div class="line">	<span class="keyword">throw</span> <span class="type">NSError</span>(domain: <span class="string">"MyDomain"</span>, code: <span class="number">500</span>, userInfo: <span class="literal">nil</span>)</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">// … 然后调用这个方法</span></div><div class="line"><span class="keyword">do</span> &#123;</div><div class="line">  <span class="keyword">let</span> result: <span class="type">String</span> = <span class="keyword">try</span> someFunctionWhichCanFail(-<span class="number">2</span>)</div><div class="line">  <span class="built_in">print</span>(<span class="string">"success! \(result)"</span>)</div><div class="line">&#125;</div><div class="line"><span class="keyword">catch</span> &#123;</div><div class="line">  <span class="built_in">print</span>(<span class="string">"Oops: \(error)"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <h3 id="错误再也阻挡不了我了"><a href="#错误再也阻挡不了我了" class="headerlink" title="错误再也阻挡不了我了"></a>错误再也阻挡不了我了</h3><p><img src="http://alisoftware.github.io/assets/frozen-failure.jpg" alt=""></p>
 <p>你可以看到 <code>someFunctionWitchCanFail</code> 返回了一个普通的 <code>String</code> ，当一切正常的情况下， <code>String</code> 也是其返回值的类型。先考虑最简单的情况(在 <code>do { … }</code> 中的)，“通常情况下”可以很方便的调用这个函数去处理没有错误发生的情况。</p>
 <p>唯一的这些方法可能会出错的提醒就是<code>try</code>关键字，编译器强制让你把 <code>try</code> 添加到方法调用的位置的前面，否则就像是调用一个无抛出错误的方法。然后，只需要在一个单独的地方(在 <code>catch</code> 里)写错误处理的代码。</p>
@@ -139,7 +139,7 @@
 <p>最适合 <code>ErrorType</code> 类型的就是 <code>enum</code> 了，如果有需要的话，甚至二者之间可以有关联值。比如：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">enum</span> <span class="title">KristoffError</span> : <span class="title">ErrorType</span> </span>&#123;</div><div class="line">  <span class="keyword">case</span> <span class="type">ClumsyWayHeWalks</span></div><div class="line">  <span class="keyword">case</span> <span class="type">GrumpyWayHeTalks</span></div><div class="line">  <span class="keyword">case</span> <span class="type">PearShapedSquareShapedWeirdnessOfHisFeet</span></div><div class="line">  <span class="keyword">case</span> <span class="type">NotWashedSince</span>(days: <span class="type">Int</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>现在你就可以在一个函数里使用 <code>throw KristoffError.NotWashedSince(days: 3)</code>来抛出错误，然后在调用的地方使用 <code>catch KristoffError.NotWashedSince(let days)</code>来处理这些错误：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">loveKristoff</span><span class="params">()</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Void</span> &#123;</div><div class="line">  <span class="keyword">guard</span> daysSinceLastShower == <span class="number">0</span> <span class="keyword">else</span> &#123;</div><div class="line">	<span class="keyword">throw</span> <span class="type">KristoffError</span>.<span class="type">NotWashedSince</span>(days: daysSinceLastShower)</div><div class="line">  &#125;</div><div class="line">  ...</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">do</span> &#123;</div><div class="line">  <span class="keyword">try</span> loveKristoff()</div><div class="line">&#125;</div><div class="line"><span class="keyword">catch</span> <span class="type">KristoffError</span>.<span class="type">NotWashedSince</span>(<span class="keyword">let</span> days) &#123;</div><div class="line">  <span class="built_in">print</span>(<span class="string">"Ewww, he hasn't had a shower since <span class="subst">\(days)</span> days!"</span>)</div><div class="line">&#125;</div><div class="line"><span class="keyword">catch</span> &#123;</div><div class="line">  <span class="comment">// 所有其他类型的错误</span></div><div class="line">  <span class="built_in">print</span>(<span class="string">"I prefer we stay friends"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">loveKristoff</span><span class="params">()</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Void</span> &#123;</div><div class="line">  <span class="keyword">guard</span> daysSinceLastShower == <span class="number">0</span> <span class="keyword">else</span> &#123;</div><div class="line">	<span class="keyword">throw</span> <span class="type">KristoffError</span>.<span class="type">NotWashedSince</span>(days: daysSinceLastShower)</div><div class="line">  &#125;</div><div class="line">  ...</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">do</span> &#123;</div><div class="line">  <span class="keyword">try</span> loveKristoff()</div><div class="line">&#125;</div><div class="line"><span class="keyword">catch</span> <span class="type">KristoffError</span>.<span class="type">NotWashedSince</span>(<span class="keyword">let</span> days) &#123;</div><div class="line">  <span class="built_in">print</span>(<span class="string">"Ewww, he hasn't had a shower since \(days) days!"</span>)</div><div class="line">&#125;</div><div class="line"><span class="keyword">catch</span> &#123;</div><div class="line">  <span class="comment">// 所有其他类型的错误</span></div><div class="line">  <span class="built_in">print</span>(<span class="string">"I prefer we stay friends"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>相比此前，这种方式更容易的捕获错误！</p>
 <p>这也让错误拥有了清晰的名字、常量以及关联值。再也没有复杂的 <code>userInfo</code> 了，在 enum 中你可以清楚地看到值的关联，就像如上例子中的 <code>days</code>，并且它只对特定的类型有效(不会对 <code>ClumsyWayHeWalks</code> 中的 <code>days</code> 关联值有效)。</p>
 <h3 id="根本拿不回来"><a href="#根本拿不回来" class="headerlink" title="根本拿不回来"></a>根本拿不回来</h3><p><img src="http://alisoftware.github.io/assets/frozen-cant-hold-it-back.jpg" alt=""></p>
@@ -434,7 +434,7 @@
 		  
 		
 		  
-			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
 		  
 		
 		  
@@ -479,11 +479,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
 			
 		
 			
@@ -503,15 +503,19 @@
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
 			
 		
 			
@@ -523,15 +527,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Apple-Watch/" title="Apple Watch">Apple Watch<sup>1</sup></a></li>
+				<li><a href="/tags/WWDC/" title="WWDC">WWDC<sup>1</sup></a></li>
 			
 		
 			
@@ -539,7 +539,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
 			
 		
 		</ul>

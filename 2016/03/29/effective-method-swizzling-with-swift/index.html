@@ -112,7 +112,7 @@
 <p>Swift 关于方法派发是使用静态方法的，但有些情形可能需要用到 Method Swizzling。</p>
 <p>在 Swift 中使用 Method Swizzling 之前，让我再次重申一下这种技术还是尽量少用，<strong>只有当你的问题不能用 Swift 的方式解决，也不能用子类、协议或扩展解决时才使用</strong>。</p>
 <p>正如 NSHipster 上<a href="http://nshipster.com/swift-objc-runtime/" target="_blank" rel="external">另一篇文章</a>描述的那样，在 Swift 中对一个来自基本框架（Foundation、UIKit 等）的类使用 Method Swizzling 与 Objective-C 没什么区别。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UIViewController</span> </span>&#123;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">initialize</span><span class="params">()</span></span> &#123;</div><div class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">Static</span> </span>&#123;</div><div class="line">            <span class="keyword">static</span> <span class="keyword">var</span> token: dispatch_once_t = <span class="number">0</span></div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="comment">// 确保不是子类</span></div><div class="line">        <span class="keyword">if</span> <span class="keyword">self</span> !== <span class="type">UIViewController</span>.<span class="keyword">self</span> &#123;</div><div class="line">            <span class="keyword">return</span></div><div class="line">        &#125;</div><div class="line"></div><div class="line">        dispatch_once(&amp;<span class="type">Static</span>.token) &#123;</div><div class="line">            <span class="keyword">let</span> originalSelector = <span class="type">Selector</span>(<span class="string">"viewWillAppear:"</span>)</div><div class="line">            <span class="keyword">let</span> swizzledSelector = <span class="type">Selector</span>(<span class="string">"newViewWillAppear:"</span>)</div><div class="line"></div><div class="line">            <span class="keyword">let</span> originalMethod = class_getInstanceMethod(<span class="keyword">self</span>, originalSelector)</div><div class="line">            <span class="keyword">let</span> swizzledMethod = class_getInstanceMethod(<span class="keyword">self</span>, swizzledSelector)</div><div class="line"></div><div class="line">            <span class="keyword">let</span> didAddMethod = class_addMethod(<span class="keyword">self</span>, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod))</div><div class="line"></div><div class="line">            <span class="keyword">if</span> didAddMethod &#123;</div><div class="line">                class_replaceMethod(<span class="keyword">self</span>, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod))</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                method_exchangeImplementations(originalMethod, swizzledMethod);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// MARK: - Method Swizzling</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">newViewWillAppear</span><span class="params">(animated: Bool)</span></span> &#123;</div><div class="line">        <span class="keyword">self</span>.newViewWillAppear(animated)</div><div class="line">        <span class="keyword">if</span> <span class="keyword">let</span> name = <span class="keyword">self</span>.descriptiveName &#123;</div><div class="line">            <span class="built_in">print</span>(<span class="string">"viewWillAppear: <span class="subst">\(name)</span>"</span>)</div><div class="line">        &#125; <span class="keyword">else</span> &#123;</div><div class="line">            <span class="built_in">print</span>(<span class="string">"viewWillAppear: <span class="subst">\(<span class="keyword">self</span>)</span>"</span>)</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UIViewController</span> </span>&#123;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">initialize</span><span class="params">()</span></span> &#123;</div><div class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">Static</span> </span>&#123;</div><div class="line">            <span class="keyword">static</span> <span class="keyword">var</span> token: dispatch_once_t = <span class="number">0</span></div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="comment">// 确保不是子类</span></div><div class="line">        <span class="keyword">if</span> <span class="keyword">self</span> !== <span class="type">UIViewController</span>.<span class="keyword">self</span> &#123;</div><div class="line">            <span class="keyword">return</span></div><div class="line">        &#125;</div><div class="line"></div><div class="line">        dispatch_once(&amp;<span class="type">Static</span>.token) &#123;</div><div class="line">            <span class="keyword">let</span> originalSelector = <span class="type">Selector</span>(<span class="string">"viewWillAppear:"</span>)</div><div class="line">            <span class="keyword">let</span> swizzledSelector = <span class="type">Selector</span>(<span class="string">"newViewWillAppear:"</span>)</div><div class="line"></div><div class="line">            <span class="keyword">let</span> originalMethod = class_getInstanceMethod(<span class="keyword">self</span>, originalSelector)</div><div class="line">            <span class="keyword">let</span> swizzledMethod = class_getInstanceMethod(<span class="keyword">self</span>, swizzledSelector)</div><div class="line"></div><div class="line">            <span class="keyword">let</span> didAddMethod = class_addMethod(<span class="keyword">self</span>, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod))</div><div class="line"></div><div class="line">            <span class="keyword">if</span> didAddMethod &#123;</div><div class="line">                class_replaceMethod(<span class="keyword">self</span>, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod))</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                method_exchangeImplementations(originalMethod, swizzledMethod);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// MARK: - Method Swizzling</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">newViewWillAppear</span><span class="params">(animated: Bool)</span></span> &#123;</div><div class="line">        <span class="keyword">self</span>.newViewWillAppear(animated)</div><div class="line">        <span class="keyword">if</span> <span class="keyword">let</span> name = <span class="keyword">self</span>.descriptiveName &#123;</div><div class="line">            <span class="built_in">print</span>(<span class="string">"viewWillAppear: \(name)"</span>)</div><div class="line">        &#125; <span class="keyword">else</span> &#123;</div><div class="line">            <span class="built_in">print</span>(<span class="string">"viewWillAppear: \(self)"</span>)</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>在这个例子中，应用中的每个 UIViewController 都会执行额外的操作，而原始的 <code>viewWillAppear</code> 方法会被保护起来不执行，这种情形只能通过 Method Swizzling 来实现。</p>
 <p><code>viewWillAppear</code> 方法的实现会被替换成 <code>initialize</code> 中 <code>newViewWillAppear</code> 方法的实现。值得注意的是，在 swizzle 后，会递归调用 <code>newViewWillAppear</code> 方法，以替换之前原始的 <code>viewWillAppear</code> 方法。</p>
 <p>与 Objective-C 的第一个不同之处就是 swizzling 不在 <code>load</code> 方法里执行。</p>
@@ -388,7 +388,7 @@
 		  
 		
 		  
-			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>14</sup></a></li>
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
 		  
 		
 		  
@@ -433,11 +433,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
 			
 		
 			
@@ -457,15 +457,19 @@
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
 			
 		
 			
@@ -477,15 +481,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Apple-Watch/" title="Apple Watch">Apple Watch<sup>1</sup></a></li>
+				<li><a href="/tags/WWDC/" title="WWDC">WWDC<sup>1</sup></a></li>
 			
 		
 			
@@ -493,7 +493,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-邮件列表/" title="Swift 邮件列表">Swift 邮件列表<sup>1</sup></a></li>
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
 			
 		
 		</ul>
