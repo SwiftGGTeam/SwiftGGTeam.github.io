@@ -112,7 +112,7 @@
 <h1 id="一个交易引擎"><a href="#一个交易引擎" class="headerlink" title="一个交易引擎"></a>一个交易引擎</h1><p>假设华尔街找到你，他们需要一个新的运行在 iOS 设备上的交易平台。因为是交易平台，所以你需要给交易定义一个 <code>enum</code>。</p>
 <h2 id="第一步"><a href="#第一步" class="headerlink" title="第一步"></a>第一步</h2><figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">enum</span> <span class="title">Trades</span> </span>&#123;</div><div class="line">    <span class="keyword">case</span> <span class="type">Buy</span>(stock: <span class="type">String</span>, amount: <span class="type">Int</span>, stockPrice: <span class="type">Float</span>)</div><div class="line">    <span class="keyword">case</span> <span class="type">Sell</span>(stock: <span class="type">String</span>, amount: <span class="type">Int</span>, stockPrice: <span class="type">Float</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>同时还会提供如下的 API 给你来进行交易处理。<strong>注意销售订单的金额是如何变成负数的</strong>，而且他们还说股票的价格不重要，他们的引擎会在内部选择一个价格。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> - 参数 stock: 股票的名字</div><div class="line"> - 参数 amount: 金额, 负数表示销售额, 正数表示购买额</div><div class="line">*/</div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">process</span><span class="params">(stock: String, <span class="number">_</span> amount: Int)</span></span> &#123;</div><div class="line">    <span class="built_in">print</span> (<span class="string">"\(amount) of \(stock)"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> - 参数 stock: 股票的名字</div><div class="line"> - 参数 amount: 金额, 负数表示销售额, 正数表示购买额</div><div class="line">*/</div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">process</span><span class="params">(stock: String, <span class="number">_</span> amount: Int)</span></span> &#123;</div><div class="line">    <span class="built_in">print</span> (<span class="string">"<span class="subst">\(amount)</span> of <span class="subst">\(stock)</span>"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>下一步就是对交易进行处理。你会发现模式匹配在写这个业务时所具备的强大处理能力：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> aTrade = <span class="type">Trades</span>.<span class="type">Buy</span>(stock: <span class="string">"APPL"</span>, amount: <span class="number">200</span>, stockPrice: <span class="number">115.5</span>)</div><div class="line"></div><div class="line"><span class="keyword">switch</span> aTrade &#123;</div><div class="line"><span class="keyword">case</span> .<span class="type">Buy</span>(<span class="keyword">let</span> stock, <span class="keyword">let</span> amount, <span class="number">_</span>):</div><div class="line">    process(stock, amount)</div><div class="line"><span class="keyword">case</span> .<span class="type">Sell</span>(<span class="keyword">let</span> stock, <span class="keyword">let</span> amount, <span class="number">_</span>):</div><div class="line">    process(stock, amount * -<span class="number">1</span>)</div><div class="line">&#125;</div><div class="line"><span class="comment">// 输出 "buy 200 of APPL"</span></div></pre></td></tr></table></figure>
 <p>Swift 可以让我们非常方便的从 <code>enum</code> 中解构/提取出我们真正想要的信息。在这个例子中只有 <code>stock</code> 和 <code>amount</code> 被解构出来。</p>
@@ -144,11 +144,11 @@
 <h2 id="1-通配符模式"><a href="#1-通配符模式" class="headerlink" title="1. 通配符模式"></a>1. 通配符模式</h2><p>通配符模式会忽略需要匹配的值，这种 <code>case</code> 下任何值都是有可能的。这和 <code>let _ = fn()</code> 一样的模式，在这个模式下， <code>_</code>  表示你将不再使用这个值。有意思的是这个模式可以匹配包括 <code>nil</code> <a href="#1">1</a>在内的所有值 。如果增加一个 <code>?</code>，它甚至可以匹配可选值：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> p: <span class="type">String</span>? = <span class="literal">nil</span></div><div class="line"><span class="keyword">switch</span> p &#123;</div><div class="line"><span class="keyword">case</span> <span class="number">_</span>?: <span class="built_in">print</span> (<span class="string">"Has String"</span>)</div><div class="line"><span class="keyword">case</span> <span class="literal">nil</span>: <span class="built_in">print</span> (<span class="string">"No String"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>就像你在交易例子里面看到的一样，它也允许你忽略需要匹配的 <code>enum</code> 或者 <code>tuples</code> 中无用的数据：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">switch</span> (<span class="number">15</span>, <span class="string">"example"</span>, <span class="number">3.14</span>) &#123;</div><div class="line">    <span class="keyword">case</span> (<span class="number">_</span>, <span class="number">_</span>, <span class="keyword">let</span> pi): <span class="built_in">print</span> (<span class="string">"pi: \(pi)"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">switch</span> (<span class="number">15</span>, <span class="string">"example"</span>, <span class="number">3.14</span>) &#123;</div><div class="line">    <span class="keyword">case</span> (<span class="number">_</span>, <span class="number">_</span>, <span class="keyword">let</span> pi): <span class="built_in">print</span> (<span class="string">"pi: <span class="subst">\(pi)</span>"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <h2 id="2-标示模式"><a href="#2-标示模式" class="headerlink" title="2. 标示模式"></a>2. 标示模式</h2><p>匹配一个具体的值。这个和 Objective-C 的 <code>switch</code> 实现是一样的：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">switch</span> <span class="number">5</span> &#123;</div><div class="line">  <span class="keyword">case</span> <span class="number">5</span>: <span class="built_in">print</span>(<span class="string">"5"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <h2 id="3-值绑定模式"><a href="#3-值绑定模式" class="headerlink" title="3. 值绑定模式"></a>3. 值绑定模式</h2><p>这种模式和通过 <code>let</code> 或者 <code>var</code> 绑定值到变量一样，但是只能用在 <code>switch</code> 中。因为你之前已经见到过，所以我只给出一个非常简单的例子：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">switch</span> (<span class="number">4</span>, <span class="number">5</span>) &#123;</div><div class="line">  <span class="keyword">case</span> <span class="keyword">let</span> (x, y): <span class="built_in">print</span>(<span class="string">"\(x) \(y)"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">switch</span> (<span class="number">4</span>, <span class="number">5</span>) &#123;</div><div class="line">  <span class="keyword">case</span> <span class="keyword">let</span> (x, y): <span class="built_in">print</span>(<span class="string">"<span class="subst">\(x)</span> <span class="subst">\(y)</span>"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <h2 id="4-元组模式"><a href="#4-元组模式" class="headerlink" title="4. 元组模式"></a>4. 元组模式</h2><p><a href="http://appventure.me/2015/07/19/tuples-swift-advanced-usage-best-practices/" target="_blank" rel="external">关于元组我已经写了一整篇博文</a>，这篇博文所提供的信息远远比这里多，但是我还是在这里给出一个简短的例子：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> age = <span class="number">23</span></div><div class="line"><span class="keyword">let</span> job: <span class="type">String</span>? = <span class="string">"Operator"</span></div><div class="line"><span class="keyword">let</span> payload: <span class="type">AnyObject</span> = <span class="type">NSDictionary</span>()</div><div class="line"></div><div class="line"><span class="keyword">switch</span> (age, job, payload) &#123;</div><div class="line">  <span class="keyword">case</span> (<span class="keyword">let</span> age, <span class="number">_</span>?, <span class="number">_</span> <span class="keyword">as</span> <span class="type">NSDictionary</span>):</div><div class="line">  <span class="built_in">print</span>(age)</div><div class="line">  <span class="keyword">default</span>: ()</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>在这里，我们把 3 个值结合放到一个元组中（假想它们是通过调用不同的 API 得到的），然后一口气匹配它们，注意这个模式完成了三件事情：</p>
@@ -190,15 +190,15 @@
 <h2 id="fallthrough，break-和标签"><a href="#fallthrough，break-和标签" class="headerlink" title="fallthrough，break 和标签"></a>fallthrough，break 和标签</h2><p>下面的内容和模式匹配没有直接关系，仅仅是和 <code>switch</code> 关键词有关，所以我就简单说了。和 C/C++/Objective-C 不一样的是：<code>switch cases</code> 不会自动进入下一个 <code>case</code>，这也是为什么 Swift 不需要给每个 <code>case</code> 都写上 <code>break</code>。你可以选择使用 <code>fallthrough</code> 关键词来实现传统的自动进入下一个 <code>case</code> 的行为。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">switch</span> <span class="number">5</span> &#123;</div><div class="line">   <span class="keyword">case</span> <span class="number">5</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"Is 5"</span>)</div><div class="line">    <span class="keyword">fallthrough</span></div><div class="line">   <span class="keyword">default</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"Is a number"</span>)</div><div class="line">&#125;</div><div class="line"><span class="comment">// 会在命令行输出: "Is 5" "Is a number"</span></div></pre></td></tr></table></figure>
 <p>另外，你可以使用 <code>break</code> 来提前跳出 <code>switch</code> 语句。既然不会默认进入下一个 <code>case</code>，为什么还需要这么做呢？比如你知道在一个 <code>case</code> 中有一个必须的要求是不满足的，这样你就不能继续执行这个 <code>case</code> 了：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> userType = <span class="string">"system"</span></div><div class="line"><span class="keyword">let</span> userID = <span class="number">10</span></div><div class="line"><span class="keyword">switch</span> (userType, userID)  &#123;</div><div class="line">   <span class="keyword">case</span> (<span class="string">"system"</span>, <span class="number">_</span>):</div><div class="line">     <span class="keyword">guard</span> <span class="keyword">let</span> userData = getSystemUser(userID) <span class="keyword">else</span> &#123; <span class="keyword">break</span> &#125;</div><div class="line">     <span class="built_in">print</span>(<span class="string">"user info: \(userData)"</span>)</div><div class="line">     insertIntoRemoteDB(userData)</div><div class="line">   <span class="keyword">default</span>: ()</div><div class="line">&#125;</div><div class="line">... 其他你需要执行的代码</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> userType = <span class="string">"system"</span></div><div class="line"><span class="keyword">let</span> userID = <span class="number">10</span></div><div class="line"><span class="keyword">switch</span> (userType, userID)  &#123;</div><div class="line">   <span class="keyword">case</span> (<span class="string">"system"</span>, <span class="number">_</span>):</div><div class="line">     <span class="keyword">guard</span> <span class="keyword">let</span> userData = getSystemUser(userID) <span class="keyword">else</span> &#123; <span class="keyword">break</span> &#125;</div><div class="line">     <span class="built_in">print</span>(<span class="string">"user info: <span class="subst">\(userData)</span>"</span>)</div><div class="line">     insertIntoRemoteDB(userData)</div><div class="line">   <span class="keyword">default</span>: ()</div><div class="line">&#125;</div><div class="line">... 其他你需要执行的代码</div></pre></td></tr></table></figure>
 <p>在这段代码中，当 <code>getSystemUser</code> 返回的结果是 <code>nil</code> 时你不想再继续调用 <code>insertIntoRemoteData</code>。当然，你可以在这里使用 <code>if let</code>，但是如果多个这样的情况结合到一起的时候，很快你就会得到一堆可怕丑陋的 <code>if lets</code> 嵌套代码。</p>
 <p>但是如果你是在一个 <code>while</code> 循环中执行你的 <code>switch</code> 语句，然后你想跳出循环，而不是 <code>switch</code> 的时候，你需要怎么做呢？对与这种情况， Swift 允许你定义一个 <code>labels</code> ，然后 <code>break</code> 或者 <code>continue</code> 到这个 <code>labels</code>：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">gameLoop: <span class="keyword">while</span> <span class="literal">true</span> &#123;</div><div class="line">  <span class="keyword">switch</span> state() &#123;</div><div class="line">     <span class="keyword">case</span> .<span class="type">Waiting</span>: <span class="keyword">continue</span> gameLoop</div><div class="line">     <span class="keyword">case</span> .<span class="type">Done</span>: calculateNextState()</div><div class="line">     <span class="keyword">case</span> .<span class="type">GameOver</span>: <span class="keyword">break</span> gameLoop</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>我们已经讨论过 <code>switch</code> 和模式匹配的语法和实现细节。现在，让我们来看一些（多少有点）有趣的真实案例。</p>
 <h1 id="真实案例"><a href="#真实案例" class="headerlink" title="真实案例"></a>真实案例</h1><h2 id="可选值"><a href="#可选值" class="headerlink" title="可选值"></a>可选值</h2><p><a href="http://appventure.me/2014/06/13/swift-optionals-made-simple/" target="_blank" rel="external">对可选值进行解包的方式有很多种</a>，模式匹配就是其中一种。可能到现在这种方法你已经用得非常频繁了，但还是给一个简短的例子吧：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> result: <span class="type">String</span>? = secretMethod()</div><div class="line"><span class="keyword">switch</span> result &#123;</div><div class="line"><span class="keyword">case</span> .<span class="type">None</span>:</div><div class="line">    <span class="built_in">println</span>(<span class="string">"is nothing"</span>)</div><div class="line"><span class="keyword">case</span> <span class="keyword">let</span> a:</div><div class="line">    <span class="built_in">println</span>(<span class="string">"\(a) is a value"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> result: <span class="type">String</span>? = secretMethod()</div><div class="line"><span class="keyword">switch</span> result &#123;</div><div class="line"><span class="keyword">case</span> .<span class="type">None</span>:</div><div class="line">    <span class="built_in">println</span>(<span class="string">"is nothing"</span>)</div><div class="line"><span class="keyword">case</span> <span class="keyword">let</span> a:</div><div class="line">    <span class="built_in">println</span>(<span class="string">"<span class="subst">\(a)</span> is a value"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>如果是 Swift 2.0 的话，这会更简单：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> result: <span class="type">String</span>? = secretMethod()</div><div class="line"><span class="keyword">switch</span> result &#123;</div><div class="line"><span class="keyword">case</span> <span class="literal">nil</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"is nothing"</span>)</div><div class="line"><span class="keyword">case</span> <span class="keyword">let</span> a?:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"\(a) is a value"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> result: <span class="type">String</span>? = secretMethod()</div><div class="line"><span class="keyword">switch</span> result &#123;</div><div class="line"><span class="keyword">case</span> <span class="literal">nil</span>:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"is nothing"</span>)</div><div class="line"><span class="keyword">case</span> <span class="keyword">let</span> a?:</div><div class="line">    <span class="built_in">print</span>(<span class="string">"<span class="subst">\(a)</span> is a value"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>正如你所见，<code>result</code> 可以是一个字符串，但是它也可能是 <code>nil</code>，因为它是 <code>optional</code> 值。通过对 <code>result</code> 执行 <code>switch</code>。我们可以确定它是 <code>.None</code> 或者是一个确定的值。更进一步，如果他是一个确定的值，我们可以在 <code>a</code> 这种情况下马上把这个值绑定到一个变量。这段代码代码的优美之处在于：变量 <code>result</code> 可能存在的两种状态被非常明显的区分开来。</p>
 <h2 id="类型匹配"><a href="#类型匹配" class="headerlink" title="类型匹配"></a>类型匹配</h2><p>做为强类型语言，Swift 通常不会像 Objective-C 那样经常需要运行时类型检查。然而，当你需要与传统的 Objective-C 代码交互时（<a href="https://netguru.co/blog/objective-c-generics" target="_blank" rel="external">这还没有更新到简单泛型的反射一文中</a>），那你就经常会碰到需要做类型检查的代码。假想你得到了一个包含 <code>NSString</code> 和 <code>NSNumber</code> 元素的数组：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> u = <span class="type">NSArray</span>(array: [<span class="type">NSString</span>(string: <span class="string">"String1"</span>), <span class="type">NSNumber</span>(int: <span class="number">20</span>), <span class="type">NSNumber</span>(int: <span class="number">40</span>)])</div></pre></td></tr></table></figure>
@@ -424,7 +424,7 @@
 		  
 		
 		  
-			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
 		  
 		
 		  
@@ -585,7 +585,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>72</sup></a></li>
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>73</sup></a></li>
 			
 		
 			
@@ -593,11 +593,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
 			
 		
 			
@@ -617,15 +617,15 @@
 			
 		
 			
-				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
 			
 		
 			
 				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
@@ -649,7 +649,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
 			
 		
 			

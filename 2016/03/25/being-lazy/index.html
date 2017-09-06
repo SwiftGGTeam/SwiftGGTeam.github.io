@@ -137,7 +137,7 @@
 <p>这段代码会先打印出 <code>Hello</code>，然后是 <code>Global constant initialized</code> 和 <code>42</code>，接下来是 <code>Type constant initialized</code> 和 <code>Felix</code>，最后是 <code>Bye</code>；证明了 <code>foo</code> 和 <code>Cat.defaultName</code> 这两个常量只在被访问时才被创建，而非初始化时创建<sup>3</sup>。</p>
 <p><img src="/img/articles/being-lazy/lazy-cat-on-leash.gif1458869119.3902402" alt=""></p>
 <p><em>⚠️别把这个和class或结构体里面的实例属性的情况搞混了。如果你声明一个<code>struct Foo { let bar = Bar() }</code>，那 <code>bar</code> 这个实例属性会在一个 <code>Foo</code> 实例被创建的时候就被计算出来（作为其初始化的一部分），而不是以惰性的形式。</em></p>
-<h2 id="另一个例子：Sequences"><a href="#另一个例子：Sequences" class="headerlink" title="另一个例子：Sequences"></a>另一个例子：Sequences</h2><p>我们再举一个例子，这次是 sequence（序列）/ <code>Array</code>，以及一些高阶函数<sup>4</sup>，比如 <code>map</code>：<br><figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">increment</span><span class="params">(x: Int)</span></span> -&gt; <span class="type">Int</span> &#123;</div><div class="line">  <span class="built_in">print</span>(<span class="string">"Computing next value of \(x)"</span>)</div><div class="line">  <span class="keyword">return</span> x+<span class="number">1</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">let</span> array = <span class="type">Array</span>(<span class="number">0</span>..&lt;<span class="number">1000</span>)</div><div class="line"><span class="keyword">let</span> incArray = array.<span class="built_in">map</span>(increment)</div><div class="line"><span class="built_in">print</span>(<span class="string">"Result:"</span>)</div><div class="line"><span class="built_in">print</span>(incArray[<span class="number">0</span>], incArray[<span class="number">4</span>])</div></pre></td></tr></table></figure></p>
+<h2 id="另一个例子：Sequences"><a href="#另一个例子：Sequences" class="headerlink" title="另一个例子：Sequences"></a>另一个例子：Sequences</h2><p>我们再举一个例子，这次是 sequence（序列）/ <code>Array</code>，以及一些高阶函数<sup>4</sup>，比如 <code>map</code>：<br><figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">increment</span><span class="params">(x: Int)</span></span> -&gt; <span class="type">Int</span> &#123;</div><div class="line">  <span class="built_in">print</span>(<span class="string">"Computing next value of <span class="subst">\(x)</span>"</span>)</div><div class="line">  <span class="keyword">return</span> x+<span class="number">1</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">let</span> array = <span class="type">Array</span>(<span class="number">0</span>..&lt;<span class="number">1000</span>)</div><div class="line"><span class="keyword">let</span> incArray = array.<span class="built_in">map</span>(increment)</div><div class="line"><span class="built_in">print</span>(<span class="string">"Result:"</span>)</div><div class="line"><span class="built_in">print</span>(incArray[<span class="number">0</span>], incArray[<span class="number">4</span>])</div></pre></td></tr></table></figure></p>
 <p>对这段代码来说，在我们访问 <code>incArray</code> 的值<strong>之前</strong>，<strong>所有的输出值都被计算出来了</strong>。所以在 <code>print(&quot;Result:&quot;)</code>被执行之前你会看到有 1000 行 <code>Computing next value of …</code>！即使我们只读了<code>[0]</code>和<code>[4]</code>这两个条目，根本就没关心其他剩下的… 想想假如我们用的函数计算量比 <code>increment</code> 更大会怎样！</p>
 <h2 id="Lazy-sequences（惰性序列）"><a href="#Lazy-sequences（惰性序列）" class="headerlink" title="Lazy sequences（惰性序列）"></a>Lazy sequences（惰性序列）</h2><p><img src="/img/articles/being-lazy/12401458869121.470778" alt=""></p>
 <p>OK，我们来用另一种形式的 <code>lazy</code> 解决上面的问题。</p>
@@ -149,7 +149,7 @@
 <p>…证明了只是在那些值被使用时才调用 <code>increment</code> 函数，而不是调用 <code>map</code> 的时候。并且只对那些被访问到的值使用，而不是对整个数组里面一千个值都使用！🎉</p>
 <p>这下效率提高了很多！对那些涉及到庞大的序列（比如这个有 1000 个元素的数组）、以及高计算度闭包的情景来说，使用这个技巧会带来质变。<sup>6</sup></p>
 <h2 id="将惰性序列级联"><a href="#将惰性序列级联" class="headerlink" title="将惰性序列级联"></a>将惰性序列级联</h2><p>有关惰性序列，最后一个小妙招就是你可以像 <a href="http://swift.gg/2015/10/30/lets-talk-about-monads/">monad</a> 那样，把高阶函数的调用拼接起来。比如你可以让一个惰性序列以这种方式调用 <code>map</code>（或者 <code>flatMap</code>）：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">double</span><span class="params">(x: Int)</span></span> -&gt; <span class="type">Int</span> &#123;</div><div class="line">  <span class="built_in">print</span>(<span class="string">"Computing double value of \(x)…"</span>)</div><div class="line">  <span class="keyword">return</span> <span class="number">2</span>*x</div><div class="line">&#125;</div><div class="line"><span class="keyword">let</span> doubleArray = array.<span class="built_in">lazy</span>.<span class="built_in">map</span>(increment).<span class="built_in">map</span>(double)</div><div class="line"><span class="built_in">print</span>(doubleArray[<span class="number">3</span>])</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">double</span><span class="params">(x: Int)</span></span> -&gt; <span class="type">Int</span> &#123;</div><div class="line">  <span class="built_in">print</span>(<span class="string">"Computing double value of <span class="subst">\(x)</span>…"</span>)</div><div class="line">  <span class="keyword">return</span> <span class="number">2</span>*x</div><div class="line">&#125;</div><div class="line"><span class="keyword">let</span> doubleArray = array.<span class="built_in">lazy</span>.<span class="built_in">map</span>(increment).<span class="built_in">map</span>(double)</div><div class="line"><span class="built_in">print</span>(doubleArray[<span class="number">3</span>])</div></pre></td></tr></table></figure>
 <p>这样只有当 <code>array[3]</code> 被访问时，<code>double(increment(array[3]))</code> 才会被执行，被访问之前不会有这个计算，数组的其他元素也不会有这个计算！</p>
 <p>与之相对，如果使用 <code>array.map(increment).map(double)[3]</code>（不带 <code>lazy</code>）会首先对整个 <code>array</code> 序列的所有元素进行计算，所有结果都计算出来之后再提取出第4个元素。更糟糕的是<strong>对数组的迭代要进行两次</strong>，每个 <code>map</code> 都会有一次。这对计算时间（computational time）来说是怎样的一种浪费！</p>
 <h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>正如那句话所说的：<code>“懒惰是人类文明进步的真正动力”</code>。</p>
@@ -299,7 +299,7 @@
 		  
 		
 		  
-			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
 		  
 		
 		  
@@ -460,7 +460,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>72</sup></a></li>
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>73</sup></a></li>
 			
 		
 			
@@ -468,11 +468,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
 			
 		
 			
@@ -492,15 +492,15 @@
 			
 		
 			
-				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
 			
 		
 			
 				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
@@ -524,7 +524,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
 			
 		
 			

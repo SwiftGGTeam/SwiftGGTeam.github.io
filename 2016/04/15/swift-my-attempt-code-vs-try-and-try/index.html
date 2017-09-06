@@ -111,7 +111,7 @@
 <p>但是，需要结合 <code>guard</code> 调用时，由于不能够在尾随闭包中将 <code>guard</code> 所需要的 <code>else</code> 闭包和 <code>attempt</code> 闭包区分开来，因此需要使用一个更为传统的参数方法。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">guard</span> <span class="keyword">let</span> fileContents = attempt(closure: &#123;</div><div class="line">    <span class="number">_</span> -&gt; [<span class="type">NSURL</span>] <span class="keyword">in</span></div><div class="line">    <span class="keyword">let</span> url = <span class="type">NSURL</span>(fileURLWithPath: <span class="string">"/Users/notarealuser"</span>)</div><div class="line">    <span class="keyword">let</span> mgr = <span class="type">NSFileManager</span>.defaultManager()</div><div class="line">    <span class="keyword">return</span> <span class="keyword">try</span> mgr.contentsOfDirectoryAtURL(</div><div class="line">            url, includingPropertiesForKeys: <span class="literal">nil</span>, </div><div class="line">            options: [])</div><div class="line">&#125;) <span class="keyword">else</span> &#123; <span class="built_in">fatalError</span>(<span class="string">"failed"</span>) &#125;</div></pre></td></tr></table></figure>
 <p><code>attempt</code> 的相关代码如下所示，您也可以在 <code>GitHub</code> 上访问内容更丰富的 <code>CoreError.swift</code> 代码实现，它当中还增加（更新）了语境化的实用工具 (<code>Contextualization Utilities</code>)。因为 <code>Swift</code> 将会采用更现代化的调试标识符，因此这种尖叫蛇式大写 (SCREAMING_SNAKE_CASE，译者注：如您所见，就是在大写单词之间加上下划线) 的常量将很快被移除。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">/// 由文件路径 (File Path)、行数 (Line Number) 和错误元组 (Error Tuple) 组成</span></div><div class="line"><span class="keyword">public</span> <span class="keyword">typealias</span> <span class="type">CommonErrorHandlerType</span> = (<span class="type">String</span>, <span class="type">Int</span>, <span class="type">ErrorType</span>) -&gt; <span class="type">Void</span></div><div class="line"></div><div class="line"><span class="comment">/// 可以打印上下文和错误的默认错误处理器</span></div><div class="line"><span class="keyword">public</span> <span class="keyword">let</span> defaultCommonErrorHandler: <span class="type">CommonErrorHandlerType</span> = &#123;</div><div class="line">    filePath, lineNumber, error <span class="keyword">in</span></div><div class="line">    <span class="keyword">let</span> trimmedFileName: <span class="type">String</span> = (filePath <span class="keyword">as</span> <span class="type">NSString</span>).lastPathComponent</div><div class="line">    <span class="built_in">print</span>(<span class="string">"Error \(trimmedFileName):\(lineNumber) \(error)"</span>)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/// 引入错误处理器来替代 `try?`</span></div><div class="line"><span class="comment">/// 默认的错误处理器将会在返回 nil 之前打印错误信息</span></div><div class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">attempt</span>&lt;T&gt;<span class="params">(</span></span></div><div class="line">file fileName: String = <span class="keyword">__FILE__</span>,</div><div class="line">line lineNumber: Int = <span class="keyword">__LINE__</span>,</div><div class="line">    crashOnError: Bool = <span class="literal">false</span>,</div><div class="line">    errorHandler: CommonErrorHandlerType = defaultCommonErrorHandler,</div><div class="line">// 感谢 http://twitter.com/Kametrixom/status/<span class="number">709809975447707648</span></div><div class="line">@noescape closure: <span class="params">()</span> <span class="keyword">throws</span> -&gt; <span class="type">T</span>) -&gt; <span class="type">T</span>? &#123; </div><div class="line"></div><div class="line"><span class="keyword">do</span> &#123;</div><div class="line"><span class="comment">// 只有当闭包成功的时候，才会返回执行，这会返回 T</span></div><div class="line"><span class="keyword">return</span> <span class="keyword">try</span> closure()</div><div class="line">        &#125; <span class="keyword">catch</span> &#123;</div><div class="line"><span class="comment">// 通过崩溃来模仿 try!</span></div><div class="line"><span class="keyword">if</span> crashOnError &#123;</div><div class="line"><span class="built_in">print</span>(<span class="string">"Fatal error \(fileName):\(lineNumber): \(error)"</span>)</div><div class="line">                <span class="built_in">fatalError</span>()</div><div class="line">            &#125;</div><div class="line"><span class="comment">// 运行错误处理器，并返回 nil</span></div><div class="line">            errorHandler(fileName, lineNumber, error)</div><div class="line"><span class="keyword">return</span> <span class="literal">nil</span></div><div class="line">        &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">/// 由文件路径 (File Path)、行数 (Line Number) 和错误元组 (Error Tuple) 组成</span></div><div class="line"><span class="keyword">public</span> <span class="keyword">typealias</span> <span class="type">CommonErrorHandlerType</span> = (<span class="type">String</span>, <span class="type">Int</span>, <span class="type">ErrorType</span>) -&gt; <span class="type">Void</span></div><div class="line"></div><div class="line"><span class="comment">/// 可以打印上下文和错误的默认错误处理器</span></div><div class="line"><span class="keyword">public</span> <span class="keyword">let</span> defaultCommonErrorHandler: <span class="type">CommonErrorHandlerType</span> = &#123;</div><div class="line">    filePath, lineNumber, error <span class="keyword">in</span></div><div class="line">    <span class="keyword">let</span> trimmedFileName: <span class="type">String</span> = (filePath <span class="keyword">as</span> <span class="type">NSString</span>).lastPathComponent</div><div class="line">    <span class="built_in">print</span>(<span class="string">"Error <span class="subst">\(trimmedFileName)</span>:<span class="subst">\(lineNumber)</span> <span class="subst">\(error)</span>"</span>)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/// 引入错误处理器来替代 `try?`</span></div><div class="line"><span class="comment">/// 默认的错误处理器将会在返回 nil 之前打印错误信息</span></div><div class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">attempt</span>&lt;T&gt;<span class="params">(</span></span></div><div class="line">file fileName: String = <span class="keyword">__FILE__</span>,</div><div class="line">line lineNumber: Int = <span class="keyword">__LINE__</span>,</div><div class="line">    crashOnError: Bool = <span class="literal">false</span>,</div><div class="line">    errorHandler: CommonErrorHandlerType = defaultCommonErrorHandler,</div><div class="line">// 感谢 http://twitter.com/Kametrixom/status/<span class="number">709809975447707648</span></div><div class="line">@noescape closure: <span class="params">()</span> <span class="keyword">throws</span> -&gt; <span class="type">T</span>) -&gt; <span class="type">T</span>? &#123; </div><div class="line"></div><div class="line"><span class="keyword">do</span> &#123;</div><div class="line"><span class="comment">// 只有当闭包成功的时候，才会返回执行，这会返回 T</span></div><div class="line"><span class="keyword">return</span> <span class="keyword">try</span> closure()</div><div class="line">        &#125; <span class="keyword">catch</span> &#123;</div><div class="line"><span class="comment">// 通过崩溃来模仿 try!</span></div><div class="line"><span class="keyword">if</span> crashOnError &#123;</div><div class="line"><span class="built_in">print</span>(<span class="string">"Fatal error <span class="subst">\(fileName)</span>:<span class="subst">\(lineNumber)</span>: <span class="subst">\(error)</span>"</span>)</div><div class="line">                <span class="built_in">fatalError</span>()</div><div class="line">            &#125;</div><div class="line"><span class="comment">// 运行错误处理器，并返回 nil</span></div><div class="line">            errorHandler(fileName, lineNumber, error)</div><div class="line"><span class="keyword">return</span> <span class="literal">nil</span></div><div class="line">        &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>一如既往，如果您发现了任何问题，或者有任何建议的话，请联系我，让我知晓。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
@@ -241,7 +241,7 @@
 		  
 		
 		  
-			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
 		  
 		
 		  
@@ -402,7 +402,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>72</sup></a></li>
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>73</sup></a></li>
 			
 		
 			
@@ -410,11 +410,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
 			
 		
 			
@@ -434,15 +434,15 @@
 			
 		
 			
-				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
 			
 		
 			
 				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
@@ -466,7 +466,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
 			
 		
 			

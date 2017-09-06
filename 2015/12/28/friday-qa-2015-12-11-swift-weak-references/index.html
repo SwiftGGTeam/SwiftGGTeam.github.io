@@ -111,7 +111,7 @@
 <p>我们希望写一个函数能够 dump 一个对象的内存内容。这个函数接受一块内存区域，将其按指针大小进行分块，并且将最终的结果转换成一个易于查看的十六进制字符串：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">contents</span><span class="params">(ptr: UnsafePointer&lt;Void&gt;, <span class="number">_</span> length: Int)</span></span> -&gt; <span class="type">String</span> &#123;</div><div class="line">    <span class="keyword">let</span> wordPtr = <span class="type">UnsafePointer</span>&lt;<span class="type">UInt</span>&gt;(ptr)</div><div class="line">    <span class="keyword">let</span> words = length / <span class="built_in">sizeof</span>(<span class="type">UInt</span>.<span class="keyword">self</span>)</div><div class="line">    <span class="keyword">let</span> wordChars = <span class="built_in">sizeof</span>(<span class="type">UInt</span>.<span class="keyword">self</span>) * <span class="number">2</span></div><div class="line"></div><div class="line">    <span class="keyword">let</span> buffer = <span class="type">UnsafeBufferPointer</span>&lt;<span class="type">UInt</span>&gt;(start: wordPtr, <span class="built_in">count</span>: words)</div><div class="line">    <span class="keyword">let</span> wordStrings = buffer.<span class="built_in">map</span>(&#123; word -&gt; <span class="type">String</span> <span class="keyword">in</span></div><div class="line">        <span class="keyword">var</span> wordString = <span class="type">String</span>(word, radix: <span class="number">16</span>)</div><div class="line">        <span class="keyword">while</span> wordString.characters.<span class="built_in">count</span> &lt; wordChars &#123;</div><div class="line">            wordString = <span class="string">"0"</span> + wordString</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> wordString</div><div class="line">    &#125;)</div><div class="line">    <span class="keyword">return</span> wordStrings.joinWithSeparator(<span class="string">" "</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>下一个函数会为一个对象创建一个 dump 函数。调用时传入一个对象，它会返回一个 dump 这个对象内容的函数。在函数内部，我们给对象保存了一个 <code>UnsafePointer</code>，而不是普通的引用。这样可以确保它不会和语言的引用计数系统发生交互。它允许我们可以在这个对象被销毁之后 dump 出它的内存，后面我们会介绍。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">dumperFunc</span><span class="params">(obj: AnyObject)</span></span> -&gt; (<span class="type">Void</span> -&gt; <span class="type">String</span>) &#123;</div><div class="line">    <span class="keyword">let</span> objString = <span class="type">String</span>(obj)</div><div class="line">    <span class="keyword">let</span> ptr = <span class="built_in">unsafeBitCast</span>(obj, <span class="type">UnsafePointer</span>&lt;<span class="type">Void</span>&gt;.<span class="keyword">self</span>)</div><div class="line">    <span class="keyword">let</span> length = class_getInstanceSize(obj.<span class="keyword">dynamicType</span>)</div><div class="line">    <span class="keyword">return</span> &#123;</div><div class="line">        <span class="keyword">let</span> bytes = contents(ptr, length)</div><div class="line">        <span class="keyword">return</span> <span class="string">"\(objString) \(ptr): \(bytes)"</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">dumperFunc</span><span class="params">(obj: AnyObject)</span></span> -&gt; (<span class="type">Void</span> -&gt; <span class="type">String</span>) &#123;</div><div class="line">    <span class="keyword">let</span> objString = <span class="type">String</span>(obj)</div><div class="line">    <span class="keyword">let</span> ptr = <span class="built_in">unsafeBitCast</span>(obj, <span class="type">UnsafePointer</span>&lt;<span class="type">Void</span>&gt;.<span class="keyword">self</span>)</div><div class="line">    <span class="keyword">let</span> length = class_getInstanceSize(obj.<span class="keyword">dynamicType</span>)</div><div class="line">    <span class="keyword">return</span> &#123;</div><div class="line">        <span class="keyword">let</span> bytes = contents(ptr, length)</div><div class="line">        <span class="keyword">return</span> <span class="string">"<span class="subst">\(objString)</span> <span class="subst">\(ptr)</span>: <span class="subst">\(bytes)</span>"</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>下面是一个包含弱引用变量的类，后面我会观察这个弱引用。我在弱引用变量的前后分别添加了一个 dummy 变量，以便于我们区分弱引用在 dump 出来的内存结构中的位置：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">WeakReferer</span> </span>&#123;</div><div class="line">    <span class="keyword">var</span> dummy1 = <span class="number">0x1234321012343210</span></div><div class="line">    <span class="keyword">weak</span> <span class="keyword">var</span> target: <span class="type">WeakTarget</span>?</div><div class="line">    <span class="keyword">var</span> dummy2: <span class="type">UInt</span> = <span class="number">0xabcdefabcdefabcd</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>让我们试一下! 我们先创建一个引用，然后 dump 它：</p>
@@ -266,10 +266,10 @@
 <nav class="article-nav clearfix">
  
  <div class="prev" >
- <a href="/2015/12/29/foursquare-realm-swift/" title="如何使用 Swift、Foursquare API 及 Realm 构建一款 Coffee Shop 应用">
+ <a href="/2015/12/29/swift-open-source/" title="聚焦 Swift #0">
   <strong>上一篇</strong><br/>
   <span>
-  如何使用 Swift、Foursquare API 及 Realm 构建一款 Coffee Shop 应用</span>
+  聚焦 Swift #0</span>
 </a>
 </div>
 
@@ -355,7 +355,7 @@
 		  
 		
 		  
-			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
 		  
 		
 		  
@@ -516,7 +516,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>72</sup></a></li>
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>73</sup></a></li>
 			
 		
 			
@@ -524,11 +524,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
 			
 		
 			
@@ -548,15 +548,15 @@
 			
 		
 			
-				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
 			
 		
 			
 				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
@@ -580,7 +580,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
 			
 		
 			

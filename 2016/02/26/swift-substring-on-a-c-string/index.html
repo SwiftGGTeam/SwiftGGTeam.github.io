@@ -106,7 +106,7 @@
 <p>我的意思是，既然 Python 可以这样用：<code>hello = helloWorld[0:5]</code>，为什么在 Swift 中不可以这样用呢？</p>
 <p>就像我们说的，Swift 2 很认真地听取了 Joel 在 2003 年提出的那些建议，我们所有人都（痛苦地）发现字符串完全变样了。<a href="https://www.mikeash.com/pyblog/friday-qa-2015-11-06-why-is-swifts-string-api-so-hard.html" target="_blank" rel="external">mikeash.com</a> 很好地总结了这些变化，因此对我来说，没有必要再去比较字符 (Character) 和字母 (Grapheme) 的区别。而当我「了解」到这点后，毫无疑问加重了我的记忆量。为了从一个（我已经知道）ASCII 编码的 <code>const char*</code>  C 语言风格字符串中截取子串，我需要努力记住那些需要调用的黑科技代码。因此，我不会费心费力地去记这些东西，而是把它们写在这里，不仅是为了我，也是为了大家。</p>
 <h3 id="简单的子串示例"><a href="#简单的子串示例" class="headerlink" title="简单的子串示例"></a>简单的子串示例</h3><p>我一直在寻找一种方法，能够在我的 Day-to-day Linux 任务中加入更多的 Swift 编程机会。我认为这是使用快速脚本 (quick script) 和面向 DevOps 的任务来替代 <a href="https://www.perl.org/" target="_blank" rel="external">其他</a> <a href="https://www.python.org/" target="_blank" rel="external">编程</a> <a href="https://www.ruby-lang.org/en/" target="_blank" rel="external">语言</a> 的绝佳机会。在这种情况下，我希望有一个快捷的方法能够打印出一个 Swift 开源项目的所有 git 修订版本 (revision)，下面是我的代码：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> Glibc</div><div class="line"> </div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">getGitRevision</span><span class="params">(dirname:String)</span></span> -&gt; <span class="type">String</span> &#123;</div><div class="line">  <span class="keyword">let</span> <span class="type">BUFSIZE</span> = <span class="number">128</span></div><div class="line">  <span class="keyword">let</span> cwd     = <span class="type">String</span>.fromCString(getcwd(<span class="literal">nil</span>, <span class="number">0</span>))!</div><div class="line">  <span class="keyword">var</span> rc      = chdir(dirname)</div><div class="line">  </div><div class="line">  <span class="keyword">guard</span> rc == <span class="number">0</span> <span class="keyword">else</span> &#123;</div><div class="line">    <span class="keyword">return</span> <span class="string">"ERROR"</span></div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="keyword">var</span> rev  = <span class="string">""</span></div><div class="line">  <span class="keyword">let</span> pipe = popen(<span class="string">"/usr/bin/git rev-parse HEAD"</span>, <span class="string">"r"</span>)</div><div class="line">  <span class="keyword">var</span> buf  = [<span class="type">CChar</span>](<span class="built_in">count</span>:<span class="type">BUFSIZE</span>, repeatedValue:<span class="type">CChar</span>(<span class="number">0</span>))</div><div class="line">  <span class="keyword">while</span> fgets(&amp;buf, <span class="type">Int32</span>(<span class="type">BUFSIZE</span>), pipe) != <span class="literal">nil</span> &#123;</div><div class="line">    rev = <span class="type">String</span>.fromCString(buf)!</div><div class="line">  &#125;</div><div class="line">  rev = rev[rev.startIndex...rev.startIndex.advancedBy(<span class="number">9</span>)]</div><div class="line"> </div><div class="line">  chdir(cwd)</div><div class="line"> </div><div class="line">  <span class="keyword">return</span> rev</div><div class="line">&#125;</div><div class="line"> </div><div class="line"><span class="keyword">let</span> dirs = [<span class="string">"swift"</span>, <span class="string">"llvm"</span>, <span class="string">"clang"</span>, <span class="string">"lldb"</span>, <span class="string">"cmark"</span>, <span class="string">"llbuild"</span>, <span class="string">"swiftpm"</span>, <span class="string">"swift-corelibs-xctest"</span>, <span class="string">"swift-corelibs-foundation"</span>, <span class="string">"swift-integration-tests"</span>]</div><div class="line"> </div><div class="line"><span class="keyword">for</span> dir <span class="keyword">in</span> dirs &#123;</div><div class="line">  <span class="keyword">let</span> rev = getGitRevision(dir)</div><div class="line">  <span class="built_in">print</span>(<span class="string">"\(dir):\(rev)"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> Glibc</div><div class="line"> </div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">getGitRevision</span><span class="params">(dirname:String)</span></span> -&gt; <span class="type">String</span> &#123;</div><div class="line">  <span class="keyword">let</span> <span class="type">BUFSIZE</span> = <span class="number">128</span></div><div class="line">  <span class="keyword">let</span> cwd     = <span class="type">String</span>.fromCString(getcwd(<span class="literal">nil</span>, <span class="number">0</span>))!</div><div class="line">  <span class="keyword">var</span> rc      = chdir(dirname)</div><div class="line">  </div><div class="line">  <span class="keyword">guard</span> rc == <span class="number">0</span> <span class="keyword">else</span> &#123;</div><div class="line">    <span class="keyword">return</span> <span class="string">"ERROR"</span></div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="keyword">var</span> rev  = <span class="string">""</span></div><div class="line">  <span class="keyword">let</span> pipe = popen(<span class="string">"/usr/bin/git rev-parse HEAD"</span>, <span class="string">"r"</span>)</div><div class="line">  <span class="keyword">var</span> buf  = [<span class="type">CChar</span>](<span class="built_in">count</span>:<span class="type">BUFSIZE</span>, repeatedValue:<span class="type">CChar</span>(<span class="number">0</span>))</div><div class="line">  <span class="keyword">while</span> fgets(&amp;buf, <span class="type">Int32</span>(<span class="type">BUFSIZE</span>), pipe) != <span class="literal">nil</span> &#123;</div><div class="line">    rev = <span class="type">String</span>.fromCString(buf)!</div><div class="line">  &#125;</div><div class="line">  rev = rev[rev.startIndex...rev.startIndex.advancedBy(<span class="number">9</span>)]</div><div class="line"> </div><div class="line">  chdir(cwd)</div><div class="line"> </div><div class="line">  <span class="keyword">return</span> rev</div><div class="line">&#125;</div><div class="line"> </div><div class="line"><span class="keyword">let</span> dirs = [<span class="string">"swift"</span>, <span class="string">"llvm"</span>, <span class="string">"clang"</span>, <span class="string">"lldb"</span>, <span class="string">"cmark"</span>, <span class="string">"llbuild"</span>, <span class="string">"swiftpm"</span>, <span class="string">"swift-corelibs-xctest"</span>, <span class="string">"swift-corelibs-foundation"</span>, <span class="string">"swift-integration-tests"</span>]</div><div class="line"> </div><div class="line"><span class="keyword">for</span> dir <span class="keyword">in</span> dirs &#123;</div><div class="line">  <span class="keyword">let</span> rev = getGitRevision(dir)</div><div class="line">  <span class="built_in">print</span>(<span class="string">"<span class="subst">\(dir)</span>:<span class="subst">\(rev)</span>"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>我用 <code>rev = rev[rev.startIndex...rev.startIndex.advancedBy(9)]</code> 来获取 Git 修订版本哈希值的前 10 个字符，这实在是太啰嗦了，但是如果你正在处理的是 C 语言风格的字符串，那它可以很好地完成任务。</p>
 <h3 id="扩展"><a href="#扩展" class="headerlink" title="扩展"></a>扩展</h3><p>幸运的是，Swift 支持扩展，这个绝佳的特性允许你向不是你写的、并且无法访问源代码的类中添加一些方法。很多人在 Gist 上发布了类似的扩展代码，给访问子字符串添加一个小小的语法糖：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">String</span> </span>&#123;</div><div class="line">  <span class="keyword">subscript</span> (r: <span class="type">Range</span>&lt;<span class="type">Int</span>&gt;) -&gt; <span class="type">String</span> &#123;</div><div class="line">    <span class="keyword">get</span> &#123;</div><div class="line">      <span class="keyword">let</span> startIndex = <span class="keyword">self</span>.startIndex.advancedBy(r.startIndex)</div><div class="line">      <span class="keyword">let</span> endIndex   = <span class="keyword">self</span>.startIndex.advancedBy(r.endIndex)</div><div class="line">            </div><div class="line">      <span class="keyword">return</span> <span class="keyword">self</span>[<span class="type">Range</span>(start: startIndex, end: endIndex)]</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
@@ -241,7 +241,7 @@
 		  
 		
 		  
-			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>28</sup></a></li>
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
 		  
 		
 		  
@@ -402,7 +402,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>72</sup></a></li>
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>73</sup></a></li>
 			
 		
 			
@@ -410,11 +410,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
 			
 		
 			
@@ -434,15 +434,15 @@
 			
 		
 			
-				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
 			
 		
 			
 				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
@@ -466,7 +466,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
 			
 		
 			
