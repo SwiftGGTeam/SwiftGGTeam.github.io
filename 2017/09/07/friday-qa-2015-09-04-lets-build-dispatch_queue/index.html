@@ -1,0 +1,1015 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>从零构建 Dispatch Queue | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Mike Ash，原文链接，原文日期：2015-09-04译者：智多芯；校对：Crystal Sun；定稿：CMB   Grand Central Dispatch 是 Apple 公司最近几年推出的重量级 API 之一。在本次“从零构建”系列文章中，我们将探索一个由 Rob Rix 建议的主题：从零构建一个具备基本功能的 Dispatch Queue。">
+<meta name="keywords" content="iOS 开发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="从零构建 Dispatch Queue">
+<meta property="og:url" content="https://swift.gg/2017/09/07/friday-qa-2015-09-04-lets-build-dispatch_queue/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Mike Ash，原文链接，原文日期：2015-09-04译者：智多芯；校对：Crystal Sun；定稿：CMB   Grand Central Dispatch 是 Apple 公司最近几年推出的重量级 API 之一。在本次“从零构建”系列文章中，我们将探索一个由 Rob Rix 建议的主题：从零构建一个具备基本功能的 Dispatch Queue。">
+<meta property="og:updated_time" content="2017-09-07T06:06:49.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="从零构建 Dispatch Queue">
+<meta name="twitter:description" content="作者：Mike Ash，原文链接，原文日期：2015-09-04译者：智多芯；校对：Crystal Sun；定稿：CMB   Grand Central Dispatch 是 Apple 公司最近几年推出的重量级 API 之一。在本次“从零构建”系列文章中，我们将探索一个由 Rob Rix 建议的主题：从零构建一个具备基本功能的 Dispatch Queue。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2017/09/07/friday-qa-2015-09-04-lets-build-dispatch_queue/" target="_blank" title="从零构建 Dispatch Queue" itemprop="url">从零构建 Dispatch Queue</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2017-09-06T16:00:00.000Z" itemprop="datePublished">2017-09-07</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Mike Ash，<a href="https://www.mikeash.com/pyblog/friday-qa-2015-09-04-lets-build-dispatch_queue.html" target="_blank" rel="external">原文链接</a>，原文日期：2015-09-04<br>译者：<a href="http://hulizhen.me" target="_blank" rel="external">智多芯</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>Grand Central Dispatch 是 Apple 公司最近几年推出的重量级 API 之一。在本次“从零构建”系列文章中，我们将探索一个由 Rob Rix 建议的主题：从零构建一个具备基本功能的 Dispatch Queue。</p>
+<a id="more"></a>
+<h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><p>分发队列（Dispatch Queue）是一个保存了多个基于全局线程池的任务（译者注：其实就是一系列的代码块）的队列。提交到队列的任务通常会被放到一个后台线程异步执行。为了使整个系统运作得更高效，所有的线程共享一个后台线程池。</p>
+<p>这就是下面将要实现的 API 核心功能。为了简单起见，本文会略去很多 GCD 提供的额外功能。例如，全局线程池中的线程数量会随着任务总量和系统的 CPU 使用率进行动态调整。在已有一堆耗 CPU 的任务在运行的情形下，如果此时再提交一个任务，GCD 不会再为该任务创建新的线程。因为此时 CPU 已经满负荷运行了，再创建新的线程只会导致系统更低效。下面我会直接将线程数量硬编码在代码中。同样，其他的额外功能，如目标队列和并行队列屏障，也会一并略过。</p>
+<p>本文会把重点放在实现分发队列的核心功能上：基于一个共享的全局线程池实现串行/并行及同步/异步派发任务。</p>
+<h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><p>和往常一样，本文中的代码可在 GitHub 上获取：</p>
+<p><a href="https://github.com/mikeash/MADispatchQueue" target="_blank" rel="external">https://github.com/mikeash/MADispatchQueue</a></p>
+<p>可以边读本文边敲代码，也可以自己探索。</p>
+<h3 id="接口"><a href="#接口" class="headerlink" title="接口"></a>接口</h3><p>GCD 提供的是一系列的 C 语言 API。虽然在最近发布的 OS 上 Apple 已经将 GCD 对象转成了 Objective-C 对象，但 API 还是保持着纯 C 语言接口（还新增了对 Block 支持）。这对底层 API 来说其实是好事，提供的接口也十分简洁。但本文将采用 Objective-C 语言来实现。</p>
+<p>本文实现的 Objective-C 类叫做 <code>MADispatchQueue</code>，它只提供了四个方法：</p>
+<ol>
+<li>一个获取共享的全局队列的方法。GCD 有多个不同优先级的全局队列，但为了简单起见，我们只有一个全局队列。</li>
+<li>一个构造器，可通过它创建并行或串行队列。</li>
+<li>一个异步派发方法。</li>
+<li>一个同步派发方法。</li>
+</ol>
+<p>接口的声明如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">@interface MADispatchQueue : NSObject</div><div class="line"></div><div class="line">+ (MADispatchQueue *)globalQueue;</div><div class="line"></div><div class="line">- (id)initSerial: (BOOL)serial;</div><div class="line"></div><div class="line">- (void)dispatchAsync: (dispatch_block_t)block;</div><div class="line">- (void)dispatchSync: (dispatch_block_t)block;</div><div class="line"></div><div class="line">@end</div></pre></td></tr></table></figure>
+<p>本文的目标就是实现这些方法的功能。</p>
+<h3 id="线程池接口"><a href="#线程池接口" class="headerlink" title="线程池接口"></a>线程池接口</h3><p>用来支撑分发队列的线程池有着相对简洁的接口，该线程池负责执行被提交的作业。分发队列负责在合适的时机将已入队的作业提交到线程池。</p>
+<p>线程池只有一个简单的任务：提交作业并执行。因此，它就只有一个方法：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">@interface MAThreadPool : NSObject</div><div class="line"></div><div class="line">- (void)addBlock: (dispatch_block_t)block;</div><div class="line"></div><div class="line">@end</div></pre></td></tr></table></figure>
+<p>因为这是整个线程池的核心，所以接下来先把它实现了。</p>
+<h3 id="线程池实现"><a href="#线程池实现" class="headerlink" title="线程池实现"></a>线程池实现</h3><p>首先看下实例变量。线程池可能会被外部或内部的多个线程同时访问，因此必须保证其线程安全。虽然 GCD 尽可能地使用了快速原子操作以保证线程安全，但本文还是采用古老的锁方案。除了保证读写操作互斥外，该锁还要支持 <code>wait</code> 和 <code>signal</code> 操作，因此使用了 <code>NSCondition</code>，而不是原生的 <code>NSLock</code>。如果你不熟悉 <code>NSCondition</code> 也没关系，实际上它只是把锁和一个条件变量封装在一起而已：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">NSCondition *_lock;</div></pre></td></tr></table></figure>
+<p>为了确定何时启动新的线程，需要知道当前线程池中有多少线程，有多少线程正在运行，线程池最多支持多少线程：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">NSUInteger _threadCount;</div><div class="line">NSUInteger _activeThreadCount;</div><div class="line">NSUInteger _threadCountLimit;</div></pre></td></tr></table></figure>
+<p>最后是一个保存了多个代码块的数组。这里使用了 <code>NSMutableArray</code> 来实现队列，通过追加新的代码块到末尾来实现入队操作，通过删除开头的代码块来实现出队操作。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">NSMutableArray *_blocks;</div></pre></td></tr></table></figure>
+<p>初始化方法很简单，只是初始化锁、代码块数组，最后将线程数的最大值设置成 123（随机选择的数目）：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">- (id)init &#123;</div><div class="line">    if((self = [super init])) &#123;</div><div class="line">        _lock = [[NSCondition alloc] init];</div><div class="line">        _blocks = [[NSMutableArray alloc] init];</div><div class="line">        _threadCountLimit = 128;</div><div class="line">    &#125;</div><div class="line">    return self;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>工作线程中主要是一个无限循环。当代码块数组为空时，线程进入休眠并等待。一旦数组不为空，该代码块立即出队并开始执行。代码块执行开始后，当前活跃线程数加一；代码块执行完成后，当前活跃线程数减一：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">- (void)workerThreadLoop: (id)ignore &#123;</div></pre></td></tr></table></figure>
+<p>在进入循环之前先加锁，至于为什么这么做，请继续往下看：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">[_lock lock];</div></pre></td></tr></table></figure>
+<p>接着进入无限循环：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">while (1) &#123;</div></pre></td></tr></table></figure>
+<p>如果队列为空，则等待：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">while ([_blocks count] == 0) &#123;</div><div class="line">   	[_lock wait];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里要注意的是，上面代码是在一个循环中，而不仅仅只是一个 <code>if</code> 语句。这么做是因为<a href="https://en.wikipedia.org/wiki/Spurious_wakeup" target="_blank" rel="external">假性唤醒</a>。简单地说，即使没有发送<code>signal</code>信号，<code>wait</code> 也可能提前返回。为了让代码产生预期的行为，<code>wait</code> 返回时每次都要检查代码块的数量。</p>
+<p>一旦有了可用代码块，立即出队：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">dispatch_block_t block = [_blocks firstObject];</div><div class="line">[_blocks removeObjectAtIndex: 0];</div></pre></td></tr></table></figure>
+<p>将当前活跃线程数加一，表明当前线程正忙：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">_activeThreadCount++;</div></pre></td></tr></table></figure>
+<p>现在是时候开始执行代码块了。但在此之前需要先解锁，否则就无法并发执行代码，并且所有试图对该锁加锁的线程都会导致死锁：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">[_lock unlock];</div></pre></td></tr></table></figure>
+<p>安全地解锁并立即执行代码块：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">block();</div></pre></td></tr></table></figure>
+<p>当该代码块执行完后，将当前活跃线程数减一。在这样做之前需要先加锁以避免竞争条件。到这里循环也就结束了：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">        [_lock lock];</div><div class="line">        _activeThreadCount--;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>现在应该明白为什么进入上面这个循环之前先加锁了。循环中的最后一步是将当前活跃线程数减一，进入循环的第一步是检查队列中的代码块数量，而这两个操作都需要先加锁。通过在循环外加锁，后续的迭代只需要加一次锁即可。而不需要加锁、解锁，又马上加锁。</p>
+<p>现在来看看 <code>addBlock</code>：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">- (void)addBlock: (dispatch_block_t)block &#123;</div></pre></td></tr></table></figure>
+<p>这个方法中的所有操作都需要加锁：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">[_lock lock];</div></pre></td></tr></table></figure>
+<p>第一件事就是将传入的代码块添加到队列中：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">[_blocks addObject: block];</div></pre></td></tr></table></figure>
+<p>如果目前有空闲的工作线程可以执行该代码块，那么就没什么需要做的了。如果没有空闲线程去处理这个还未被执行的代码块，并且工作线程总数还没超出限制，那就新建一个线程：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">NSUInteger idleThreads = _threadCount - _activeThreadCount;</div><div class="line">   if([_blocks count] &gt; idleThreads &amp;&amp; _threadCount &lt; _threadCountLimit) &#123;</div><div class="line">   	[NSThread detachNewThreadSelector: @selector(workerThreadLoop:)</div><div class="line">                                toTarget: self</div><div class="line">                              withObject: nil];</div><div class="line">       _threadCount++;</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p>现在有了空闲的工作线程可以执行代码块了。但 <code>workerThreadLoop</code> 中的循环可能由于 <code>wait</code> 操作而处于休眠状态，因此执行一下 <code>signal</code> 操作唤醒它：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">[_lock signal];</div></pre></td></tr></table></figure>
+<p>最后解锁：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">    [_lock unlock];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>上面实现的线程池能够创建预定数目的工作线程以便执行新入队的代码块。接下来就利用这个线程池去实现分发队列 <code>Dispatch Queue</code>。</p>
+<h3 id="分发队列的实现"><a href="#分发队列的实现" class="headerlink" title="分发队列的实现"></a>分发队列的实现</h3><p>和线程池相同的是，分发队列同样需要一个锁。而不同的是，它并不需要 <code>wait</code> 和 <code>signal</code>操作，只需要最基本的互斥锁 <code>NSLock</code>：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">NSLock *_lock;</div></pre></td></tr></table></figure>
+<p>类似线程池，分发队列使用 <code>NSMutableArray</code> 维护了一个队列用于保存还未被执行的代码块：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">NSMutableArray *_pendingBlocks;</div></pre></td></tr></table></figure>
+<p><code>Dispatch Queue</code> 需要知道自己是串行还是并行队列。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">BOOL _serial;</div></pre></td></tr></table></figure>
+<p>如果是串行队列，它还需要跟踪线程池中是否有代码块正在执行：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">BOOL _serialRunning;</div></pre></td></tr></table></figure>
+<p>并行队列则不管是否有代码块正在运行都不影响，因此不需要跟踪该状态。</p>
+<p>和共享的线程池一样，将全局队列保存在一个全局变量中，二者都在 <code>+initialize</code> 方法中创建：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">static MADispatchQueue *gGlobalQueue;</div><div class="line">static MAThreadPool *gThreadPool;</div><div class="line"></div><div class="line">+ (void)initialize &#123;</div><div class="line">    if(self == [MADispatchQueue class]) &#123;</div><div class="line">        gGlobalQueue = [[MADispatchQueue alloc] initSerial: NO];</div><div class="line">        gThreadPool = [[MAThreadPool alloc] init];</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>+initialize</code> 方法已经确保了全局队列会被创建，因此 <code>+globalQueue</code> 方法可直接返回 <code>gGlobalQueue</code>：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">+ (MADispatchQueue *)globalQueue &#123;</div><div class="line">    return gGlobalQueue;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里本来是可以直接用 <code>dispatch_once</code> 方法的，但这么做会有种使用了 GCD API 来作弊的感觉，说好的要从零构建的，虽然这并不是我们要实现的 API。</p>
+<p>初始化方法包括分配锁、创建代码块队列（译者注：还未被执行的代码块），还要设置 <code>_serial</code> 变量：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">- (id)initSerial: (BOOL)serial &#123;</div><div class="line">    if ((self = [super init])) &#123;</div><div class="line">        _lock = [[NSLock alloc] init];</div><div class="line">        _pendingBlocks = [[NSMutableArray alloc] init];</div><div class="line">        _serial = serial;</div><div class="line">    &#125;</div><div class="line">    return self;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在讲其余的公开 API 之前，还有一个底层方法需要实现。这个方法会在线程池中将 <code>_pendingBlocks</code> 队列中的一个代码块取出并执行，接着还很有可能（串行队列的情况下）会调用自身在线程池中执行另一个代码块：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">- (void)dispatchOneBlock &#123;</div></pre></td></tr></table></figure>
+<p>该方法唯一的职责就是在线程池中执行代码块，所以把自身的功能代码块添加到线程池中：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">[gThreadPool addBlock: ^&#123;</div></pre></td></tr></table></figure>
+<p>接着从队列中取出队列头部的代码块。当然了，这个操作也需要加锁：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">[_lock lock];</div><div class="line">      dispatch_block_t block = [_pendingBlocks firstObject];</div><div class="line">      [_pendingBlocks removeObjectAtIndex: 0];</div><div class="line">      [_lock unlock];</div></pre></td></tr></table></figure>
+<p>在解锁后，上面取出的代码块就可以安全地在后台线程执行（译者注：在前文线程池的实现中可以看出，每个添加到线程池中的代码块都会在独立的后台线程中执行）：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">block();</div></pre></td></tr></table></figure>
+<p>如果队列是并行的，那么到这里就结束了。如果是串行的话，还需要下面的代码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">if(_serial) &#123;</div></pre></td></tr></table></figure>
+<p>在串行队列上，新增的代码块需要等到前一个代码块执行完后才能执行。每当一个代码块执行完后，<code>dispatchOneBlock</code> 会检查当前队列是否还有代码块未执行。如果有的话，它会调用自身以便最后可以执行到该代码块。如果没有，将队列的运行状态设置回 <code>NO</code>：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">            [_lock lock];</div><div class="line">            if([_pendingBlocks count] &gt; 0) &#123;</div><div class="line">                [self dispatchOneBlock];</div><div class="line">            &#125; else &#123;</div><div class="line">                _serialRunning = NO;</div><div class="line">            &#125;</div><div class="line">            [_lock unlock];</div><div class="line">        &#125;</div><div class="line">    &#125;];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>有了上面这个方法之后，实现 <code>dispatchAsync</code> 就相对简单了。将代码块添加到队列中，然后根据情况（是否为串行队列）设置队列的运行状态并调用 <code>dispatchOneBlock</code>：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">- (void)dispatchAsync: (dispatch_block_t)block &#123;</div><div class="line">    [_lock lock];</div><div class="line">    [_pendingBlocks addObject: block];</div></pre></td></tr></table></figure>
+<p>如果是串行队列且当前空闲，就将队列运行状态设置为 <code>YES</code> 并调用 <code>dispatchOneBlock</code>：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">if(_serial &amp;&amp; !_serialRunning) &#123;</div><div class="line">    _serialRunning = YES;</div><div class="line">    [self dispatchOneBlock];</div></pre></td></tr></table></figure>
+<p>如果是并行队列，就无条件直接执行。这样保证了即使其他代码块正在执行，新增的代码块也能尽快执行，毕竟并行队列是允许多个代码块同时运行的：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">&#125; else if (!_serial) &#123;</div><div class="line">       [self dispatchOneBlock];</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p>如果串行队列已经在执行代码块了，就没什么需要做的了，已经在执行的 <code>dispatchOneBlock</code>最后会执行到新增的代码块的。最后解锁：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">    [_lock unlock];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>接下来轮到 <code>dispatchSync</code> 了。与 GCD 的实现不同，本文直接使用 <code>dispatchAsync</code> 派发代码块，并等到代码执行完后再返回（译者注：这就是同步的效果）。</p>
+<p>为了实现这个目的，这里使用到了一个本地条件变量 <code>NSCondition</code>，还有一个 <code>done</code> 变量用于表示代码块是否执行完毕：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">- (void)dispatchSync: (dispatch_block_t)block &#123;</div><div class="line">   NSCondition *condition = [[NSCondition alloc] init];</div><div class="line">   __block BOOL done = NO;</div></pre></td></tr></table></figure>
+<p>接着异步派发代码块。这里执行了通过函数参数传进来的代码块，然后设置 <code>done</code> 为 <code>YES</code>并唤醒 <code>condition</code>：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">[self dispatchAsync: ^&#123;</div><div class="line">    block();</div><div class="line">    [condition lock];</div><div class="line">    done = YES;</div><div class="line">    [condition signal];</div><div class="line">    [condition unlock];</div><div class="line">&#125;];</div></pre></td></tr></table></figure>
+<p>在条件变量 <code>condition</code> 上等待 <code>done</code> 被设置成 <code>YES</code>，然后返回：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">    [condition lock];</div><div class="line">    while (!done) &#123;</div><div class="line">        [condition wait];</div><div class="line">    &#125;</div><div class="line">    [condition unlock];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>到这里就成功地运行了代码块，这也是 <code>MADispatchQueue</code> 所需要的最后一个 API 。</p>
+<h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>可以通过一个保存代码块的队列和动态创建和销毁线程的方法来实现一个全局的线程池。通过使用一个共享的全局线程池，可以构建基本的 <code>Dispatch Queue</code> API，支持串行/并行及同步/异步派发任务。本文的实现少了许多 GCD 中很赞的功能，而且也确实比 GCD 低效得多。但即便如此，本文还是可以让你窥视到 GCD 内部的运作原理，让你明白这其实也不是什么神奇的事。（除了 <code>dispatch_once</code>，着简直就是个魔法。）</p>
+<p>这就是今天所有的内容了，记得不要错过下一次更多有趣的内容哦。另外，周五的 Q&amp;A 是由读者驱动的，所以如果你有什么想在这里讨论的，给我<a href="mailto:mike@mikeash.com" target="_blank" rel="external">发个邮件</a>吧！</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Mike-Ash/">Mike Ash</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/iOS-开发/">iOS 开发</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2017/09/07/friday-qa-2015-09-04-lets-build-dispatch_queue/" data-title="从零构建 Dispatch Queue | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2017/09/06/collision-detection-uikit-dynamics-ios-tutorial-ios10/"  title="如何用 UIKit Dynamics 进行碰撞检测">
+ <strong>下一篇</strong><br/> 
+ <span>如何用 UIKit Dynamics 进行碰撞检测
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2017/09/07/friday-qa-2015-09-04-lets-build-dispatch_queue/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#概述"><span class="toc-number">1.</span> <span class="toc-text">概述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#代码"><span class="toc-number">2.</span> <span class="toc-text">代码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#接口"><span class="toc-number">3.</span> <span class="toc-text">接口</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#线程池接口"><span class="toc-number">4.</span> <span class="toc-text">线程池接口</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#线程池实现"><span class="toc-number">5.</span> <span class="toc-text">线程池实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#分发队列的实现"><span class="toc-number">6.</span> <span class="toc-text">分发队列的实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#结论"><span class="toc-number">7.</span> <span class="toc-text">结论</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>39</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>5</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>165</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>74</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>66</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WWDC/" title="WWDC">WWDC<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">订阅同样走心的<b>『<a style="color: white;text-decoration:underline;" target="_blank" href="http://swiftweekly.cn">Swift开发者周报</a>』</b>&nbsp;</span>
+  <form id="content">
+    <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a>
+  </form>
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
