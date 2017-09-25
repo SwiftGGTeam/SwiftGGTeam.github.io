@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://swift.gg/"/>
-  <updated>2017-09-20T11:16:29.000Z</updated>
+  <updated>2017-09-25T04:56:15.000Z</updated>
   <id>https://swift.gg/</id>
   
   <author>
@@ -16,17 +16,86 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>Core NFC 指南 - iOS 设备中的 NFC</title>
+    <link href="https://swift.gg/2017/09/25/core-nfc-tutorial-for-nfc-on-ios-devices/"/>
+    <id>https://swift.gg/2017/09/25/core-nfc-tutorial-for-nfc-on-ios-devices/</id>
+    <published>2017-09-24T16:00:00.000Z</published>
+    <updated>2017-09-25T04:56:15.000Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote>
+<p>作者：Jameson Quave，<a href="http://jamesonquave.com/blog/core-nfc-tutorial-for-nfc-on-ios-devices/" target="_blank" rel="external">原文链接</a>，原文日期：2017-06-06<br>译者：<a href="http://www.desgard.com/" target="_blank" rel="external">冬瓜</a>；校对：<a href="undefined">Forelax</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>在 iOS 11 发布后，开发者们首次可以在 iPhone7 或者更高的设备上调用 NFC 读取相关的接口。这些接口可以用于传递身份信息或者是用于实现类似门禁、地铁闸机这种功能的数据交换应用。</p>
+<p>在 iOS 11 中，这项技术被称作 Core NFC，下面我将在教程中使用 Swift 4 来讨论如何使用它。</p>
+<p><img src="http://i2.wp.com/jamesonquave.com/blog/wp-content/uploads/nfc2.png?zoom=2&amp;w=584" alt=""></p>
+<a id="more"></a>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/SD6Rm4cGyko" frameborder="0" allowfullscreen></iframe>
+
+<p>由于 Core NFC 目前权限为只读状态，非接触式支付功能是不被开放的，但是仍旧有一些能够使用 Core NFC 读取能力的<del>使用</del>场景。下面我们来讲述一下。</p>
+<p>使用 NFC 的第一步是在 Apple Developer Center 中通过 App ID 来启用它。创建一个新的 App ID，并启用 “NFC Tag Reading” 这个功能。</p>
+<p><img src="http://i0.wp.com/jamesonquave.com/blog/wp-content/uploads/entitlement.png?zoom=2&amp;w=584" alt=""></p>
+<p>这之后，我建议专门为这个 App ID 创建一个 development/distribution provisioning profile 文件，这样当你尝试构建 App 的时候，NFC 读取功能将会自动加入。</p>
+<p>接下来，你需要在 Xcode 项目中的 projectName.entitlements 中为的工程添加授权。你需要右键点击该文件并选择”Open As Source Code”，显示如图所示：</p>
+<figure class="highlight xml"><table><tr><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">key</span>&gt;</span>com.apple.developer.nfc.readersession.formats<span class="tag">&lt;/<span class="name">key</span>&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">array</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">string</span>&gt;</span>NDEF<span class="tag">&lt;/<span class="name">string</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">array</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>如果没有 entitlements 文件，可以在项目中手动创建并把他加到工程的 build settings 中。在 “Build Settings” 下点击 “Coding Signing Entitlements” 选项并加入 entitlements 文件的相对路径。本例中是 “CoreNFC-Tutorial/CoreNFC-Tutorial.entitlements” ，因为我的工程文件在 “CoreNFC-Tutorial” 子目录下。</p>
+<p>然后，需要为 Xcode 项目增加 usage string。打开 Info.plist 文件，增加 “Privacy - NFC Scan Usage Description” 这个键值。当用户使用 NFC 时，这个键值填写的内容会作为通知消息展示给用户，所以我们最好写一些有用的信息，比如可以填写 “NFC is needed to unlock doors.”。</p>
+<p>接下来，在代码中引入 <code>CoreNFC</code> 模块。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> CoreNFC</div></pre></td></tr></table></figure>
+<p>备注：Core NFC 在 iOS 的模拟器上不可用， 即便是导入模块也会编译失败。因此 Core NFC 相关代码只能真机调试。</p>
+<p>这里我创建了一个 <code>NFCHelper.swift</code> 文件，并将所有 NFC 相关的 API 调用封装成一个 NFCHelper 类。在 <code>init</code> 方法中我创建了一个会话 ，Core NFC 需要使用 <code>NFCNDEFReaderSession</code> 这个 class 来监听 NFC 设备，从而完成通信。（注意 <code>NFCReaderSession</code> 是一个抽象类，不能直接使用）</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">NFCHelper</span> </span>&#123;</div><div class="line">  <span class="keyword">init</span>() &#123;</div><div class="line">    <span class="keyword">let</span> session =</div><div class="line">      <span class="type">NFCNDEFReaderSession</span>(delegate: <span class="keyword">self</span>,</div><div class="line">                           queue: <span class="literal">nil</span>,</div><div class="line">                           invalidateAfterFirstRead: <span class="literal">true</span>)</div><div class="line">    session.begin()</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>以上代码中我们创建了一个会话，并且为 <code>Dispatch Queue</code> 这个参数传递了一个 nil 值。这样可以使得 <code>NFCNDEFReaderSession</code> 自动创建一个串行 Dispatch Queue。</p>
+<p>创建会话的时候，我们也要为 <code>NFCDEFReaderSession</code> 设置代理对象。这里我使用 <code>NFCHelper</code> class 来作为代理，所以我们需要遵守 <code>NFCNDEFReaderSessionDelegate</code> 协议。这个协议是基于 <code>NSObjectProtocol</code> 协议的，所以我们需要继承 <code>NSObject</code>（译者注：NSObject 协议在 Swift 中的名称为 NSObjectProtocol）。<code>NFCNDEFReaderSessionDelegate</code> 有两个必须实现的代理方法：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">readerSession</span><span class="params">(<span class="number">_</span> session: NFCNDEFReaderSession, didInvalidateWithError error: Error)</span></span></div><div class="line"> </div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">readerSession</span><span class="params">(<span class="number">_</span> session: NFCNDEFReaderSession, didDetectNDEFs messages: [NFCNDEFMessage])</span></span></div></pre></td></tr></table></figure>
+<p>当 NFC 的会话获取到验证错误，或是 NFC 的感应被触发时，这两个回调方法就会被调用。我们对回调信息的处理方式取决于我们 App 的使用场景，但是所有能够获取到的信息都可以通过 <code>didDetectNDEFs</code> 回调方法中的 <code>messages</code> 变量得到。在一开始，你可以通过遍历并打印 <code>messages</code> 中的元素来了解这些信息的内容。每个元素均是 <code>NFCDEFPayload</code> 对象，并且每一个对象都会包括 <code>identifier</code>、<code>payload</code>、<code>type</code> 和 <code>typeNameFormat</code> 这些属性。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">readerSession</span><span class="params">(<span class="number">_</span> session: NFCNDEFReaderSession, didDetectNDEFs messages: [NFCNDEFMessage])</span></span> &#123;</div><div class="line">  <span class="built_in">print</span>(<span class="string">"Did detect NDEFs."</span>)</div><div class="line">  <span class="comment">// 遍历 messages 数组中所有元素</span></div><div class="line">  <span class="keyword">for</span> message <span class="keyword">in</span> messages &#123;</div><div class="line">    <span class="keyword">for</span> record <span class="keyword">in</span> message.records &#123;</div><div class="line">      <span class="built_in">print</span>(record.identifier)</div><div class="line">      <span class="built_in">print</span>(record.payload)</div><div class="line">      <span class="built_in">print</span>(record.type)</div><div class="line">      <span class="built_in">print</span>(record.typeNameFormat)</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>我们了解了这些属性的含义之后，就可以将其集成在前端 App 中，这里我针对我的应用创建了一个专门的回调方法，你应该也会做类似的事情，这里我增加了一个回调的属性，便于我的前端页面用这个属性来做进一步的展示：</p>
+<p>当我从 NFC 获得一个有效信号或是一个错误的时候，会调用这个回调：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">NFCHelper</span>: <span class="title">NSObject</span>, <span class="title">NFCNDEFReaderSessionDelegate</span> </span>&#123;</div><div class="line">  ...</div><div class="line">  <span class="keyword">var</span> onNFCResult: ((<span class="type">Bool</span>, <span class="type">String</span>) -&gt; ())?</div><div class="line">  ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>另外我还实现了把创建会话的方法封装到了一个新的方法中，这样我就可以通过 <code>ViewController</code> 中的一个 button 点击触发来创建一个新的会话。关于 <code>NFCHelper.swift</code> 的最终代码如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">//</span></div><div class="line"><span class="comment">//  NFCHelper.swift</span></div><div class="line"><span class="comment">//  CoreNFC-Tutorial</span></div><div class="line"><span class="comment">//</span></div><div class="line"><span class="comment">//  Created by Jameson Quave on 6/6/17.</span></div><div class="line"><span class="comment">//  Copyright © 2017 Jameson Quave. All rights reserved.</span></div><div class="line"><span class="comment">//</span></div><div class="line"> </div><div class="line"><span class="keyword">import</span> Foundation</div><div class="line"><span class="keyword">import</span> CoreNFC</div><div class="line"> </div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">NFCHelper</span>: <span class="title">NSObject</span>, <span class="title">NFCNDEFReaderSessionDelegate</span> </span>&#123;</div><div class="line"> </div><div class="line">  <span class="keyword">var</span> onNFCResult: ((<span class="type">Bool</span>, <span class="type">String</span>) -&gt; ())?</div><div class="line"> </div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">restartSession</span><span class="params">()</span></span> &#123;</div><div class="line">    <span class="keyword">let</span> session =</div><div class="line">    <span class="type">NFCNDEFReaderSession</span>(delegate: <span class="keyword">self</span>,</div><div class="line">                       queue: <span class="literal">nil</span>,</div><div class="line">                       invalidateAfterFirstRead: <span class="literal">true</span>)</div><div class="line">    session.begin()</div><div class="line">  &#125;</div><div class="line">  <span class="comment">// MARK: NFCNDEFReaderSessionDelegate</span></div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">readerSession</span><span class="params">(<span class="number">_</span> session: NFCNDEFReaderSession, didInvalidateWithError error: Error)</span></span> &#123;</div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> onNFCResult = onNFCResult <span class="keyword">else</span> &#123;</div><div class="line">      <span class="keyword">return</span></div><div class="line">    &#125;</div><div class="line">    onNFCResult(<span class="literal">false</span>, error.localizedDescription)</div><div class="line">  &#125;</div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">readerSession</span><span class="params">(<span class="number">_</span> session: NFCNDEFReaderSession, didDetectNDEFs messages: [NFCNDEFMessage])</span></span> &#123;</div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> onNFCResult = onNFCResult <span class="keyword">else</span> &#123;</div><div class="line">      <span class="keyword">return</span></div><div class="line">    &#125;</div><div class="line">    <span class="keyword">for</span> message <span class="keyword">in</span> messages &#123;</div><div class="line">      <span class="keyword">for</span> record <span class="keyword">in</span> message.records &#123;</div><div class="line">        <span class="keyword">if</span>(record.payload.<span class="built_in">count</span> &gt; <span class="number">0</span>) &#123;</div><div class="line">          <span class="keyword">if</span> <span class="keyword">let</span> payloadString = <span class="type">String</span>.<span class="keyword">init</span>(data: record.payload, encoding: .utf8) &#123;</div><div class="line">              onNFCResult(<span class="literal">true</span>, payloadString)</div><div class="line">          &#125;</div><div class="line">        &#125;</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line"> </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>另外我还搭建了一个简易的 UI 视图来展示这个类的用法：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">//</span></div><div class="line"><span class="comment">//  ViewController.swift</span></div><div class="line"><span class="comment">//  CoreNFC-Tutorial</span></div><div class="line"><span class="comment">//</span></div><div class="line"><span class="comment">//  Created by Jameson Quave on 6/6/17.</span></div><div class="line"><span class="comment">//  Copyright © 2017 Jameson Quave. All rights reserved.</span></div><div class="line"><span class="comment">//</span></div><div class="line"> </div><div class="line"><span class="keyword">import</span> UIKit</div><div class="line"> </div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">ViewController</span>: <span class="title">UIViewController</span> </span>&#123;</div><div class="line">  <span class="keyword">var</span> helper: <span class="type">NFCHelper</span>?</div><div class="line">  <span class="keyword">var</span> payloadLabel: <span class="type">UILabel</span>!</div><div class="line">  <span class="keyword">var</span> payloadText = <span class="string">""</span></div><div class="line">  <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</div><div class="line">    <span class="keyword">super</span>.viewDidLoad()</div><div class="line">    <span class="comment">// 增加检测按钮</span></div><div class="line">    <span class="keyword">let</span> button = <span class="type">UIButton</span>(type: .system)</div><div class="line">    button.setTitle(<span class="string">"Read NFC"</span>, <span class="keyword">for</span>: .normal)</div><div class="line">    button.titleLabel?.font = <span class="type">UIFont</span>(name: <span class="string">"Helvetica"</span>, size: <span class="number">28.0</span>)</div><div class="line">    button.isEnabled = <span class="literal">true</span></div><div class="line">    button.addTarget(<span class="keyword">self</span>, action: #selector(didTapReadNFC), <span class="keyword">for</span>: .touchUpInside)</div><div class="line">    button.frame = <span class="type">CGRect</span>(x: <span class="number">60</span>, y: <span class="number">200</span>, width: <span class="keyword">self</span>.view.bounds.width - <span class="number">120</span>, height: <span class="number">80</span>)</div><div class="line">    <span class="keyword">self</span>.view.addSubview(button)</div><div class="line">    <span class="comment">// 添加一个 Label 来显示状态</span></div><div class="line">    payloadLabel = <span class="type">UILabel</span>(frame: button.frame.offsetBy(dx: <span class="number">0</span>, dy: <span class="number">220</span>))</div><div class="line">    payloadLabel.text = <span class="string">"Press Read to see payload data."</span></div><div class="line">    payloadLabel.numberOfLines = <span class="number">100</span></div><div class="line">    <span class="keyword">self</span>.view.addSubview(payloadLabel)</div><div class="line">  &#125;</div><div class="line">  <span class="comment">// 当 NFCHelper 已经处理过或者通信失败时调用</span></div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">onNFCResult</span><span class="params">(success: Bool, message: String)</span></span> &#123;</div><div class="line">    <span class="keyword">if</span> success &#123;</div><div class="line">      payloadText = <span class="string">"<span class="subst">\(payloadText)</span>\n<span class="subst">\(message)</span>"</span></div><div class="line">    &#125;</div><div class="line">    <span class="keyword">else</span> &#123;</div><div class="line">      payloadText = <span class="string">"<span class="subst">\(payloadText)</span>\n<span class="subst">\(message)</span>"</span></div><div class="line">    &#125;</div><div class="line">    <span class="comment">// 在主线程中更新 UI </span></div><div class="line">    <span class="type">DispatchQueue</span>.main.async &#123;</div><div class="line">      <span class="keyword">self</span>.payloadLabel.text = <span class="keyword">self</span>.payloadText</div><div class="line">    &#125;</div><div class="line"> </div><div class="line">  &#125;</div><div class="line">  <span class="comment">// 当用户点击 NFC 读取按钮时调用</span></div><div class="line">  <span class="meta">@objc</span> <span class="function"><span class="keyword">func</span> <span class="title">didTapReadNFC</span><span class="params">()</span></span> &#123;</div><div class="line">    <span class="keyword">if</span> helper == <span class="literal">nil</span> &#123;</div><div class="line">      helper = <span class="type">NFCHelper</span>()</div><div class="line">      helper?.onNFCResult = <span class="keyword">self</span>.onNFCResult(success:message:)</div><div class="line">    &#125;</div><div class="line">    payloadText = <span class="string">""</span></div><div class="line">    helper?.restartSession()</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>有了以上的基本框架，你就可以结合你具体的需求来为你的 APP 添砖加瓦了。无论是识别客人身份、检测 Amiibo 状态（译者注：<a href="https://zh.wikipedia.org/wiki/Amiibo" target="_blank" rel="external">Amiibo</a> 是任天堂推出的基于 NFC 的玩偶），甚至是完成支付，Apple 推出的 Core NFC API 终于为这些新设备提供了完成各类 NFC 功能的可能性。如果你在开发任何集成了 NFC 功能的产品，欢迎发邮件到<a href="jquave@gmail.com">jquave@gmail.com</a>和我交流。</p>
+<p><a href="https://github.com/jquave/TagReader" target="_blank" rel="external">完整源码</a></p>
+<p><a href="https://www.youtube.com/watch?v=SD6Rm4cGyko&amp;feature=youtu.be" target="_blank" rel="external">视频教程</a></p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;作者：Jameson Quave，&lt;a href=&quot;http://jamesonquave.com/blog/core-nfc-tutorial-for-nfc-on-ios-devices/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;原文链接&lt;/a&gt;，原文日期：2017-06-06&lt;br&gt;译者：&lt;a href=&quot;http://www.desgard.com/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;冬瓜&lt;/a&gt;；校对：&lt;a href=&quot;undefined&quot;&gt;Forelax&lt;/a&gt;；定稿：&lt;a href=&quot;https://github.com/chenmingbiao&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;CMB&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;!--此处开始正文--&gt;
+&lt;p&gt;在 iOS 11 发布后，开发者们首次可以在 iPhone7 或者更高的设备上调用 NFC 读取相关的接口。这些接口可以用于传递身份信息或者是用于实现类似门禁、地铁闸机这种功能的数据交换应用。&lt;/p&gt;
+&lt;p&gt;在 iOS 11 中，这项技术被称作 Core NFC，下面我将在教程中使用 Swift 4 来讨论如何使用它。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://i2.wp.com/jamesonquave.com/blog/wp-content/uploads/nfc2.png?zoom=2&amp;amp;w=584&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="Jameson Quave" scheme="https://swift.gg/categories/Jameson-Quave/"/>
+    
+    
+      <category term="Swift 进阶" scheme="https://swift.gg/tags/Swift-%E8%BF%9B%E9%98%B6/"/>
+    
+  </entry>
+  
+  <entry>
     <title>升级 CMake 使 Swift 的构建过程更加愉悦</title>
     <link href="https://swift.gg/2017/09/20/swift-option-sets/"/>
     <id>https://swift.gg/2017/09/20/swift-option-sets/</id>
     <published>2017-09-19T16:00:00.000Z</published>
-    <updated>2017-09-20T11:16:29.000Z</updated>
+    <updated>2017-09-25T04:56:15.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
 <p>作者：Joe，<a href="http://dev.iachieved.it/iachievedit/upgrading-cmake-for-a-happier-swift-build/" target="_blank" rel="external">原文链接</a>，原文日期：2016/06/30<br>译者：<a href="undefined">EyreFree</a>；校对：<a href="http://chengway.in/" target="_blank" rel="external">walkingway</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p><img src="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/06/swift-og-1.png" alt=""></p>
+<p><img src="/img/articles/swift-option-sets/swift-og-1.png1505906195.22" alt=""></p>
 <p>开源 Swift 已经有一些更新来利用新版本的 <a href="https://cmake.org/" target="_blank" rel="external">CMake</a> <strong>在 Linux 上构建 Swift</strong>。需要指出的是，Ubuntu 14.04 (2.8.12.2) 自带的默认版 cmake 不再胜任这项工作。</p>
 <p>让我们把 Ubuntu 14.04 的 CMake 升级到 3.4.3，<a href="https://lists.swift.org/pipermail/swift-dev/Week-of-Mon-20160627/002299.html" target="_blank" rel="external">开发者表示</a>该版本可以满足需求。</p>
 <p>当通过源代码安装软件时，通常会有一个构建区在 <code>/usr/local/src</code> 和一个存档区（所以可以跟踪我构建的版本）在 <code>/usr/local/archive</code>：</p>
@@ -61,7 +130,7 @@
     <link href="https://swift.gg/2017/09/07/friday-qa-2015-09-04-lets-build-dispatch_queue/"/>
     <id>https://swift.gg/2017/09/07/friday-qa-2015-09-04-lets-build-dispatch_queue/</id>
     <published>2017-09-06T16:00:00.000Z</published>
-    <updated>2017-09-20T11:16:29.000Z</updated>
+    <updated>2017-09-25T04:56:15.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
 <p>作者：Mike Ash，<a href="https://www.mikeash.com/pyblog/friday-qa-2015-09-04-lets-build-dispatch_queue.html" target="_blank" rel="external">原文链接</a>，原文日期：2015-09-04<br>译者：<a href="http://hulizhen.me" target="_blank" rel="external">智多芯</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
@@ -204,7 +273,7 @@
     <link href="https://swift.gg/2017/09/06/collision-detection-uikit-dynamics-ios-tutorial-ios10/"/>
     <id>https://swift.gg/2017/09/06/collision-detection-uikit-dynamics-ios-tutorial-ios10/</id>
     <published>2017-09-05T16:00:00.000Z</published>
-    <updated>2017-09-20T11:16:29.000Z</updated>
+    <updated>2017-09-25T04:56:15.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
 <p>作者：Arthur Knopper，<a href="https://www.ioscreator.com/tutorials/collision-detection-uikit-dynamics-ios-tutorial-ios10" target="_blank" rel="external">原文链接</a>，原文日期：2017-04-20<br>译者：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；校对：<a href="http://chengway.in/" target="_blank" rel="external">walkingway</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
@@ -275,7 +344,7 @@
     <link href="https://swift.gg/2017/09/04/all-about-concurrency-in-swift-1-the-present/"/>
     <id>https://swift.gg/2017/09/04/all-about-concurrency-in-swift-1-the-present/</id>
     <published>2017-09-03T16:00:00.000Z</published>
-    <updated>2017-09-20T11:16:29.000Z</updated>
+    <updated>2017-09-25T04:56:15.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
 <p>作者：Umberto Raimondi，<a href="https://www.uraimo.com/2017/05/07/all-about-concurrency-in-swift-1-the-present/" target="_blank" rel="external">原文链接</a>，原文日期：2017-05-07<br>译者：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a>；校对：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
@@ -596,7 +665,7 @@
     <link href="https://swift.gg/2017/07/31/announcing-purple-train/"/>
     <id>https://swift.gg/2017/07/31/announcing-purple-train/</id>
     <published>2017-07-30T16:00:00.000Z</published>
-    <updated>2017-09-20T11:16:29.000Z</updated>
+    <updated>2017-09-25T04:56:15.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
 <p>作者：Ian C. Anderson，<a href="https://robots.thoughtbot.com/announcing-purple-train" target="_blank" rel="external">原文链接</a>，原文日期：2017-1-9<br>译者：<a href="undefined">Tuccuay</a>；校对：<a href="undefined">way</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
@@ -648,7 +717,7 @@
     <link href="https://swift.gg/2017/07/26/swift-weekly-issue-76/"/>
     <id>https://swift.gg/2017/07/26/swift-weekly-issue-76/</id>
     <published>2017-07-25T16:00:00.000Z</published>
-    <updated>2017-09-20T11:16:29.000Z</updated>
+    <updated>2017-09-25T04:56:15.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
 <p>作者：Jesse Squires，<a href="https://swiftweekly.github.io/issue-76/" target="_blank" rel="external">原文链接</a>，原文日期：2017-06-29<br>译者：<a href="https://kemchenj.github.io" target="_blank" rel="external">四娘</a>；校对：<a href="http://weibo.com/277195544" target="_blank" rel="external">Cwift</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
@@ -728,7 +797,7 @@
     <link href="https://swift.gg/2017/07/24/swift-weekly-issue-75/"/>
     <id>https://swift.gg/2017/07/24/swift-weekly-issue-75/</id>
     <published>2017-07-23T16:00:00.000Z</published>
-    <updated>2017-09-20T11:16:29.000Z</updated>
+    <updated>2017-09-25T04:56:15.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
 <p>作者：Jesse Squires，<a href="https://swiftweekly.github.io/issue-75/" target="_blank" rel="external">原文链接</a>，原文日期：2017-06-22<br>译者：<a href="https://kemchenj.github.io" target="_blank" rel="external">四娘</a>；校对：<a href="http://weibo.com/277195544" target="_blank" rel="external">Cwift</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
@@ -795,7 +864,7 @@
     <link href="https://swift.gg/2017/07/20/sprite-movement-actions-sprite-kit-ios-tutorial-ios10/"/>
     <id>https://swift.gg/2017/07/20/sprite-movement-actions-sprite-kit-ios-tutorial-ios10/</id>
     <published>2017-07-19T16:00:00.000Z</published>
-    <updated>2017-09-20T11:16:29.000Z</updated>
+    <updated>2017-09-25T04:56:15.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
 <p>作者：Arthur Knopper，<a href="https://www.ioscreator.com/tutorials/sprite-movement-actions-sprite-kit-ios-tutorial-ios10" target="_blank" rel="external">原文链接</a>，原文日期：2017-04-18<br>译者：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；校对：<a href="undefined">way</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
@@ -853,7 +922,7 @@
     <link href="https://swift.gg/2017/07/19/the-best-table-view-controller-mar-2016-edition/"/>
     <id>https://swift.gg/2017/07/19/the-best-table-view-controller-mar-2016-edition/</id>
     <published>2017-07-18T16:00:00.000Z</published>
-    <updated>2017-09-20T11:16:29.000Z</updated>
+    <updated>2017-09-25T04:56:15.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
 <p>作者：Dominik Hauser，<a href="http://swiftandpainless.com/the-best-table-view-controller-mar-2016-edition/" target="_blank" rel="external">原文链接</a>，原文日期：2016-03-28<br>译者：<a href="undefined">Doye</a>；校对：<a href="undefined">way</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
@@ -909,7 +978,7 @@
     <link href="https://swift.gg/2017/07/18/detect-shake-gestures-ios-tutorial-ios10/"/>
     <id>https://swift.gg/2017/07/18/detect-shake-gestures-ios-tutorial-ios10/</id>
     <published>2017-07-17T16:00:00.000Z</published>
-    <updated>2017-09-20T11:16:29.000Z</updated>
+    <updated>2017-09-25T04:56:15.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
 <p>作者：Arthur Knopper，<a href="https://www.ioscreator.com/tutorials/detect-shake-gestures-ios-tutorial-ios10" target="_blank" rel="external">原文链接</a>，原文日期：2017-04-18<br>译者：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；校对：<a href="undefined">way</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
@@ -958,7 +1027,7 @@
     <link href="https://swift.gg/2017/07/17/attributed-strings-ios-tutorial-ios10/"/>
     <id>https://swift.gg/2017/07/17/attributed-strings-ios-tutorial-ios10/</id>
     <published>2017-07-16T16:00:00.000Z</published>
-    <updated>2017-09-20T11:16:29.000Z</updated>
+    <updated>2017-09-25T04:56:15.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
 <p>作者：Arthur Knopper，<a href="https://www.ioscreator.com/tutorials/attributed-strings-ios-tutorial-ios10" target="_blank" rel="external">原文链接</a>，原文日期：2017-04-04<br>译者：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；校对：<a href="undefined">way</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
@@ -1014,7 +1083,7 @@
     <link href="https://swift.gg/2017/07/16/swift_weekly_issue_74/"/>
     <id>https://swift.gg/2017/07/16/swift_weekly_issue_74/</id>
     <published>2017-07-15T16:00:00.000Z</published>
-    <updated>2017-09-20T11:16:29.000Z</updated>
+    <updated>2017-09-25T04:56:15.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
 <p>作者：Jesse Squires，<a href="https://swiftweekly.github.io/issue-74/" target="_blank" rel="external">原文链接</a>，原文日期：2017-06-15<br>译者：<a href="https://kemchenj.github.io" target="_blank" rel="external">四娘</a>；校对：<a href="http://weibo.com/277195544" target="_blank" rel="external">Cwift</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
@@ -1255,6 +1324,49 @@
   </entry>
   
   <entry>
+    <title>把代码迁移到协调器上</title>
+    <link href="https://swift.gg/2017/06/09/migrating-to-coordinators/"/>
+    <id>https://swift.gg/2017/06/09/migrating-to-coordinators/</id>
+    <published>2017-06-08T16:00:00.000Z</published>
+    <updated>2017-07-16T00:49:14.000Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote>
+<p>作者：Soroush Khanlou，<a href="http://khanlou.com/2017/04/migrating-to-coordinators/" target="_blank" rel="external">原文链接</a>，原文日期：2017-4-25<br>译者：<a href="http://weibo.com/277195544" target="_blank" rel="external">Cwift</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>这篇文章是 <a href="http://khanlou.com/tag/advanced-coordinators/" target="_blank" rel="external">Coordinators（协调器）进阶教程系列</a>的第一篇。如果你没有阅读过<a href="http://khanlou.com/2015/01/the-coordinator/" target="_blank" rel="external">原始的帖子</a>及其<a href="http://khanlou.com/2015/10/coordinators-redux/" target="_blank" rel="external">后续</a>，请务必首先查阅这些文章。该系列将涵盖几项进阶的 Coordinator 使用技巧、疑点、常见问题以及其他细碎的内容。让我们开始吧。</p>
+<a id="more"></a>
+<p>常有人问我，如何把一个使用 Storyboard 构建或者是使用纯代码编写 ViewController 构建的应用重构成使用 Coordinators 的应用。只要方法正确，重构可以逐步完成。即使重构未完成，你的应用仍旧可以部署。</p>
+<p>要实现这个目标，最好的做法是从根路径出发，在 Coordinators 中称之为 “AppCoordinator”。AppDelegate 持有该 AppCoordinator，AppCoordinator 调度 App 可以加载的所有 ViewController。</p>
+<p>想要理解为什么从 App 的根路径开始，可以从反面来思考。如果从一些叶子流程开始（比如，一个 <code>CheckoutCoordinator</code>），那么需要保持对该 Coordinator 的强引用，以防它被释放。如果 Coordinator 被释放，它内部的代码就都不能执行了。所以，深入一个 App 中去，如果我们创建一个 Coordinator，必须让某个对象长久地持有它。</p>
+<p>有两种方案可以防止对象被释放。第一种方案是使用静态引用。因为系统里可能只有一个 <code>CheckoutCoordinator</code>，所以很容易将其填充到一个全局变量中。虽然这种方案有效果，但是不是一个理想的选择，因为全局变量阻碍了可测试性和灵活性。第二种方案是让当前展示的 ViewController 持有 Coordinator。这将迫使当前的 ViewController 变得复杂一些，但是可以降低 Coordinator 所管理的所有 ViewController 的复杂性。然而，这种关系本质上是有缺陷的。ViewController 是 Coordinator 的“孩子”，编程时，孩子们不应该不知道他们的父母是谁。类似于一个 <code>UIView</code> 持有了一个 <code>UIViewController</code> 的引用：这种事是不该发生的。</p>
+<p>如果你遇到了必须从子流程开始的情况，你可以使用上述两种方法之一。但是，如果可以选择，我的建议是从根路径开始。</p>
+<p>从根路径开始的另一个好处是认证流程通常更靠近 App 的根路径。身份认证是一个很好的流程，可以抽象成单独的对象，很适合用来验证 App 中的 Coordinator。</p>
+<p>将 App 的 RootViewController 交付给 <code>AppCoordinator</code> 之后，你可以对代码进行 Commit/Pull Request/Code Review。因为其他的 ViewController 仍在正常运转，所以 App 可以在这个未完工的状态下继续工作。基于这点，逐步改造，你可以将更多的 ViewController 交付给 Coordinator。将每个“流程”都交付给 Coordinator 之后，你可以提交代码或者创建一个 pr，不会影响 App 的正常工作。正如最佳重构一样，这些步骤只是移动代码，有时根据需要创建新的 Coordinator。</p>
+<p>一旦所有的场景切换都转移到了 Coordinator 中，你就可以开始下一步的重构了，例如将 iPhone 和 iPad 的 Coordinator 封装到单独的对象（而不是一个切换状态的 Coordinator），让子流程可复用，更好地依赖注入，这些都可以应用到你的新架构中。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;作者：Soroush Khanlou，&lt;a href=&quot;http://khanlou.com/2017/04/migrating-to-coordinators/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;原文链接&lt;/a&gt;，原文日期：2017-4-25&lt;br&gt;译者：&lt;a href=&quot;http://weibo.com/277195544&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Cwift&lt;/a&gt;；校对：&lt;a href=&quot;http://www.jianshu.com/users/7a2d2cc38444/latest_articles&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Crystal Sun&lt;/a&gt;；定稿：&lt;a href=&quot;https://github.com/chenmingbiao&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;CMB&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;!--此处开始正文--&gt;
+&lt;p&gt;这篇文章是 &lt;a href=&quot;http://khanlou.com/tag/advanced-coordinators/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Coordinators（协调器）进阶教程系列&lt;/a&gt;的第一篇。如果你没有阅读过&lt;a href=&quot;http://khanlou.com/2015/01/the-coordinator/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;原始的帖子&lt;/a&gt;及其&lt;a href=&quot;http://khanlou.com/2015/10/coordinators-redux/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;后续&lt;/a&gt;，请务必首先查阅这些文章。该系列将涵盖几项进阶的 Coordinator 使用技巧、疑点、常见问题以及其他细碎的内容。让我们开始吧。&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="KHANLOU" scheme="https://swift.gg/categories/KHANLOU/"/>
+    
+    
+      <category term="iOS 开发" scheme="https://swift.gg/tags/iOS-%E5%BC%80%E5%8F%91/"/>
+    
+  </entry>
+  
+  <entry>
     <title>Table View 中开启文本菜单功能</title>
     <link href="https://swift.gg/2017/06/09/use-context-menu-with-table-view-tutorial-ios10/"/>
     <id>https://swift.gg/2017/06/09/use-context-menu-with-table-view-tutorial-ios10/</id>
@@ -1313,49 +1425,6 @@
     </summary>
     
       <category term="IOSCREATOR" scheme="https://swift.gg/categories/IOSCREATOR/"/>
-    
-    
-      <category term="iOS 开发" scheme="https://swift.gg/tags/iOS-%E5%BC%80%E5%8F%91/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>把代码迁移到协调器上</title>
-    <link href="https://swift.gg/2017/06/09/migrating-to-coordinators/"/>
-    <id>https://swift.gg/2017/06/09/migrating-to-coordinators/</id>
-    <published>2017-06-08T16:00:00.000Z</published>
-    <updated>2017-07-16T00:49:14.000Z</updated>
-    
-    <content type="html"><![CDATA[<blockquote>
-<p>作者：Soroush Khanlou，<a href="http://khanlou.com/2017/04/migrating-to-coordinators/" target="_blank" rel="external">原文链接</a>，原文日期：2017-4-25<br>译者：<a href="http://weibo.com/277195544" target="_blank" rel="external">Cwift</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
-</blockquote>
-<!--此处开始正文-->
-<p>这篇文章是 <a href="http://khanlou.com/tag/advanced-coordinators/" target="_blank" rel="external">Coordinators（协调器）进阶教程系列</a>的第一篇。如果你没有阅读过<a href="http://khanlou.com/2015/01/the-coordinator/" target="_blank" rel="external">原始的帖子</a>及其<a href="http://khanlou.com/2015/10/coordinators-redux/" target="_blank" rel="external">后续</a>，请务必首先查阅这些文章。该系列将涵盖几项进阶的 Coordinator 使用技巧、疑点、常见问题以及其他细碎的内容。让我们开始吧。</p>
-<a id="more"></a>
-<p>常有人问我，如何把一个使用 Storyboard 构建或者是使用纯代码编写 ViewController 构建的应用重构成使用 Coordinators 的应用。只要方法正确，重构可以逐步完成。即使重构未完成，你的应用仍旧可以部署。</p>
-<p>要实现这个目标，最好的做法是从根路径出发，在 Coordinators 中称之为 “AppCoordinator”。AppDelegate 持有该 AppCoordinator，AppCoordinator 调度 App 可以加载的所有 ViewController。</p>
-<p>想要理解为什么从 App 的根路径开始，可以从反面来思考。如果从一些叶子流程开始（比如，一个 <code>CheckoutCoordinator</code>），那么需要保持对该 Coordinator 的强引用，以防它被释放。如果 Coordinator 被释放，它内部的代码就都不能执行了。所以，深入一个 App 中去，如果我们创建一个 Coordinator，必须让某个对象长久地持有它。</p>
-<p>有两种方案可以防止对象被释放。第一种方案是使用静态引用。因为系统里可能只有一个 <code>CheckoutCoordinator</code>，所以很容易将其填充到一个全局变量中。虽然这种方案有效果，但是不是一个理想的选择，因为全局变量阻碍了可测试性和灵活性。第二种方案是让当前展示的 ViewController 持有 Coordinator。这将迫使当前的 ViewController 变得复杂一些，但是可以降低 Coordinator 所管理的所有 ViewController 的复杂性。然而，这种关系本质上是有缺陷的。ViewController 是 Coordinator 的“孩子”，编程时，孩子们不应该不知道他们的父母是谁。类似于一个 <code>UIView</code> 持有了一个 <code>UIViewController</code> 的引用：这种事是不该发生的。</p>
-<p>如果你遇到了必须从子流程开始的情况，你可以使用上述两种方法之一。但是，如果可以选择，我的建议是从根路径开始。</p>
-<p>从根路径开始的另一个好处是认证流程通常更靠近 App 的根路径。身份认证是一个很好的流程，可以抽象成单独的对象，很适合用来验证 App 中的 Coordinator。</p>
-<p>将 App 的 RootViewController 交付给 <code>AppCoordinator</code> 之后，你可以对代码进行 Commit/Pull Request/Code Review。因为其他的 ViewController 仍在正常运转，所以 App 可以在这个未完工的状态下继续工作。基于这点，逐步改造，你可以将更多的 ViewController 交付给 Coordinator。将每个“流程”都交付给 Coordinator 之后，你可以提交代码或者创建一个 pr，不会影响 App 的正常工作。正如最佳重构一样，这些步骤只是移动代码，有时根据需要创建新的 Coordinator。</p>
-<p>一旦所有的场景切换都转移到了 Coordinator 中，你就可以开始下一步的重构了，例如将 iPhone 和 iPad 的 Coordinator 封装到单独的对象（而不是一个切换状态的 Coordinator），让子流程可复用，更好地依赖注入，这些都可以应用到你的新架构中。</p>
-<blockquote>
-<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
-</blockquote>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;blockquote&gt;
-&lt;p&gt;作者：Soroush Khanlou，&lt;a href=&quot;http://khanlou.com/2017/04/migrating-to-coordinators/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;原文链接&lt;/a&gt;，原文日期：2017-4-25&lt;br&gt;译者：&lt;a href=&quot;http://weibo.com/277195544&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Cwift&lt;/a&gt;；校对：&lt;a href=&quot;http://www.jianshu.com/users/7a2d2cc38444/latest_articles&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Crystal Sun&lt;/a&gt;；定稿：&lt;a href=&quot;https://github.com/chenmingbiao&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;CMB&lt;/a&gt;&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;!--此处开始正文--&gt;
-&lt;p&gt;这篇文章是 &lt;a href=&quot;http://khanlou.com/tag/advanced-coordinators/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Coordinators（协调器）进阶教程系列&lt;/a&gt;的第一篇。如果你没有阅读过&lt;a href=&quot;http://khanlou.com/2015/01/the-coordinator/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;原始的帖子&lt;/a&gt;及其&lt;a href=&quot;http://khanlou.com/2015/10/coordinators-redux/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;后续&lt;/a&gt;，请务必首先查阅这些文章。该系列将涵盖几项进阶的 Coordinator 使用技巧、疑点、常见问题以及其他细碎的内容。让我们开始吧。&lt;/p&gt;
-    
-    </summary>
-    
-      <category term="KHANLOU" scheme="https://swift.gg/categories/KHANLOU/"/>
     
     
       <category term="iOS 开发" scheme="https://swift.gg/tags/iOS-%E5%BC%80%E5%8F%91/"/>
@@ -1554,55 +1623,6 @@
     
     
       <category term="Swift 进阶" scheme="https://swift.gg/tags/Swift-%E8%BF%9B%E9%98%B6/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>SpriteKit 技巧之添加背景图片</title>
-    <link href="https://swift.gg/2017/05/19/display-background-with-spritekit-ios-tutorial-ios10/"/>
-    <id>https://swift.gg/2017/05/19/display-background-with-spritekit-ios-tutorial-ios10/</id>
-    <published>2017-05-18T16:00:00.000Z</published>
-    <updated>2017-07-16T00:49:14.000Z</updated>
-    
-    <content type="html"><![CDATA[<blockquote>
-<p>作者：Arthur Knopper，<a href="https://www.ioscreator.com/tutorials/display-background-with-spritekit-ios-tutorial-ios10" target="_blank" rel="external">原文链接</a>，原文日期：2017/01/17<br>译者：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；校对：<a href="http://chengway.in/" target="_blank" rel="external">walkingway</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
-</blockquote>
-<!--此处开始正文-->
-<p>Sprite Kit 是硬件加速的动画系统，为创建 2D 游戏进行了专门的优化。在本节教程中，将使用 Game 模板来添加一张背景图片。本节教程使用的是 Xcode 8.2.1 和 iOS 10.2。</p>
-<a id="more"></a>
-<p>打开 Xcode，选择 iOS -&gt; Application -&gt; Game 模板。</p>
-<p><img src="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/587dfce23a04118eabdf7d95/1484651758293/?format=1500w" alt=""></p>
-<p>Product Name 使用 <strong>SpriteKitBackgroundTutorial</strong>，填写自己的 Organization Name 和 Organization Identifier，Language 一栏选择 Swift，Game Technology 一栏选择 SpriteKit，Devices 一栏选择 iPhone。</p>
-<p><img src="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/58ff88c71b10e3c8c1dc6a0d/1493141718478/facebook-project?format=1500w" alt=""></p>
-<p>本节教程需要一张图片作为背景图，从这里<a href="https://www.ioscreator.com/s/background.jpg" target="_blank" rel="external">下载</a>图片，添加到工程中，确保在添加时选择 “Copy items if needed” 选项。</p>
-<p><img src="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/587dff5d46c3c46130f0a478/1484652392518/?format=1500w" alt=""></p>
-<p>在 Xcode 的 Game 模板中，已经做了很多初始化的工作。在 Sprite Kit 框架中，每个场景（scene）控制 App 的一屏（screen）。找到 <strong>GameViewController.swift</strong> 文件，在 GameViewController 类里，已经定义好了 <strong>viewDidLoad</strong> 方法，在这个方法里创建场景，呈现 GameScene 对象。将 viewDidLoad 方法代码更改成如下所示：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</div><div class="line">    <span class="keyword">super</span>.viewDidLoad()</div><div class="line">        </div><div class="line">    <span class="keyword">let</span> scene = <span class="type">GameScene</span>(size:<span class="type">CGSize</span>(width: <span class="number">1080</span>, height: <span class="number">1920</span>))</div><div class="line">        </div><div class="line">    <span class="keyword">let</span> skView = <span class="keyword">self</span>.view <span class="keyword">as</span>! <span class="type">SKView</span></div><div class="line">    scene.scaleMode = .aspectFill</div><div class="line">    skView.presentScene(scene)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>找到 <strong>GameScene.swift</strong> 方法，已经定义好了 GameScene 类，在 <strong>didMove</strong> 方法中，实现自定义的代码。删除 GameScene 类里面所有的代码，然后添加 didMove 方法：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">GameScene</span>: <span class="title">SKScene</span> </span>&#123;</div><div class="line">    </div><div class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">didMove</span><span class="params">(to view: SKView)</span></span> &#123;</div><div class="line">        <span class="keyword">let</span> background = <span class="type">SKSpriteNode</span>(imageNamed: <span class="string">"background.jpg"</span>)</div><div class="line">        background.position = <span class="type">CGPoint</span>(x: size.width/<span class="number">2</span>, y: size.height/<span class="number">2</span>)</div><div class="line">        addChild(background)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>Sprite Kit 框架有个指定的类来创建控制 sprite（精灵）（译者注：sprite 是计算机图形学的专有名词，意为包含于场景中的二维图像或动画），就是 SKSpriteNode 类。在该节点（node）下，图片加载完成。接下来，将图片添加到场景中。最后，删除 GameScene.sks 和 Action.sks 文件，目前不需要这两个文件。</p>
-<p><strong>运行</strong>工程。</p>
-<p><img src="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/587e00d546c3c46130f0ae45/1484652772003/?format=750w" alt=""></p>
-<p>可以从 <a href="https://github.com/ioscreator/ioscreator" target="_blank" rel="external">github</a> 上下载 <strong>SpriteKitBackgroundTutorial</strong> 教程的源代码。</p>
-<blockquote>
-<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
-</blockquote>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;blockquote&gt;
-&lt;p&gt;作者：Arthur Knopper，&lt;a href=&quot;https://www.ioscreator.com/tutorials/display-background-with-spritekit-ios-tutorial-ios10&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;原文链接&lt;/a&gt;，原文日期：2017/01/17&lt;br&gt;译者：&lt;a href=&quot;http://www.jianshu.com/users/7a2d2cc38444/latest_articles&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Crystal Sun&lt;/a&gt;；校对：&lt;a href=&quot;http://chengway.in/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;walkingway&lt;/a&gt;；定稿：&lt;a href=&quot;https://github.com/chenmingbiao&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;CMB&lt;/a&gt;&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;!--此处开始正文--&gt;
-&lt;p&gt;Sprite Kit 是硬件加速的动画系统，为创建 2D 游戏进行了专门的优化。在本节教程中，将使用 Game 模板来添加一张背景图片。本节教程使用的是 Xcode 8.2.1 和 iOS 10.2。&lt;/p&gt;
-    
-    </summary>
-    
-      <category term="IOSCREATOR" scheme="https://swift.gg/categories/IOSCREATOR/"/>
-    
-    
-      <category term="iOS 开发" scheme="https://swift.gg/tags/iOS-%E5%BC%80%E5%8F%91/"/>
     
   </entry>
   
