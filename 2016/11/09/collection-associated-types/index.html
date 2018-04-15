@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/11/09/collection-associated-types/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="Swift 中的集合很强大也很复杂，本文就来讨论下 Swift 集合协议的关联类型作用。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.403Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="老司机带你深入浅出 Collection">
 <meta name="twitter:description" content="Swift 中的集合很强大也很复杂，本文就来讨论下 Swift 集合协议的关联类型作用。">
@@ -88,7 +89,7 @@
         <a href="/2016/11/09/collection-associated-types/" target="_blank" title="老司机带你深入浅出 Collection" itemprop="url">老司机带你深入浅出 Collection</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-11-08T16:00:00.000Z" itemprop="datePublished">2016-11-09</time>
+      <time datetime="2016-11-09T00:00:00.000Z" itemprop="datePublished">2016-11-09</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,45 +97,45 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Ole Begemann，<a href="https://oleb.net/blog/2016/09/collection-associated-types/" target="_blank" rel="external">原文链接</a>，原文日期：2016-09-22<br>译者：<a href="https://github.com/chaiyixiao" target="_blank" rel="external">BigbigChai</a>；校对：<a href="http://chengway.in/" target="_blank" rel="external">walkingway</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+<p>作者：Ole Begemann，<a href="https://oleb.net/blog/2016/09/collection-associated-types/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-09-22<br>译者：<a href="https://github.com/chaiyixiao" target="_blank" rel="noopener">BigbigChai</a>；校对：<a href="http://chengway.in/" target="_blank" rel="noopener">walkingway</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p>本文摘自即将出新版的 <a href="https://www.objc.io/books/advanced-swift/Swift" target="_blank" rel="external">Swift 进阶（Advanced Swift）</a>一书中的集合协议（Collection Protocols）章节（稍作修改以适合博客文章）。我和 <a href="http://chris.eidhof.nl/" target="_blank" rel="external">Chris Eidhof</a> 已经基本完成为本书更新到 Swift 3 的工作，很快可以面世。</p>
-<p>Swift 中的集合非常强大，但也<a href="http://chris.eidhof.nl/post/protocols-in-swift/" target="_blank" rel="external">很复杂</a>。如果你想实现自定义的集合类型，首先需要了解<a href="https://developer.apple.com/reference/swift/collection" target="_blank" rel="external">集合</a>协议的原理。即使只是使用标准库中常见的集合类型，它的工作原理仍然十分值得学习，尤其是它可以帮助你理解编译器打印出来的错误信息。</p>
-<p>在本文中，我们想探讨一下集合协议的<a href="https://developer.apple.com/library/content/documentation/Swift/Conceptual/Swift_Programming_Language/Generics.html#//apple_ref/doc/uid/TP40014097-CH26-ID189" target="_blank" rel="external">关联类型</a>。这听起来像是一个晦涩的主题，但我认为想要掌握 Swift 中集合类型的关键：在于对理解关联类型的作用、以及为什么需要它们。</p>
+<p>本文摘自即将出新版的 <a href="https://www.objc.io/books/advanced-swift/Swift" target="_blank" rel="noopener">Swift 进阶（Advanced Swift）</a>一书中的集合协议（Collection Protocols）章节（稍作修改以适合博客文章）。我和 <a href="http://chris.eidhof.nl/" target="_blank" rel="noopener">Chris Eidhof</a> 已经基本完成为本书更新到 Swift 3 的工作，很快可以面世。</p>
+<p>Swift 中的集合非常强大，但也<a href="http://chris.eidhof.nl/post/protocols-in-swift/" target="_blank" rel="noopener">很复杂</a>。如果你想实现自定义的集合类型，首先需要了解<a href="https://developer.apple.com/reference/swift/collection" target="_blank" rel="noopener">集合</a>协议的原理。即使只是使用标准库中常见的集合类型，它的工作原理仍然十分值得学习，尤其是它可以帮助你理解编译器打印出来的错误信息。</p>
+<p>在本文中，我们想探讨一下集合协议的<a href="https://developer.apple.com/library/content/documentation/Swift/Conceptual/Swift_Programming_Language/Generics.html#//apple_ref/doc/uid/TP40014097-CH26-ID189" target="_blank" rel="noopener">关联类型</a>。这听起来像是一个晦涩的主题，但我认为想要掌握 Swift 中集合类型的关键：在于对理解关联类型的作用、以及为什么需要它们。</p>
 <a id="more"></a>
 <h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><p>集合有五种关联类型。它们声明如下（实际的代码并不是这样，因为 Index 是在 IndexableBase 中声明的，但你明白我的意思就好）：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">Collection</span>: <span class="title">Indexable</span>, <span class="title">Sequence</span> </span>&#123;</div><div class="line">    associatedtype <span class="type">Iterator</span>: <span class="type">IteratorProtocol</span> = <span class="type">IndexingIterator</span>&lt;<span class="type">Self</span>&gt;</div><div class="line">    associatedtype <span class="type">SubSequence</span>: <span class="type">IndexableBase</span>, <span class="type">Sequence</span> = <span class="type">Slice</span>&lt;<span class="type">Self</span>&gt;</div><div class="line">    associatedtype <span class="type">Index</span>: <span class="type">Comparable</span> <span class="comment">// declared in IndexableBase</span></div><div class="line">    associatedtype <span class="type">IndexDistance</span>: <span class="type">SignedInteger</span> = <span class="type">Int</span></div><div class="line">    associatedtype <span class="type">Indices</span>: <span class="type">IndexableBase</span>, <span class="type">Sequence</span> = <span class="type">DefaultIndices</span>&lt;<span class="type">Self</span>&gt;</div><div class="line">    ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>前四个关联类型继承自基础协议<br><a href="https://developer.apple.com/reference/swift/sequence" target="_blank" rel="external">Sequence</a>，<a href="https://developer.apple.com/reference/swift/indexable" target="_blank" rel="external">Indexable</a> 和 <a href="https://developer.apple.com/reference/swift/indexablebase" target="_blank" rel="external">IndexableBase</a> [^1]；集合遵循了以上所有的协议，只是 Index 的约束更加严格、余下的协议赋予了不同的默认值。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">Collection</span>: <span class="title">Indexable</span>, <span class="title">Sequence</span> </span>&#123;</span><br><span class="line">    associatedtype <span class="type">Iterator</span>: <span class="type">IteratorProtocol</span> = <span class="type">IndexingIterator</span>&lt;<span class="type">Self</span>&gt;</span><br><span class="line">    associatedtype <span class="type">SubSequence</span>: <span class="type">IndexableBase</span>, <span class="type">Sequence</span> = <span class="type">Slice</span>&lt;<span class="type">Self</span>&gt;</span><br><span class="line">    associatedtype <span class="type">Index</span>: <span class="type">Comparable</span> <span class="comment">// declared in IndexableBase</span></span><br><span class="line">    associatedtype <span class="type">IndexDistance</span>: <span class="type">SignedInteger</span> = <span class="type">Int</span></span><br><span class="line">    associatedtype <span class="type">Indices</span>: <span class="type">IndexableBase</span>, <span class="type">Sequence</span> = <span class="type">DefaultIndices</span>&lt;<span class="type">Self</span>&gt;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>前四个关联类型继承自基础协议<br><a href="https://developer.apple.com/reference/swift/sequence" target="_blank" rel="noopener">Sequence</a>，<a href="https://developer.apple.com/reference/swift/indexable" target="_blank" rel="noopener">Indexable</a> 和 <a href="https://developer.apple.com/reference/swift/indexablebase" target="_blank" rel="noopener">IndexableBase</a> [^1]；集合遵循了以上所有的协议，只是 Index 的约束更加严格、余下的协议赋予了不同的默认值。</p>
 <p>注意，除了 Index 以外，集合类型的关联类型都有默认值 — 因此遵守集合协议的类型都只需指定 Index 的类型就可以了。虽然你不必过分在意其他的关联类型，但还是应该大致了解一下。</p>
-<h3 id="迭代器-Iterator"><a href="#迭代器-Iterator" class="headerlink" title="迭代器 Iterator"></a><a href="https://developer.apple.com/reference/swift/collection/iterator" target="_blank" rel="external">迭代器 Iterator</a></h3><p>遵守 Sequence 协议。Sequence 通过创建迭代器来访问它们的元素。迭代器每次产生一个序列的值，并在遍历该序列时追踪它的迭代状态。</p>
-<p>迭代器内部有一个称为 <a href="https://developer.apple.com/reference/swift/iteratorprotocol/element" target="_blank" rel="external">Element</a> 的关联类型。Element 类型指定了迭代器的生成值类型。例如，对于 <a href="https://developer.apple.com/reference/swift/string.characterview" target="_blank" rel="external">String.CharacterView</a> 的迭代器而言，Element 的类型是 <a href="https://developer.apple.com/reference/swift/character" target="_blank" rel="external">Character</a>。另外，迭代器也定义了它的 Sequence 的 Element 类型；事实上，我们经常能在方法签名、或者 Sequence 和集合的泛型约束中看到对 Iterator.Element 的引用，就是因为 Element 是 <a href="https://developer.apple.com/reference/swift/iteratorprotocol" target="_blank" rel="external">IteratorProtocol</a> 的关联类型。</p>
-<p>集合的默认迭代器类型是 <a href="https://developer.apple.com/reference/swift/indexingiterator" target="_blank" rel="external">IndexingIterator \<self\></self\></a>。这是一个非常简单的封装结构体，它使用集合自身的索引来遍历每个元素。标准库中的大多数集合都使用 IndexingIterator 作为迭代器。我们不需要为自定义的集合更改迭代器类型。</p>
-<h3 id="子序列-SubSequence"><a href="#子序列-SubSequence" class="headerlink" title="子序列 SubSequence"></a><a href="https://developer.apple.com/reference/swift/collection/subsequence" target="_blank" rel="external">子序列 SubSequence</a></h3><p>子序列也遵守 Sequence 协议，但是集合约束更加严格：集合的子序列本身也应该是集合。（我们说“应该”而不是“必须”，因为这种约束在目前的类型系统中无法完全表示。）</p>
+<h3 id="迭代器-Iterator"><a href="#迭代器-Iterator" class="headerlink" title="迭代器 Iterator"></a><a href="https://developer.apple.com/reference/swift/collection/iterator" target="_blank" rel="noopener">迭代器 Iterator</a></h3><p>遵守 Sequence 协议。Sequence 通过创建迭代器来访问它们的元素。迭代器每次产生一个序列的值，并在遍历该序列时追踪它的迭代状态。</p>
+<p>迭代器内部有一个称为 <a href="https://developer.apple.com/reference/swift/iteratorprotocol/element" target="_blank" rel="noopener">Element</a> 的关联类型。Element 类型指定了迭代器的生成值类型。例如，对于 <a href="https://developer.apple.com/reference/swift/string.characterview" target="_blank" rel="noopener">String.CharacterView</a> 的迭代器而言，Element 的类型是 <a href="https://developer.apple.com/reference/swift/character" target="_blank" rel="noopener">Character</a>。另外，迭代器也定义了它的 Sequence 的 Element 类型；事实上，我们经常能在方法签名、或者 Sequence 和集合的泛型约束中看到对 Iterator.Element 的引用，就是因为 Element 是 <a href="https://developer.apple.com/reference/swift/iteratorprotocol" target="_blank" rel="noopener">IteratorProtocol</a> 的关联类型。</p>
+<p>集合的默认迭代器类型是 <a href="https://developer.apple.com/reference/swift/indexingiterator" target="_blank" rel="noopener">IndexingIterator \&lt;Self></a>。这是一个非常简单的封装结构体，它使用集合自身的索引来遍历每个元素。标准库中的大多数集合都使用 IndexingIterator 作为迭代器。我们不需要为自定义的集合更改迭代器类型。</p>
+<h3 id="子序列-SubSequence"><a href="#子序列-SubSequence" class="headerlink" title="子序列 SubSequence"></a><a href="https://developer.apple.com/reference/swift/collection/subsequence" target="_blank" rel="noopener">子序列 SubSequence</a></h3><p>子序列也遵守 Sequence 协议，但是集合约束更加严格：集合的子序列本身也应该是集合。（我们说“应该”而不是“必须”，因为这种约束在目前的类型系统中无法完全表示。）</p>
 <p>在返回初始集合片段的操作中，子序列作为其返回类型：</p>
 <ul>
-<li><a href="https://developer.apple.com/reference/swift/collection/1641469-prefix" target="_blank" rel="external">prefix</a> 和 <a href="https://developer.apple.com/reference/swift/collection/1641372-suffix" target="_blank" rel="external">suffix</a> — 取开头或末尾的 n 个元素。</li>
-<li><a href="https://developer.apple.com/reference/swift/collection/1641742-dropfirst" target="_blank" rel="external">dropFirst</a> 和 <a href="https://developer.apple.com/reference/swift/collection/1641794-droplast" target="_blank" rel="external">dropLast</a>  — 返回删除开头或末尾 n 个元素后的子序列。</li>
-<li><a href="https://developer.apple.com/reference/swift/collection/1641547-split" target="_blank" rel="external">拆分（split）</a> —  以指定的分隔符元素拆分序列，并以数组形式返回。</li>
-<li>带有 Range \<index\> 参数的 <a href="https://developer.apple.com/reference/swift/collection/1641423-subscript" target="_blank" rel="external">subscript</a>（下标）— 返回指定索引范围内的元素片段。</index\></li>
+<li><a href="https://developer.apple.com/reference/swift/collection/1641469-prefix" target="_blank" rel="noopener">prefix</a> 和 <a href="https://developer.apple.com/reference/swift/collection/1641372-suffix" target="_blank" rel="noopener">suffix</a> — 取开头或末尾的 n 个元素。</li>
+<li><a href="https://developer.apple.com/reference/swift/collection/1641742-dropfirst" target="_blank" rel="noopener">dropFirst</a> 和 <a href="https://developer.apple.com/reference/swift/collection/1641794-droplast" target="_blank" rel="noopener">dropLast</a>  — 返回删除开头或末尾 n 个元素后的子序列。</li>
+<li><a href="https://developer.apple.com/reference/swift/collection/1641547-split" target="_blank" rel="noopener">拆分（split）</a> —  以指定的分隔符元素拆分序列，并以数组形式返回。</li>
+<li>带有 Range \&lt;Index> 参数的 <a href="https://developer.apple.com/reference/swift/collection/1641423-subscript" target="_blank" rel="noopener">subscript</a>（下标）— 返回指定索引范围内的元素片段。</li>
 </ul>
-<p>集合的默认子序列类型是 <a href="https://developer.apple.com/reference/swift/slice" target="_blank" rel="external">Slice \<self\></self\></a>，它封装了初始的集合（类似于 IndexingIterator ），并存储该片段在初始集合中的起始索引（startIndex）和结束索引（endIndex）。</p>
-<p>自定义集合的子序列类型非常有用，特别是当它定义为 Self（即集合的片段与集合本身类型相同）的时候。标准库类型中的例子有 String.CharacterView，这让字符串片段的使用<a href="https://oleb.net/blog/2016/08/swift-3-strings" target="_blank" rel="external">更为方便</a>。而一个反例是 <a href="https://developer.apple.com/reference/swift/array" target="_blank" rel="external">Array</a>，它以 <a href="https://developer.apple.com/reference/swift/arrayslice" target="_blank" rel="external">ArraySlice</a> 作为片段类型。</p>
-<h3 id="索引-Index"><a href="#索引-Index" class="headerlink" title="索引 Index"></a><a href="https://developer.apple.com/reference/swift/indexablebase/index" target="_blank" rel="external">索引 Index</a></h3><p>索引表示集合中的位置。每个集合都有两个特殊的索引，<a href="https://developer.apple.com/reference/swift/indexablebase/1786423-startindex" target="_blank" rel="external">startIndex</a> 和 <a href="https://developer.apple.com/reference/swift/indexablebase/1782993-endindex" target="_blank" rel="external">endIndex</a>。 startIndex 指向集合的第一个元素，而 endIndex 是集合中最后一个元素<em>之后</em>的索引。索引应该是一个哑值，只存储表明元素位置所需的最少信息量。尤其，索引应该尽可能地减少对集合的引用。集合索引必须是<a href="https://developer.apple.com/reference/swift/comparable" target="_blank" rel="external">可比较的</a>，这是它唯一的要求。也就是说，索引需要有明确的顺序。</p>
-<p>比如数组就是用整数作为索引的，但是整数索引不是对所有数据结构都起作用。我们再以 String.CharacterView 为例，Swift 中的字符是<a href="https://oleb.net/blog/2016/08/swift-3-strings" target="_blank" rel="external">大小可变的</a>；如果你想使用整数索引，你有两个选择：</p>
+<p>集合的默认子序列类型是 <a href="https://developer.apple.com/reference/swift/slice" target="_blank" rel="noopener">Slice \&lt;Self></a>，它封装了初始的集合（类似于 IndexingIterator ），并存储该片段在初始集合中的起始索引（startIndex）和结束索引（endIndex）。</p>
+<p>自定义集合的子序列类型非常有用，特别是当它定义为 Self（即集合的片段与集合本身类型相同）的时候。标准库类型中的例子有 String.CharacterView，这让字符串片段的使用<a href="https://oleb.net/blog/2016/08/swift-3-strings" target="_blank" rel="noopener">更为方便</a>。而一个反例是 <a href="https://developer.apple.com/reference/swift/array" target="_blank" rel="noopener">Array</a>，它以 <a href="https://developer.apple.com/reference/swift/arrayslice" target="_blank" rel="noopener">ArraySlice</a> 作为片段类型。</p>
+<h3 id="索引-Index"><a href="#索引-Index" class="headerlink" title="索引 Index"></a><a href="https://developer.apple.com/reference/swift/indexablebase/index" target="_blank" rel="noopener">索引 Index</a></h3><p>索引表示集合中的位置。每个集合都有两个特殊的索引，<a href="https://developer.apple.com/reference/swift/indexablebase/1786423-startindex" target="_blank" rel="noopener">startIndex</a> 和 <a href="https://developer.apple.com/reference/swift/indexablebase/1782993-endindex" target="_blank" rel="noopener">endIndex</a>。 startIndex 指向集合的第一个元素，而 endIndex 是集合中最后一个元素<em>之后</em>的索引。索引应该是一个哑值，只存储表明元素位置所需的最少信息量。尤其，索引应该尽可能地减少对集合的引用。集合索引必须是<a href="https://developer.apple.com/reference/swift/comparable" target="_blank" rel="noopener">可比较的</a>，这是它唯一的要求。也就是说，索引需要有明确的顺序。</p>
+<p>比如数组就是用整数作为索引的，但是整数索引不是对所有数据结构都起作用。我们再以 String.CharacterView 为例，Swift 中的字符是<a href="https://oleb.net/blog/2016/08/swift-3-strings" target="_blank" rel="noopener">大小可变的</a>；如果你想使用整数索引，你有两个选择：</p>
 <ol>
 <li><p><strong>用索引表示字符串内部存储的偏移量。</strong>这种做法十分有效率；访问一个给定索引的元素的复杂度是 O（1）。但是对于索引范围而言会有差别。例如，如果索引 0 处的字符是正常大小的两倍，则下一个字符的索引会是 2  - 访问索引 1 处的元素将触发致命错误或未定义行为。这会严重违反用户的期望。</p>
 </li>
 <li><p><strong>用索引 n 表示字符串中的第 n 个字符。</strong>这与用户期望一致 — 对索引范围来说不会有任何差别。然而，访问给定索引的元素的复杂度变成了O（n）；必须从头遍历字符串内该索引之前的所有元素，才能确定字符的储存位置。这种行为非常不好，因为用户会期望通过索引下标访问元素的操作能瞬间完成。<br>​<br>因此，<code>String.CharacterView.Index</code> 是一个不可见的值，指向字符串的内部存储缓冲区中的位置。实际上，它只是封装了一个整型偏移量，集合的使用者并不会对这种实现细节感兴趣。<br>每个集合都需要分别选择正确的索引类型。因此，关联类型中索引是唯一没有默认值的。</p>
 </li>
 </ol>
-<h3 id="索引距离-IndexDistance"><a href="#索引距离-IndexDistance" class="headerlink" title="索引距离 IndexDistance"></a><a href="https://developer.apple.com/reference/swift/collection/indexdistance" target="_blank" rel="external">索引距离 IndexDistance</a></h3><p>索引距离是一个带符号的整型，表示两个索引之间的距离。默认值是<a href="https://developer.apple.com/reference/swift/int" target="_blank" rel="external">整型</a>，我们没必要自己修改。</p>
-<h3 id="索引范围-Indices"><a href="#索引范围-Indices" class="headerlink" title="索引范围 Indices"></a><a href="https://developer.apple.com/reference/swift/collection/indices" target="_blank" rel="external">索引范围 Indices</a></h3><p>这是集合的 <a href="https://developer.apple.com/reference/swift/collection/1641719-indices" target="_blank" rel="external">indices</a> 属性的返回类型。它是一个包含所有索引的集合，该集合中的索引以升序排列对应初始集合的下标。注意，<a href="https://developer.apple.com/reference/swift/indexablebase/1782993-endindex" target="_blank" rel="external">endIndex</a> 不包括在内，因为 endIndex 表示”结束之后”的位置，所以不是有效的下标参数。</p>
-<p>在 Swift 2 中，indices 属性返回一个 <a href="http://swiftdoc.org/v2.2/type/Range/" target="_blank" rel="external">Range \<index\></index\></a>，可以用来遍历集合中所有的有效索引。在 Swift 3 中，Range \<index\> <a href="https://oleb.net/blog/2016/09/swift-3-ranges" target="_blank" rel="external">不再可迭代</a>，因为索引不能自我递进（现在<a href="https://github.com/apple/swift-evolution/blob/master/proposals/0065-collections-move-indices.md" target="_blank" rel="external">由集合来推进索引迭代</a>）。Indices 类型替代了 Range \<index\> 来实现索引的迭代。</index\></index\></p>
-<p>默认的 Indices 类型十分具有想象力地命名为 <a href="https://developer.apple.com/reference/swift/defaultindices" target="_blank" rel="external">DefaultIndices \<self\></self\></a>（23333）。它跟 Slice 一样，是对初始集合、起始和结束索引的一个简单封装 — 它需要保留对初始集合的引用，以便能够推进索引。如果在集合迭代索引的过程中对集合进行修改，可能会导致意想不到的性能问题：假设集合的实现使用了<a href="http://chris.eidhof.nl/post/struct-semantics-in-swift/" target="_blank" rel="external">写时复制（copy-on-write）</a>（正如标准库中的所有集合类型），迭代开始之后对集合的额外引用可能触发不必要的复制。</p>
-<p>我们在书中广泛说明了写时复制的内容。就现在来说，知道自定义集合可以使用一个不引用初始集合的 Indices 类型就足够了，这样做是一个非常有益的优化。所有索引不依赖于集合本身的集合都可以这样使用，例如数组。如果数组的索引是一个整数类型，你可以使用 <a href="https://developer.apple.com/reference/swift/countablerange" target="_blank" rel="external">CountableRange \<index\></index\></a>。以下是对自定义队列类型的定义（我们在书中实现了此类型）：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Queue</span>: <span class="title">Collection</span> </span>&#123;</div><div class="line">    ...</div><div class="line">    </div><div class="line">    <span class="keyword">typealias</span> <span class="type">Indices</span> = <span class="type">CountableRange</span>&lt;<span class="type">Int</span>&gt;</div><div class="line">    </div><div class="line">    <span class="keyword">var</span> <span class="built_in">indices</span>: <span class="type">CountableRange</span>&lt;<span class="type">Int</span>&gt; &#123;</div><div class="line">        <span class="keyword">return</span> startIndex..&lt;endIndex</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>[^1]: 请将 Indexable 和 IndexableBase 视为实现细节。这些协议被引入来解决类型系统不支持递归协议的约束，例如引用了集合本身的集合，它的关联类型就会有这种限制。<br>考虑这是<a href="https://github.com/apple/swift/blob/master/docs/GenericsManifesto.md" target="_blank" rel="external">更好地支持泛型</a>的部分，希望明年当这个让人高度期待的特性出来时，Indexable 和 IndexableBase 会被去掉，而把它们的功能放在集合内部。</p>
+<h3 id="索引距离-IndexDistance"><a href="#索引距离-IndexDistance" class="headerlink" title="索引距离 IndexDistance"></a><a href="https://developer.apple.com/reference/swift/collection/indexdistance" target="_blank" rel="noopener">索引距离 IndexDistance</a></h3><p>索引距离是一个带符号的整型，表示两个索引之间的距离。默认值是<a href="https://developer.apple.com/reference/swift/int" target="_blank" rel="noopener">整型</a>，我们没必要自己修改。</p>
+<h3 id="索引范围-Indices"><a href="#索引范围-Indices" class="headerlink" title="索引范围 Indices"></a><a href="https://developer.apple.com/reference/swift/collection/indices" target="_blank" rel="noopener">索引范围 Indices</a></h3><p>这是集合的 <a href="https://developer.apple.com/reference/swift/collection/1641719-indices" target="_blank" rel="noopener">indices</a> 属性的返回类型。它是一个包含所有索引的集合，该集合中的索引以升序排列对应初始集合的下标。注意，<a href="https://developer.apple.com/reference/swift/indexablebase/1782993-endindex" target="_blank" rel="noopener">endIndex</a> 不包括在内，因为 endIndex 表示”结束之后”的位置，所以不是有效的下标参数。</p>
+<p>在 Swift 2 中，indices 属性返回一个 <a href="http://swiftdoc.org/v2.2/type/Range/" target="_blank" rel="noopener">Range \&lt;Index></a>，可以用来遍历集合中所有的有效索引。在 Swift 3 中，Range \&lt;Index> <a href="https://oleb.net/blog/2016/09/swift-3-ranges" target="_blank" rel="noopener">不再可迭代</a>，因为索引不能自我递进（现在<a href="https://github.com/apple/swift-evolution/blob/master/proposals/0065-collections-move-indices.md" target="_blank" rel="noopener">由集合来推进索引迭代</a>）。Indices 类型替代了 Range \&lt;Index> 来实现索引的迭代。</p>
+<p>默认的 Indices 类型十分具有想象力地命名为 <a href="https://developer.apple.com/reference/swift/defaultindices" target="_blank" rel="noopener">DefaultIndices \&lt;Self></a>（23333）。它跟 Slice 一样，是对初始集合、起始和结束索引的一个简单封装 — 它需要保留对初始集合的引用，以便能够推进索引。如果在集合迭代索引的过程中对集合进行修改，可能会导致意想不到的性能问题：假设集合的实现使用了<a href="http://chris.eidhof.nl/post/struct-semantics-in-swift/" target="_blank" rel="noopener">写时复制（copy-on-write）</a>（正如标准库中的所有集合类型），迭代开始之后对集合的额外引用可能触发不必要的复制。</p>
+<p>我们在书中广泛说明了写时复制的内容。就现在来说，知道自定义集合可以使用一个不引用初始集合的 Indices 类型就足够了，这样做是一个非常有益的优化。所有索引不依赖于集合本身的集合都可以这样使用，例如数组。如果数组的索引是一个整数类型，你可以使用 <a href="https://developer.apple.com/reference/swift/countablerange" target="_blank" rel="noopener">CountableRange \&lt;Index></a>。以下是对自定义队列类型的定义（我们在书中实现了此类型）：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Queue</span>: <span class="title">Collection</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">typealias</span> <span class="type">Indices</span> = <span class="type">CountableRange</span>&lt;<span class="type">Int</span>&gt;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">var</span> <span class="built_in">indices</span>: <span class="type">CountableRange</span>&lt;<span class="type">Int</span>&gt; &#123;</span><br><span class="line">        <span class="keyword">return</span> startIndex..&lt;endIndex</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>[^1]: 请将 Indexable 和 IndexableBase 视为实现细节。这些协议被引入来解决类型系统不支持递归协议的约束，例如引用了集合本身的集合，它的关联类型就会有这种限制。<br>考虑这是<a href="https://github.com/apple/swift/blob/master/docs/GenericsManifesto.md" target="_blank" rel="noopener">更好地支持泛型</a>的部分，希望明年当这个让人高度期待的特性出来时，Indexable 和 IndexableBase 会被去掉，而把它们的功能放在集合内部。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
@@ -247,6 +248,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -295,7 +300,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -444,11 +449,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -460,11 +465,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -472,7 +473,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -484,11 +485,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -496,7 +501,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -690,7 +695,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

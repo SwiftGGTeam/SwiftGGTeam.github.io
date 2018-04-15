@@ -20,6 +20,7 @@
 <meta property="og:url" content="https://swift.gg/2016/06/12/let-it-throw/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="怎么在 Swift 中进行错误处理，这是一个问题，本文就来教你如何解决这个问题。">
+<meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="http://alisoftware.github.io/assets/frozen-throw-man.jpg">
 <meta property="og:image" content="http://alisoftware.github.io/assets/frozen-failure.jpg">
 <meta property="og:image" content="http://alisoftware.github.io/assets/frozen-fixer-upper.jpg">
@@ -28,7 +29,7 @@
 <meta property="og:image" content="http://alisoftware.github.io/assets/frozen-dont-let-them-in.jpg">
 <meta property="og:image" content="http://alisoftware.github.io/assets/frozen-sandwiches.jpg">
 <meta property="og:image" content="http://alisoftware.github.io/assets/frozen-olaf-holidays.jpg">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.391Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="如何在 Swift 中进行错误处理">
 <meta name="twitter:description" content="怎么在 Swift 中进行错误处理，这是一个问题，本文就来教你如何解决这个问题。">
@@ -97,7 +98,7 @@
         <a href="/2016/06/12/let-it-throw/" target="_blank" title="如何在 Swift 中进行错误处理" itemprop="url">如何在 Swift 中进行错误处理</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-06-11T16:00:00.000Z" itemprop="datePublished">2016-06-12</time>
+      <time datetime="2016-06-12T00:00:00.000Z" itemprop="datePublished">2016-06-12</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -105,7 +106,7 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Olivier Halligon，<a href="http://alisoftware.github.io/swift/error/2015/12/17/let-it-throw/" target="_blank" rel="external">原文链接</a>，原文日期：2015-12-17<br>译者：<a href="http://ijack.pw/" target="_blank" rel="external">JackAlan</a>；校对：<a href="http://blog.dianqk.org/" target="_blank" rel="external">靛青K</a>；定稿：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="external">Channe</a></p>
+<p>作者：Olivier Halligon，<a href="http://alisoftware.github.io/swift/error/2015/12/17/let-it-throw/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-12-17<br>译者：<a href="http://ijack.pw/" target="_blank" rel="noopener">JackAlan</a>；校对：<a href="http://blog.dianqk.org/" target="_blank" rel="noopener">靛青K</a>；定稿：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="noopener">Channe</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>今天的文章讲解如何在 Swift 中进行错误处理。</p>
@@ -115,7 +116,7 @@
 </blockquote>
 <a id="more"></a>
 <h3 id="Objective-C-以及对应的-NSError"><a href="#Objective-C-以及对应的-NSError" class="headerlink" title="Objective-C 以及对应的 NSError"></a>Objective-C 以及对应的 NSError</h3><p>还记得 Objective-C 吗？那时<sup><a href="#fn:nshipster">1</a></sup>，官方的方法是通过传入一个 <code>NSError*</code> 的引用进行错误处理。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">NSError* error;</div><div class="line">BOOL ok = [string writeToFile:path </div><div class="line">                   atomically:YES</div><div class="line">                     encoding:NSUTF8StringEncoding</div><div class="line">                        error:&amp;error];</div><div class="line">if (!ok) &#123;</div><div class="line">  NSLog(@“发生了一个错误: %@&quot;, error);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">NSError* error;</span><br><span class="line">BOOL ok = [string writeToFile:path </span><br><span class="line">                   atomically:YES</span><br><span class="line">                     encoding:NSUTF8StringEncoding</span><br><span class="line">                        error:&amp;error];</span><br><span class="line">if (!ok) &#123;</span><br><span class="line">  NSLog(@“发生了一个错误: %@&quot;, error);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>那简直是太痛苦了。以至于许多人不想甚至是懒得去检查错误，只是简单的在那里传一个 <code>NULL</code> 。这是很不负责且不安全的行为。</p>
 <h3 id="抛出一个错误"><a href="#抛出一个错误" class="headerlink" title="抛出一个错误"></a>抛出一个错误</h3><p><img src="http://alisoftware.github.io/assets/frozen-throw-man.jpg" alt=""></p>
 <p>Swift 2.0 以后，苹果决定采用一种不同的方式进行错误处理：使用 <code>throw</code> <sup><a href="#fn:not-exception">2</a></sup>。</p>
@@ -127,24 +128,24 @@
 <li>可以使用 <code>do { … } catch { … }</code> 这样的结构用来捕获并处理错误。</li>
 </ul>
 <p>看起来像这样：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// 定义一个可以抛错误的方法…</span></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">someFunctionWhichCanFail</span><span class="params">(param: Int)</span></span> <span class="keyword">throws</span> -&gt; <span class="type">String</span> &#123;</div><div class="line">  ...</div><div class="line">  <span class="keyword">if</span> (param &gt; <span class="number">0</span>) &#123;</div><div class="line">	<span class="keyword">return</span> <span class="string">"somestring"</span></div><div class="line">  &#125;</div><div class="line">  <span class="keyword">else</span> &#123;</div><div class="line">	<span class="keyword">throw</span> <span class="type">NSError</span>(domain: <span class="string">"MyDomain"</span>, code: <span class="number">500</span>, userInfo: <span class="literal">nil</span>)</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">// … 然后调用这个方法</span></div><div class="line"><span class="keyword">do</span> &#123;</div><div class="line">  <span class="keyword">let</span> result: <span class="type">String</span> = <span class="keyword">try</span> someFunctionWhichCanFail(-<span class="number">2</span>)</div><div class="line">  <span class="built_in">print</span>(<span class="string">"success! <span class="subst">\(result)</span>"</span>)</div><div class="line">&#125;</div><div class="line"><span class="keyword">catch</span> &#123;</div><div class="line">  <span class="built_in">print</span>(<span class="string">"Oops: <span class="subst">\(error)</span>"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 定义一个可以抛错误的方法…</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">someFunctionWhichCanFail</span><span class="params">(param: Int)</span></span> <span class="keyword">throws</span> -&gt; <span class="type">String</span> &#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">if</span> (param &gt; <span class="number">0</span>) &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="string">"somestring"</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> &#123;</span><br><span class="line">	<span class="keyword">throw</span> <span class="type">NSError</span>(domain: <span class="string">"MyDomain"</span>, code: <span class="number">500</span>, userInfo: <span class="literal">nil</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// … 然后调用这个方法</span></span><br><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">  <span class="keyword">let</span> result: <span class="type">String</span> = <span class="keyword">try</span> someFunctionWhichCanFail(-<span class="number">2</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"success! <span class="subst">\(result)</span>"</span>)</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">catch</span> &#123;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"Oops: <span class="subst">\(error)</span>"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h3 id="错误再也阻挡不了我了"><a href="#错误再也阻挡不了我了" class="headerlink" title="错误再也阻挡不了我了"></a>错误再也阻挡不了我了</h3><p><img src="http://alisoftware.github.io/assets/frozen-failure.jpg" alt=""></p>
 <p>你可以看到 <code>someFunctionWitchCanFail</code> 返回了一个普通的 <code>String</code> ，当一切正常的情况下， <code>String</code> 也是其返回值的类型。先考虑最简单的情况(在 <code>do { … }</code> 中的)，“通常情况下”可以很方便的调用这个函数去处理没有错误发生的情况。</p>
 <p>唯一的这些方法可能会出错的提醒就是<code>try</code>关键字，编译器强制让你把 <code>try</code> 添加到方法调用的位置的前面，否则就像是调用一个无抛出错误的方法。然后，只需要在一个单独的地方(在 <code>catch</code> 里)写错误处理的代码。</p>
 <p>要注意的是你可以在 <code>do</code> 代码段中写多于一行的代码(并且 <code>try</code> 可以调用不止一个抛错误的方法)。如果一切顺利的话，将会像预期的那样执行那些方法，但是一旦方法出错就会跳出 <code>do</code> 代码段，进入 <code>catch</code> 处。对于那些有很多潜在错误的大段代码来说，你可以在一个单一的错误路径中处理所有的错误，这也是非常方便的。</p>
 <h3 id="NSError-有点挫了"><a href="#NSError-有点挫了" class="headerlink" title="NSError 有点挫了"></a>NSError 有点挫了</h3><p><img src="http://alisoftware.github.io/assets/frozen-fixer-upper.jpg" alt=""></p>
 <p>OK，在这个例子下，我们仍然得用 <code>NSError</code> 处理错误，这有点痛苦。用 <code>==</code> 来比较域和错误代码，以及制作一个域和常量代码的列表，只是为了知道我们得到了什么错误以及如何正确的处理。。。哎哟。</p>
-<p>但是我们可以解决这个问题！如果用<a href="http://alisoftware.github.io/swift/enum/constants/2015/07/19/enums-as-constants/" target="_blank" rel="external">Enums as Constants</a>这篇文章里的知识：用 <code>enum</code> 替代 errors，将会怎样？</p>
+<p>但是我们可以解决这个问题！如果用<a href="http://alisoftware.github.io/swift/enum/constants/2015/07/19/enums-as-constants/" target="_blank" rel="noopener">Enums as Constants</a>这篇文章里的知识：用 <code>enum</code> 替代 errors，将会怎样？</p>
 <p>好吧，有一个好消息，那就是苹果提供了新的错误处理模式。事实上，当一个函数抛出错误时，它可以抛出任何遵从 <code>ErrorType</code> 的错误。 <code>NSError</code> 是其中的类型之一，但是你也可以自己搞一个，苹果也推荐这么做。</p>
 <p>最适合 <code>ErrorType</code> 类型的就是 <code>enum</code> 了，如果有需要的话，甚至二者之间可以有关联值。比如：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">enum</span> <span class="title">KristoffError</span> : <span class="title">ErrorType</span> </span>&#123;</div><div class="line">  <span class="keyword">case</span> <span class="type">ClumsyWayHeWalks</span></div><div class="line">  <span class="keyword">case</span> <span class="type">GrumpyWayHeTalks</span></div><div class="line">  <span class="keyword">case</span> <span class="type">PearShapedSquareShapedWeirdnessOfHisFeet</span></div><div class="line">  <span class="keyword">case</span> <span class="type">NotWashedSince</span>(days: <span class="type">Int</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">KristoffError</span> : <span class="title">ErrorType</span> </span>&#123;</span><br><span class="line">  <span class="keyword">case</span> <span class="type">ClumsyWayHeWalks</span></span><br><span class="line">  <span class="keyword">case</span> <span class="type">GrumpyWayHeTalks</span></span><br><span class="line">  <span class="keyword">case</span> <span class="type">PearShapedSquareShapedWeirdnessOfHisFeet</span></span><br><span class="line">  <span class="keyword">case</span> <span class="type">NotWashedSince</span>(days: <span class="type">Int</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>现在你就可以在一个函数里使用 <code>throw KristoffError.NotWashedSince(days: 3)</code>来抛出错误，然后在调用的地方使用 <code>catch KristoffError.NotWashedSince(let days)</code>来处理这些错误：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">loveKristoff</span><span class="params">()</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Void</span> &#123;</div><div class="line">  <span class="keyword">guard</span> daysSinceLastShower == <span class="number">0</span> <span class="keyword">else</span> &#123;</div><div class="line">	<span class="keyword">throw</span> <span class="type">KristoffError</span>.<span class="type">NotWashedSince</span>(days: daysSinceLastShower)</div><div class="line">  &#125;</div><div class="line">  ...</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">do</span> &#123;</div><div class="line">  <span class="keyword">try</span> loveKristoff()</div><div class="line">&#125;</div><div class="line"><span class="keyword">catch</span> <span class="type">KristoffError</span>.<span class="type">NotWashedSince</span>(<span class="keyword">let</span> days) &#123;</div><div class="line">  <span class="built_in">print</span>(<span class="string">"Ewww, he hasn't had a shower since <span class="subst">\(days)</span> days!"</span>)</div><div class="line">&#125;</div><div class="line"><span class="keyword">catch</span> &#123;</div><div class="line">  <span class="comment">// 所有其他类型的错误</span></div><div class="line">  <span class="built_in">print</span>(<span class="string">"I prefer we stay friends"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">loveKristoff</span><span class="params">()</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Void</span> &#123;</span><br><span class="line">  <span class="keyword">guard</span> daysSinceLastShower == <span class="number">0</span> <span class="keyword">else</span> &#123;</span><br><span class="line">	<span class="keyword">throw</span> <span class="type">KristoffError</span>.<span class="type">NotWashedSince</span>(days: daysSinceLastShower)</span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">  <span class="keyword">try</span> loveKristoff()</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">catch</span> <span class="type">KristoffError</span>.<span class="type">NotWashedSince</span>(<span class="keyword">let</span> days) &#123;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"Ewww, he hasn't had a shower since <span class="subst">\(days)</span> days!"</span>)</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">catch</span> &#123;</span><br><span class="line">  <span class="comment">// 所有其他类型的错误</span></span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"I prefer we stay friends"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>相比此前，这种方式更容易的捕获错误！</p>
 <p>这也让错误拥有了清晰的名字、常量以及关联值。再也没有复杂的 <code>userInfo</code> 了，在 enum 中你可以清楚地看到值的关联，就像如上例子中的 <code>days</code>，并且它只对特定的类型有效(不会对 <code>ClumsyWayHeWalks</code> 中的 <code>days</code> 关联值有效)。</p>
 <h3 id="根本拿不回来"><a href="#根本拿不回来" class="headerlink" title="根本拿不回来"></a>根本拿不回来</h3><p><img src="http://alisoftware.github.io/assets/frozen-cant-hold-it-back.jpg" alt=""></p>
 <p>当你调用一个正在抛出错误的函数时，抛出的错误就会被调用函数中的 <code>do...catch</code> 捕获。但是如果错误没有被捕获，它就会被传递到上一层。比如：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">doFail</span><span class="params">()</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Void</span> &#123; <span class="keyword">throw</span> … &#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">test</span><span class="params">()</span></span> &#123;</div><div class="line">  <span class="keyword">do</span> &#123;</div><div class="line">	<span class="keyword">try</span> doTheActualCall()</div><div class="line">  &#125; <span class="keyword">catch</span> &#123;</div><div class="line">	<span class="built_in">print</span>(<span class="string">"Oops"</span>)</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">doTheActualCall</span><span class="params">()</span></span> <span class="keyword">throws</span> &#123;</div><div class="line">  <span class="keyword">try</span> doFail()</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">doFail</span><span class="params">()</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Void</span> &#123; <span class="keyword">throw</span> … &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">test</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">do</span> &#123;</span><br><span class="line">	<span class="keyword">try</span> doTheActualCall()</span><br><span class="line">  &#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">	<span class="built_in">print</span>(<span class="string">"Oops"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">doTheActualCall</span><span class="params">()</span></span> <span class="keyword">throws</span> &#123;</span><br><span class="line">  <span class="keyword">try</span> doFail()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这里，当 <code>doFail</code> 被调用时，潜在的错误没有被 <code>doTheActualCall</code> 捕获(没有 <code>do...catch</code> 来捕获它)，所以它就被传递到 <code>test()</code> 函数。由于 <code>doTheActualCall</code> 没有捕获任何错误，所以它必须被标记为 <code>throws</code> ：即使它不能通过自己抛出错误，但仍能传递。它自己不能处理错误，必须抛出到更高层。</p>
 <p>另一方面，<code>test()</code> 在内部捕获所有的错误，所以，即使它调用一个抛出函数(<code>try doTheActualCall()</code>)，这个函数抛出的所有的错误都会在 <code>do...catch</code> 块中被捕获。函数 <code>test()</code> 本身不抛出错误，所以调用者也不要知道其内部行为。</p>
 <h3 id="隐藏，不要让他们知道"><a href="#隐藏，不要让他们知道" class="headerlink" title="隐藏，不要让他们知道"></a>隐藏，不要让他们知道</h3><p><img src="http://alisoftware.github.io/assets/frozen-conceal-dont-feel.jpg" alt=""></p>
@@ -167,19 +168,19 @@
 <p><code>throw</code> 话题和 Swift 2.0 的错误处理模型还有很多东西可讲，我本可以讲一些关于 <code>try?</code> 和 <code>try!</code>，或者关于高阶函数中的 <code>rethrows</code> 关键字。</p>
 <p>这里没有时间对每个话题面面俱到了，那会使得我的文章非常长。但是别人有趣的文章将会帮你探索 Swift 错误处理的世界，包括但不限于：</p>
 <ul>
-<li><a href="http://robnapier.net/throw-what-dont-throw" target="_blank" rel="external">Throw that don’t throw</a> and <a href="http://robnapier.net/re-throws" target="_blank" rel="external">Re…throws?</a> by Rob Napier</li>
-<li><a href="https://littlebitesofcocoa.com/108-error-handling" target="_blank" rel="external">Error Handling</a> by Little Bites of Cocoa</li>
-<li><a href="http://www.sunsetlakesoftware.com/2015/11/03/what-we-learned-rewriting-our-robotic-control-software-swift" target="_blank" rel="external">What we learned from rewriting our robotic control software in Swift</a>, by Brad Larson</li>
+<li><a href="http://robnapier.net/throw-what-dont-throw" target="_blank" rel="noopener">Throw that don’t throw</a> and <a href="http://robnapier.net/re-throws" target="_blank" rel="noopener">Re…throws?</a> by Rob Napier</li>
+<li><a href="https://littlebitesofcocoa.com/108-error-handling" target="_blank" rel="noopener">Error Handling</a> by Little Bites of Cocoa</li>
+<li><a href="http://www.sunsetlakesoftware.com/2015/11/03/what-we-learned-rewriting-our-robotic-control-software-swift" target="_blank" rel="noopener">What we learned from rewriting our robotic control software in Swift</a>, by Brad Larson</li>
 <li>… (别犹豫了，快去评论区分享更多链接吧！)</li>
 </ul>
 <p><img src="http://alisoftware.github.io/assets/frozen-olaf-holidays.jpg" alt=""></p>
 <hr>
 <p><a name="fn:nshipster"></a></p>
 <ol>
-<li>更多关于在 Objective-C 中错误处理的信息，可以参考这篇文章：<a href="http://nshipster.com/nserror/" target="_blank" rel="external">NSError</a>。今天的文章是关于 Swift 中的新方式的，所以别在旧事物上花费太多的时间。<br><a name="fn:not-exception"></a></li>
+<li>更多关于在 Objective-C 中错误处理的信息，可以参考这篇文章：<a href="http://nshipster.com/nserror/" target="_blank" rel="noopener">NSError</a>。今天的文章是关于 Swift 中的新方式的，所以别在旧事物上花费太多的时间。<br><a name="fn:not-exception"></a></li>
 <li>尽管它叫 throw ，但是 <code>throw</code> 不是像 Java 或者 C++ 甚至 OC 中的 throw exception。但是使用的方式非常相似，苹果决定保留相同的措辞，所以习惯于 exceptions 的人会感到非常自然。<br><a name="fn:why-try"></a></li>
 <li>这是编译器强制的，其目的是让你意识到这个函数可能出错，你必须处理潜在的错误。<br><a name="fn:resilience"></a></li>
-<li>Swift 2.0 还不支持 typed throws，但是<a href="https://lists.swift.org/pipermail/swift-evolution/2015-December/000076.html" target="_blank" rel="external">这里</a>有一个关于添加这个特性的讨论，Chris Lattner 解释了 Swift 2 不支持的原因，以及为什么我们需要 Swift 3.0 的弹性模型以获得这个特性。<br><a name="#fn:ref"></a></li>
+<li>Swift 2.0 还不支持 typed throws，但是<a href="https://lists.swift.org/pipermail/swift-evolution/2015-December/000076.html" target="_blank" rel="noopener">这里</a>有一个关于添加这个特性的讨论，Chris Lattner 解释了 Swift 2 不支持的原因，以及为什么我们需要 Swift 3.0 的弹性模型以获得这个特性。<br><a name="#fn:ref"></a></li>
 <li>好了，我保证这是我最后一次可耻使用 <em>Frozen</em>(《冰雪奇缘》) 标题了。</li>
 </ol>
 <blockquote>
@@ -294,6 +295,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -342,7 +347,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -491,11 +496,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -507,11 +512,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -519,7 +520,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -531,11 +532,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -543,7 +548,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -737,7 +742,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

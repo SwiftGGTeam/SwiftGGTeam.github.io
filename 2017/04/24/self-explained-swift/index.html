@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2017/04/24/self-explained-swift/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Weston Hanners，原文链接，原文日期：2017-04-19译者：CoderAFI；校对：Darren；定稿：CMB   用代码来进行自动布局">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.411Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift 简洁之道(上)">
 <meta name="twitter:description" content="作者：Weston Hanners，原文链接，原文日期：2017-04-19译者：CoderAFI；校对：Darren；定稿：CMB   用代码来进行自动布局">
@@ -88,7 +89,7 @@
         <a href="/2017/04/24/self-explained-swift/" target="_blank" title="Swift 简洁之道(上)" itemprop="url">Swift 简洁之道(上)</a>
     </h1>
     <p class="article-time">
-      <time datetime="2017-04-23T16:00:00.000Z" itemprop="datePublished">2017-04-24</time>
+      <time datetime="2017-04-24T00:00:00.000Z" itemprop="datePublished">2017-04-24</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,15 +97,17 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Weston Hanners，<a href="https://www.alloc-init.com/blog/2016.12.28" target="_blank" rel="external">原文链接</a>，原文日期：2017-04-19<br>译者：<a href="http://coderafi.github.io/" target="_blank" rel="external">CoderAFI</a>；校对：<a href="https://github.com/Harman-darrenchen" target="_blank" rel="external">Darren</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+<p>作者：Weston Hanners，<a href="https://www.alloc-init.com/blog/2016.12.28" target="_blank" rel="noopener">原文链接</a>，原文日期：2017-04-19<br>译者：<a href="http://coderafi.github.io/" target="_blank" rel="noopener">CoderAFI</a>；校对：<a href="https://github.com/Harman-darrenchen" target="_blank" rel="noopener">Darren</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>用代码来进行自动布局</p>
 <a id="more"></a>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">import UIKit // 导入 UIKit 为下面布局所用</div><div class="line">import PlaygroundSupport // 导入 Playground 运行支持的库</div><div class="line"></div><div class="line">// 我将会采用一种非常简洁的方式来添加界面元素、完成布局、配置界面属性但是不会用到 `Storybards`.</div><div class="line"></div><div class="line">class OurAwesomeViewController: UIViewController &#123;</div><div class="line"></div><div class="line">	// 在这里的所有UI元素, 我都会用 懒加载 方式来初始化</div><div class="line"></div><div class="line">	// 所谓懒加载也就说，只有在这些UI元素被添加到界面层级中去的时候，才会调用他们的内联构造函数进行初始化并且只会调用一次</div><div class="line">	// 理想情况下，我在这里想采用 lazy let 来强制保证这些UI元素在显示之后不会改变，但是 Swift 3 并不支持</div><div class="line"></div><div class="line">	// 那如果我们直接用 let 又如何呢,答案是也不行，因为如果这样的话是无法在一个方法中访问到 self 的，这个时候 self 还没有初始化完成</div><div class="line">	lazy var titleLabel: UILabel = &#123;</div><div class="line"></div><div class="line">		// 初始化 label</div><div class="line">		let label = UILabel()</div><div class="line"></div><div class="line">		// 将下面的属性禁止掉，否则会有很多布局的错误日志输出.</div><div class="line">		// 我也不清楚为什么默认值是 &quot;true&quot;，反正现在用不到它了.</div><div class="line">		label.translatesAutoresizingMaskIntoConstraints = false</div><div class="line"></div><div class="line">		// 给 label 设置字体</div><div class="line">		label.font = UIFont(name: &quot;Menlo&quot;, size: 14)</div><div class="line"></div><div class="line">		// 设置字体颜色(注意，这里我们不会牵扯到设计的东西)</div><div class="line">		label.textColor = .white</div><div class="line"></div><div class="line">		// 当然也可以设置 label 的显示内容</div><div class="line">		label.text = &quot;Awesome&quot;</div><div class="line"></div><div class="line">		// 让文字内容居中</div><div class="line">		label.textAlignment = .center</div><div class="line"></div><div class="line">		return label</div><div class="line">	&#125;()</div><div class="line"></div><div class="line">	// Button 设置也大同小异</div><div class="line">	lazy var button: UIButton = &#123;</div><div class="line"></div><div class="line">		// 初始化</div><div class="line">		let button = UIButton()</div><div class="line"></div><div class="line">		// 禁用掉这个多余的属性</div><div class="line">		button.translatesAutoresizingMaskIntoConstraints = false</div><div class="line"></div><div class="line">		// 设置按钮的标题内容</div><div class="line">		button.setTitle(&quot;Press Me&quot;, for: .normal)</div><div class="line"></div><div class="line">		// 给按钮绑定事件函数</div><div class="line">		button.addTarget(self,</div><div class="line">							action: #selector(OurAwesomeViewController.buttonTest),</div><div class="line">  							for: .touchUpInside)</div><div class="line"></div><div class="line">		return button</div><div class="line">	&#125;()</div><div class="line"></div><div class="line">	// 在这里添加布局代码，当界面准备显示在屏幕上的时候这个方法就会在 UIKit 中被调用</div><div class="line">	override func loadView() &#123;</div><div class="line"></div><div class="line">		// 如果要采用UIKit默认提供的view,请别忘了调用 super 的 loadView 方法,如果不用的话，也要给self.view赋值</div><div class="line">		super.loadView()</div><div class="line"></div><div class="line">		// 自定义 view 的背景色</div><div class="line">		view.backgroundColor = .blue</div><div class="line"></div><div class="line">		// StackView 控件会节省很多时间. 它会自动管理子界面的布局方式并且可以结合一些属性设置就可以避免臃余的界面约束</div><div class="line">		// StackView 控件还可以嵌套甚至设置一些边距以满足各种复杂的布局情况.在我看来，这种布局方式要比设置约束简单有效的多.</div><div class="line">		let verticalLayout = UIStackView(arrangedSubviews: [titleLabel, button])</div><div class="line"></div><div class="line">		// 同样的禁用掉这个属性</div><div class="line">		verticalLayout.translatesAutoresizingMaskIntoConstraints = false</div><div class="line"></div><div class="line">		// 设置垂直方向布局，并且设置填充和对齐方式.</div><div class="line">		// 这里不用记到底用了哪个属性，只要大体有个印象，用的时候查下也可以了.</div><div class="line">		verticalLayout.axis = .vertical</div><div class="line">		verticalLayout.alignment = .fill</div><div class="line">		verticalLayout.distribution = .fill</div><div class="line"></div><div class="line">		// 如果你要设置一些边距，可以像下面这样做</div><div class="line">		verticalLayout.isLayoutMarginsRelativeArrangement = true</div><div class="line">		verticalLayout.layoutMargins = UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)</div><div class="line"></div><div class="line">		// 我们给 StackView 控件设置一些布局约束来矫正它的位置</div><div class="line">		// 这部分代码可以抽象一下写成一个类库来简化代码.在下面文章中我会展示出来</div><div class="line">		let topConstraint = NSLayoutConstraint(item: verticalLayout,</div><div class="line">                                              attribute: .top,</div><div class="line">                                              relatedBy: .equal,</div><div class="line">                                              toItem: view,</div><div class="line">                                              attribute: .top,</div><div class="line">                                              multiplier: 1,</div><div class="line">                                              constant: 0)</div><div class="line"></div><div class="line">		let bottomConstraint = NSLayoutConstraint(item: verticalLayout,</div><div class="line">                                                 attribute: .bottom,</div><div class="line">                                                 relatedBy: .equal,</div><div class="line">                                                 toItem: view,</div><div class="line">                                                 attribute: .bottom,</div><div class="line">                                                 multiplier: 1,</div><div class="line">                                                 constant: 0)</div><div class="line"></div><div class="line">		let leftConstraint = NSLayoutConstraint(item: verticalLayout,</div><div class="line">                                               attribute: .left,</div><div class="line">                                               relatedBy: .equal,</div><div class="line">                                               toItem: view,</div><div class="line">                                               attribute: .left,</div><div class="line">                                               multiplier: 1,</div><div class="line">                                               constant: 0)</div><div class="line"></div><div class="line">		let rightConstraint = NSLayoutConstraint(item: verticalLayout,</div><div class="line">                                                attribute: .right,</div><div class="line">                                                relatedBy: .equal,</div><div class="line">                                                toItem: view,</div><div class="line">                                                attribute: .right,</div><div class="line">                                                multiplier: 1,</div><div class="line">                                                constant: 0)</div><div class="line"></div><div class="line">		// 现在添加到view中...</div><div class="line">		view.addSubview(verticalLayout)</div><div class="line"></div><div class="line">		// 添加上面的约束.</div><div class="line">		view.addConstraints([topConstraint, bottomConstraint, leftConstraint, rightConstraint])</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	// 当按钮被点击时，这个测试方法会被调用.</div><div class="line">	func buttonTest(sender: UIButton) &#123;</div><div class="line">	// 这里只是改变了界面的颜色</div><div class="line">	view.backgroundColor = .red</div><div class="line">	&#125;</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line">// 将上面的 view controller 绑定到 playground 上.</div><div class="line">PlaygroundPage.current.liveView = OurAwesomeViewController()</div><div class="line">PlaygroundPage.current.needsIndefiniteExecution = true</div><div class="line"></div><div class="line">// 用纯手工的方式编写布局代码可能看起来有点费力，但这样做对于了解UI元素的布局原理，位置分布，属性设置是非常有用的.</div><div class="line">// 采用这种方式更容易用 git 来跟踪历史变化, 所以在某些方面我个人认为要比 Interface Builder 更简单易用一些.</div><div class="line"></div><div class="line">// 附加内容!!!</div><div class="line"></div><div class="line">// 你可能会想把以上代码用到真是的 Xcode 工程中去，而不是仅仅在 Playgrounds 里面跑跑.</div><div class="line"></div><div class="line">// 首先，当你创建完工程之后，在工程文件里一般会有一个 `Main Interface` 的配置，它通常是第一个要加载的 `Storyboard`.</div><div class="line">// 现在我们不用它了，可以把它删掉.</div><div class="line"></div><div class="line">// 下一步</div><div class="line"></div><div class="line">// 在 AppDelegate 的 applicationDidFinishLaunchingWithOptions 中，只需要改变一行代码即可.</div><div class="line">class AppDelegate: UIResponder, UIApplicationDelegate &#123;</div><div class="line"></div><div class="line">	var window: UIWindow?</div><div class="line"></div><div class="line">	func application(_ application: UIApplication,</div><div class="line">                    willFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey : Any]? = nil) -&gt; Bool &#123;</div><div class="line"></div><div class="line">		window = UIWindow(frame: UIScreen.main.bounds)</div><div class="line">		window?.rootViewController = OurAwesomeViewController()</div><div class="line">		window?.makeKeyAndVisible()</div><div class="line">		return true</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">// 如果你想看我的更多文章或者跟我交流可以在 twitter(@WestonHanners) 上找我.</div><div class="line"></div><div class="line">// 在下片文章中，我会写一些扩展让上面的代码更简洁、易读,大家敬请期待</div></pre></td></tr></table></figure>
-<p><a href="https://www.alloc-init.com/content/downloads/1-Layout.zip" target="_blank" rel="external">下载示例代码</a></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">import UIKit // 导入 UIKit 为下面布局所用</span><br><span class="line">import PlaygroundSupport // 导入 Playground 运行支持的库</span><br><span class="line"></span><br><span class="line">// 我将会采用一种非常简洁的方式来添加界面元素、完成布局、配置界面属性但是不会用到 `Storybards`.</span><br><span class="line"></span><br><span class="line">class OurAwesomeViewController: UIViewController &#123;</span><br><span class="line"></span><br><span class="line">	// 在这里的所有UI元素, 我都会用 懒加载 方式来初始化</span><br><span class="line"></span><br><span class="line">	// 所谓懒加载也就说，只有在这些UI元素被添加到界面层级中去的时候，才会调用他们的内联构造函数进行初始化并且只会调用一次</span><br><span class="line">	// 理想情况下，我在这里想采用 lazy let 来强制保证这些UI元素在显示之后不会改变，但是 Swift 3 并不支持</span><br><span class="line"></span><br><span class="line">	// 那如果我们直接用 let 又如何呢,答案是也不行，因为如果这样的话是无法在一个方法中访问到 self 的，这个时候 self 还没有初始化完成</span><br><span class="line">	lazy var titleLabel: UILabel = &#123;</span><br><span class="line"></span><br><span class="line">		// 初始化 label</span><br><span class="line">		let label = UILabel()</span><br><span class="line"></span><br><span class="line">		// 将下面的属性禁止掉，否则会有很多布局的错误日志输出.</span><br><span class="line">		// 我也不清楚为什么默认值是 &quot;true&quot;，反正现在用不到它了.</span><br><span class="line">		label.translatesAutoresizingMaskIntoConstraints = false</span><br><span class="line"></span><br><span class="line">		// 给 label 设置字体</span><br><span class="line">		label.font = UIFont(name: &quot;Menlo&quot;, size: 14)</span><br><span class="line"></span><br><span class="line">		// 设置字体颜色(注意，这里我们不会牵扯到设计的东西)</span><br><span class="line">		label.textColor = .white</span><br><span class="line"></span><br><span class="line">		// 当然也可以设置 label 的显示内容</span><br><span class="line">		label.text = &quot;Awesome&quot;</span><br><span class="line"></span><br><span class="line">		// 让文字内容居中</span><br><span class="line">		label.textAlignment = .center</span><br><span class="line"></span><br><span class="line">		return label</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	// Button 设置也大同小异</span><br><span class="line">	lazy var button: UIButton = &#123;</span><br><span class="line"></span><br><span class="line">		// 初始化</span><br><span class="line">		let button = UIButton()</span><br><span class="line"></span><br><span class="line">		// 禁用掉这个多余的属性</span><br><span class="line">		button.translatesAutoresizingMaskIntoConstraints = false</span><br><span class="line"></span><br><span class="line">		// 设置按钮的标题内容</span><br><span class="line">		button.setTitle(&quot;Press Me&quot;, for: .normal)</span><br><span class="line"></span><br><span class="line">		// 给按钮绑定事件函数</span><br><span class="line">		button.addTarget(self,</span><br><span class="line">							action: #selector(OurAwesomeViewController.buttonTest),</span><br><span class="line">  							for: .touchUpInside)</span><br><span class="line"></span><br><span class="line">		return button</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	// 在这里添加布局代码，当界面准备显示在屏幕上的时候这个方法就会在 UIKit 中被调用</span><br><span class="line">	override func loadView() &#123;</span><br><span class="line"></span><br><span class="line">		// 如果要采用UIKit默认提供的view,请别忘了调用 super 的 loadView 方法,如果不用的话，也要给self.view赋值</span><br><span class="line">		super.loadView()</span><br><span class="line"></span><br><span class="line">		// 自定义 view 的背景色</span><br><span class="line">		view.backgroundColor = .blue</span><br><span class="line"></span><br><span class="line">		// StackView 控件会节省很多时间. 它会自动管理子界面的布局方式并且可以结合一些属性设置就可以避免臃余的界面约束</span><br><span class="line">		// StackView 控件还可以嵌套甚至设置一些边距以满足各种复杂的布局情况.在我看来，这种布局方式要比设置约束简单有效的多.</span><br><span class="line">		let verticalLayout = UIStackView(arrangedSubviews: [titleLabel, button])</span><br><span class="line"></span><br><span class="line">		// 同样的禁用掉这个属性</span><br><span class="line">		verticalLayout.translatesAutoresizingMaskIntoConstraints = false</span><br><span class="line"></span><br><span class="line">		// 设置垂直方向布局，并且设置填充和对齐方式.</span><br><span class="line">		// 这里不用记到底用了哪个属性，只要大体有个印象，用的时候查下也可以了.</span><br><span class="line">		verticalLayout.axis = .vertical</span><br><span class="line">		verticalLayout.alignment = .fill</span><br><span class="line">		verticalLayout.distribution = .fill</span><br><span class="line"></span><br><span class="line">		// 如果你要设置一些边距，可以像下面这样做</span><br><span class="line">		verticalLayout.isLayoutMarginsRelativeArrangement = true</span><br><span class="line">		verticalLayout.layoutMargins = UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)</span><br><span class="line"></span><br><span class="line">		// 我们给 StackView 控件设置一些布局约束来矫正它的位置</span><br><span class="line">		// 这部分代码可以抽象一下写成一个类库来简化代码.在下面文章中我会展示出来</span><br><span class="line">		let topConstraint = NSLayoutConstraint(item: verticalLayout,</span><br><span class="line">                                              attribute: .top,</span><br><span class="line">                                              relatedBy: .equal,</span><br><span class="line">                                              toItem: view,</span><br><span class="line">                                              attribute: .top,</span><br><span class="line">                                              multiplier: 1,</span><br><span class="line">                                              constant: 0)</span><br><span class="line"></span><br><span class="line">		let bottomConstraint = NSLayoutConstraint(item: verticalLayout,</span><br><span class="line">                                                 attribute: .bottom,</span><br><span class="line">                                                 relatedBy: .equal,</span><br><span class="line">                                                 toItem: view,</span><br><span class="line">                                                 attribute: .bottom,</span><br><span class="line">                                                 multiplier: 1,</span><br><span class="line">                                                 constant: 0)</span><br><span class="line"></span><br><span class="line">		let leftConstraint = NSLayoutConstraint(item: verticalLayout,</span><br><span class="line">                                               attribute: .left,</span><br><span class="line">                                               relatedBy: .equal,</span><br><span class="line">                                               toItem: view,</span><br><span class="line">                                               attribute: .left,</span><br><span class="line">                                               multiplier: 1,</span><br><span class="line">                                               constant: 0)</span><br><span class="line"></span><br><span class="line">		let rightConstraint = NSLayoutConstraint(item: verticalLayout,</span><br><span class="line">                                                attribute: .right,</span><br><span class="line">                                                relatedBy: .equal,</span><br><span class="line">                                                toItem: view,</span><br><span class="line">                                                attribute: .right,</span><br><span class="line">                                                multiplier: 1,</span><br><span class="line">                                                constant: 0)</span><br><span class="line"></span><br><span class="line">		// 现在添加到view中...</span><br><span class="line">		view.addSubview(verticalLayout)</span><br><span class="line"></span><br><span class="line">		// 添加上面的约束.</span><br><span class="line">		view.addConstraints([topConstraint, bottomConstraint, leftConstraint, rightConstraint])</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// 当按钮被点击时，这个测试方法会被调用.</span><br><span class="line">	func buttonTest(sender: UIButton) &#123;</span><br><span class="line">	// 这里只是改变了界面的颜色</span><br><span class="line">	view.backgroundColor = .red</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 将上面的 view controller 绑定到 playground 上.</span><br><span class="line">PlaygroundPage.current.liveView = OurAwesomeViewController()</span><br><span class="line">PlaygroundPage.current.needsIndefiniteExecution = true</span><br><span class="line"></span><br><span class="line">// 用纯手工的方式编写布局代码可能看起来有点费力，但这样做对于了解UI元素的布局原理，位置分布，属性设置是非常有用的.</span><br><span class="line">// 采用这种方式更容易用 git 来跟踪历史变化, 所以在某些方面我个人认为要比 Interface Builder 更简单易用一些.</span><br><span class="line"></span><br><span class="line">// 附加内容!!!</span><br><span class="line"></span><br><span class="line">// 你可能会想把以上代码用到真是的 Xcode 工程中去，而不是仅仅在 Playgrounds 里面跑跑.</span><br><span class="line"></span><br><span class="line">// 首先，当你创建完工程之后，在工程文件里一般会有一个 `Main Interface` 的配置，它通常是第一个要加载的 `Storyboard`.</span><br><span class="line">// 现在我们不用它了，可以把它删掉.</span><br><span class="line"></span><br><span class="line">// 下一步</span><br><span class="line"></span><br><span class="line">// 在 AppDelegate 的 applicationDidFinishLaunchingWithOptions 中，只需要改变一行代码即可.</span><br><span class="line">class AppDelegate: UIResponder, UIApplicationDelegate &#123;</span><br><span class="line"></span><br><span class="line">	var window: UIWindow?</span><br><span class="line"></span><br><span class="line">	func application(_ application: UIApplication,</span><br><span class="line">                    willFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey : Any]? = nil) -&gt; Bool &#123;</span><br><span class="line"></span><br><span class="line">		window = UIWindow(frame: UIScreen.main.bounds)</span><br><span class="line">		window?.rootViewController = OurAwesomeViewController()</span><br><span class="line">		window?.makeKeyAndVisible()</span><br><span class="line">		return true</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 如果你想看我的更多文章或者跟我交流可以在 twitter(@WestonHanners) 上找我.</span><br><span class="line"></span><br><span class="line">// 在下片文章中，我会写一些扩展让上面的代码更简洁、易读,大家敬请期待</span><br></pre></td></tr></table></figure>
+<p><a href="https://www.alloc-init.com/content/downloads/1-Layout.zip" target="_blank" rel="noopener">下载示例代码</a></p>
 <blockquote>
 <p>译者注：上面的这些翻译，个人认为只是作者为了阐述清楚代码的原理，也就是说为什么这样做能使代码简洁，而并非是每行代码都要加注释</p>
+</blockquote>
+<blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
   
@@ -216,6 +219,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -264,7 +271,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -413,11 +420,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -429,11 +436,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -441,7 +444,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -453,11 +456,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -465,7 +472,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -659,7 +666,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

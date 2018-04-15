@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2017/01/10/dear-erica-singletons-and-property-observers/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Erica Sadun，原文链接，原文日期：2017-01-05译者：星夜暮晨；校对：Crystal Sun；定稿：CMB   Laptopmini 给我留言道：「是否可以为单例 (singleton) 的共享实例 (shared instance) 定义一个 get 闭包呢？我现在正在编写一个网络 socket 管理器，我希望在每次调用 connect() 的时候都能够匹配到这个实例」。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.407Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="单例中静态属性的额外作用">
 <meta name="twitter:description" content="作者：Erica Sadun，原文链接，原文日期：2017-01-05译者：星夜暮晨；校对：Crystal Sun；定稿：CMB   Laptopmini 给我留言道：「是否可以为单例 (singleton) 的共享实例 (shared instance) 定义一个 get 闭包呢？我现在正在编写一个网络 socket 管理器，我希望在每次调用 connect() 的时候都能够匹配到这个实例」。">
@@ -88,7 +89,7 @@
         <a href="/2017/01/10/dear-erica-singletons-and-property-observers/" target="_blank" title="单例中静态属性的额外作用" itemprop="url">单例中静态属性的额外作用</a>
     </h1>
     <p class="article-time">
-      <time datetime="2017-01-09T16:00:00.000Z" itemprop="datePublished">2017-01-10</time>
+      <time datetime="2017-01-10T00:00:00.000Z" itemprop="datePublished">2017-01-10</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,18 +97,18 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Erica Sadun，<a href="http://ericasadun.com/2017/01/05/dear-erica-singletons-and-property-observers/" target="_blank" rel="external">原文链接</a>，原文日期：2017-01-05<br>译者：<a href="http://www.jianshu.com/users/ef1058d2d851" target="_blank" rel="external">星夜暮晨</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+<p>作者：Erica Sadun，<a href="http://ericasadun.com/2017/01/05/dear-erica-singletons-and-property-observers/" target="_blank" rel="noopener">原文链接</a>，原文日期：2017-01-05<br>译者：<a href="http://www.jianshu.com/users/ef1058d2d851" target="_blank" rel="noopener">星夜暮晨</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="noopener">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p><a href="https://github.com/Laptopmini" target="_blank" rel="external">Laptopmini</a> 给我留言道：「是否可以为单例 (singleton) 的共享实例 (shared instance) 定义一个 <code>get</code> 闭包呢？我现在正在编写一个网络 socket 管理器，我希望在每次调用 <code>connect()</code> 的时候都能够匹配到这个实例」。</p>
+<p><a href="https://github.com/Laptopmini" target="_blank" rel="noopener">Laptopmini</a> 给我留言道：「是否可以为单例 (singleton) 的共享实例 (shared instance) 定义一个 <code>get</code> 闭包呢？我现在正在编写一个网络 socket 管理器，我希望在每次调用 <code>connect()</code> 的时候都能够匹配到这个实例」。</p>
 <a id="more"></a>
 <p>一个基本的 Swift 单例如下所示：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">Singleton</span> </span>&#123;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">let</span> shared = <span class="type">Singleton</span>()</div><div class="line">    <span class="keyword">private</span> <span class="keyword">init</span>() &#123; &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">Singleton</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">let</span> shared = <span class="type">Singleton</span>()</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">init</span>() &#123; &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这种设计模式创建了一个类，这个类只有一个可访问的共享实例。此外这个类被标记为 <code>final</code>，其构造器的访问域为 <code>private</code>，以确保这个类型不能被继承，也不能通过 <code>shared</code> 之外的方法被实例化。</p>
 <p>为了给大家介绍「静态属性的额外作用 (side effect)」，我们创建一个间接访问此单例的静态属性，然后向 <code>getter</code> 方法中添加自定义的行为：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">Singleton</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">let</span> _shared = <span class="type">Singleton</span>()</div><div class="line">    <span class="keyword">private</span> <span class="keyword">init</span>() &#123; &#125;</div><div class="line">    </div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">var</span> shared: <span class="type">Singleton</span> &#123;</div><div class="line">        <span class="keyword">get</span> &#123;</div><div class="line">            <span class="built_in">print</span>(<span class="string">"side effects here"</span>)</div><div class="line">            connect() <span class="comment">// 举个栗子</span></div><div class="line">            <span class="keyword">return</span> _shared</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">Singleton</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">let</span> _shared = <span class="type">Singleton</span>()</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">init</span>() &#123; &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">var</span> shared: <span class="type">Singleton</span> &#123;</span><br><span class="line">        <span class="keyword">get</span> &#123;</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">"side effects here"</span>)</span><br><span class="line">            connect() <span class="comment">// 举个栗子</span></span><br><span class="line">            <span class="keyword">return</span> _shared</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这样写也行，不过这段代码还可以更为精简。对只读属性而言，完全可以移除 <code>get</code> 语法。直接将自定义行为移到最顶层的 <code>var</code> 闭包单重，如以下修改所示：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">Singleton</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">let</span> _shared = <span class="type">Singleton</span>()</div><div class="line">    <span class="keyword">private</span> <span class="keyword">init</span>() &#123; &#125;</div><div class="line">    </div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">var</span> shared: <span class="type">Singleton</span> &#123;</div><div class="line">        <span class="built_in">print</span>(<span class="string">"side effects here"</span>)</div><div class="line">        connect() <span class="comment">// 举个栗子</span></div><div class="line">        <span class="keyword">return</span> _shared</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">Singleton</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">let</span> _shared = <span class="type">Singleton</span>()</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">init</span>() &#123; &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">var</span> shared: <span class="type">Singleton</span> &#123;</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">"side effects here"</span>)</span><br><span class="line">        connect() <span class="comment">// 举个栗子</span></span><br><span class="line">        <span class="keyword">return</span> _shared</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>来快速总结一下：</p>
 <ul>
 <li>对于单例而言，请使用引用类型；</li>
@@ -119,7 +120,7 @@
 <p>如果大家对这段代码有其他的改进或者建议，就和以前一样，在评论中留言评论，或者在 tweet 上私信我。</p>
 <p>Rob N 在这里说得非常好：</p>
 <blockquote>
-<p>「<a href="https://twitter.com/ericasadun" target="_blank" rel="external">@ericasadun</a> 这篇文章很好，但是我对其中的用例有些顾虑。也就是说 <code>self.websocket</code> 与 <code>Websocket.shared</code> 相比，它们的行为可能是大相径庭的，即便它们都是同一个对象。<br>—— Rob Napier (@cocoaphony) <a href="https://twitter.com/cocoaphony/status/817104066429980672" target="_blank" rel="external">2017年1月5日</a>」<br>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+<p>「<a href="https://twitter.com/ericasadun" target="_blank" rel="noopener">@ericasadun</a> 这篇文章很好，但是我对其中的用例有些顾虑。也就是说 <code>self.websocket</code> 与 <code>Websocket.shared</code> 相比，它们的行为可能是大相径庭的，即便它们都是同一个对象。<br>—— Rob Napier (@cocoaphony) <a href="https://twitter.com/cocoaphony/status/817104066429980672" target="_blank" rel="noopener">2017年1月5日</a>」<br>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
   
 	</div>
@@ -230,6 +231,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -278,7 +283,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -427,11 +432,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -443,11 +448,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -455,7 +456,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -467,11 +468,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -479,7 +484,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -673,7 +678,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

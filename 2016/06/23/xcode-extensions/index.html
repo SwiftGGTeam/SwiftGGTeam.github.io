@@ -20,10 +20,11 @@
 <meta property="og:url" content="https://swift.gg/2016/06/23/xcode-extensions/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="Xcode 现在支持扩展 API 了，本文就来介绍下第一个源码编辑器的扩展。">
+<meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="http://img.blog.csdn.net/20160621095215813">
 <meta property="og:image" content="http://img.blog.csdn.net/20160621104506975">
 <meta property="og:image" content="http://img.blog.csdn.net/20160621115727975">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.395Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Xcode 扩展">
 <meta name="twitter:description" content="Xcode 现在支持扩展 API 了，本文就来介绍下第一个源码编辑器的扩展。">
@@ -92,7 +93,7 @@
         <a href="/2016/06/23/xcode-extensions/" target="_blank" title="Xcode 扩展" itemprop="url">Xcode 扩展</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-06-23T03:00:00.000Z" itemprop="datePublished">2016-06-23</time>
+      <time datetime="2016-06-23T11:00:00.000Z" itemprop="datePublished">2016-06-23</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -100,10 +101,10 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Russ Bishop，<a href="http://www.russbishop.net/xcode-extensions" target="_blank" rel="external">原文链接</a>，原文日期：2016-06-14<br>译者：<a href="http://daizi.me" target="_blank" rel="external">小袋子</a>；校对：<a href="http://www.saitjr.com" target="_blank" rel="external">saitjr</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+<p>作者：Russ Bishop，<a href="http://www.russbishop.net/xcode-extensions" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-06-14<br>译者：<a href="http://daizi.me" target="_blank" rel="noopener">小袋子</a>；校对：<a href="http://www.saitjr.com" target="_blank" rel="noopener">saitjr</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p>Xcode 8 现在开始支持一套官方的扩展 API。第一个支持的扩展类型就是源码编辑器的扩展（虽然很可能不是最后一个）。另一方面， Xcode 8 采用了系统完整性保护功能（即 SIP，System Integrity Protection）。 这意味着想要将代码注入到 Xcode 进程已经不可能了，并且 <a href="http://alcatraz.io/" target="_blank" rel="external">Alcatraz</a> 的业务也关闭了。</p>
+<p>Xcode 8 现在开始支持一套官方的扩展 API。第一个支持的扩展类型就是源码编辑器的扩展（虽然很可能不是最后一个）。另一方面， Xcode 8 采用了系统完整性保护功能（即 SIP，System Integrity Protection）。 这意味着想要将代码注入到 Xcode 进程已经不可能了，并且 <a href="http://alcatraz.io/" target="_blank" rel="noopener">Alcatraz</a> 的业务也关闭了。</p>
 <a id="more"></a>
 <h2 id="XcodeKit-源码编辑器扩展的基础"><a href="#XcodeKit-源码编辑器扩展的基础" class="headerlink" title="XcodeKit 源码编辑器扩展的基础"></a>XcodeKit 源码编辑器扩展的基础</h2><p>源码编辑器扩展有很多功能，并且能通过命令组织起来。每一个扩展能够在它的 plist 文件或者通过重写 <code>XCSourceEditorExtension</code> 提供一个命令清单。每一个命令都具体描述了 <code>XCSourceEditorCommand</code> 子类所实现的命令、菜单栏的名字以及唯一标识。同一个类能够通过切换不同的标识符被多个命令继承。</p>
 <p>一旦用户激活一个命令，Xcode 将会调用 <code>perform(with:completionHandler:)</code> 方法，这样就允许你的命令可以异步地完成工作。</p>
@@ -117,7 +118,7 @@
 <p><img src="http://img.blog.csdn.net/20160621115727975" alt=""></p>
 <p>默认的模板包括了一个命令（在 plist 中预设了）和扩展。你可以编辑 plist 中命令的名称，使得在 Editor 菜单中可以看到更好的名称。如果你选择在代码中提供命令，你必须支持所有的命令。因为 Xcode 不会自动把出现在 plist 中的命令合并起来的。</p>
 <p>现在，在命令中你可以添加如下的代码：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">perform</span><span class="params">(with invocation: XCSourceEditorCommandInvocation, </span></span></div><div class="line">completionHandler: <span class="params">(NSError?)</span> -&gt; <span class="type">Void</span> ) -&gt; <span class="type">Void</span> &#123;</div><div class="line">    <span class="keyword">let</span> buffer = invocation.buffer</div><div class="line">    <span class="keyword">if</span> <span class="keyword">let</span> insertionPoint = buffer.selections[<span class="number">0</span>] <span class="keyword">as</span>? <span class="type">XCSourceTextRange</span> &#123;</div><div class="line">        <span class="keyword">let</span> currentLine = insertionPoint.start.line</div><div class="line">        buffer.lines.insert(<span class="string">"// More Awesome!"</span>, at: currentLine)</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    completionHandler(<span class="literal">nil</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">perform</span><span class="params">(with invocation: XCSourceEditorCommandInvocation, </span></span></span><br><span class="line"><span class="function"><span class="params">completionHandler: <span class="params">(NSError?)</span></span></span> -&gt; <span class="type">Void</span> ) -&gt; <span class="type">Void</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> buffer = invocation.buffer</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">let</span> insertionPoint = buffer.selections[<span class="number">0</span>] <span class="keyword">as</span>? <span class="type">XCSourceTextRange</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> currentLine = insertionPoint.start.line</span><br><span class="line">        buffer.lines.insert(<span class="string">"// More Awesome!"</span>, at: currentLine)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    completionHandler(<span class="literal">nil</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这个代码是建立在没有文本被选中的情况下，所以 <code>selections</code> 属性中唯一的 range 表示着插入点。我通过修改 <code>lines</code> 的数组来做改变，但是你也可以访问 <code>var completeBuffer: String</code>。任何对 <code>completeBuffer</code> 或者 <code>line</code> 的修改都会马上映射到另外的属性上。你可以通过检查 <code>buffer.contentUTI</code> 来决定 buffer 包含的文本类型，对于 Swift 来说就是 <code>public.swift-source</code>。</p>
 <p>当你完成时，请确保调用 <code>completionHandler</code>  ，使得 Xcode 知道命令已结束。</p>
 <p>如果你想要支持取消功能，使用 <code>invocation.cancellationHandler = { ... }</code>，确保你是用线程安全的方式处理（可以通过使用 <code>OSAtomic</code> 方法去设置一个取消的标志）。这可以让扩展知道应该马上遗弃正在处理的操作，尽管你还是必须调用 <code>completionHandler</code>。</p>
@@ -237,6 +238,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -285,7 +290,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -434,11 +439,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -450,11 +455,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -462,7 +463,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -474,11 +475,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -486,7 +491,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -680,7 +685,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

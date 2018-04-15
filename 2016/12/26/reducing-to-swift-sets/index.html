@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/12/26/reducing-to-swift-sets/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Erica Sadun，原文链接，原文日期：2016-12-21译者：星夜暮晨；校对：Crystal Sun；定稿：CMB   一位朋友问我：「在对集合执行 reduce 操作的时候，是否有比 .reduce(Set&amp;lt;String&amp;gt;()) { $0.union(CollectionOfOne($1)) } 更好的方法？」。这位朋友需要从一个外部数据源中获取相关的数据结果，然后将">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.407Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift 集合的 reduce 操作">
 <meta name="twitter:description" content="作者：Erica Sadun，原文链接，原文日期：2016-12-21译者：星夜暮晨；校对：Crystal Sun；定稿：CMB   一位朋友问我：「在对集合执行 reduce 操作的时候，是否有比 .reduce(Set&amp;lt;String&amp;gt;()) { $0.union(CollectionOfOne($1)) } 更好的方法？」。这位朋友需要从一个外部数据源中获取相关的数据结果，然后将">
@@ -88,7 +89,7 @@
         <a href="/2016/12/26/reducing-to-swift-sets/" target="_blank" title="Swift 集合的 reduce 操作" itemprop="url">Swift 集合的 reduce 操作</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-12-25T16:00:00.000Z" itemprop="datePublished">2016-12-26</time>
+      <time datetime="2016-12-26T00:00:00.000Z" itemprop="datePublished">2016-12-26</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,14 +97,14 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Erica Sadun，<a href="http://ericasadun.com/2016/12/21/reducing-to-swift-sets/" target="_blank" rel="external">原文链接</a>，原文日期：2016-12-21<br>译者：<a href="http://www.jianshu.com/users/ef1058d2d851" target="_blank" rel="external">星夜暮晨</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+<p>作者：Erica Sadun，<a href="http://ericasadun.com/2016/12/21/reducing-to-swift-sets/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-12-21<br>译者：<a href="http://www.jianshu.com/users/ef1058d2d851" target="_blank" rel="noopener">星夜暮晨</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="noopener">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>一位朋友问我：「在对集合执行 <code>reduce</code> 操作的时候，是否有比 <code>.reduce(Set&lt;String&gt;()) { $0.union(CollectionOfOne($1)) }</code> 更好的方法？」。这位朋友需要从一个外部数据源中获取相关的数据结果，然后将其填充到集合里。</p>
 <a id="more"></a>
 <p>我们就如何实现这一点提出了一些想法。在获取所有项目（item）之前，是否需要对集合进行检索呢？（答案是不需要）数据集是否会过于庞大，以至于不可能在创建集合之前将中间结果存储到数组当中？（答案是不会）。</p>
 <p>我构建了一套测试，首先尝试他的 <code>reduce</code> 方法，此外也尝试了通常所使用的 <code>insert</code> 等多种操作。我事前以为使用 <code>Set</code> 的构造器来处理已预先计算 (pre-computed) 的数组可能是最好的方法，但是事实证明：<code>union</code> 和 <code>insert</code> 在重复测试中的表现更好。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">timetest(<span class="string">"initializer"</span>) &#123; <span class="comment">//  0.652348856034223</span></div><div class="line">    <span class="keyword">var</span> x: <span class="type">Set</span>&lt;<span class="type">String</span>&gt; = []</div><div class="line">    (<span class="number">1</span> ... <span class="number">5_000</span>).forEach &#123; <span class="number">_</span> <span class="keyword">in</span></div><div class="line">        x = <span class="type">Set</span>(letters)</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">timetest(<span class="string">"union"</span>) &#123; <span class="comment">// 0.524669112986885</span></div><div class="line">    <span class="keyword">var</span> x: <span class="type">Set</span>&lt;<span class="type">String</span>&gt; = []</div><div class="line">    (<span class="number">1</span> ... <span class="number">5_000</span>).forEach &#123; <span class="number">_</span> <span class="keyword">in</span></div><div class="line">        x = x.union(letters)</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">timetest(<span class="string">"insert"</span>) &#123; <span class="comment">// 0.572339564969297</span></div><div class="line">    <span class="keyword">var</span> x: <span class="type">Set</span>&lt;<span class="type">String</span>&gt; = []</div><div class="line">    (<span class="number">1</span> ... <span class="number">5_000</span>).forEach &#123; <span class="number">_</span> <span class="keyword">in</span></div><div class="line">        x = []</div><div class="line">        letters.forEach (&#123; x.insert($<span class="number">0</span>) &#125;)</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">timetest(<span class="string">"reduce"</span>) &#123; <span class="comment">//  0.762973523989785</span></div><div class="line">    (<span class="number">1</span> ... <span class="number">5_000</span>).forEach &#123; <span class="number">_</span> <span class="keyword">in</span></div><div class="line">        <span class="keyword">var</span> x = letters.<span class="built_in">reduce</span>(<span class="type">Set</span>&lt;<span class="type">String</span>&gt;()) &#123;</div><div class="line">            $<span class="number">0</span>.union(<span class="type">CollectionOfOne</span>($<span class="number">1</span>))</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">timetest(<span class="string">"initializer"</span>) &#123; <span class="comment">//  0.652348856034223</span></span><br><span class="line">    <span class="keyword">var</span> x: <span class="type">Set</span>&lt;<span class="type">String</span>&gt; = []</span><br><span class="line">    (<span class="number">1</span> ... <span class="number">5_000</span>).forEach &#123; <span class="number">_</span> <span class="keyword">in</span></span><br><span class="line">        x = <span class="type">Set</span>(letters)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">timetest(<span class="string">"union"</span>) &#123; <span class="comment">// 0.524669112986885</span></span><br><span class="line">    <span class="keyword">var</span> x: <span class="type">Set</span>&lt;<span class="type">String</span>&gt; = []</span><br><span class="line">    (<span class="number">1</span> ... <span class="number">5_000</span>).forEach &#123; <span class="number">_</span> <span class="keyword">in</span></span><br><span class="line">        x = x.union(letters)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">timetest(<span class="string">"insert"</span>) &#123; <span class="comment">// 0.572339564969297</span></span><br><span class="line">    <span class="keyword">var</span> x: <span class="type">Set</span>&lt;<span class="type">String</span>&gt; = []</span><br><span class="line">    (<span class="number">1</span> ... <span class="number">5_000</span>).forEach &#123; <span class="number">_</span> <span class="keyword">in</span></span><br><span class="line">        x = []</span><br><span class="line">        letters.forEach (&#123; x.insert($<span class="number">0</span>) &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">timetest(<span class="string">"reduce"</span>) &#123; <span class="comment">//  0.762973523989785</span></span><br><span class="line">    (<span class="number">1</span> ... <span class="number">5_000</span>).forEach &#123; <span class="number">_</span> <span class="keyword">in</span></span><br><span class="line">        <span class="keyword">var</span> x = letters.<span class="built_in">reduce</span>(<span class="type">Set</span>&lt;<span class="type">String</span>&gt;()) &#123;</span><br><span class="line">            $<span class="number">0</span>.union(<span class="type">CollectionOfOne</span>($<span class="number">1</span>))</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这结果令我感到惊讶，因为您可能会觉得 <code>init&lt;Source : Sequence where Source.Iterator.Element == Element&gt;(_ sequence: Source)</code> 以及 <code>func union&lt;S : Sequence where S.Iterator.Element == Element&gt;(_ other: S) -&gt; Set&lt;Element&gt;</code> 拥有相同的性能。</p>
 <p>不过我不感到惊讶的一点是：比起将中间数据存储在数组当中并籍此来直接构建集合，使用 <code>reduce</code> 来不停地构建集合的性能开销要大很多。只要数组的尺寸受到合理的限制（需要足够大，但是也不能太大，否则就会对应用内存造成负担），那么使用中间数组无疑是一个更好的办法。不过对于海量数据而言，<code>Set(collectedResults)</code> 的性能比 <code>insert</code>、<code>formUnion</code> 以及 <code>reduce/union</code> 更优异。</p>
 <blockquote>
@@ -218,6 +219,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -266,7 +271,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -415,11 +420,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -431,11 +436,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -443,7 +444,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -455,11 +456,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -467,7 +472,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -661,7 +666,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

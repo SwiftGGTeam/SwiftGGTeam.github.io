@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/03/21/thinking-in-swift-1-addendum/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="Swift的编程思想之什么时候可以使用隐式解析可选类型`!`来牺牲小马。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.383Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift 编程思想，第一部分（补遗）：牺牲小马">
 <meta name="twitter:description" content="Swift的编程思想之什么时候可以使用隐式解析可选类型`!`来牺牲小马。">
@@ -88,7 +89,7 @@
         <a href="/2016/03/21/thinking-in-swift-1-addendum/" target="_blank" title="Swift 编程思想，第一部分（补遗）：牺牲小马" itemprop="url">Swift 编程思想，第一部分（补遗）：牺牲小马</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-03-20T16:00:00.000Z" itemprop="datePublished">2016-03-21</time>
+      <time datetime="2016-03-21T00:00:00.000Z" itemprop="datePublished">2016-03-21</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,7 +97,7 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Olivier Halligon，<a href="http://alisoftware.github.io/swift/2015/09/14/thinking-in-swift-1-addendum/" target="_blank" rel="external">原文链接</a>，原文日期：2015-12-14<br>译者：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="external">Channe</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="external">numbbbbb</a>；定稿：<a href="http://www.swiftyper.com" target="_blank" rel="external">小锅</a></p>
+<p>作者：Olivier Halligon，<a href="http://alisoftware.github.io/swift/2015/09/14/thinking-in-swift-1-addendum/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-12-14<br>译者：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="noopener">Channe</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>；定稿：<a href="http://www.swiftyper.com" target="_blank" rel="noopener">小锅</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>我的系列文章<a href="http://swift.gg/2015/09/29/thinking-in-swift-1/">《Swift 编程思想》第一部分</a>发表后，在 Twitter 上收到一些不错的反馈。现在，我在这些评论的基础上谈一谈什么时候可以使用<code>!</code>来牺牲小马（译者注：本篇文章中的<code>!</code>表示隐式解析可选类型）。</p>
@@ -110,12 +111,12 @@
 <h3 id="1-IBOutlets-依赖注入"><a href="#1-IBOutlets-依赖注入" class="headerlink" title="1. IBOutlets + 依赖注入"></a>1. IBOutlets + 依赖注入</h3><p><code>IBOutlets</code> – 和你做的那些依赖注入的属性一样 – 是一个特殊的例子，因为它们在 init 方法结束前一直是 <code>nil</code> （因为它们不能马上被初始化），但是它们在实例初始化后将迅速获得一个值（不管是通过依赖注入还是加载 XIB ）。</p>
 <p>所以即便它们不得声明为可选的类型（因为它们在 init 过程中不会被初始化，仅仅是在那一小会之后才会），在设计上，能十分确定，它们在代码的其他部分绝不会是 <code>nil</code> 。这是一个隐式解析很方便的例子，因为<strong>在使用它们的时候它们绝不会是 <code>nil</code></strong> 。</p>
 <h3 id="2-UIImage，UIStoryboard，UITableViewCell"><a href="#2-UIImage，UIStoryboard，UITableViewCell" class="headerlink" title="2. UIImage，UIStoryboard，UITableViewCell"></a>2. UIImage，UIStoryboard，UITableViewCell</h3><p>下面的方法都是使用名称和标识符这些常量来初始化的：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="type">UIImage</span>(named:...)</div><div class="line"><span class="type">UIStoryboard</span>(name:,bundle:)</div><div class="line"><span class="type">UIStoryboard</span>.instantiateViewControllerWithIdentifier(<span class="number">_</span>:)</div><div class="line"><span class="type">UITableView</span>.dequeueReusableCellWithIdentifier(<span class="number">_</span>:, forIndexPath:)</div><div class="line"><span class="comment">// 还有一些其他类似的情况···</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="type">UIImage</span>(named:...)</span><br><span class="line"><span class="type">UIStoryboard</span>(name:,bundle:)</span><br><span class="line"><span class="type">UIStoryboard</span>.instantiateViewControllerWithIdentifier(<span class="number">_</span>:)</span><br><span class="line"><span class="type">UITableView</span>.dequeueReusableCellWithIdentifier(<span class="number">_</span>:, forIndexPath:)</span><br><span class="line"><span class="comment">// 还有一些其他类似的情况···</span></span><br></pre></td></tr></table></figure>
 <p>这里面的每个例子中，名称、标识符拼写错误都会导致代码崩溃，因为这是一个开发错误（bundle 中缺失图片，或者 target 中没有包含 storyboard 等情况导致的），你也许希望在开发阶段能尽早的发现并修复这些这些错误。</p>
 <p>注意这些例子，有些情况你可能更愿意使用 <code>guard let else fatalError()</code> 模式，这能在开发时触发错误后提供更精确的异常消息：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">guard</span> <span class="keyword">let</span> cell = tableView.dequeueReusableCellWithIdentifier(<span class="string">"foo"</span>, forIndexPath:indexPath) <span class="keyword">as</span>? <span class="type">MyCustomCell</span> <span class="keyword">else</span> &#123;</div><div class="line">  <span class="built_in">fatalError</span>(<span class="string">"cell with identifier 'foo' and class 'MyCustomCell' not found. "</span></div><div class="line">    + <span class="string">"Check that your XIB/Storyboard is configured properly."</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这种小技巧非常有用，比如我在文章《<a href="http://alisoftware.github.io/swift/enum/constants/2015/07/19/enums-as-constants/" target="_blank" rel="external">enums as constants</a>》中讨论过的，使用<a href="https://github.com/AliSoftware/SwiftGen" target="_blank" rel="external">SwiftGen</a>来避免潜在的标识符拼写错误和崩溃😉。</p>
-<p>例如，<a href="https://github.com/AliSoftware/SwiftGen#generated-code" target="_blank" rel="external"><code>SwiftGen</code>的实现里实际上使用了<code>UIImage(named: asset.rawValue)!</code></a>，因为这里的枚举是通过 SwiftGen 工具生成的，因而它能保证图片的名字在 Assets Catalog 中一定存在 – 所以在设计上不可能是 <code>nil</code> 。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">guard</span> <span class="keyword">let</span> cell = tableView.dequeueReusableCellWithIdentifier(<span class="string">"foo"</span>, forIndexPath:indexPath) <span class="keyword">as</span>? <span class="type">MyCustomCell</span> <span class="keyword">else</span> &#123;</span><br><span class="line">  <span class="built_in">fatalError</span>(<span class="string">"cell with identifier 'foo' and class 'MyCustomCell' not found. "</span></span><br><span class="line">    + <span class="string">"Check that your XIB/Storyboard is configured properly."</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这种小技巧非常有用，比如我在文章《<a href="http://alisoftware.github.io/swift/enum/constants/2015/07/19/enums-as-constants/" target="_blank" rel="noopener">enums as constants</a>》中讨论过的，使用<a href="https://github.com/AliSoftware/SwiftGen" target="_blank" rel="noopener">SwiftGen</a>来避免潜在的标识符拼写错误和崩溃😉。</p>
+<p>例如，<a href="https://github.com/AliSoftware/SwiftGen#generated-code" target="_blank" rel="noopener"><code>SwiftGen</code>的实现里实际上使用了<code>UIImage(named: asset.rawValue)!</code></a>，因为这里的枚举是通过 SwiftGen 工具生成的，因而它能保证图片的名字在 Assets Catalog 中一定存在 – 所以在设计上不可能是 <code>nil</code> 。</p>
 <h2 id="我是否应该牺牲小马？"><a href="#我是否应该牺牲小马？" class="headerlink" title="我是否应该牺牲小马？"></a>我是否应该牺牲小马？</h2><p>本系列文章的第一部分是面向那些 Swift 新手，因为他们倾向于所有情况下任何时候都强制解包，仅仅是因为 Xcode 告诉他们这样做，或者是因为他们真的不知道为什么可选类型更适合他们。因此我没有介绍更多高级的例子，只是介绍了最常见的例子。</p>
 <p>所以，有的例子确实可以使用<code>!</code>。但是，我在第一部分中的建议依旧保留：仅仅在真的明白为什么使用<code>!</code>的情况下使用<code>!</code>，不能只是为了取悦编译器而这样做。特别地，如果你是一个 Swift 新手，同时你想添加一个<code>!</code>仅仅因为『这些可选类型的报错真是烦透了，我真希望编译器能够停止抱怨』，你就做错了，这是在开始杀死小马。</p>
 <p>在本系列文章接下来的部分再见，那里探讨 <code>map</code>，<code>flatMap</code>，<code>??</code>，可选链以及避免数据不一致。</p>
@@ -231,6 +232,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -279,7 +284,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -428,11 +433,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -444,11 +449,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -456,7 +457,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -468,11 +469,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -480,7 +485,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -674,7 +679,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

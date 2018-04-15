@@ -20,10 +20,11 @@
 <meta property="og:url" content="https://swift.gg/2015/12/02/swift-weak-and-unowned/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Thomas Hanning，原文链接，原文日期：2015-11-30译者：pmst；校对：Cee；定稿：Cee   使用 weak 和 unowned 关键字，我们可以避免所谓的循环引用。在这篇文章中，我们将讨论两者之间的差异。">
+<meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://swift.gg/img/articles/swift-weak-and-unowned/retainc1.jpg1449449056.5054061">
 <meta property="og:image" content="https://swift.gg/img/articles/swift-weak-and-unowned/retain2c.jpg1449449057.561948">
 <meta property="og:image" content="https://swift.gg/img/articles/swift-weak-and-unowned/retainc3.jpg1449449058.1724997">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.371Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift 中的 weak 和 unowned">
 <meta name="twitter:description" content="作者：Thomas Hanning，原文链接，原文日期：2015-11-30译者：pmst；校对：Cee；定稿：Cee   使用 weak 和 unowned 关键字，我们可以避免所谓的循环引用。在这篇文章中，我们将讨论两者之间的差异。">
@@ -92,7 +93,7 @@
         <a href="/2015/12/02/swift-weak-and-unowned/" target="_blank" title="Swift 中的 weak 和 unowned" itemprop="url">Swift 中的 weak 和 unowned</a>
     </h1>
     <p class="article-time">
-      <time datetime="2015-12-01T16:00:00.000Z" itemprop="datePublished">2015-12-02</time>
+      <time datetime="2015-12-02T00:00:00.000Z" itemprop="datePublished">2015-12-02</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -100,29 +101,29 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Thomas Hanning，<a href="http://www.thomashanning.com/swift-weak-and-unowned/" target="_blank" rel="external">原文链接</a>，原文日期：2015-11-30<br>译者：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="external">pmst</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="external">Cee</a>；定稿：<a href="https://github.com/Cee" target="_blank" rel="external">Cee</a></p>
+<p>作者：Thomas Hanning，<a href="http://www.thomashanning.com/swift-weak-and-unowned/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-11-30<br>译者：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="noopener">pmst</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a>；定稿：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>使用 weak 和 unowned 关键字，我们可以避免所谓的循环引用。在这篇文章中，我们将讨论两者之间的差异。</p>
 <a id="more"></a> 
-<h3 id="何为循环引用？"><a href="#何为循环引用？" class="headerlink" title="何为循环引用？"></a>何为循环引用？</h3><p>我曾在 <a href="http://www.thomashanning.com/a-trick-to-discover-retain-cycles/" target="_blank" rel="external">“A Trick To Discover Retain Cycles”</a> 博客一文中强调了内存管理的重要性，即使 ARC  已经为你分忧解难了：</p>
+<h3 id="何为循环引用？"><a href="#何为循环引用？" class="headerlink" title="何为循环引用？"></a>何为循环引用？</h3><p>我曾在 <a href="http://www.thomashanning.com/a-trick-to-discover-retain-cycles/" target="_blank" rel="noopener">“A Trick To Discover Retain Cycles”</a> 博客一文中强调了内存管理的重要性，即使 ARC  已经为你分忧解难了：</p>
 <p>首先，我们创建两个视图控制器：<code>RootViewController</code> 和 <code>SecondViewController</code>。如果点击了 <code>RootViewController</code> 视图中的按钮，就呈现 <code>SecondViewController</code>。我们可以通过在 storyboard 使用 segue 来简单实现这个目的。另外，我们还创建了一个名为 <code>ModelObject</code> 的类，内含一个类型为 <code>ModelObjectDelegate</code> 的委托对象（译者注：你也可以说这个对象遵循 ModelObjectDelegate 协议）。如果 <code>SecondViewController</code> 的视图加载完毕，当前视图控制器就将自己任命（译者注：即 self）为 <code>ModelObject</code> 的代理。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// ModelObject 类内容</span></div><div class="line"><span class="keyword">import</span> Foundation</div><div class="line"> </div><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">ModelObjectDelegate</span>: <span class="title">class</span> </span>&#123;</div><div class="line">    </div><div class="line">&#125;</div><div class="line"> </div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">ModelObject</span> </span>&#123;</div><div class="line">    </div><div class="line">    <span class="keyword">var</span> delegate: <span class="type">ModelObjectDelegate</span>?</div><div class="line">       </div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// SecondViewController 类内容</span></div><div class="line"><span class="keyword">import</span> UIKit</div><div class="line"> </div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">SecondViewController</span>: <span class="title">UIViewController</span>, <span class="title">ModelObjectDelegate</span> </span>&#123;</div><div class="line">    </div><div class="line">    <span class="keyword">var</span> modelObject: <span class="type">ModelObject</span>?</div><div class="line">    </div><div class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</div><div class="line">        <span class="keyword">super</span>.viewDidLoad()</div><div class="line">        modelObject = <span class="type">ModelObject</span>()</div><div class="line">        modelObject!.delegate = <span class="keyword">self</span></div><div class="line">    &#125;</div><div class="line">        </div><div class="line">    <span class="meta">@IBAction</span> <span class="function"><span class="keyword">func</span> <span class="title">closeButtonPressed</span><span class="params">(sender: UIButton)</span></span> &#123;</div><div class="line">        dismissViewControllerAnimated(<span class="literal">true</span>, completion: <span class="literal">nil</span>)</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ModelObject 类内容</span></span><br><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">ModelObjectDelegate</span>: <span class="title">class</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ModelObject</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">var</span> delegate: <span class="type">ModelObjectDelegate</span>?</span><br><span class="line">       </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// SecondViewController 类内容</span></span><br><span class="line"><span class="keyword">import</span> UIKit</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SecondViewController</span>: <span class="title">UIViewController</span>, <span class="title">ModelObjectDelegate</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">var</span> modelObject: <span class="type">ModelObject</span>?</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.viewDidLoad()</span><br><span class="line">        modelObject = <span class="type">ModelObject</span>()</span><br><span class="line">        modelObject!.delegate = <span class="keyword">self</span></span><br><span class="line">    &#125;</span><br><span class="line">        </span><br><span class="line">    <span class="meta">@IBAction</span> <span class="function"><span class="keyword">func</span> <span class="title">closeButtonPressed</span><span class="params">(sender: UIButton)</span></span> &#123;</span><br><span class="line">        dismissViewControllerAnimated(<span class="literal">true</span>, completion: <span class="literal">nil</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>准备工作完毕，现在来测试下内存管理：首先我们释放掉（dismiss）<code>SecondViewController</code> 视图控制器，你会发现使用内存并未有所下降。这是为什么呢？按照期望应该是释放掉 <code>SecondViewController</code> 对象,内存被释放才对。让我们首先来了解下对象之间的关系。假设 <code>SecondViewController</code> 加载完毕，对象之间关系应该看起来这样：</p>
 <p><img src="/img/articles/swift-weak-and-unowned/retainc1.jpg1449449056.5054061" alt=""></p>
 <p>现在，释放掉 <code>SecondViewController</code>，看起来应该这样：</p>
 <p><img src="/img/articles/swift-weak-and-unowned/retain2c.jpg1449449057.561948" alt=""></p>
 <p>如图所示：<code>RootViewController</code> 不再对 <code>SecondViewController</code> 拥有强引用关系。但是 <code>SecondViewController</code> 和 <code>ModelObject</code> 对象之间始终保持相互强引用。所以它们不会被释放掉。</p>
 <h3 id="Weak"><a href="#Weak" class="headerlink" title="Weak"></a>Weak</h3><p>为了避免这种情况发生，我们可以将引用关系声明为 <code>weak</code> ，它不会阻止 ARC 释放内存。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> Foundation</div><div class="line"> </div><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">ModelObjectDelegate</span>: <span class="title">class</span> </span>&#123;</div><div class="line">    </div><div class="line">&#125;</div><div class="line"> </div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">ModelObject</span> </span>&#123;</div><div class="line">    </div><div class="line">    <span class="keyword">weak</span> <span class="keyword">var</span> delegate: <span class="type">ModelObjectDelegate</span>?</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">ModelObjectDelegate</span>: <span class="title">class</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ModelObject</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">weak</span> <span class="keyword">var</span> delegate: <span class="type">ModelObjectDelegate</span>?</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>现在对象关系图应该看起来这样：</p>
 <p><img src="/img/articles/swift-weak-and-unowned/retainc3.jpg1449449058.1724997" alt=""></p>
 <p>由于 <code>SecondViewController</code> 和 <code>ModelObject</code> 对象之间仅存一个强引用关系，毫无疑问可以成功释放内存。</p>
 <h3 id="Unowned"><a href="#Unowned" class="headerlink" title="Unowned"></a>Unowned</h3><p>此外你还可以使用 <code>unowned</code> 关键字替换掉 <code>weak</code>,那么两者的区别在哪里？倘若你使用 <code>weak</code>,属性可以是可选类型，即允许有 <code>nil</code> 值的情况。另一方面，倘若你使用 <code>unowned</code>，它不允许设为可选类型。因为一个 unowned 属性不能为可选类型，那么它必须在 init 方法中初始化值：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> Foundation</div><div class="line"> </div><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">ModelObjectDelegate</span>: <span class="title">class</span> </span>&#123;</div><div class="line">    </div><div class="line">&#125;</div><div class="line"> </div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">ModelObject</span> </span>&#123;</div><div class="line">    <span class="comment">//译者注：swift 要求变量一定要有初始值</span></div><div class="line">    <span class="comment">//        可选类型默认初始值为 nil</span></div><div class="line">    <span class="keyword">unowned</span> <span class="keyword">var</span> delegate: <span class="type">ModelObjectDelegate</span></div><div class="line">    </div><div class="line">    <span class="keyword">init</span>(delegate:<span class="type">ModelObjectDelegate</span>) &#123;</div><div class="line">        <span class="keyword">self</span>.delegate = delegate</div><div class="line">    &#125;</div><div class="line">        </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">ModelObjectDelegate</span>: <span class="title">class</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ModelObject</span> </span>&#123;</span><br><span class="line">    <span class="comment">//译者注：swift 要求变量一定要有初始值</span></span><br><span class="line">    <span class="comment">//        可选类型默认初始值为 nil</span></span><br><span class="line">    <span class="keyword">unowned</span> <span class="keyword">var</span> delegate: <span class="type">ModelObjectDelegate</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>(delegate:<span class="type">ModelObjectDelegate</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.delegate = delegate</span><br><span class="line">    &#125;</span><br><span class="line">        </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>根据属性是否为可选类型，你可以在 <code>weak</code> 和 <code>unowned</code> 之间进行选择。</p>
-<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="http://www.thomashanning.com/a-trick-to-discover-retain-cycles/" target="_blank" rel="external">A Trick To Discover Retain Cycles</a><br><a href="http://www.thomashanning.com/optionals-in-swift/" target="_blank" rel="external">Optionals In Swift</a><br><a href="https://itunes.apple.com/us/book-series/swift-programming-series/id888896989?mt=11" target="_blank" rel="external">Swift Programming Series (iBook Store)</a></p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="http://www.thomashanning.com/a-trick-to-discover-retain-cycles/" target="_blank" rel="noopener">A Trick To Discover Retain Cycles</a><br><a href="http://www.thomashanning.com/optionals-in-swift/" target="_blank" rel="noopener">Optionals In Swift</a><br><a href="https://itunes.apple.com/us/book-series/swift-programming-series/id888896989?mt=11" target="_blank" rel="noopener">Swift Programming Series (iBook Store)</a></p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
@@ -235,6 +236,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -283,7 +288,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -432,11 +437,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -448,11 +453,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -460,7 +461,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -472,11 +473,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -484,7 +489,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -678,7 +683,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

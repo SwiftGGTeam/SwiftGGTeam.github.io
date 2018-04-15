@@ -20,8 +20,9 @@
 <meta property="og:url" content="https://swift.gg/2016/08/23/swift-pretty-in-print-pt-2/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="本文继续讲解在 Swift 中使用 print() 语句，教你怎么轻量地实现带 emoji 表情的日志。">
+<meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="http://swiftgg-main.b0.upaiyun.com/img/swift-pretty-in-print-pt-2.png">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.399Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift：如何优雅地使用 print()（二）">
 <meta name="twitter:description" content="本文继续讲解在 Swift 中使用 print() 语句，教你怎么轻量地实现带 emoji 表情的日志。">
@@ -90,7 +91,7 @@
         <a href="/2016/08/23/swift-pretty-in-print-pt-2/" target="_blank" title="Swift：如何优雅地使用 print()（二）" itemprop="url">Swift：如何优雅地使用 print()（二）</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-08-22T16:00:00.000Z" itemprop="datePublished">2016-08-23</time>
+      <time datetime="2016-08-23T00:00:00.000Z" itemprop="datePublished">2016-08-23</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -98,20 +99,20 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Anddy Hope，<a href="https://medium.com/swift-programming/swift-pretty-in-print-pt-2-640cea920653#.jfchib95j" target="_blank" rel="external">原文链接</a>，原文日期：2016-04-14<br>译者：<a href="https://github.com/Harman-darrenchen" target="_blank" rel="external">Darren</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="external">Cee</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+<p>作者：Anddy Hope，<a href="https://medium.com/swift-programming/swift-pretty-in-print-pt-2-640cea920653#.jfchib95j" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-04-14<br>译者：<a href="https://github.com/Harman-darrenchen" target="_blank" rel="noopener">Darren</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
 <h4 id="如果说-Log-是一种时尚，那你就是时尚设计师。"><a href="#如果说-Log-是一种时尚，那你就是时尚设计师。" class="headerlink" title="如果说 Log 是一种时尚，那你就是时尚设计师。"></a>如果说 Log 是一种时尚，那你就是时尚设计师。</h4><p>在<a href="http://swift.gg/2016/08/03/swift-prettify-your-print-statements-pt-1/">上一篇文章</a>中，我聊到了如何通过在打印的日志中使用 emoji 表情来帮助你从冗杂的信息中减少认知负荷。然而，我给的糟糕的实现并不会让你对在自己的代码中使用 emoji 产生强烈的意愿。</p>
 <p>这篇文章我将会实现承诺，告诉你如何使用比 <code>print</code> 函数 <em>稍微</em> 复杂的方法轻量地实现带 emoji 表情的日志。</p>
 <a id="more"></a>
 <h3 id="预算限制"><a href="#预算限制" class="headerlink" title="预算限制"></a>预算限制</h3><p>在本文接下来的部分，你会看到：我们会打破 Swift 的命名约定，不过这么做是有理由的；为了降低替代 print 的成本，我们需要减少敲击键盘的次数；此外使用大写字母的必要性也需要讨论。不过如果看完后你的认知负荷还是存在的话，那就换成你喜欢的命名吧。</p>
-<h3 id="介绍-log"><a href="#介绍-log" class="headerlink" title="介绍 log"></a>介绍 log</h3><figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">enum</span> <span class="title">log</span> </span>&#123; &#125;</div></pre></td></tr></table></figure>
+<h3 id="介绍-log"><a href="#介绍-log" class="headerlink" title="介绍 log"></a>介绍 log</h3><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">log</span> </span>&#123; &#125;</span><br></pre></td></tr></table></figure>
 <p>我们使用 enum 而不是 class 和 struct 是有一些理由的。其中一个原因是我们<em>永远</em>不需要实例化一个 log。我们使用 case 判断条件而不是通过函数判断，是因为我们想实现一个<em>安全</em>的 log。你很快就会知道我为什么这么说。</p>
-<h3 id="Case-的关联值"><a href="#Case-的关联值" class="headerlink" title="Case 的关联值"></a>Case 的关联值</h3><figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">enum</span> <span class="title">log</span> </span>&#123;</div><div class="line">    <span class="keyword">case</span> ln(<span class="number">_</span> line: <span class="type">String</span>)</div><div class="line">    <span class="keyword">case</span> url(<span class="number">_</span> url: <span class="type">String</span>)</div><div class="line">    <span class="keyword">case</span> obj(<span class="number">_</span> any: <span class="type">AnyObject</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="Case-的关联值"><a href="#Case-的关联值" class="headerlink" title="Case 的关联值"></a>Case 的关联值</h3><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">log</span> </span>&#123;</span><br><span class="line">    <span class="keyword">case</span> ln(<span class="number">_</span> line: <span class="type">String</span>)</span><br><span class="line">    <span class="keyword">case</span> url(<span class="number">_</span> url: <span class="type">String</span>)</span><br><span class="line">    <span class="keyword">case</span> obj(<span class="number">_</span> any: <span class="type">AnyObject</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>有些朋友可能不知道吧，<code>ln</code>（line）曾经在 Swift 中出现过，在 Swift 2.0 出现前，<code>println()</code> 曾是替代 <code>print()</code> 打印 log 的主要方式。我也写了一些其他的例子来证明 log 的扩展性。</p>
 <p>在 case 的条件中我们包含了不同的关联值来应对不同输入所对应输出的 log 值。同时你也应该注意到了我们省略了声明中的外部参数的名称，因为我们使用了 case 的名称来描述参数的作用。</p>
 <p>看看我们现在可以做些什么：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="built_in">print</span>(log.ln(“<span class="type">Hello</span> <span class="type">World</span>”))</div><div class="line"><span class="comment">// ln("Hello World")</span></div><div class="line"></div><div class="line"><span class="built_in">print</span>(<span class="string">"Hello World"</span>)</div><div class="line"><span class="comment">// "Hello World"</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="built_in">print</span>(log.ln(“<span class="type">Hello</span> <span class="type">World</span>”))</span><br><span class="line"><span class="comment">// ln("Hello World")</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"Hello World"</span>)</span><br><span class="line"><span class="comment">// "Hello World"</span></span><br></pre></td></tr></table></figure>
 <p>呃，的确是可以用的，但是它绝不是一个合适的补充或<em>替代</em> print 语句的选择。原因如下：</p>
 <ul>
 <li>想要使用它时需要敲多次键盘；</li>
@@ -121,17 +122,17 @@
 <li>总而言之它这货简直就弱爆了！</li>
 </ul>
 <p>所以我们现在需要用一个方法来解决这五件事。快上车，带你到达我之前许诺的终点——日志岛。</p>
-<h3 id="自定义操作符"><a href="#自定义操作符" class="headerlink" title="自定义操作符"></a>自定义操作符</h3><figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">postfix</span> <span class="keyword">operator</span> / &#123; &#125;</div></pre></td></tr></table></figure>
+<h3 id="自定义操作符"><a href="#自定义操作符" class="headerlink" title="自定义操作符"></a>自定义操作符</h3><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">postfix</span> <span class="keyword">operator</span> / &#123; &#125;</span><br></pre></td></tr></table></figure>
 <p>我会假定你们中的大部分人都没有过实现自定义操作符。很正常，我也是最近才开始用的，但其实这并不难。</p>
 <p>我们自定义的操作符将会是<code>后缀操作符（postfix）</code>，因为我们希望它在 log 的代码后面，而且同时希望在它的左边仅有一个输入。</p>
 <p>我选择使用「/」这个符号，因为它是最接近注释语法而又不会实际创建注释的，还因为它是为数不多的不需要按 shift 键进行输入的操作符。</p>
 <p>…我真的开始感觉我就像一个收到预算限制的政客。</p>
-<h4 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h4><figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">postfix</span> <span class="function"><span class="keyword">func</span> / <span class="params">(target: log)</span></span> &#123;</div><div class="line">    <span class="keyword">switch</span> target &#123;</div><div class="line">    <span class="keyword">case</span> ln(<span class="keyword">let</span> line):</div><div class="line">        log(<span class="string">"✏️"</span>, line)</div><div class="line">    <span class="keyword">case</span> url(<span class="keyword">let</span> url):</div><div class="line">        log(<span class="string">"🌏"</span>, url)</div><div class="line">    <span class="keyword">case</span> obj(<span class="keyword">let</span> object):</div><div class="line">        log(<span class="string">"🔹"</span>, object)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h4><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">postfix</span> <span class="function"><span class="keyword">func</span> / <span class="params">(target: log)</span></span> &#123;</span><br><span class="line">    <span class="keyword">switch</span> target &#123;</span><br><span class="line">    <span class="keyword">case</span> ln(<span class="keyword">let</span> line):</span><br><span class="line">        log(<span class="string">"✏️"</span>, line)</span><br><span class="line">    <span class="keyword">case</span> url(<span class="keyword">let</span> url):</span><br><span class="line">        log(<span class="string">"🌏"</span>, url)</span><br><span class="line">    <span class="keyword">case</span> obj(<span class="keyword">let</span> object):</span><br><span class="line">        log(<span class="string">"🔹"</span>, object)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这个实现很像是声明，但是我们提供了一个函数体，增加了要求传入的参数为 <code>log</code> 枚举类型的限制，这就是我所说的写「更安全的代码」。此外还有一点也能够证明「更安全的代码」，就是 <code>log</code> 声明时是一个枚举类型而不是类或者结构体，因为枚举类型的 switch 语句一定是完全覆盖所有判断条件的。每当我们添加一个新的 emoji 日志类型，我们必须同时在操作符的 switch 语句中包含它。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">log</span>&lt;T&gt;<span class="params">(emoji: String, <span class="number">_</span> object: T)</span></span> &#123;</div><div class="line">    <span class="built_in">print</span>(emoji + “ “ + <span class="type">String</span>(object))</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">log</span>&lt;T&gt;<span class="params">(emoji: String, <span class="number">_</span> object: T)</span></span> &#123;</span><br><span class="line">    <span class="built_in">print</span>(emoji + “ “ + <span class="type">String</span>(object))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>最后，我们实现了 <code>log</code> 函数，这简单得难以置信。它是<code>私有函数</code>，因为我们不希望它在我们正在写的 <code>.swift</code> 文件外部被访问。它的第二个参数是一个泛型，因为我们可能会传任何类型进去。</p>
 <p>如你所见，它只是一个简单地把 emoji 表情和对象用一个空格连接起来的 print 语句。</p>
-<h3 id="用起来"><a href="#用起来" class="headerlink" title="用起来"></a>用起来</h3><figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">log.ln(“<span class="type">Pretty</span>”)/</div><div class="line">✏️ <span class="type">Pretty</span></div><div class="line"></div><div class="line">log.url(url)/</div><div class="line">🌏 http:<span class="comment">//www.andyyhope.com</span></div><div class="line"></div><div class="line">log.obj(date)/</div><div class="line">🔹 <span class="number">2016</span>–<span class="number">04</span>–<span class="number">02</span> <span class="number">23</span>:<span class="number">23</span>:<span class="number">05</span> +<span class="number">0000</span></div><div class="line"></div><div class="line"><span class="type">Maybe</span> i should use a screenshot here instead?</div></pre></td></tr></table></figure>
+<h3 id="用起来"><a href="#用起来" class="headerlink" title="用起来"></a>用起来</h3><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">log.ln(“<span class="type">Pretty</span>”)/</span><br><span class="line">✏️ <span class="type">Pretty</span></span><br><span class="line"></span><br><span class="line">log.url(url)/</span><br><span class="line">🌏 http:<span class="comment">//www.andyyhope.com</span></span><br><span class="line"></span><br><span class="line">log.obj(date)/</span><br><span class="line">🔹 <span class="number">2016</span>–<span class="number">04</span>–<span class="number">02</span> <span class="number">23</span>:<span class="number">23</span>:<span class="number">05</span> +<span class="number">0000</span></span><br><span class="line"></span><br><span class="line"><span class="type">Maybe</span> i should use a screenshot here instead?</span><br></pre></td></tr></table></figure>
 <p>这样就做好了！只需要额外敲两下键盘（字母），我们已经可以成功地从被应用和第三方日志塞满的控制台中找到特定类型的日志。但事情还没做完…</p>
 <h3 id="性能提升"><a href="#性能提升" class="headerlink" title="性能提升"></a>性能提升</h3><p>很多开发者都忽略了的一个事实是调用 print 实际上会降低你的应用的性能。在调试过程中代码中遍布大量的 print 是完全没有问题的，但是在上架 App Store 之前，你真的应该删掉它们。</p>
 <blockquote>
@@ -151,15 +152,15 @@
 <li>输入 <code>-D DEBUG</code>。</li>
 </ol>
 <p>最后，我们将把我们实际的 print 函数打包进我们刚才设置的预编译指令中。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">log</span>&lt;T&gt;<span class="params">(emoji: String, <span class="number">_</span> object: T)</span></span> &#123;</div><div class="line">    #<span class="keyword">if</span> <span class="type">DEBUG</span></div><div class="line">        <span class="built_in">print</span>(emoji + “ “ + <span class="type">String</span>(object))</div><div class="line">    #endif</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>瞧！现在你的 print 语句只会在调试时运行。你可以通过<a href="https://developer.apple.com/library/mac/recipes/xcode_help-scheme_editor/Articles/SchemeDialog.html" target="_blank" rel="external">改变你的编译配置方案</a>为 Release 再测试运行你的 app，不过不要忘了把它重新改回 Debug！</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">log</span>&lt;T&gt;<span class="params">(emoji: String, <span class="number">_</span> object: T)</span></span> &#123;</span><br><span class="line">    #<span class="keyword">if</span> <span class="type">DEBUG</span></span><br><span class="line">        <span class="built_in">print</span>(emoji + “ “ + <span class="type">String</span>(object))</span><br><span class="line">    #endif</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>瞧！现在你的 print 语句只会在调试时运行。你可以通过<a href="https://developer.apple.com/library/mac/recipes/xcode_help-scheme_editor/Articles/SchemeDialog.html" target="_blank" rel="noopener">改变你的编译配置方案</a>为 Release 再测试运行你的 app，不过不要忘了把它重新改回 Debug！</p>
 <h3 id="Framework、Carthage-和-Cocoapods-支持"><a href="#Framework、Carthage-和-Cocoapods-支持" class="headerlink" title="Framework、Carthage 和 Cocoapods 支持"></a>Framework、Carthage 和 Cocoapods 支持</h3><p>或许你可能对上面的内容很喜欢，而且会想：「如果 Andyy 再提供 Framework、Carthage 或者 CocoaPods 的支持就更好了」，但是实际上这对 log 的功能性来说没有好处。</p>
 <p>原因是，如果我提供这三者之一，每次你想打 log 的时候，在你使用前，你都需要将框架导入你的 Swift 文件，这样做很傻，因为你在每次使用这个愚蠢的 log 把戏前都需要做一些额外的管理工作。这也是为什么那么多 NSLog 的替代品在 Objective-C 下面工作地并不好。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> Log <span class="comment">// 看上去就是一坨💩</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Log <span class="comment">// 看上去就是一坨💩</span></span><br></pre></td></tr></table></figure>
 <h3 id="探索与使用"><a href="#探索与使用" class="headerlink" title="探索与使用"></a>探索与使用</h3><p>我为你们提供了一个 playground 用来测试文章中写到的内容，同时还提供了一个 <code>log.swift</code> 文件方便你添加到自己的项目中。示例代码中有一些额外的案例可以用在日常的开发中。尽情享受吧！</p>
 <hr>
-<p><a href="https://github.com/andyyhope/Blog_PrettyPrint" target="_blank" rel="external">示例代码</a>已上传 GitHub.</p>
-<p>像往常一样，如果你喜欢你今天看到的内容，或者已经实现了它，请  <a href="https://twitter.com/AndyyHope" target="_blank" rel="external">发推给我</a>。我喜欢读者的反馈，这会让我很高兴！</p>
+<p><a href="https://github.com/andyyhope/Blog_PrettyPrint" target="_blank" rel="noopener">示例代码</a>已上传 GitHub.</p>
+<p>像往常一样，如果你喜欢你今天看到的内容，或者已经实现了它，请  <a href="https://twitter.com/AndyyHope" target="_blank" rel="noopener">发推给我</a>。我喜欢读者的反馈，这会让我很高兴！</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
@@ -272,6 +273,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -320,7 +325,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -469,11 +474,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -485,11 +490,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -497,7 +498,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -509,11 +510,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -521,7 +526,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -715,7 +720,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

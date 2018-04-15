@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/01/28/swift-magic-public-getter-private-setter/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="在Swift中有属性需要在外部读并只能在内部进行的话，只需公开Getter同时隐藏Setter就可以了。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.379Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift 魔法：公开 Getter，隐藏 Setter">
 <meta name="twitter:description" content="在Swift中有属性需要在外部读并只能在内部进行的话，只需公开Getter同时隐藏Setter就可以了。">
@@ -88,7 +89,7 @@
         <a href="/2016/01/28/swift-magic-public-getter-private-setter/" target="_blank" title="Swift 魔法：公开 Getter，隐藏 Setter" itemprop="url">Swift 魔法：公开 Getter，隐藏 Setter</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-01-27T16:00:00.000Z" itemprop="datePublished">2016-01-28</time>
+      <time datetime="2016-01-28T00:00:00.000Z" itemprop="datePublished">2016-01-28</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,17 +97,17 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Natasha，<a href="https://www.natashatherobot.com/swift-magic-public-getter-private-setter/" target="_blank" rel="external">原文链接</a>，原文日期：2016-1-11<br>译者：<a href="http://www.saitjr.com" target="_blank" rel="external">saitjr</a>；校对：<a href="http://www.swiftyper.com" target="_blank" rel="external">小锅</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="external">千叶知风</a></p>
+<p>作者：Natasha，<a href="https://www.natashatherobot.com/swift-magic-public-getter-private-setter/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-1-11<br>译者：<a href="http://www.saitjr.com" target="_blank" rel="noopener">saitjr</a>；校对：<a href="http://www.swiftyper.com" target="_blank" rel="noopener">小锅</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p>在我之前发布的文章 <a href="https://www.natashatherobot.com/swift-dependency-injection-with-a-custom-initializer/" target="_blank" rel="external">构造器注入(Constructor Injection)</a> 中，有这样的案例：在 <code>struct</code> 中有一个属性，这属性需要在外部读，并只能在内部进行写。当时的实现方式是：</p>
+<p>在我之前发布的文章 <a href="https://www.natashatherobot.com/swift-dependency-injection-with-a-custom-initializer/" target="_blank" rel="noopener">构造器注入(Constructor Injection)</a> 中，有这样的案例：在 <code>struct</code> 中有一个属性，这属性需要在外部读，并只能在内部进行写。当时的实现方式是：</p>
 <a id="more"></a>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</div><div class="line">    <span class="comment">// `count` 在这里必须是一个 var </span></div><div class="line">    <span class="comment">// 但我并不想将 `count` 设为公开的，</span></div><div class="line">    <span class="comment">// 所以加了 private 定为私有的</span></div><div class="line">    <span class="keyword">private</span> <span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span></div><div class="line">    </div><div class="line">    <span class="comment">// 现在就只能通过这种方式在外部访问 `count` 了</span></div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">getCount</span><span class="params">()</span></span> &#123;</div><div class="line">        <span class="keyword">return</span> <span class="built_in">count</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</span><br><span class="line">    <span class="comment">// `count` 在这里必须是一个 var </span></span><br><span class="line">    <span class="comment">// 但我并不想将 `count` 设为公开的，</span></span><br><span class="line">    <span class="comment">// 所以加了 private 定为私有的</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 现在就只能通过这种方式在外部访问 `count` 了</span></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">getCount</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">count</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这种方式并不优雅，但却是我唯一能想到的解决方案。幸运的是，现在我找到了一个更好的方式！</p>
-<p>Twitter 上 <a href="https://twitter.com/mipstian/status/685489964403003393" target="_blank" rel="external">@mipstian</a> 指出可以通过设置私有的 Setter 方法来达到效果，就像这样：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</div><div class="line">    <span class="comment">// 现在就只有setter是private的了！</span></div><div class="line">    <span class="keyword">private</span>(<span class="keyword">set</span>) <span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>Twitter 上 <a href="https://twitter.com/mipstian/status/685489964403003393" target="_blank" rel="noopener">@mipstian</a> 指出可以通过设置私有的 Setter 方法来达到效果，就像这样：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 现在就只有setter是private的了！</span></span><br><span class="line">    <span class="keyword">private</span>(<span class="keyword">set</span>) <span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>对当前案例来说，将 <code>Counter</code> 设置为模块内公开(也就是internal)。但如果你是要做 SDK，你可以像下面这样公开 Getter ，同时隐藏 Setter：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</div><div class="line">    <span class="comment">// 现在就只有setter是private的了！</span></div><div class="line">    <span class="keyword">public</span> <span class="keyword">private</span>(<span class="keyword">set</span>) <span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 现在就只有setter是private的了！</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">private</span>(<span class="keyword">set</span>) <span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>我也不知道我怎么就错过了这个知识（可能是因为我一直都尽量使用 <code>let</code> 的原因），但我真的很庆幸最终我还是知道了这个超赞的 Swift 特性。</p>
 <p>–</p>
 <p>以上全文完，但是作为一个走心的翻译组，我们发现我们还翻译过其它类似的文章，以下链接可以供参考：</p>
@@ -223,6 +224,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -271,7 +276,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -420,11 +425,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -436,11 +441,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -448,7 +449,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -460,11 +461,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -472,7 +477,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -666,7 +671,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

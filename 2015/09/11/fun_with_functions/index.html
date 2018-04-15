@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2015/09/11/fun_with_functions/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Olivier Halligon，原文链接，原文日期：2015-08-28译者：小锅；校对：numbbbbb；定稿：shanks   今天我们要研究 Swift 函数中一些好玩的特性，比如返回函数的函数，柯里化以及运算符函数。 函数的基础在这篇文章中，我们将使用一个返回 Bool 类型的函数来判断它的参数是否匹配某个条件，这个函数接收一个 Int 类型的参数。像这类功能可以使用filter">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.363Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="函数之趣">
 <meta name="twitter:description" content="作者：Olivier Halligon，原文链接，原文日期：2015-08-28译者：小锅；校对：numbbbbb；定稿：shanks   今天我们要研究 Swift 函数中一些好玩的特性，比如返回函数的函数，柯里化以及运算符函数。 函数的基础在这篇文章中，我们将使用一个返回 Bool 类型的函数来判断它的参数是否匹配某个条件，这个函数接收一个 Int 类型的参数。像这类功能可以使用filter">
@@ -88,7 +89,7 @@
         <a href="/2015/09/11/fun_with_functions/" target="_blank" title="函数之趣" itemprop="url">函数之趣</a>
     </h1>
     <p class="article-time">
-      <time datetime="2015-09-10T16:00:00.000Z" itemprop="datePublished">2015-09-11</time>
+      <time datetime="2015-09-11T00:00:00.000Z" itemprop="datePublished">2015-09-11</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,49 +97,49 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Olivier Halligon，<a href="http://alisoftware.github.io/swift/function/operator/2015/08/28/fun-with-functions/" target="_blank" rel="external">原文链接</a>，原文日期：2015-08-28<br>译者：<a href="http://www.swiftyper.com" target="_blank" rel="external">小锅</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="external">numbbbbb</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
+<p>作者：Olivier Halligon，<a href="http://alisoftware.github.io/swift/function/operator/2015/08/28/fun-with-functions/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-08-28<br>译者：<a href="http://www.swiftyper.com" target="_blank" rel="noopener">小锅</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>今天我们要研究 Swift 函数中一些好玩的特性，比如返回函数的函数，柯里化以及运算符函数。</p>
 <h2 id="函数的基础"><a href="#函数的基础" class="headerlink" title="函数的基础"></a>函数的基础</h2><p>在这篇文章中，我们将使用一个返回 <code>Bool</code> 类型的函数来判断它的参数是否匹配某个条件，这个函数接收一个 <code>Int</code> 类型的参数。像这类功能可以使用<code>filter</code>方法对整型数组进行过滤。</p>
 <a id="more"></a>
 <p>让我们从最简单的开始，下面是一个用来判断它的参数是否为正数的函数：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">isPositive</span><span class="params">(value: Int)</span></span> -&gt; <span class="type">Bool</span> &#123;</div><div class="line">  <span class="keyword">return</span> value &gt; <span class="number">0</span></div><div class="line">&#125;</div><div class="line"></div><div class="line">[-<span class="number">4</span>,-<span class="number">2</span>,<span class="number">0</span>,<span class="number">4</span>,<span class="number">7</span>,-<span class="number">8</span>,<span class="number">3</span>].<span class="built_in">filter</span>(isPositive)</div><div class="line"><span class="comment">// returns: [4,7,3]</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">isPositive</span><span class="params">(value: Int)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> value &gt; <span class="number">0</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">[-<span class="number">4</span>,-<span class="number">2</span>,<span class="number">0</span>,<span class="number">4</span>,<span class="number">7</span>,-<span class="number">8</span>,<span class="number">3</span>].<span class="built_in">filter</span>(isPositive)</span><br><span class="line"><span class="comment">// returns: [4,7,3]</span></span><br></pre></td></tr></table></figure>
 <h2 id="更通用的函数"><a href="#更通用的函数" class="headerlink" title="更通用的函数"></a>更通用的函数</h2><p>如果某个数字能被 N 整除，我们希望该函数能返回<code>true</code>，如何实现呢？当然，我们可以写出类似 <code>isEven</code>， <code>isMultipleOf3</code> 和 <code>isMultipleOf4</code> 这样的函数，但是这样的函数是无穷无尽的。</p>
 <p>另一种显而易见的解决方案是把整数 N 作为一个参数传入。以这种思路，我们可以写出如下的函数：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">isMultiple</span><span class="params">(multiple: Int, value: Int)</span></span> -&gt; <span class="type">Bool</span> &#123;</div><div class="line">  <span class="keyword">return</span> value % multiple == <span class="number">0</span></div><div class="line">&#125;</div><div class="line"></div><div class="line">[-<span class="number">4</span>,-<span class="number">2</span>,<span class="number">0</span>,<span class="number">4</span>,<span class="number">7</span>,-<span class="number">8</span>,<span class="number">3</span>].<span class="built_in">filter</span>(isMultiple)</div><div class="line"><span class="comment">//错误：filter 方法期望传入 Int-&gt;Bool ，但是我们给的是 (Int,Int)-&gt;Bool</span></div><div class="line">[-<span class="number">4</span>,-<span class="number">2</span>,<span class="number">0</span>,<span class="number">4</span>,<span class="number">7</span>,-<span class="number">8</span>,<span class="number">3</span>].<span class="built_in">filter</span>(isMultiple(<span class="number">3</span>))</div><div class="line"><span class="comment">//错误：不能只传入一个参数来调用 `isMultiple`，需要传入两个参数</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">isMultiple</span><span class="params">(multiple: Int, value: Int)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> value % multiple == <span class="number">0</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">[-<span class="number">4</span>,-<span class="number">2</span>,<span class="number">0</span>,<span class="number">4</span>,<span class="number">7</span>,-<span class="number">8</span>,<span class="number">3</span>].<span class="built_in">filter</span>(isMultiple)</span><br><span class="line"><span class="comment">//错误：filter 方法期望传入 Int-&gt;Bool ，但是我们给的是 (Int,Int)-&gt;Bool</span></span><br><span class="line">[-<span class="number">4</span>,-<span class="number">2</span>,<span class="number">0</span>,<span class="number">4</span>,<span class="number">7</span>,-<span class="number">8</span>,<span class="number">3</span>].<span class="built_in">filter</span>(isMultiple(<span class="number">3</span>))</span><br><span class="line"><span class="comment">//错误：不能只传入一个参数来调用 `isMultiple`，需要传入两个参数</span></span><br></pre></td></tr></table></figure>
 <p>但是如果这样编写代码的话，<code>filter</code>方法无法使用。</p>
 <h2 id="返回函数的函数"><a href="#返回函数的函数" class="headerlink" title="返回函数的函数"></a>返回函数的函数</h2><p>我们现在需要的是一种方法，通过这种方法，只要我们给定一个除数，就可以生成一个 <code>Int -&gt; Bool</code> 类型的函数(这种类型的函数正是 <code>filter</code> 函数所需要的)。那就让我们开始动手构建：一个接收 <code>(multiplier: Int)</code> 的函数，同时它会返回… 另一个 <code>Int -&gt; Bool</code> 类型的函数。</p>
 <p>要构建这样的函数有很多种方法，第一种是在 <code>isMultiple</code> <em>里面</em> 声明一个 <code>Int -&gt; Bool</code> 的函数，然后再将内部声明的函数返回：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">isMultiple</span><span class="params">(multiplier: Int)</span></span> -&gt; (<span class="type">Int</span> -&gt; <span class="type">Bool</span>) &#123;</div><div class="line">  <span class="function"><span class="keyword">func</span> <span class="title">multFunctionToReturn</span><span class="params">(value: Int)</span></span> -&gt; <span class="type">Bool</span> &#123;</div><div class="line">    <span class="keyword">return</span> value % multiplier == <span class="number">0</span></div><div class="line">  &#125;</div><div class="line">  <span class="keyword">return</span> multFunctionToReturn</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">isMultiple</span><span class="params">(multiplier: Int)</span></span> -&gt; (<span class="type">Int</span> -&gt; <span class="type">Bool</span>) &#123;</span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">multFunctionToReturn</span><span class="params">(value: Int)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> value % multiplier == <span class="number">0</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> multFunctionToReturn</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>在这里，内部函数“捕获”了外部函数提供的 <code>multiplier</code> 参数，并生成一个特定的函数，然后将该函数返回。</p>
 <p>不过一种更常见(也更紧凑)的方法是使用闭包。在 Swift 当中，函数和闭包是可以互换的，因此，我们可以直接在函数中返回一个 <code>Int -&gt; Bool</code> 类型的闭包：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">isMultiple</span><span class="params">(multiplier: Int)</span></span> -&gt; (<span class="type">Int</span> -&gt; <span class="type">Bool</span>) &#123;</div><div class="line">  <span class="keyword">return</span> &#123; (value: <span class="type">Int</span>) -&gt; <span class="type">Bool</span> <span class="keyword">in</span></div><div class="line">    value % multiplier == <span class="number">0</span></div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h2 id="柯里化"><a href="#柯里化" class="headerlink" title="柯里化"></a>柯里化</h2><p>其实，我们还有第三种方法：<em>柯里化</em>。<a href="https://en.wikipedia.org/wiki/Currying" target="_blank" rel="external">柯里化</a>可以将一个接收多个参数的函数转化一个只接收一个参数的函数，同时返回另一个函数（返回的函数将接收原函数的下一个参数，再返回一个函数… 直到所有的参数都被消耗掉，并返回一个最终的值）。这种技术可以让我们实现某个函数的部分功能，这在某些情况下是十分强大和有用的。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">isMultiple</span><span class="params">(multiplier: Int)</span></span> -&gt; (<span class="type">Int</span> -&gt; <span class="type">Bool</span>) &#123;</span><br><span class="line">  <span class="keyword">return</span> &#123; (value: <span class="type">Int</span>) -&gt; <span class="type">Bool</span> <span class="keyword">in</span></span><br><span class="line">    value % multiplier == <span class="number">0</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="柯里化"><a href="#柯里化" class="headerlink" title="柯里化"></a>柯里化</h2><p>其实，我们还有第三种方法：<em>柯里化</em>。<a href="https://en.wikipedia.org/wiki/Currying" target="_blank" rel="noopener">柯里化</a>可以将一个接收多个参数的函数转化一个只接收一个参数的函数，同时返回另一个函数（返回的函数将接收原函数的下一个参数，再返回一个函数… 直到所有的参数都被消耗掉，并返回一个最终的值）。这种技术可以让我们实现某个函数的部分功能，这在某些情况下是十分强大和有用的。</p>
 <p>在 Swift 中，我们可以轻松地将一个接收多个参数的方法转化成柯里化的方法，只要将分隔参数的逗号替换成一个闭括号，紧接着再添加一个开括号。现在，让我们复用第一个 <code>isMultiple</code> 函数的实现，并将它转化成柯里化的函数：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">isMultiple</span><span class="params">(multiplier: Int)</span></span>(value: <span class="type">Int</span>) -&gt; <span class="type">Bool</span> &#123;</div><div class="line">  <span class="keyword">return</span> value % multiplier == <span class="number">0</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">isMultiple</span><span class="params">(multiplier: Int)</span></span>(value: <span class="type">Int</span>) -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> value % multiplier == <span class="number">0</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这种语法会让人觉得有点困扰，所以就个人来讲，我还是偏向显式地使用返回函数的函数(就像在上一小节中的形式)，因此，柯里化的函数可以等价地转化为如下的形式(我觉得这种形式更易懂)：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">isMultiple</span><span class="params">(multiplier: Int)</span></span> -&gt; (value: <span class="type">Int</span>) -&gt; <span class="type">Bool</span> &#123;</div><div class="line">  <span class="keyword">return</span> &#123; value <span class="keyword">in</span> value % multiplier == <span class="number">0</span> &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">isMultiple</span><span class="params">(multiplier: Int)</span></span> -&gt; (value: <span class="type">Int</span>) -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> &#123; value <span class="keyword">in</span> value % multiplier == <span class="number">0</span> &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>不过使用哪种方式的最终决定权还是在你自己手上。</p>
 <h2 id="组合函数"><a href="#组合函数" class="headerlink" title="组合函数"></a>组合函数</h2><p>我们下一步要做的事，是将这些筛选函数进行组合，生成一个新的筛选函数。比如说，我们有一个 <code>isPositive</code> 函数和一个 <code>isMultiple</code>函数，如何筛选出即是正数同时也是偶数的数字呢？</p>
 <p>当然我们可以进行两次筛选，就像这样：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">[-<span class="number">4</span>,-<span class="number">2</span>,<span class="number">0</span>,<span class="number">4</span>,<span class="number">7</span>,-<span class="number">8</span>,<span class="number">3</span>].<span class="built_in">filter</span>(isPositive).<span class="built_in">filter</span>(isMultiple(<span class="number">2</span>))</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">[-<span class="number">4</span>,-<span class="number">2</span>,<span class="number">0</span>,<span class="number">4</span>,<span class="number">7</span>,-<span class="number">8</span>,<span class="number">3</span>].<span class="built_in">filter</span>(isPositive).<span class="built_in">filter</span>(isMultiple(<span class="number">2</span>))</span><br></pre></td></tr></table></figure>
 <p>但是这种方法效率并不高，因为它对数组进行了两次遍历。更进一步地，如果想筛选出数组中的正数<em>或者</em>偶数，我们就没有其它更好的语法来表达，只能这样做：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">[-<span class="number">4</span>,-<span class="number">2</span>,<span class="number">0</span>,<span class="number">4</span>,<span class="number">7</span>,-<span class="number">8</span>,<span class="number">3</span>].<span class="built_in">filter</span> &#123; value <span class="keyword">in</span> isPositive(value) || isMultiple(<span class="number">2</span>)(value) &#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">[-<span class="number">4</span>,-<span class="number">2</span>,<span class="number">0</span>,<span class="number">4</span>,<span class="number">7</span>,-<span class="number">8</span>,<span class="number">3</span>].<span class="built_in">filter</span> &#123; value <span class="keyword">in</span> isPositive(value) || isMultiple(<span class="number">2</span>)(value) &#125;</span><br></pre></td></tr></table></figure>
 <p>如果我们可以组合两个 <code>Int -&gt; Bool</code> 函数并生成一个新的函数，不是更酸爽么？如果像下面这样来写代码，我们应该会觉得更自然：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">[-<span class="number">4</span>,-<span class="number">2</span>,<span class="number">0</span>,<span class="number">4</span>,<span class="number">7</span>,-<span class="number">8</span>,<span class="number">3</span>].<span class="built_in">filter</span>(isPositive || isMultiple(<span class="number">2</span>))</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">[-<span class="number">4</span>,-<span class="number">2</span>,<span class="number">0</span>,<span class="number">4</span>,<span class="number">7</span>,-<span class="number">8</span>,<span class="number">3</span>].<span class="built_in">filter</span>(isPositive || isMultiple(<span class="number">2</span>))</span><br></pre></td></tr></table></figure>
 <p>妥妥地，我们来让它实现吧！</p>
 <p><code>&amp;&amp;</code> 和 <code>||</code> 运算符已经存在了，我们只需要对他们进行重载，好让它们能够接收 <code>Int -&gt; Bool</code> 类型作为参数：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> || <span class="params">(lhs: Int-&gt;Bool, rhs: Int-&gt;Bool)</span></span> -&gt; (<span class="type">Int</span>-&gt;<span class="type">Bool</span>) &#123;</div><div class="line">  <span class="keyword">return</span> &#123; (value: <span class="type">Int</span>) -&gt; <span class="type">Bool</span> <span class="keyword">in</span></div><div class="line">    <span class="keyword">return</span> lhs(value) || rhs(value)</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> || <span class="params">(lhs: Int-&gt;Bool, rhs: Int-&gt;Bool)</span></span> -&gt; (<span class="type">Int</span>-&gt;<span class="type">Bool</span>) &#123;</span><br><span class="line">  <span class="keyword">return</span> &#123; (value: <span class="type">Int</span>) -&gt; <span class="type">Bool</span> <span class="keyword">in</span></span><br><span class="line">    <span class="keyword">return</span> lhs(value) || rhs(value)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>我们也可以对 <code>&amp;&amp;</code> 运算符进行同样的操作。这次我们将使用 <code>$0</code> 隐式参数，这样可以使代码更紧凑：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> &amp;&amp; <span class="params">(lhs: Int-&gt;Bool, rhs: Int-&gt;Bool)</span></span> -&gt; (<span class="type">Int</span>-&gt;<span class="type">Bool</span>) &#123;</div><div class="line">  <span class="keyword">return</span> &#123; lhs($<span class="number">0</span>) &amp;&amp; rhs($<span class="number">0</span>) &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> &amp;&amp; <span class="params">(lhs: Int-&gt;Bool, rhs: Int-&gt;Bool)</span></span> -&gt; (<span class="type">Int</span>-&gt;<span class="type">Bool</span>) &#123;</span><br><span class="line">  <span class="keyword">return</span> &#123; lhs($<span class="number">0</span>) &amp;&amp; rhs($<span class="number">0</span>) &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>重写 <code>!</code> 运行符好让我们可以对一个函数进行取反，如何？</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">prefix</span> <span class="function"><span class="keyword">func</span> ! <span class="params">(f: Int-&gt;Bool)</span></span> -&gt; (<span class="type">Int</span>-&gt;<span class="type">Bool</span>) &#123;</div><div class="line">  <span class="keyword">return</span> &#123; value <span class="keyword">in</span> !f(value) &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">prefix</span> <span class="function"><span class="keyword">func</span> ! <span class="params">(f: Int-&gt;Bool)</span></span> -&gt; (<span class="type">Int</span>-&gt;<span class="type">Bool</span>) &#123;</span><br><span class="line">  <span class="keyword">return</span> &#123; value <span class="keyword">in</span> !f(value) &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>现在，我们可以这样来写代码：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">[-<span class="number">4</span>,-<span class="number">2</span>,<span class="number">0</span>,<span class="number">4</span>,<span class="number">7</span>,-<span class="number">8</span>,<span class="number">3</span>].<span class="built_in">filter</span>( !isPositive || isMultiple(<span class="number">3</span>) )</div><div class="line"><span class="comment">// return [-4,-2,0,-8,3] (non-positive numbers + multiples of 3)</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">[-<span class="number">4</span>,-<span class="number">2</span>,<span class="number">0</span>,<span class="number">4</span>,<span class="number">7</span>,-<span class="number">8</span>,<span class="number">3</span>].<span class="built_in">filter</span>( !isPositive || isMultiple(<span class="number">3</span>) )</span><br><span class="line"><span class="comment">// return [-4,-2,0,-8,3] (non-positive numbers + multiples of 3)</span></span><br></pre></td></tr></table></figure>
 <p>有没有很优雅？</p>
 <p>我们甚至可以使用它们来声明负数和奇数/偶数筛选器：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> isZero = &#123; value <span class="keyword">in</span> value == <span class="number">0</span> &#125;</div><div class="line"><span class="keyword">let</span> isPositiveOrZero = isPositive || isZero</div><div class="line"><span class="keyword">let</span> isNegative = !isPositive &amp;&amp; !isZero</div><div class="line"><span class="keyword">let</span> isNegativeOrZero = !isPositive</div><div class="line"><span class="keyword">let</span> isEven = isMultiple(<span class="number">2</span>)</div><div class="line"><span class="keyword">let</span> isOdd = !isEven</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> isZero = &#123; value <span class="keyword">in</span> value == <span class="number">0</span> &#125;</span><br><span class="line"><span class="keyword">let</span> isPositiveOrZero = isPositive || isZero</span><br><span class="line"><span class="keyword">let</span> isNegative = !isPositive &amp;&amp; !isZero</span><br><span class="line"><span class="keyword">let</span> isNegativeOrZero = !isPositive</span><br><span class="line"><span class="keyword">let</span> isEven = isMultiple(<span class="number">2</span>)</span><br><span class="line"><span class="keyword">let</span> isOdd = !isEven</span><br></pre></td></tr></table></figure>
 <p>感谢重载的运算符，以上的代码运行正确无误！</p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>通过这些简单的例子，我们学习到了返回函数的函数的好用之处，同时还学习了如何对运算符进行重载以用来对返回 <code>Bool</code> 类型的函数进行组合，最后还介绍了柯里化的概念。</p>
 <p>函数还有很多有乐趣值得我们去挖掘。我们可以使 <code>&amp;&amp;</code>, <code>||</code> 和 <code>!</code> 的重载更加泛型化，以使它们可以接受 <code>T -&gt; Bool</code> 类型的函数，这里的 <code>T</code> 可以是任何类型。我甚至还可以全面地讲解柯里化的知识，解开它的封印，深入探索下函数式编程(不过目前已经有很多其它的博客对这些进行了讲解，因此我觉得不需要再增加我的一篇了)，不过我觉得今天这些知识已经足够你充实一整天了！</p>
@@ -182,18 +183,18 @@
 <nav class="article-nav clearfix">
  
  <div class="prev" >
- <a href="/2015/09/11/sequencetype_and_generatortype/" title="如何用 Swift 实现序列和生成器">
+ <a href="/2015/09/11/ios-a-beautiful-way-of-styling-iboutlets-in-swift/" title="Swift 小贴士: 优雅地设置 IBOutlets">
   <strong>上一篇</strong><br/>
   <span>
-  如何用 Swift 实现序列和生成器</span>
+  Swift 小贴士: 优雅地设置 IBOutlets</span>
 </a>
 </div>
 
 
 <div class="next">
-<a href="/2015/09/11/take_video_tutorial_in_ios8_with_swift/"  title="iOS 8 中使用 Swift 录制视频教程">
+<a href="/2015/09/10/how-to-create-an-ios-book-open-animation-part-1/"  title="iOS 书本打开动画制作教程（第一部分）">
  <strong>下一篇</strong><br/> 
- <span>iOS 8 中使用 Swift 录制视频教程
+ <span>iOS 书本打开动画制作教程（第一部分）
 </span>
 </a>
 </div>
@@ -255,6 +256,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -303,7 +308,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -452,11 +457,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -468,11 +473,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -480,7 +481,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -492,11 +493,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -504,7 +509,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -698,7 +703,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

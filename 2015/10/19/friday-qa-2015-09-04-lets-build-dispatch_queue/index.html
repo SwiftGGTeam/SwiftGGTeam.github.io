@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2015/10/19/friday-qa-2015-09-04-lets-build-dispatch_queue/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Mike Ash，原文链接，原文日期：2015-09-04译者：Yake；校对：shanks；定稿：小锅    译者注：这篇文章的代码是用 Objective-C 完成的，不过不妨碍大家学习多线程编码的知识。  Grand Central Dispatch 是过去几年中苹果推出过的许多很棒的 API 中的一员。在最新一期的 “Let’s Build” 系列中，我准备去探索 dispatch">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.367Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Friday Q&amp;A 2015-09-04:让我们来自定义 dispatch_queue">
 <meta name="twitter:description" content="作者：Mike Ash，原文链接，原文日期：2015-09-04译者：Yake；校对：shanks；定稿：小锅    译者注：这篇文章的代码是用 Objective-C 完成的，不过不妨碍大家学习多线程编码的知识。  Grand Central Dispatch 是过去几年中苹果推出过的许多很棒的 API 中的一员。在最新一期的 “Let’s Build” 系列中，我准备去探索 dispatch">
@@ -88,7 +89,7 @@
         <a href="/2015/10/19/friday-qa-2015-09-04-lets-build-dispatch_queue/" target="_blank" title="Friday Q&amp;A 2015-09-04:让我们来自定义 dispatch_queue" itemprop="url">Friday Q&amp;A 2015-09-04:让我们来自定义 dispatch_queue</a>
     </h1>
     <p class="article-time">
-      <time datetime="2015-10-19T01:00:00.000Z" itemprop="datePublished">2015-10-19</time>
+      <time datetime="2015-10-19T09:00:00.000Z" itemprop="datePublished">2015-10-19</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,7 +97,7 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Mike Ash，<a href="https://www.mikeash.com/pyblog/friday-qa-2015-09-04-lets-build-dispatch_queue.html" target="_blank" rel="external">原文链接</a>，原文日期：2015-09-04<br>译者：<a href="http://blog.csdn.net/yake_099" target="_blank" rel="external">Yake</a>；校对：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a>；定稿：<a href="http://www.swiftyper.com" target="_blank" rel="external">小锅</a></p>
+<p>作者：Mike Ash，<a href="https://www.mikeash.com/pyblog/friday-qa-2015-09-04-lets-build-dispatch_queue.html" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-09-04<br>译者：<a href="http://blog.csdn.net/yake_099" target="_blank" rel="noopener">Yake</a>；校对：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a>；定稿：<a href="http://www.swiftyper.com" target="_blank" rel="noopener">小锅</a></p>
 </blockquote>
 <!--此处开始正文-->
 <blockquote>
@@ -107,7 +108,7 @@
 <h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>一个调度队列（Dispatch Queue）是存储在全局线程池中的队列任务。通常，提交到队列中的任务会在后台线程中异步地执行。所有的线程共用一个后台线程池，这使得系统更加地高效。</p>
 <p>我将重新实现 GCD 中那些必要的 API。为了简单起见，我会忽略掉 GCD 提供的许多有趣的特性。举个例子，全局线程池中的线程数量随着需要处理的任务的数量增大或者减少，这样可以提高 CPU 的使用效率。如果你有一堆任务让 CPU 负载很高，而你又提交了另外一个任务，这时 GCD 将不会为这个任务再创建一个线程。因为 CPU 已经满载运行了，更多的线程只会让性能下降。我会忽略这些实现并且使用硬编码的固定线程数。我也会跳过另外一些有趣的特性比如目标队列（target queues）以及并发队列中的屏障（barriers on concurrent queues）等等。</p>
 <p>我们的目标是重写调度队列的核心特性：他们可以是串行的或者并发的，他们可以同步地或者异步地调度任务，并且他们由一个共享的全局线程池提供支持。</p>
-<h1 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h1><p>像往常一样，这篇文章中的代码可以在 Github 上获取：<a href="https://github.com/mikeash/MADispatchQueue" target="_blank" rel="external">代码</a></p>
+<h1 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h1><p>像往常一样，这篇文章中的代码可以在 Github 上获取：<a href="https://github.com/mikeash/MADispatchQueue" target="_blank" rel="noopener">代码</a></p>
 <p>如果你想边读边跟进，或者是自己进行探索，你都可以在这里找到你想要的。</p>
 <h1 id="接口"><a href="#接口" class="headerlink" title="接口"></a>接口</h1><p>GCD 是一个基于 C 语言的 API。虽然在最近的 OS 发布版本中 GCD 对象被转换成了 Objective-C 对象，API 仍然是纯 C 实现的（加上苹果的 block 扩展）。这种实现对于一个底层 API 来说非常棒，并且 GCD 展示了一种非常简洁的接口，但对我的研究来说，我想用 Objective-C 重写这些接口。</p>
 <p>重新实现的 Objective-C 类叫做 “MADispatchQueue”，它只有四个方法：</p>
@@ -118,97 +119,97 @@
 <li>同步调度的方法</li>
 </ol>
 <p>下面是接口声明：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">@interface MADispatchQueue : NSObject</div><div class="line"></div><div class="line">    + (MADispatchQueue *)globalQueue;</div><div class="line"></div><div class="line">    - (id)initSerial: (BOOL)serial;</div><div class="line"></div><div class="line">    - (void)dispatchAsync: (dispatch_block_t)block;</div><div class="line">    - (void)dispatchSync: (dispatch_block_t)block;</div><div class="line"></div><div class="line">    @end</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">@interface MADispatchQueue : NSObject</span><br><span class="line"></span><br><span class="line">    + (MADispatchQueue *)globalQueue;</span><br><span class="line"></span><br><span class="line">    - (id)initSerial: (BOOL)serial;</span><br><span class="line"></span><br><span class="line">    - (void)dispatchAsync: (dispatch_block_t)block;</span><br><span class="line">    - (void)dispatchSync: (dispatch_block_t)block;</span><br><span class="line"></span><br><span class="line">    @end</span><br></pre></td></tr></table></figure>
 <p>接下来，我们的目标就是要实现这些方法。</p>
 <h1 id="线程池接口"><a href="#线程池接口" class="headerlink" title="线程池接口"></a>线程池接口</h1><p>存储队列的线程池有一个很简洁的接口。这个接口的实现能够实际执行已经提交的任务。队列则负责在合适的时间把那些已经在队列中的任务提交给 CPU 。</p>
-<p>线程池只有一项工作：提交将要被运行的任务。对应的，它的接口也只有一个方法：<br><figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">MAThreadPool</span> : <span class="title">NSObject</span></span></div><div class="line"></div><div class="line">  - (<span class="keyword">void</span>)addBlock: (dispatch_block_t)block;</div><div class="line"></div><div class="line">  <span class="keyword">@end</span></div></pre></td></tr></table></figure></p>
+<p>线程池只有一项工作：提交将要被运行的任务。对应的，它的接口也只有一个方法：<br><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">MAThreadPool</span> : <span class="title">NSObject</span></span></span><br><span class="line"></span><br><span class="line">  - (<span class="keyword">void</span>)addBlock: (dispatch_block_t)block;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">@end</span></span><br></pre></td></tr></table></figure></p>
 <p>既然这个是核心，让我们首先来实现它。</p>
 <h1 id="线程池的实现"><a href="#线程池的实现" class="headerlink" title="线程池的实现"></a>线程池的实现</h1><p>首先让我们来看实例变量。线程池将会被多个线程访问，不管是内部的还是外部的。因此它应该是线程安全的。尽管 GCD 一直使用的都是较为快速的原子性操作（atomic operations），但是我将会在我的重新实现中使用一种较好的老式的锁。我需要这个锁等待（wait）以及发信号(signal)的功能，而不仅仅是强制互斥的功能，所以我会使用 <code>NSConditon</code>而不是简单的<code>NSLock</code>。你可能对它不是很熟悉，<code>NSCondition</code> 是一种基本锁，并且包含了一个条件变量：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line"><span class="built_in">NSCondition</span> *_lock;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="built_in">NSCondition</span> *_lock;</span><br></pre></td></tr></table></figure>
 <p>为了知道什么时候该启用新的工作线程，我需要知道当前线程池中有多少线程，有多少线程正在执行任务，以及可以使用的最大线程数：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line"><span class="built_in">NSUInteger</span> _threadCount;</div><div class="line"><span class="built_in">NSUInteger</span> _activeThreadCount;</div><div class="line"><span class="built_in">NSUInteger</span> _threadCountLimit;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="built_in">NSUInteger</span> _threadCount;</span><br><span class="line"><span class="built_in">NSUInteger</span> _activeThreadCount;</span><br><span class="line"><span class="built_in">NSUInteger</span> _threadCountLimit;</span><br></pre></td></tr></table></figure>
 <p>最后，还有一些要被执行的 block 。这是一个 <code>NSMutableArray</code>，它被当作一个队列，你可以从它的末位添加 block，也可以从它的开头移除 block:</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line"><span class="built_in">NSMutableArray</span> *_blocks;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="built_in">NSMutableArray</span> *_blocks;</span><br></pre></td></tr></table></figure>
 <p>初始化很简单。先初始化锁，接着初始化 block 数组，然后将线程数的限制设置为 128：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">- (<span class="keyword">id</span>)init &#123;</div><div class="line">      <span class="keyword">if</span>((<span class="keyword">self</span> = [<span class="keyword">super</span> init])) &#123;</div><div class="line">          _lock = [[<span class="built_in">NSCondition</span> alloc] init];</div><div class="line">          _blocks = [[<span class="built_in">NSMutableArray</span> alloc] init];</div><div class="line">          _threadCountLimit = <span class="number">128</span>;</div><div class="line">      &#125;</div><div class="line">      <span class="keyword">return</span> <span class="keyword">self</span>;</div><div class="line">  &#125;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="keyword">id</span>)init &#123;</span><br><span class="line">      <span class="keyword">if</span>((<span class="keyword">self</span> = [<span class="keyword">super</span> init])) &#123;</span><br><span class="line">          _lock = [[<span class="built_in">NSCondition</span> alloc] init];</span><br><span class="line">          _blocks = [[<span class="built_in">NSMutableArray</span> alloc] init];</span><br><span class="line">          _threadCountLimit = <span class="number">128</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">self</span>;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
 <p>工作线程是一个简单的无限循环。只要 block 数组为空，它就会进入等待状态。一旦有一个 block 可用，它就会让 block 从数组中出列并且执行 它。当做这些事的时候，线程池会增加活跃线程的数量，等完成之后会再让其减少。现在让我们开始吧：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">- (<span class="keyword">void</span>)workerThreadLoop: (<span class="keyword">id</span>)ignore &#123;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="keyword">void</span>)workerThreadLoop: (<span class="keyword">id</span>)ignore &#123;</span><br></pre></td></tr></table></figure>
 <p>它做的第一件事就是获取锁。注意这个动作在循环开始<em>之前</em>。在循环结束后我会解释这样做的原因：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">[_lock lock];</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">[_lock lock];</span><br></pre></td></tr></table></figure>
 <p>接下来进入一个死循环：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line"><span class="keyword">while</span>(<span class="number">1</span>) &#123;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">while</span>(<span class="number">1</span>) &#123;</span><br></pre></td></tr></table></figure>
 <p>如果队列是空的，让锁进入等待状态：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line"><span class="keyword">while</span>([_blocks count] == <span class="number">0</span>) &#123;</div><div class="line">	[_lock wait];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>注意这里使用了循环来处理的，而不是一个简单的 <code>if</code> 语句。这样做的原因是为了防止<a href="https://en.wikipedia.org/wiki/Spurious_wakeup" target="_blank" rel="external">虚假唤醒</a>。简单来说，即使没有信号发出，wait 函数也可能会返回，为了保证正确性，当 wait 返回时，需要再次对条件进行检查。</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">while</span>([_blocks count] == <span class="number">0</span>) &#123;</span><br><span class="line">	[_lock wait];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意这里使用了循环来处理的，而不是一个简单的 <code>if</code> 语句。这样做的原因是为了防止<a href="https://en.wikipedia.org/wiki/Spurious_wakeup" target="_blank" rel="noopener">虚假唤醒</a>。简单来说，即使没有信号发出，wait 函数也可能会返回，为了保证正确性，当 wait 返回时，需要再次对条件进行检查。</p>
 <p>一旦 block 可用，就让它出列：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">dispatch_block_t block = [_blocks firstObject];</div><div class="line">[_blocks removeObjectAtIndex: <span class="number">0</span>];</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">dispatch_block_t block = [_blocks firstObject];</span><br><span class="line">[_blocks removeObjectAtIndex: <span class="number">0</span>];</span><br></pre></td></tr></table></figure>
 <p>通过增加活跃线程数量来标识该线程正在执行任务：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">_activeThreadCount++;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">_activeThreadCount++;</span><br></pre></td></tr></table></figure>
 <p>现在是时候执行 block 了，但是我们首先需要将锁释放，否则我们不会获得任何并发性，而且会产生各种各样的死锁。</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">[_lock unlock];</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">[_lock unlock];</span><br></pre></td></tr></table></figure>
 <p>当锁被安全释放之后，就可以执行 block 了:</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">block();</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">block();</span><br></pre></td></tr></table></figure>
 <p>block 执行完之后，需要减少活跃线程数的数量。这个操作需要在加锁的情况下进行，防止竞争条件的产生，这里就是循环的结尾了：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">  [_lock lock];</div><div class="line">  _activeThreadCount--;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">  [_lock lock];</span><br><span class="line">  _activeThreadCount--;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>现在你已经看到了为什么进入循环之前需要加锁。循环中的最后一步是减少活跃线程数量，这就需要我们在这时就持有锁。进入循环的第一件事就是要检查 block 队列。通过在循环的外部运行了第一把锁，后续的循环就可以针对所有的操作使用这把锁，而不需要加锁，解锁，然后突然又加锁了。</p>
 <p>现在来看 <code>addBlock</code> :</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">- (<span class="keyword">void</span>)addBlock: (dispatch_block_t)block &#123;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="keyword">void</span>)addBlock: (dispatch_block_t)block &#123;</span><br></pre></td></tr></table></figure>
 <p>这里所做的所有事情都需要先加锁：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">[_lock lock];</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">[_lock lock];</span><br></pre></td></tr></table></figure>
 <p>首要的任务是要把新的 block 添加到 block 队列中：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">[_blocks addObject: block];</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">[_blocks addObject: block];</span><br></pre></td></tr></table></figure>
 <p>如果正好有一个空闲的工作线程准备接手这个 block，就没有什么可做的。但是如果没有足够的空闲工作线程来处理这个 block，并且工作线程的数量还没有达到限制，那么就应该再创建一个新的线程：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line"><span class="built_in">NSUInteger</span> idleThreads = _threadCount - _activeThreadCount;</div><div class="line"><span class="keyword">if</span>([_blocks count] &gt; idleThreads &amp;&amp; _threadCount &lt; _threadCountLimit) &#123;</div><div class="line">    [<span class="built_in">NSThread</span> detachNewThreadSelector: <span class="keyword">@selector</span>(workerThreadLoop:)</div><div class="line">                             toTarget: <span class="keyword">self</span></div><div class="line">                           withObject: <span class="literal">nil</span>];</div><div class="line">    _threadCount++;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="built_in">NSUInteger</span> idleThreads = _threadCount - _activeThreadCount;</span><br><span class="line"><span class="keyword">if</span>([_blocks count] &gt; idleThreads &amp;&amp; _threadCount &lt; _threadCountLimit) &#123;</span><br><span class="line">    [<span class="built_in">NSThread</span> detachNewThreadSelector: <span class="keyword">@selector</span>(workerThreadLoop:)</span><br><span class="line">                             toTarget: <span class="keyword">self</span></span><br><span class="line">                           withObject: <span class="literal">nil</span>];</span><br><span class="line">    _threadCount++;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>现在一切准备就绪，线程可以开始执行 block 了。为了防止它们都在休眠，唤醒一个：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">[_lock signal];</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">[_lock signal];</span><br></pre></td></tr></table></figure>
 <p>然后解锁就可以了：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">    [_lock unlock];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">    [_lock unlock];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这样我们就有了一个线程池，这个线程池可以大量生产线程至预设的数量限制，然后在 block 进入的时候执行 block。现在以这个为基础来实现队列。</p>
 <h1 id="队列实现"><a href="#队列实现" class="headerlink" title="队列实现"></a>队列实现</h1><p>与线程池一样，队列需要一把锁保护里面的内容。但与线程池不一样的地方是，它不需要任何等待和信号，只是基本的互斥锁，所以它使用<code>NSLock</code>类就行了：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line"><span class="built_in">NSLock</span> *_lock;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="built_in">NSLock</span> *_lock;</span><br></pre></td></tr></table></figure>
 <p>与线程池一样，这里使用了<code>NSMutableArray</code>来维护一个待分配 block 的队列：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line"><span class="built_in">NSMutableArray</span> *_pendingBlocks;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="built_in">NSMutableArray</span> *_pendingBlocks;</span><br></pre></td></tr></table></figure>
 <p>队列需要知道任务是串行的还是并行的：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line"><span class="built_in">BOOL</span> _serial;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="built_in">BOOL</span> _serial;</span><br></pre></td></tr></table></figure>
 <p>如果是串行的，它同时需要记录现在是否有 block 正在线程池中被执行：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line"><span class="built_in">BOOL</span> _serialRunning;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="built_in">BOOL</span> _serialRunning;</span><br></pre></td></tr></table></figure>
 <p>而并发队列无论是否有 block 在执行它的行为都是一样的，因此它们不需要记录这些。<br>全局队列被存储在一个全局变量中，就像下面的共享线程池那样。他们都是在<code>+initialize:</code>中创建的：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line"><span class="keyword">static</span> MADispatchQueue *gGlobalQueue;</div><div class="line"><span class="keyword">static</span> MAThreadPool *gThreadPool;</div><div class="line"></div><div class="line">+ (<span class="keyword">void</span>)initialize &#123;</div><div class="line">    <span class="keyword">if</span>(<span class="keyword">self</span> == [MADispatchQueue <span class="keyword">class</span>]) &#123;</div><div class="line">        gGlobalQueue = [[MADispatchQueue alloc] initSerial: <span class="literal">NO</span>];</div><div class="line">        gThreadPool = [[MAThreadPool alloc] init];</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> MADispatchQueue *gGlobalQueue;</span><br><span class="line"><span class="keyword">static</span> MAThreadPool *gThreadPool;</span><br><span class="line"></span><br><span class="line">+ (<span class="keyword">void</span>)initialize &#123;</span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">self</span> == [MADispatchQueue <span class="keyword">class</span>]) &#123;</span><br><span class="line">        gGlobalQueue = [[MADispatchQueue alloc] initSerial: <span class="literal">NO</span>];</span><br><span class="line">        gThreadPool = [[MAThreadPool alloc] init];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>既然 <code>+initialize</code> 已经保证创建了 <code>gGlobalQueue</code>，<code>+globalQueue</code> 方法只需要直接返回这个变量即可：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">+ (MADispatchQueue *)globalQueue &#123;</div><div class="line">    <span class="keyword">return</span> gGlobalQueue;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">+ (MADispatchQueue *)globalQueue &#123;</span><br><span class="line">    <span class="keyword">return</span> gGlobalQueue;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>以上代码与调用 <code>dispatch_once</code> 类似，但是如果在我实现 GCD API 的时候又使用了另一个 GCD 的 API，这会让人感觉是在作弊，即使这两个 API 并不是一样的。</p>
 <p>初始化队列包含了创建锁和待分配 block 队列，还需要设置<code>_serial</code>变量：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">- (<span class="keyword">id</span>)initSerial: (<span class="built_in">BOOL</span>)serial &#123;</div><div class="line">    <span class="keyword">if</span> ((<span class="keyword">self</span> = [<span class="keyword">super</span> init])) &#123;</div><div class="line">        _lock = [[<span class="built_in">NSLock</span> alloc] init];</div><div class="line">        _pendingBlocks = [[<span class="built_in">NSMutableArray</span> alloc] init];</div><div class="line">        _serial = serial;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> <span class="keyword">self</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="keyword">id</span>)initSerial: (<span class="built_in">BOOL</span>)serial &#123;</span><br><span class="line">    <span class="keyword">if</span> ((<span class="keyword">self</span> = [<span class="keyword">super</span> init])) &#123;</span><br><span class="line">        _lock = [[<span class="built_in">NSLock</span> alloc] init];</span><br><span class="line">        _pendingBlocks = [[<span class="built_in">NSMutableArray</span> alloc] init];</span><br><span class="line">        _serial = serial;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">self</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>在我们着手实现其它的公共 API 之前，有一个潜在的方法需要被实现，这个方法需要在线程池中调度一个 block，然后再隐式地调用自身去执行另外一个 block：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">- (<span class="keyword">void</span>)dispatchOneBlock &#123;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="keyword">void</span>)dispatchOneBlock &#123;</span><br></pre></td></tr></table></figure>
 <p>它存在的所有的目的都是为了运行线程池中的任务，所以它就要在这里进行调度：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">[gThreadPool addBlock: ^&#123;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">[gThreadPool addBlock: ^&#123;</span><br></pre></td></tr></table></figure>
 <p>接下来它获取到了队列中的第一个 block。当然，这需要在加锁的情况下执行以避免灾难性的崩溃：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">[_lock lock];</div><div class="line">dispatch_block_t block = [_pendingBlocks firstObject];</div><div class="line">[_pendingBlocks removeObjectAtIndex: <span class="number">0</span>];</div><div class="line">[_lock unlock];</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">[_lock lock];</span><br><span class="line">dispatch_block_t block = [_pendingBlocks firstObject];</span><br><span class="line">[_pendingBlocks removeObjectAtIndex: <span class="number">0</span>];</span><br><span class="line">[_lock unlock];</span><br></pre></td></tr></table></figure>
 <p>在获取到了 block 并且锁也释放的时候，block 就可以安全地在后台线程中执行了：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">block();</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">block();</span><br></pre></td></tr></table></figure>
 <p>如果队列是并发队列，那么这就是它所有需要处理的所有内容。如果是串行队列，还要再进行一些操作：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line"><span class="keyword">if</span>(_serial) &#123;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span>(_serial) &#123;</span><br></pre></td></tr></table></figure>
 <p>在一个串行队列中，添加的 block 会被创建，但是得等到正在处理的 block 完成才会被激活。当一个 block 执行完毕以后，<code>dispatchOneBlock</code> 将会检查是否还有 block 在队列中等待。如果有，它会调用自己执行下一个 block。如果没有，它会把队列的运行状态置为<code>NO</code>:</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">            [_lock lock];</div><div class="line">            <span class="keyword">if</span>([_pendingBlocks count] &gt; <span class="number">0</span>) &#123;</div><div class="line">                [<span class="keyword">self</span> dispatchOneBlock];</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                _serialRunning = <span class="literal">NO</span>;</div><div class="line">            &#125;</div><div class="line">            [_lock unlock];</div><div class="line">        &#125;</div><div class="line">    &#125;];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">            [_lock lock];</span><br><span class="line">            <span class="keyword">if</span>([_pendingBlocks count] &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                [<span class="keyword">self</span> dispatchOneBlock];</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                _serialRunning = <span class="literal">NO</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            [_lock unlock];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>有了这个方法，想要实现<code>dispatchAsync:</code>就相对简单了。将 block 添加到队列中作为等待任务，然后设置状态并在合适的时候激活<code>dispatchOneBlock</code>：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">- (<span class="keyword">void</span>)dispatchAsync: (dispatch_block_t)block &#123;</div><div class="line">    [_lock lock];</div><div class="line">    [_pendingBlocks addObject: block];</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="keyword">void</span>)dispatchAsync: (dispatch_block_t)block &#123;</span><br><span class="line">    [_lock lock];</span><br><span class="line">    [_pendingBlocks addObject: block];</span><br></pre></td></tr></table></figure>
 <p>如果一个串行队列是<em>空闲</em>的，把它的状态设置为正在运行并调用<code>dispatchOneBlock</code>使一切开始运转：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line"><span class="keyword">if</span>(_serial &amp;&amp; !_serialRunning) &#123;</div><div class="line">    _serialRunning = <span class="literal">YES</span>;</div><div class="line">    [<span class="keyword">self</span> dispatchOneBlock];</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span>(_serial &amp;&amp; !_serialRunning) &#123;</span><br><span class="line">    _serialRunning = <span class="literal">YES</span>;</span><br><span class="line">    [<span class="keyword">self</span> dispatchOneBlock];</span><br></pre></td></tr></table></figure>
 <p>如果队列是并发的，那么无条件地调用<code>dispatchOneBlock</code>。即使另外一个 block 正在运行，新的 block 也可以被马上执行，因为多个 block 被允许并发地执行：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> (!_serial) &#123;</div><div class="line">    [<span class="keyword">self</span> dispatchOneBlock];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> (!_serial) &#123;</span><br><span class="line">    [<span class="keyword">self</span> dispatchOneBlock];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>如果一个串行队列已经在运行了，那么没有别的什么需要去处理了。已经在执行的 <code>dispatchOneBlock</code> 终将会执行到刚刚被添加到队列中的的 block。现在释放锁：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">    [_lock unlock];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">    [_lock unlock];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>接下来就是 <code>dispatchSync</code> 了。针对这个，GCD 是相当智能的，它可以在调用线程中直接执行 block ，而让队列中的其他 block 停止执行（如果是串行队列）。但是我们不用实现到如此智能。我们只需要对<code>dispatchAsync:</code> 进行包装，让它等一个任务完成之后才开始执行下一个任务。</p>
 <p>这里使用了一个局部的 <code>NSCondition</code> 对象，加上一个<code>done</code>变量来表示 block 什么时候执行完毕：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">- (<span class="keyword">void</span>)dispatchSync: (dispatch_block_t)block &#123;</div><div class="line">    <span class="built_in">NSCondition</span> *condition = [[<span class="built_in">NSCondition</span> alloc] init];</div><div class="line">    __block <span class="built_in">BOOL</span> done = <span class="literal">NO</span>;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="keyword">void</span>)dispatchSync: (dispatch_block_t)block &#123;</span><br><span class="line">    <span class="built_in">NSCondition</span> *condition = [[<span class="built_in">NSCondition</span> alloc] init];</span><br><span class="line">    __block <span class="built_in">BOOL</span> done = <span class="literal">NO</span>;</span><br></pre></td></tr></table></figure>
 <p>然后它就异步的调度一个 block。这个 block 调用了被传入的那个 block，然后设置 done 变量并用 condition 发出信号：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">[<span class="keyword">self</span> dispatchAsync: ^&#123;</div><div class="line">    block();</div><div class="line">    [condition lock];</div><div class="line">    done = <span class="literal">YES</span>;</div><div class="line">    [condition signal];</div><div class="line">    [condition unlock];</div><div class="line">&#125;];</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">[<span class="keyword">self</span> dispatchAsync: ^&#123;</span><br><span class="line">    block();</span><br><span class="line">    [condition lock];</span><br><span class="line">    done = <span class="literal">YES</span>;</span><br><span class="line">    [condition signal];</span><br><span class="line">    [condition unlock];</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
 <p>而在外面的原始的调用线程中，它通过 <code>condition</code> 在等待 <code>done</code> 变量被设置，然后返回：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><div class="line">    [condition lock];</div><div class="line">    <span class="keyword">while</span> (!done) &#123;</div><div class="line">        [condition wait];</div><div class="line">    &#125;</div><div class="line">    [condition unlock];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">    [condition lock];</span><br><span class="line">    <span class="keyword">while</span> (!done) &#123;</span><br><span class="line">        [condition wait];</span><br><span class="line">    &#125;</span><br><span class="line">    [condition unlock];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>到这里，block 的执行已经完成了。大功告成！那就是<code>MADispatchQueue</code> API 中的所需要的最后一点儿内容。</p>
 <h1 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h1><p>一个全局线程池可以通过一个拥有任务 block 以及能大量生产线程的队列来实现。使用一个共享的线程池，一个基本的调度队列的 API 就可以被创建，它提供了基本的串行/并行队列下同步/异步任务的调度。这次的重新实现缺少了 GCD 中许多优秀的特征，并且肯定没有 GCD 那么高效，但即便如此它让我们能够看到像这样一种机制的内部原理是怎样的，并且让我们看到那并不是什么魔法（除了<code>dispatch_once</code>，那是绝对的魔法！）。</p>
-<p>这就是今天的内容。下次回来看更多有趣的内容。”Friday Q&amp;A”是由用户的想法驱动的，所以如果你希望下次或者将来我可以在这里讨论某些内容，请<a href="mailto:mike@mikeash.com" target="_blank" rel="external">告诉我</a>！</p>
+<p>这就是今天的内容。下次回来看更多有趣的内容。”Friday Q&amp;A”是由用户的想法驱动的，所以如果你希望下次或者将来我可以在这里讨论某些内容，请<a href="mailto:mike@mikeash.com" target="_blank" rel="noopener">告诉我</a>！</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
@@ -321,6 +322,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -369,7 +374,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -518,11 +523,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -534,11 +539,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -546,7 +547,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -558,11 +559,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -570,7 +575,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -764,7 +769,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

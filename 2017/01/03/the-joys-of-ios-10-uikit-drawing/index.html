@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2017/01/03/the-joys-of-ios-10-uikit-drawing/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="如何在Swift里面绘制图片">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.407Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="趣谈 iOS 10 UIKit 绘图">
 <meta name="twitter:description" content="如何在Swift里面绘制图片">
@@ -88,7 +89,7 @@
         <a href="/2017/01/03/the-joys-of-ios-10-uikit-drawing/" target="_blank" title="趣谈 iOS 10 UIKit 绘图" itemprop="url">趣谈 iOS 10 UIKit 绘图</a>
     </h1>
     <p class="article-time">
-      <time datetime="2017-01-02T16:00:00.000Z" itemprop="datePublished">2017-01-03</time>
+      <time datetime="2017-01-03T00:00:00.000Z" itemprop="datePublished">2017-01-03</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,18 +97,18 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Erica Sadun，<a href="http://ericasadun.com/2016/10/16/the-joys-of-ios-10-uikit-drawing/" target="_blank" rel="external">原文链接</a>，原文日期：2016-11-16<br>译者：<a href="http://www.desgard.com/" target="_blank" rel="external">冬瓜</a>；校对：<a href="http://www.jianshu.com/users/9c51a213b02e/latest_articles" target="_blank" rel="external">Joy</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+<p>作者：Erica Sadun，<a href="http://ericasadun.com/2016/10/16/the-joys-of-ios-10-uikit-drawing/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-11-16<br>译者：<a href="http://www.desgard.com/" target="_blank" rel="noopener">冬瓜</a>；校对：<a href="http://www.jianshu.com/users/9c51a213b02e/latest_articles" target="_blank" rel="noopener">Joy</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>我花费了几天时间用来尝试 iOS 10 中 <code>UIGraphics</code> 类中对于图片和 PDF 中的渲染功能。感觉很有意思。这次我来分享一下这个功能，并且将其与旧的版本对比一下。</p>
 <a id="more"></a>
 <h2 id="旧版本"><a href="#旧版本" class="headerlink" title="旧版本"></a>旧版本</h2><p>是否还记得这个？</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><div class="line"><span class="comment">// 创建一个色域(color space)</span></div><div class="line"><span class="built_in">CGColorSpaceRef</span> colorSpace = <span class="built_in">CGColorSpaceCreateDeviceRGB</span>(); </div><div class="line"><span class="keyword">if</span> (colorSpace == <span class="literal">NULL</span>) &#123;</div><div class="line">    <span class="built_in">NSLog</span>(<span class="string">@"Error allocating color space"</span>);</div><div class="line">    <span class="keyword">return</span> <span class="literal">nil</span>; </div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">// 创建位图上下文(Context Reference)</span></div><div class="line"><span class="built_in">CGContextRef</span> context = <span class="built_in">CGBitmapContextCreate</span>(</div><div class="line">    <span class="literal">NULL</span>, width, height,</div><div class="line">    BITS_PER_COMPONENT, <span class="comment">// 每个通道的位数是 8 bit （BPC） </span></div><div class="line">    width * ARGB_COUNT, <span class="comment">// 4 byte ARGB 值</span></div><div class="line">    colorSpace,</div><div class="line">    (<span class="built_in">CGBitmapInfo</span>) kCGImageAlphaPremultipliedFirst); </div><div class="line"></div><div class="line"><span class="keyword">if</span> (context == <span class="literal">NULL</span>) &#123;</div><div class="line">    <span class="built_in">NSLog</span>(<span class="string">@"Error: Context not created!"</span>); </div><div class="line">    <span class="built_in">CGColorSpaceRelease</span>(colorSpace ); </div><div class="line">    <span class="keyword">return</span> <span class="literal">nil</span>;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">// 加入上下文</span></div><div class="line"><span class="built_in">UIGraphicsPushContext</span>(context);</div><div class="line"></div><div class="line"><span class="comment">// 绘图操作</span></div><div class="line"><span class="built_in">UIGraphicsPopContext</span>();</div><div class="line"></div><div class="line"><span class="comment">// 转换为图片对象</span></div><div class="line"><span class="built_in">CGImageRef</span> imageRef = <span class="built_in">CGBitmapContextCreateImage</span>(context); </div><div class="line"><span class="built_in">UIImage</span> *image = [<span class="built_in">UIImage</span> imageWithCGImage:imageRef];</div><div class="line"></div><div class="line"><span class="comment">// 	清除</span></div><div class="line"><span class="built_in">CGColorSpaceRelease</span>(colorSpace ); </div><div class="line"><span class="built_in">CGContextRelease</span>(context); </div><div class="line"><span class="built_in">CFRelease</span>(imageRef);</div></pre></td></tr></table></figure>
-<h2 id="新版本"><a href="#新版本" class="headerlink" title="新版本"></a>新版本</h2><figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> image = renderer.image &#123; context <span class="keyword">in</span></div><div class="line">    <span class="keyword">let</span> bounds = context.format.bounds</div><div class="line">    <span class="keyword">for</span> amount <span class="keyword">in</span> <span class="built_in">stride</span>(from: <span class="number">1.0</span> <span class="keyword">as</span> <span class="type">CGFloat</span>, to: <span class="number">0.0</span>, by: -<span class="number">0.1</span>) &#123;</div><div class="line">        <span class="keyword">let</span> color = <span class="type">UIColor</span>(hue: amount, saturation: <span class="number">1.0</span>, </div><div class="line">            brightness: <span class="number">1.0</span>, alpha: <span class="number">1.0</span>)</div><div class="line">        <span class="keyword">let</span> rects = bounds.divided(</div><div class="line">            atDistance: amount * bounds.size.width, from: .maxXEdge)</div><div class="line">        color.<span class="keyword">set</span>(); <span class="type">UIRectFill</span>(rects.<span class="number">0</span>)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 创建一个色域(color space)</span></span><br><span class="line"><span class="built_in">CGColorSpaceRef</span> colorSpace = <span class="built_in">CGColorSpaceCreateDeviceRGB</span>(); </span><br><span class="line"><span class="keyword">if</span> (colorSpace == <span class="literal">NULL</span>) &#123;</span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@"Error allocating color space"</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span>; </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建位图上下文(Context Reference)</span></span><br><span class="line"><span class="built_in">CGContextRef</span> context = <span class="built_in">CGBitmapContextCreate</span>(</span><br><span class="line">    <span class="literal">NULL</span>, width, height,</span><br><span class="line">    BITS_PER_COMPONENT, <span class="comment">// 每个通道的位数是 8 bit （BPC） </span></span><br><span class="line">    width * ARGB_COUNT, <span class="comment">// 4 byte ARGB 值</span></span><br><span class="line">    colorSpace,</span><br><span class="line">    (<span class="built_in">CGBitmapInfo</span>) kCGImageAlphaPremultipliedFirst); </span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (context == <span class="literal">NULL</span>) &#123;</span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@"Error: Context not created!"</span>); </span><br><span class="line">    <span class="built_in">CGColorSpaceRelease</span>(colorSpace ); </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 加入上下文</span></span><br><span class="line"><span class="built_in">UIGraphicsPushContext</span>(context);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 绘图操作</span></span><br><span class="line"><span class="built_in">UIGraphicsPopContext</span>();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 转换为图片对象</span></span><br><span class="line"><span class="built_in">CGImageRef</span> imageRef = <span class="built_in">CGBitmapContextCreateImage</span>(context); </span><br><span class="line"><span class="built_in">UIImage</span> *image = [<span class="built_in">UIImage</span> imageWithCGImage:imageRef];</span><br><span class="line"></span><br><span class="line"><span class="comment">// 	清除</span></span><br><span class="line"><span class="built_in">CGColorSpaceRelease</span>(colorSpace ); </span><br><span class="line"><span class="built_in">CGContextRelease</span>(context); </span><br><span class="line"><span class="built_in">CFRelease</span>(imageRef);</span><br></pre></td></tr></table></figure>
+<h2 id="新版本"><a href="#新版本" class="headerlink" title="新版本"></a>新版本</h2><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> image = renderer.image &#123; context <span class="keyword">in</span></span><br><span class="line">    <span class="keyword">let</span> bounds = context.format.bounds</span><br><span class="line">    <span class="keyword">for</span> amount <span class="keyword">in</span> <span class="built_in">stride</span>(from: <span class="number">1.0</span> <span class="keyword">as</span> <span class="type">CGFloat</span>, to: <span class="number">0.0</span>, by: -<span class="number">0.1</span>) &#123;</span><br><span class="line">        <span class="keyword">let</span> color = <span class="type">UIColor</span>(hue: amount, saturation: <span class="number">1.0</span>, </span><br><span class="line">            brightness: <span class="number">1.0</span>, alpha: <span class="number">1.0</span>)</span><br><span class="line">        <span class="keyword">let</span> rects = bounds.divided(</span><br><span class="line">            atDistance: amount * bounds.size.width, from: .maxXEdge)</span><br><span class="line">        color.<span class="keyword">set</span>(); <span class="type">UIRectFill</span>(rects.<span class="number">0</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>以及</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">imageExample</span><span class="params">(size: CGSize)</span></span> -&gt; <span class="type">UIImage</span>? &#123;</div><div class="line">    <span class="keyword">let</span> bounds = <span class="type">CGRect</span>(origin: .zero, size: size)</div><div class="line">    <span class="keyword">let</span> colorSpace = <span class="type">CGColorSpaceCreateDeviceRGB</span>()</div><div class="line">    <span class="keyword">let</span> (width, height) = (<span class="type">Int</span>(size.width), <span class="type">Int</span>(size.height))</div><div class="line">    </div><div class="line">    <span class="comment">// 创建 CG ARGB 上下文</span></div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> context = <span class="type">CGContext</span>(data: <span class="literal">nil</span>, width: width, </div><div class="line">        height: height, bitsPerComponent: <span class="number">8</span>, </div><div class="line">        bytesPerRow: width * <span class="number">4</span>, space: colorSpace, </div><div class="line">        bitmapInfo: <span class="type">CGImageAlphaInfo</span>.premultipliedFirst.rawValue) </div><div class="line">        <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</div><div class="line">    </div><div class="line">    <span class="comment">// 为 UIKit 准备 CG 上下文 </span></div><div class="line">    <span class="type">UIGraphicsPushContext</span>(context); <span class="keyword">defer</span> &#123; <span class="type">UIGraphicsPopContext</span>() &#125;</div><div class="line">    </div><div class="line">    <span class="comment">// 使用 UIKit 调用绘制上下文</span></div><div class="line">    <span class="type">UIColor</span>.blue.<span class="keyword">set</span>(); <span class="type">UIRectFill</span>(bounds)</div><div class="line">    <span class="keyword">let</span> oval = <span class="type">UIBezierPath</span>(ovalIn: bounds)</div><div class="line">    <span class="type">UIColor</span>.red.<span class="keyword">set</span>(); oval.fill()</div><div class="line">    </div><div class="line">    <span class="comment">// 从上下文中提取图像</span></div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> imageRef = context.makeImage() <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</div><div class="line">    <span class="keyword">return</span> <span class="type">UIImage</span>(cgImage: imageRef)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">imageExample</span><span class="params">(size: CGSize)</span></span> -&gt; <span class="type">UIImage</span>? &#123;</span><br><span class="line">    <span class="keyword">let</span> bounds = <span class="type">CGRect</span>(origin: .zero, size: size)</span><br><span class="line">    <span class="keyword">let</span> colorSpace = <span class="type">CGColorSpaceCreateDeviceRGB</span>()</span><br><span class="line">    <span class="keyword">let</span> (width, height) = (<span class="type">Int</span>(size.width), <span class="type">Int</span>(size.height))</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 创建 CG ARGB 上下文</span></span><br><span class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> context = <span class="type">CGContext</span>(data: <span class="literal">nil</span>, width: width, </span><br><span class="line">        height: height, bitsPerComponent: <span class="number">8</span>, </span><br><span class="line">        bytesPerRow: width * <span class="number">4</span>, space: colorSpace, </span><br><span class="line">        bitmapInfo: <span class="type">CGImageAlphaInfo</span>.premultipliedFirst.rawValue) </span><br><span class="line">        <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 为 UIKit 准备 CG 上下文 </span></span><br><span class="line">    <span class="type">UIGraphicsPushContext</span>(context); <span class="keyword">defer</span> &#123; <span class="type">UIGraphicsPopContext</span>() &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 使用 UIKit 调用绘制上下文</span></span><br><span class="line">    <span class="type">UIColor</span>.blue.<span class="keyword">set</span>(); <span class="type">UIRectFill</span>(bounds)</span><br><span class="line">    <span class="keyword">let</span> oval = <span class="type">UIBezierPath</span>(ovalIn: bounds)</span><br><span class="line">    <span class="type">UIColor</span>.red.<span class="keyword">set</span>(); oval.fill()</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 从上下文中提取图像</span></span><br><span class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> imageRef = context.makeImage() <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="type">UIImage</span>(cgImage: imageRef)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>以及</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UIImage</span> </span>&#123;</div><div class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">grayscaled</span><span class="params">()</span></span> -&gt; <span class="type">UIImage</span>? &#123;</div><div class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> cgImage = cgImage <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</div><div class="line">        <span class="keyword">let</span> colorSpace = <span class="type">CGColorSpaceCreateDeviceGray</span>()</div><div class="line">        <span class="keyword">let</span> (width, height) = (<span class="type">Int</span>(size.width), <span class="type">Int</span>(size.height))</div><div class="line">        </div><div class="line">        <span class="comment">// 构建上下文：每个像素一个字节，无alpha</span></div><div class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> context = <span class="type">CGContext</span>(data: <span class="literal">nil</span>, width: width, </div><div class="line">            height: height, bitsPerComponent: <span class="number">8</span>, </div><div class="line">            bytesPerRow: width, space: colorSpace, </div><div class="line">            bitmapInfo: <span class="type">CGImageAlphaInfo</span>.<span class="keyword">none</span>.rawValue) </div><div class="line">            <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</div><div class="line">        </div><div class="line">        <span class="comment">// 绘制上下文</span></div><div class="line">        <span class="keyword">let</span> destination = <span class="type">CGRect</span>(origin: .zero, size: size)</div><div class="line">        context.draw(cgImage, <span class="keyword">in</span>: destination)</div><div class="line">        </div><div class="line">        <span class="comment">// 返回灰度图片</span></div><div class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> imageRef = context.makeImage() </div><div class="line">            <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</div><div class="line">        <span class="keyword">return</span> <span class="type">UIImage</span>(cgImage: imageRef)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UIImage</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">grayscaled</span><span class="params">()</span></span> -&gt; <span class="type">UIImage</span>? &#123;</span><br><span class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> cgImage = cgImage <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</span><br><span class="line">        <span class="keyword">let</span> colorSpace = <span class="type">CGColorSpaceCreateDeviceGray</span>()</span><br><span class="line">        <span class="keyword">let</span> (width, height) = (<span class="type">Int</span>(size.width), <span class="type">Int</span>(size.height))</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 构建上下文：每个像素一个字节，无alpha</span></span><br><span class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> context = <span class="type">CGContext</span>(data: <span class="literal">nil</span>, width: width, </span><br><span class="line">            height: height, bitsPerComponent: <span class="number">8</span>, </span><br><span class="line">            bytesPerRow: width, space: colorSpace, </span><br><span class="line">            bitmapInfo: <span class="type">CGImageAlphaInfo</span>.<span class="keyword">none</span>.rawValue) </span><br><span class="line">            <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 绘制上下文</span></span><br><span class="line">        <span class="keyword">let</span> destination = <span class="type">CGRect</span>(origin: .zero, size: size)</span><br><span class="line">        context.draw(cgImage, <span class="keyword">in</span>: destination)</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 返回灰度图片</span></span><br><span class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> imageRef = context.makeImage() </span><br><span class="line">            <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">UIImage</span>(cgImage: imageRef)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>好吧，我承认<code>bitmapInfo</code> 还是有些别扭，但是其他还是很不错的，不是吗？</p>
 <ul>
 <li>取消了 <code>UIGraphicsBeginImageContext()</code> <code>UIGraphicsEndImageContext()</code> 这些成员，与上下文引用对象实现脱离。为什么之前不这样做呢？</li>
@@ -232,6 +233,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -280,7 +285,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -429,11 +434,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -445,11 +450,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -457,7 +458,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -469,11 +470,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -481,7 +486,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -675,7 +680,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

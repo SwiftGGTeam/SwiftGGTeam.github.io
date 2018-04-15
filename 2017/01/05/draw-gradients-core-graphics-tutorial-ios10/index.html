@@ -20,12 +20,13 @@
 <meta property="og:url" content="https://swift.gg/2017/01/05/draw-gradients-core-graphics-tutorial-ios10/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="本文详细描述从创建工程到绘制渐变颜色">
+<meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/5804d3c1b3db2b01469b94c1/1476711380019/?format=1500w">
 <meta property="og:image" content="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/5804d422197aea7e4af070ec/1476711476087/?format=1500w">
 <meta property="og:image" content="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/5804d4bb893fc04c1969a8d7/1476711626406/?format=1500w">
 <meta property="og:image" content="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/5804d53dcd0f6803b406290b/1476711750764/customClass.png?format=500w">
 <meta property="og:image" content="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/5804d734893fc04c1969c470/1476712254769/?format=750w">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.407Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="通过 Core Graphics 绘制渐变颜色">
 <meta name="twitter:description" content="本文详细描述从创建工程到绘制渐变颜色">
@@ -94,7 +95,7 @@
         <a href="/2017/01/05/draw-gradients-core-graphics-tutorial-ios10/" target="_blank" title="通过 Core Graphics 绘制渐变颜色" itemprop="url">通过 Core Graphics 绘制渐变颜色</a>
     </h1>
     <p class="article-time">
-      <time datetime="2017-01-04T16:00:00.000Z" itemprop="datePublished">2017-01-05</time>
+      <time datetime="2017-01-05T00:00:00.000Z" itemprop="datePublished">2017-01-05</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -102,7 +103,7 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Arthur Knopper，<a href="https://www.ioscreator.com/tutorials/draw-gradients-core-graphics-tutorial-ios10" target="_blank" rel="external">原文链接</a>，原文日期：2016-10-18<br>译者：<a href="http://www.desgard.com/" target="_blank" rel="external">冬瓜</a>；校对：<a href="http://www.jianshu.com/users/ef1058d2d851" target="_blank" rel="external">星夜暮晨</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+<p>作者：Arthur Knopper，<a href="https://www.ioscreator.com/tutorials/draw-gradients-core-graphics-tutorial-ios10" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-10-18<br>译者：<a href="http://www.desgard.com/" target="_blank" rel="noopener">冬瓜</a>；校对：<a href="http://www.jianshu.com/users/ef1058d2d851" target="_blank" rel="noopener">星夜暮晨</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>Core Graphics 是一套非常强大的底层 API 接口集合。在这篇教程中，我们将借助 Core Graphics 来创建渐变颜色。出于简便起见，我们将创建线性渐变 (linear gradients)。所谓线性渐变，是从一个点到另外一个点颜色过渡的描述。我们将会创建一个从左向右渐变的视图。该教程的实验环境是 Xcode 8 和 iOS 10。</p>
@@ -116,7 +117,7 @@
 <p>转到 <strong>storyboard</strong> 中，在 <em>Document Outline</em> 选择要编辑的视图，然后点击 <em>Identity Inspector</em> 选项卡，在 <em>Custom Class</em> 一栏中将 <em>Class</em> 选择 <em>GradientView</em> 。</p>
 <p><img src="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/5804d53dcd0f6803b406290b/1476711750764/customClass.png?format=500w" alt=""></p>
 <p>打开文件 <code>gradientView.swift</code> ，并修改 <code>drawRect</code> 方法：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">draw</span><span class="params">(<span class="number">_</span> rect: CGRect)</span></span> &#123;</div><div class="line">    <span class="comment">// 1</span></div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> currentContext = <span class="type">UIGraphicsGetCurrentContext</span>() <span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</div><div class="line">       </div><div class="line">    <span class="comment">// 2</span></div><div class="line">    currentContext.saveGState()</div><div class="line">        </div><div class="line">    <span class="comment">// 3</span></div><div class="line">    <span class="keyword">let</span> colorSpace = <span class="type">CGColorSpaceCreateDeviceRGB</span>()</div><div class="line">        </div><div class="line">    <span class="comment">// 4</span></div><div class="line">    <span class="keyword">let</span> startColor = <span class="type">UIColor</span>.red</div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> startColorComponents = startColor.cgColor.components <span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</div><div class="line">        </div><div class="line">    <span class="keyword">let</span> endColor = <span class="type">UIColor</span>.blue</div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> endColorComponents = endColor.cgColor.components <span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</div><div class="line">        </div><div class="line">    <span class="comment">// 5</span></div><div class="line">    <span class="keyword">let</span> colorComponents: [<span class="type">CGFloat</span>]</div><div class="line">            = [startColorComponents[<span class="number">0</span>], startColorComponents[<span class="number">1</span>], startColorComponents[<span class="number">2</span>], startColorComponents[<span class="number">3</span>], endColorComponents[<span class="number">0</span>], endColorComponents[<span class="number">1</span>], endColorComponents[<span class="number">2</span>], endColorComponents[<span class="number">3</span>]]</div><div class="line">        </div><div class="line">    <span class="comment">// 6</span></div><div class="line">    <span class="keyword">let</span> locations:[<span class="type">CGFloat</span>] = [<span class="number">0.0</span>, <span class="number">1.0</span>]</div><div class="line">        </div><div class="line">    <span class="comment">// 7</span></div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> gradient = <span class="type">CGGradient</span>(colorSpace: colorSpace,colorComponents: colorComponents,locations: locations,<span class="built_in">count</span>: <span class="number">2</span>) <span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</div><div class="line">        </div><div class="line">    <span class="keyword">let</span> startPoint = <span class="type">CGPoint</span>(x: <span class="number">0</span>, y: <span class="keyword">self</span>.bounds.height)</div><div class="line">    <span class="keyword">let</span> endPoint = <span class="type">CGPoint</span>(x: <span class="keyword">self</span>.bounds.width,y: <span class="keyword">self</span>.bounds.height)</div><div class="line">        </div><div class="line">    <span class="comment">// 8</span></div><div class="line">    currentContext.drawLinearGradient(gradient, start: startPoint, end: endPoint, options: <span class="type">CGGradientDrawingOptions</span>(rawValue: <span class="type">UInt32</span>(<span class="number">0</span>)))</div><div class="line">        </div><div class="line">    <span class="comment">// 9</span></div><div class="line">    currentContext.restoreGState()</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">draw</span><span class="params">(<span class="number">_</span> rect: CGRect)</span></span> &#123;</span><br><span class="line">    <span class="comment">// 1</span></span><br><span class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> currentContext = <span class="type">UIGraphicsGetCurrentContext</span>() <span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</span><br><span class="line">       </span><br><span class="line">    <span class="comment">// 2</span></span><br><span class="line">    currentContext.saveGState()</span><br><span class="line">        </span><br><span class="line">    <span class="comment">// 3</span></span><br><span class="line">    <span class="keyword">let</span> colorSpace = <span class="type">CGColorSpaceCreateDeviceRGB</span>()</span><br><span class="line">        </span><br><span class="line">    <span class="comment">// 4</span></span><br><span class="line">    <span class="keyword">let</span> startColor = <span class="type">UIColor</span>.red</span><br><span class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> startColorComponents = startColor.cgColor.components <span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">let</span> endColor = <span class="type">UIColor</span>.blue</span><br><span class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> endColorComponents = endColor.cgColor.components <span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</span><br><span class="line">        </span><br><span class="line">    <span class="comment">// 5</span></span><br><span class="line">    <span class="keyword">let</span> colorComponents: [<span class="type">CGFloat</span>]</span><br><span class="line">            = [startColorComponents[<span class="number">0</span>], startColorComponents[<span class="number">1</span>], startColorComponents[<span class="number">2</span>], startColorComponents[<span class="number">3</span>], endColorComponents[<span class="number">0</span>], endColorComponents[<span class="number">1</span>], endColorComponents[<span class="number">2</span>], endColorComponents[<span class="number">3</span>]]</span><br><span class="line">        </span><br><span class="line">    <span class="comment">// 6</span></span><br><span class="line">    <span class="keyword">let</span> locations:[<span class="type">CGFloat</span>] = [<span class="number">0.0</span>, <span class="number">1.0</span>]</span><br><span class="line">        </span><br><span class="line">    <span class="comment">// 7</span></span><br><span class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> gradient = <span class="type">CGGradient</span>(colorSpace: colorSpace,colorComponents: colorComponents,locations: locations,<span class="built_in">count</span>: <span class="number">2</span>) <span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">let</span> startPoint = <span class="type">CGPoint</span>(x: <span class="number">0</span>, y: <span class="keyword">self</span>.bounds.height)</span><br><span class="line">    <span class="keyword">let</span> endPoint = <span class="type">CGPoint</span>(x: <span class="keyword">self</span>.bounds.width,y: <span class="keyword">self</span>.bounds.height)</span><br><span class="line">        </span><br><span class="line">    <span class="comment">// 8</span></span><br><span class="line">    currentContext.drawLinearGradient(gradient, start: startPoint, end: endPoint, options: <span class="type">CGGradientDrawingOptions</span>(rawValue: <span class="type">UInt32</span>(<span class="number">0</span>)))</span><br><span class="line">        </span><br><span class="line">    <span class="comment">// 9</span></span><br><span class="line">    currentContext.restoreGState()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <ol>
 <li><code>UIGraphicsGetCurrentContext</code> 得到了图形上下文 (graphical context)，这里可以当做一个新的画布。</li>
 <li>图形上下文将被存储，以便于之后的存储操作。</li>
@@ -130,7 +131,7 @@
 </ol>
 <p><strong>编译并运行</strong>我们的工程：</p>
 <p><img src="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/5804d734893fc04c1969c470/1476712254769/?format=750w" alt=""></p>
-<p>可以从我的 <a href="https://github.com/ioscreator/ioscreator" target="_blank" rel="external">Github</a> 上下载本篇文章的示例代码。</p>
+<p>可以从我的 <a href="https://github.com/ioscreator/ioscreator" target="_blank" rel="noopener">Github</a> 上下载本篇文章的示例代码。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
@@ -243,6 +244,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -291,7 +296,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -440,11 +445,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -456,11 +461,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -468,7 +469,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -480,11 +481,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -492,7 +497,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -686,7 +691,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

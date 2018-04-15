@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/09/27/wift-associated-types-cont/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="对于 Swift 关联类型我们有太多的话题讨论，而本文主要是说下 existential 这个带有协议类型的值。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.403Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift 关联类型(续)">
 <meta name="twitter:description" content="对于 Swift 关联类型我们有太多的话题讨论，而本文主要是说下 existential 这个带有协议类型的值。">
@@ -88,7 +89,7 @@
         <a href="/2016/09/27/wift-associated-types-cont/" target="_blank" title="Swift 关联类型(续)" itemprop="url">Swift 关联类型(续)</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-09-26T16:00:00.000Z" itemprop="datePublished">2016-09-27</time>
+      <time datetime="2016-09-27T00:00:00.000Z" itemprop="datePublished">2016-09-27</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,19 +97,19 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Russ Bishop，<a href="http://www.russbishop.net/swift-associated-types-cont" target="_blank" rel="external">原文链接</a>，原文日期：2016-04-28<br>译者：<a href="http://blog.dianqk.org/" target="_blank" rel="external">靛青K</a>；校对：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+<p>作者：Russ Bishop，<a href="http://www.russbishop.net/swift-associated-types-cont" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-04-28<br>译者：<a href="http://blog.dianqk.org/" target="_blank" rel="noopener">靛青K</a>；校对：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p><em>好了，让我们再次跳进兔子洞</em></p>
 <p>我并不觉得<a href="http://swift.gg/2016/08/01/swift-associated-types/">之前的文章</a>覆盖了全部关于带关联类型协议的方面的内容：为什么使用它们如此不爽？</p>
 <a id="more"></a>
-<h1 id="为什么是关联类型"><a href="#为什么是关联类型" class="headerlink" title="为什么是关联类型"></a>为什么是关联类型</h1><p>这个兔子洞只是在保持移动；<a href="http://www.russbishop.net/swift-why-associated-types" target="_blank" rel="external">看我的关联类型系列的第三篇，这里有更好的解释了为什么 Swift 使用关联类型</a>。</p>
+<h1 id="为什么是关联类型"><a href="#为什么是关联类型" class="headerlink" title="为什么是关联类型"></a>为什么是关联类型</h1><p>这个兔子洞只是在保持移动；<a href="http://www.russbishop.net/swift-why-associated-types" target="_blank" rel="noopener">看我的关联类型系列的第三篇，这里有更好的解释了为什么 Swift 使用关联类型</a>。</p>
 <p>我删了之前的解释，因为它写了过多的编译优化方面的东西。而不是解释为什么在 Swift 中要使用关联类型，以及这个主题即使没有误导也很难理解。</p>
 <h1 id="关联类型的问题"><a href="#关联类型的问题" class="headerlink" title="关联类型的问题"></a>关联类型的问题</h1><p>主要原因是人们都懒得去问这个问题，事实上编译器不能处理一个 existential ，导致一个不爽的错误提示：“协议 X 只能被用于约束，因为它需要 Self 或者关联类型的确定（<em>Protocol ‘X’ can only be used as a generic constraint because it has Self or associated type requirements</em>）”。</p>
 <blockquote>
 <p>译者注：<em>Protocol ‘X’ can only be used as a generic constraint because it has Self or associated type requirements</em> 是 Xcode 给出的错误提示，比如这段代码就会报如上错误。</p>
 </blockquote>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">X</span> </span>&#123;</div><div class="line">    associatedtype <span class="type">Foo</span></div><div class="line">&#125;</div><div class="line"><span class="keyword">let</span> x: <span class="type">X</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">X</span> </span>&#123;</span><br><span class="line">    associatedtype <span class="type">Foo</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">let</span> x: <span class="type">X</span></span><br></pre></td></tr></table></figure>
 <h2 id="漫谈-Existential"><a href="#漫谈-Existential" class="headerlink" title="漫谈 Existential"></a>漫谈 Existential</h2><p>你的下一个问题可能是“到底 existential 是什么”。问的好。</p>
 <p>一个值定义为 <code>var x: protocol&lt;SomeProtocol, OtherProtocol&gt;</code> 是 existential ，因为我们无法在编译时确定 <code>x</code> 具体正确的类型。我们（以及编译器）都知道它会实现对应的协议。实际上 Swift 会在类型大小比较小的情况下，直接使用内联的实例来表示它，否则就把它在堆上打包起来，存储为一个指针。更重要的是，通过这个指针，可以找到所有具体的需要遵循的协议，满足<code>SomeProtocol</code>和 <code>OtherProtocol</code> 协议。间接法是个关键，因为服从该协议的类型是可以改变的（毕竟可以有多个类型服从这个协议）。你的局部变量 <code>var x: SomeProtocol</code> 可以被重新指定类型，以至于编译器甚至不需要在一个局部函数中缓存同样服从你这个协议的指针。</p>
 <blockquote>
@@ -120,8 +121,8 @@
 <p>比较罕见的，使用类型，编译器可能会选择使用运行时泛型版本，而不是一个特定的限制大小的生成二进制可执行文件；这个等同于 C++ 的模板问题，在结合每个单独的类型参数时，模板都会<em>实例化</em>一个新的编译名称类型，并且所有的这些类型都会增加二进制文件的大小。</p>
 </blockquote>
 <p>换句话说就是一个 <code>ContiguousArray&lt;Int&gt;</code> 有一个静态已知布局。在编译器的概念中，可以指出 <code>myArray[15]</code> 真的就是 <code>*(myArrayBasePtr + (15 * sizeof(Int)))</code> 。不同的点是，更快指出 <code>IndexType = Int</code> ，对于定位到与 <code>Int</code> 一致的 <code>RandomAccessIndexType.advancedBy()</code> 方法，建立栈结构，调用方法实现，然后返回结果。</p>
-<p><a href="http://blog.benjamin-encz.de/post/compile-time-vs-runtime-type-checking-swift/" target="_blank" rel="external">当我们不知道静态类型是是什么时，发生了什么？</a></p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">fancyFunction</span>&lt;T: protocol&lt;SomeProtocol, OtherProtocol&gt;&gt;<span class="params">(thing: T)</span></span> &#123; &#125;</div><div class="line">	<span class="keyword">if</span> <span class="keyword">let</span> value = value <span class="keyword">as</span>? <span class="class"><span class="keyword">protocol</span>&lt;<span class="title">SomeProtocol</span>, <span class="title">OtherProtocol</span>&gt; </span>&#123;</div><div class="line">	    fancyFunction(value)</div><div class="line">	&#125;</div><div class="line">	<span class="comment">// Compile Error: cannot invoke 'fancyFunction'</span></div><div class="line">	<span class="comment">// with an argument list of type '(protocol&lt; SomeProtocol, OtherProtocol &gt;)</span></div></pre></td></tr></table></figure>
+<p><a href="http://blog.benjamin-encz.de/post/compile-time-vs-runtime-type-checking-swift/" target="_blank" rel="noopener">当我们不知道静态类型是是什么时，发生了什么？</a></p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">fancyFunction</span>&lt;T: protocol&lt;SomeProtocol, OtherProtocol&gt;&gt;<span class="params">(thing: T)</span></span> &#123; &#125;</span><br><span class="line">	<span class="keyword">if</span> <span class="keyword">let</span> value = value <span class="keyword">as</span>? <span class="class"><span class="keyword">protocol</span>&lt;<span class="title">SomeProtocol</span>, <span class="title">OtherProtocol</span>&gt; </span>&#123;</span><br><span class="line">	    fancyFunction(value)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// Compile Error: cannot invoke 'fancyFunction'</span></span><br><span class="line">	<span class="comment">// with an argument list of type '(protocol&lt; SomeProtocol, OtherProtocol &gt;)</span></span><br></pre></td></tr></table></figure>
 <p>如果你已经运行到这个位置，说明你遇到了泛型专有化和 existentials 的问题。编译器无法确定 <code>value</code> 的具体类型，所以它不能传入一个专有化的泛型调用这个方法。</p>
 <p>即使我们满足了这个约束，这里也不能保证我们调用了正确的带泛型函数的版本。</p>
 <blockquote>
@@ -135,26 +136,26 @@
 <li>当前在协议上的限制是关联值，如果这个 existential 值包含关联类型，编译器就不能动态解包该 exitential 值。</li>
 <li>即使我们可以提供一个满足所有约束的 existential ，我们也不能动态的得到泛型专用化类型。</li>
 </ul>
-<p><a href="https://lists.swift.org/pipermail/swift-evolution/Week-of-Mon-20160229/011666.html" target="_blank" rel="external">完全版的泛型声明</a> 提议是解决这个问题的第二部分：</p>
+<p><a href="https://lists.swift.org/pipermail/swift-evolution/Week-of-Mon-20160229/011666.html" target="_blank" rel="noopener">完全版的泛型声明</a> 提议是解决这个问题的第二部分：</p>
 <p>首先 Doug 称之为 “泛型的 existentials”</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">SqlColumn</span> </span>&#123;</div><div class="line">	associatedtype <span class="type">ValueType</span></div><div class="line">	<span class="function"><span class="keyword">func</span> <span class="title">read</span><span class="params">()</span></span> -&gt; <span class="type">ValueType</span></div><div class="line">&#125;</div><div class="line"><span class="keyword">let</span> x: <span class="type">SqlColumn</span> = ...column.read() <span class="comment">// returns Any</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">SqlColumn</span> </span>&#123;</span><br><span class="line">	associatedtype <span class="type">ValueType</span></span><br><span class="line">	<span class="function"><span class="keyword">func</span> <span class="title">read</span><span class="params">()</span></span> -&gt; <span class="type">ValueType</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">let</span> x: <span class="type">SqlColumn</span> = ...column.read() <span class="comment">// returns Any</span></span><br></pre></td></tr></table></figure>
 <p>如果实现了这个协议，这个特性将会立即进抛出一个“协议 X 只能被当做一个约束”（”Protocol X can only be used as a constraint”）的错误信息；这个关联类型会被认为是 <code>Any</code> ，并且你需要动态的装换类型。</p>
 <p>但这样一来就没有一个很炫的静态类型编译性能以及它还带来了潜在的运行时崩溃，但有时动态特性又是一个最好的工具，如果在工具箱中拥有它是很好的。</p>
 <p>Doug 进一步指出，这里应当允许定义约束来允许类型自动转换，这样可以减少许多类型转换的代码：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> x: <span class="type">Any</span>&lt;<span class="type">SqlColumn</span> <span class="keyword">where</span> .<span class="type">ValueType</span> == <span class="type">String</span>&gt; = ...column.read() <span class="comment">// returns String</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> x: <span class="type">Any</span>&lt;<span class="type">SqlColumn</span> <span class="keyword">where</span> .<span class="type">ValueType</span> == <span class="type">String</span>&gt; = ...column.read() <span class="comment">// returns String</span></span><br></pre></td></tr></table></figure>
 <h1 id="Opening-Existentials"><a href="#Opening-Existentials" class="headerlink" title="Opening Existentials"></a>Opening Existentials</h1><p>一个技巧是当你使<code>Self</code>满足像<code>Equatable</code>这样的协议。只是因为两个类型实现了<code>Equatable</code>并不意味着可以检查他们是否相等。使用 <code>is</code>/<code>as</code> 检查两个值的 <code>dynamicType</code> ，判断是否服从 <code>Equatable</code> ，但即便是这样，我们仍然不能调用重载的 <code>==</code> ，这是泛型专有化的问题。</p>
 <p>为了解决上述问题， Doug 建议提供给 existential 动态变换成一个确定的类型的能力，比如给出一个本地名称 <code>T</code> .之后你可以检查是否另一个值也是类型 <code>T</code> ，更重要的是你可以通过 <code>T</code> 调用这个泛型专有化的方法：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">if</span> <span class="keyword">let</span> storedInE1 = e1 openas <span class="type">T</span> &#123;</div><div class="line">	 <span class="comment">// T is a the type of storedInE1, a copy of the value stored in e1</span></div><div class="line">  <span class="keyword">if</span> <span class="keyword">let</span> storedInE2 = e2 <span class="keyword">as</span>? <span class="type">T</span> &#123;</div><div class="line">	  <span class="comment">// is e2 also a T?</span></div><div class="line">  <span class="keyword">if</span> storedInE1 == storedInE2 &#123; … &#125; <span class="comment">// okay: storedInT1 and storedInE2 are both of type T, which we know is Equatable</span></div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> storedInE1 = e1 openas <span class="type">T</span> &#123;</span><br><span class="line">	 <span class="comment">// T is a the type of storedInE1, a copy of the value stored in e1</span></span><br><span class="line">  <span class="keyword">if</span> <span class="keyword">let</span> storedInE2 = e2 <span class="keyword">as</span>? <span class="type">T</span> &#123;</span><br><span class="line">	  <span class="comment">// is e2 also a T?</span></span><br><span class="line">  <span class="keyword">if</span> storedInE1 == storedInE2 &#123; … &#125; <span class="comment">// okay: storedInT1 and storedInE2 are both of type T, which we know is Equatable</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>在这个例子中，调用 <code>==</code> 依赖于 <code>e1</code> 和 <code>e2</code> 运行时的动态类型。这个之所以可以正常工作，是因为协议有 <code>Self</code> 的约束<em>并且</em>同时可以解决我们泛型约束的问题。</p>
 <blockquote>
 <p>注意：所有的语法只是假象语法，并没有确定未来的 Swift 版本会有上面这些特性。</p>
 </blockquote>
 <h1 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h1><p>我个人认为解决 existential 问题是一个高优先级的事情，因为它涉及一个很不爽的点。任何人使用协议和泛型的时候，都很容易遇到这个问题。但 Swift 3 的新特性清单中的内容已经非常多了，开发的时间又很短暂，所提我不确定这是否会出现在 Swift 3 的开发计划中。</p>
 <p>如果 opening existentials 已经实现了使用关联类型，并没有强迫你静态派发和泛型约束；这将可以根据你是追求性能还是其他需求决定。</p>
-<p>这时你就可以使用<a href="http://www.russbishop.net/type-erasure" target="_blank" rel="external">类型擦除</a>的方式处理带关联类型的协议的问题。</p>
-<p>那么还有什么更通用的 existential 场景呢？<a href="http://blog.benjamin-encz.de/post/bridging-existentials-generics-swift-2/" target="_blank" rel="external">Benji 的新文章讲到了这个话题</a></p>
-<h1 id="推荐阅读"><a href="#推荐阅读" class="headerlink" title="推荐阅读"></a>推荐阅读</h1><p>对于更多关联类型的内容，<a href="https://www.twitter.com/alexisgallagher" target="_blank" rel="external">@alexisgallagher</a> <a href="https://www.youtube.com/watch?v=XWoNjiSPqI8" target="_blank" rel="external">已经讨论了很多相关的话题</a>（事实上，我们已经私下讨论很多次了）。</p>
-<p>这里也有一篇<a href="http://www.osl.iu.edu/publications/prints/2005/garcia05:_extended_comparing05.pdf" target="_blank" rel="external">非常有趣的令人惊奇的痴迷的程序语言论文</a>，比较了泛型编程在多种语言中的场景，Alexis 指出 <strong>Swift 符合所有的要求，部分的结果就成了关联类型</strong>。</p>
+<p>这时你就可以使用<a href="http://www.russbishop.net/type-erasure" target="_blank" rel="noopener">类型擦除</a>的方式处理带关联类型的协议的问题。</p>
+<p>那么还有什么更通用的 existential 场景呢？<a href="http://blog.benjamin-encz.de/post/bridging-existentials-generics-swift-2/" target="_blank" rel="noopener">Benji 的新文章讲到了这个话题</a></p>
+<h1 id="推荐阅读"><a href="#推荐阅读" class="headerlink" title="推荐阅读"></a>推荐阅读</h1><p>对于更多关联类型的内容，<a href="https://www.twitter.com/alexisgallagher" target="_blank" rel="noopener">@alexisgallagher</a> <a href="https://www.youtube.com/watch?v=XWoNjiSPqI8" target="_blank" rel="noopener">已经讨论了很多相关的话题</a>（事实上，我们已经私下讨论很多次了）。</p>
+<p>这里也有一篇<a href="http://www.osl.iu.edu/publications/prints/2005/garcia05:_extended_comparing05.pdf" target="_blank" rel="noopener">非常有趣的令人惊奇的痴迷的程序语言论文</a>，比较了泛型编程在多种语言中的场景，Alexis 指出 <strong>Swift 符合所有的要求，部分的结果就成了关联类型</strong>。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
@@ -267,6 +268,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -315,7 +320,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -464,11 +469,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -480,11 +485,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -492,7 +493,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -504,11 +505,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -516,7 +521,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -710,7 +715,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

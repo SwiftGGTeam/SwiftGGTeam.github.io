@@ -20,8 +20,9 @@
 <meta property="og:url" content="https://swift.gg/2017/02/07/optionals-string-interpolation/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="本文介绍如何更好的使用可选型以及字符串插值">
+<meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://oleb.net/media/xcode-warning-string-interpolation-optional-as-any.png">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.411Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="可选型以及字符串插值">
 <meta name="twitter:description" content="本文介绍如何更好的使用可选型以及字符串插值">
@@ -90,7 +91,7 @@
         <a href="/2017/02/07/optionals-string-interpolation/" target="_blank" title="可选型以及字符串插值" itemprop="url">可选型以及字符串插值</a>
     </h1>
     <p class="article-time">
-      <time datetime="2017-02-06T16:00:00.000Z" itemprop="datePublished">2017-02-07</time>
+      <time datetime="2017-02-07T00:00:00.000Z" itemprop="datePublished">2017-02-07</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -98,13 +99,13 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Ole Begemann，<a href="https://oleb.net/blog/2016/12/optionals-string-interpolation/" target="_blank" rel="external">原文链接</a>，原文日期：2016-12-07<br>译者：<a href="http://weibo.com/277195544" target="_blank" rel="external">Cwift</a>；校对：<a href="http://chengway.in/" target="_blank" rel="external">walkingway</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+<p>作者：Ole Begemann，<a href="https://oleb.net/blog/2016/12/optionals-string-interpolation/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-12-07<br>译者：<a href="http://weibo.com/277195544" target="_blank" rel="noopener">Cwift</a>；校对：<a href="http://chengway.in/" target="_blank" rel="noopener">walkingway</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>你遇到过这个问题吗？想要在 UI 中显示一个可选值或将其打印到控制台以便调试，但是你不喜欢可选值转成字符串的默认格式：<code>Optional(…)</code> 或 <code>nil</code>。比如：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> someValue: <span class="type">Int</span>? = <span class="number">5</span></div><div class="line"><span class="built_in">print</span>(<span class="string">"The value is <span class="subst">\(someValue)</span>"</span>)</div><div class="line"><span class="comment">// → "The value is Optional(5)"</span></div><div class="line">someValue = <span class="literal">nil</span></div><div class="line"><span class="built_in">print</span>(<span class="string">"The value is <span class="subst">\(someValue)</span>"</span>)</div><div class="line"><span class="comment">// → "The value is nil"</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> someValue: <span class="type">Int</span>? = <span class="number">5</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"The value is <span class="subst">\(someValue)</span>"</span>)</span><br><span class="line"><span class="comment">// → "The value is Optional(5)"</span></span><br><span class="line">someValue = <span class="literal">nil</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"The value is <span class="subst">\(someValue)</span>"</span>)</span><br><span class="line"><span class="comment">// → "The value is nil"</span></span><br></pre></td></tr></table></figure>
 <a id="more"></a>
-<h2 id="在字符串插值中使用可选值可能会导致意想不到的结果"><a href="#在字符串插值中使用可选值可能会导致意想不到的结果" class="headerlink" title="在字符串插值中使用可选值可能会导致意想不到的结果"></a>在字符串插值中使用可选值可能会导致意想不到的结果</h2><p>当你 <a href="https://github.com/apple/swift/pull/5110" target="_blank" rel="external">在字符串插值中使用可选值</a> 的时候，实际上 Swift 3.1 会发出一个警告，因为这种行为会产生意外的结果。这是 Julio Carrettoni、Harlan Haskins 和 Robert Widmann 提出有关 Swift 演化的论点：</p>
+<h2 id="在字符串插值中使用可选值可能会导致意想不到的结果"><a href="#在字符串插值中使用可选值可能会导致意想不到的结果" class="headerlink" title="在字符串插值中使用可选值可能会导致意想不到的结果"></a>在字符串插值中使用可选值可能会导致意想不到的结果</h2><p>当你 <a href="https://github.com/apple/swift/pull/5110" target="_blank" rel="noopener">在字符串插值中使用可选值</a> 的时候，实际上 Swift 3.1 会发出一个警告，因为这种行为会产生意外的结果。这是 Julio Carrettoni、Harlan Haskins 和 Robert Widmann 提出有关 Swift 演化的论点：</p>
 <blockquote>
 <p>鉴于可选值永远不适合显示给最终的用户，并且通常打印到控制台中的可选值会出现令人惊讶的内容，我们建议使用明确的方式来请求一个可选的调试描述。即：当你在字符串插值段中使用可选值时编译器会发出警告。</p>
 </blockquote>
@@ -116,16 +117,16 @@
 <li>使用 <code>String(describing: someValue)</code>。</li>
 <li>提供一个默认值，使得表达式不包含可选型，例如 <code>someValue ?? defaultValue</code>。</li>
 </ol>
-<p>多数情况下我真的不喜欢任何一种，但这已经是编译器可以提供的最好的方案了。第三种方案的问题是使用 <a href="https://developer.apple.com/library/content/documentation/Swift/Conceptual/Swift_Programming_Language/BasicOperators.html#//apple_ref/doc/uid/TP40014097-CH6-ID72" target="_blank" rel="external">空值合并操作符</a> <code>??</code> 需要类型匹配——如果左边的操作数是 <code>T?</code>，那么右边的操作数必须是 <code>T</code> 类型的。应用到上面的例子中，这意味着我可以提供另一个 <code>Int</code> 作为默认值，但不是一个字符串——而这种情形中字符串才是我真正想要的。</p>
+<p>多数情况下我真的不喜欢任何一种，但这已经是编译器可以提供的最好的方案了。第三种方案的问题是使用 <a href="https://developer.apple.com/library/content/documentation/Swift/Conceptual/Swift_Programming_Language/BasicOperators.html#//apple_ref/doc/uid/TP40014097-CH6-ID72" target="_blank" rel="noopener">空值合并操作符</a> <code>??</code> 需要类型匹配——如果左边的操作数是 <code>T?</code>，那么右边的操作数必须是 <code>T</code> 类型的。应用到上面的例子中，这意味着我可以提供另一个 <code>Int</code> 作为默认值，但不是一个字符串——而这种情形中字符串才是我真正想要的。</p>
 <h2 id="自定义一个可选型的字符串合并运算符"><a href="#自定义一个可选型的字符串合并运算符" class="headerlink" title="自定义一个可选型的字符串合并运算符"></a>自定义一个可选型的字符串合并运算符</h2><p>为了解决这个问题，我自定义了一个可选型的字符串合并操作符。我觉得给它取名为 <code>???</code> ，因为很明显它与空值合并操作符有关联。（最初我认为重载 <code>??</code> 操作符是一个好主意，即定义一个 <code>(T?, String) -&gt; String</code> 类型的 <code>??</code> 版本。我喜欢这种写法，因为我的实现很好地捕捉到了空值合并操作符的意义，但这意味着放弃一些其他上下文中的类型安全性，因为现在形如 <code>someOptional ?? &quot;someString</code> 的表达式总是可以通过编译的。）<code>???</code> 操作符的左侧可以接受任意可选型，而右侧接受一个默认的字符串，返回值也是字符串。如果可选值不为空，操作符将解包并返回其字符串描述，否则返回默认值。这里是具体实现：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">infix</span> <span class="keyword">operator</span> ???: <span class="type">NilCoalescingPrecedence</span></div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> ???&lt;T&gt;<span class="params">(<span class="keyword">optional</span>: T?, defaultValue: @autoclosure <span class="params">()</span></span></span> -&gt; <span class="type">String</span>) -&gt; <span class="type">String</span> &#123;</div><div class="line">    <span class="keyword">switch</span> <span class="keyword">optional</span> &#123;</div><div class="line">    <span class="keyword">case</span> <span class="keyword">let</span> value?: <span class="keyword">return</span> <span class="type">String</span>(describing: value)</div><div class="line">    <span class="keyword">case</span> <span class="literal">nil</span>: <span class="keyword">return</span> defaultValue()</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p><a href="https://developer.apple.com/library/content/documentation/Swift/Conceptual/Swift_Programming_Language/Closures.html#//apple_ref/doc/uid/TP40014097-CH11-ID543" target="_blank" rel="external"><code>@autoclosure</code> 结构</a> 确保仅当需要的时候（即当可选型为 <code>nil</code> 时）才计算右操作数。这个关键字允许你传递开销大的或具有副作用的表达式，只在极少数情况下才需要承担性能成本。我认为在此用例中这种机制不是很重要，<code>???</code> 的定义镜像了 <a href="http://swiftdoc.org/v3.0/operator/qmqm/#func-qmqm-t_-t-defaultvalue_-autoclosure-throws-t" target="_blank" rel="external">标准库中 <code>??</code> 操作符的定义</a>。（虽然我决定舍弃当前标准库版本中的 throw /<a href="http://robnapier.net/re-throws" target="_blank" rel="external">rethrows</a> 格式。）</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">infix</span> <span class="keyword">operator</span> ???: <span class="type">NilCoalescingPrecedence</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> ???&lt;T&gt;<span class="params">(<span class="keyword">optional</span>: T?, defaultValue: @autoclosure <span class="params">()</span></span></span> -&gt; <span class="type">String</span>) -&gt; <span class="type">String</span> &#123;</span><br><span class="line">    <span class="keyword">switch</span> <span class="keyword">optional</span> &#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="keyword">let</span> value?: <span class="keyword">return</span> <span class="type">String</span>(describing: value)</span><br><span class="line">    <span class="keyword">case</span> <span class="literal">nil</span>: <span class="keyword">return</span> defaultValue()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><a href="https://developer.apple.com/library/content/documentation/Swift/Conceptual/Swift_Programming_Language/Closures.html#//apple_ref/doc/uid/TP40014097-CH11-ID543" target="_blank" rel="noopener"><code>@autoclosure</code> 结构</a> 确保仅当需要的时候（即当可选型为 <code>nil</code> 时）才计算右操作数。这个关键字允许你传递开销大的或具有副作用的表达式，只在极少数情况下才需要承担性能成本。我认为在此用例中这种机制不是很重要，<code>???</code> 的定义镜像了 <a href="http://swiftdoc.org/v3.0/operator/qmqm/#func-qmqm-t_-t-defaultvalue_-autoclosure-throws-t" target="_blank" rel="noopener">标准库中 <code>??</code> 操作符的定义</a>。（虽然我决定舍弃当前标准库版本中的 throw /<a href="http://robnapier.net/re-throws" target="_blank" rel="noopener">rethrows</a> 格式。）</p>
 <p>或者，使用 <a href=""><code>Optional.map</code></a> 你可以通过一行代码实现该操作符，就像这样：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> ???&lt;T&gt;<span class="params">(<span class="keyword">optional</span>: T?, defaultValue: @autoclosure <span class="params">()</span></span></span> -&gt; <span class="type">String</span>) -&gt; <span class="type">String</span> &#123;</div><div class="line">    <span class="keyword">return</span> <span class="keyword">optional</span>.<span class="built_in">map</span> &#123; <span class="type">String</span>(describing: $<span class="number">0</span>) &#125; ?? defaultValue()</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> ???&lt;T&gt;<span class="params">(<span class="keyword">optional</span>: T?, defaultValue: @autoclosure <span class="params">()</span></span></span> -&gt; <span class="type">String</span>) -&gt; <span class="type">String</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">optional</span>.<span class="built_in">map</span> &#123; <span class="type">String</span>(describing: $<span class="number">0</span>) &#125; ?? defaultValue()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>两种实现完全相等。你喜欢哪一种版本取决于个人口味以及你的代码风格。我不认为哪一个会显得更清晰。</p>
-<p>还有最后一件事我认为需要提醒一下，你必须在 <a href="https://developer.apple.com/reference/swift/string/2427941-init" target="_blank" rel="external"><code>String(describing:)</code></a>（即你更喜欢基于值的描述）以及 <a href="https://developer.apple.com/reference/swift/string/1541282-init" target="_blank" rel="external"><code>String(reflecting:)</code></a>（更喜欢基于调试的描述）二者之间做出选择，以便完成值的转换。前者更适合用于格式化需要在 UI 显示的值，而后者可能更适合用于打印日志。通常基于调试的描述的输出格式长度更长，或许你可以为它定义另一个运算符（例如，????）。</p>
+<p>还有最后一件事我认为需要提醒一下，你必须在 <a href="https://developer.apple.com/reference/swift/string/2427941-init" target="_blank" rel="noopener"><code>String(describing:)</code></a>（即你更喜欢基于值的描述）以及 <a href="https://developer.apple.com/reference/swift/string/1541282-init" target="_blank" rel="noopener"><code>String(reflecting:)</code></a>（更喜欢基于调试的描述）二者之间做出选择，以便完成值的转换。前者更适合用于格式化需要在 UI 显示的值，而后者可能更适合用于打印日志。通常基于调试的描述的输出格式长度更长，或许你可以为它定义另一个运算符（例如，????）。</p>
 <h2 id="应用"><a href="#应用" class="headerlink" title="应用"></a>应用</h2><p>让我们使用 <code>???</code> 操作符重写本文开头的示例：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> someValue: <span class="type">Int</span>? = <span class="number">5</span></div><div class="line"><span class="built_in">print</span>(<span class="string">"The value is <span class="subst">\(someValue ??? "unknown")</span>"</span>)</div><div class="line"><span class="comment">// → "The value is 5"</span></div><div class="line">someValue = <span class="literal">nil</span></div><div class="line"><span class="built_in">print</span>(<span class="string">"The value is <span class="subst">\(someValue ??? "unknown")</span>"</span>)</div><div class="line"><span class="comment">// → "The value is unknown"</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> someValue: <span class="type">Int</span>? = <span class="number">5</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"The value is <span class="subst">\(someValue ??? "unknown")</span>"</span>)</span><br><span class="line"><span class="comment">// → "The value is 5"</span></span><br><span class="line">someValue = <span class="literal">nil</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"The value is <span class="subst">\(someValue ??? "unknown")</span>"</span>)</span><br><span class="line"><span class="comment">// → "The value is unknown"</span></span><br></pre></td></tr></table></figure>
 <p>这只是个小玩意，但我真的很喜欢它。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
@@ -239,6 +240,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -287,7 +292,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -436,11 +441,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -452,11 +457,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -464,7 +465,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -476,11 +477,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -488,7 +493,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -682,7 +687,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

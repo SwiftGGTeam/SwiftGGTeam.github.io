@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/09/20/swift-what-are-protocols-with-associated-types/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="Swift 是一门面向协议的语言，那么在 Swift 中带有关联类型的协议是什么样子的呢，本文就来分析下这个问题。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.403Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift: 带有关联类型的协议是什么样的？">
 <meta name="twitter:description" content="Swift 是一门面向协议的语言，那么在 Swift 中带有关联类型的协议是什么样子的呢，本文就来分析下这个问题。">
@@ -88,7 +89,7 @@
         <a href="/2016/09/20/swift-what-are-protocols-with-associated-types/" target="_blank" title="Swift: 带有关联类型的协议是什么样的？" itemprop="url">Swift: 带有关联类型的协议是什么样的？</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-09-19T16:00:00.000Z" itemprop="datePublished">2016-09-20</time>
+      <time datetime="2016-09-20T00:00:00.000Z" itemprop="datePublished">2016-09-20</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,29 +97,29 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Natasha The Robot，<a href="https://www.natashatherobot.com/swift-what-are-protocols-with-associated-types/" target="_blank" rel="external">原文链接</a>，原文日期：2016-07-28<br>译者：<a href="undefined">jseanj</a>；校对：<a href="http://www.saitjr.com" target="_blank" rel="external">saitjr</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+<p>作者：Natasha The Robot，<a href="https://www.natashatherobot.com/swift-what-are-protocols-with-associated-types/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-07-28<br>译者：<a href="undefined">jseanj</a>；校对：<a href="http://www.saitjr.com" target="_blank" rel="noopener">saitjr</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p>最近我做了一个关于带有关联类型的协议（PATs, Protocols with Associated Types）的<a href="http://www.slideshare.net/natashatherobot/practical-protocols-with-associated-types" target="_blank" rel="external">演讲</a>，我本来还觉得观众对这个已经耳熟能详了，但事实却相反。</p>
+<p>最近我做了一个关于带有关联类型的协议（PATs, Protocols with Associated Types）的<a href="http://www.slideshare.net/natashatherobot/practical-protocols-with-associated-types" target="_blank" rel="noopener">演讲</a>，我本来还觉得观众对这个已经耳熟能详了，但事实却相反。</p>
 <p>很多人并不知道 PATs 是什么——这我应该预料到的，因为我自学就用了一段时间。因此我想当面讲解下，尤其是这些东西比较难理解，而且我也没能找到很好的解释。</p>
-<p>Gwendolyn Weston 在东京 <a href="http://www.tryswiftnyc.com/" target="_blank" rel="external">try! Swift 大会</a>上给出的解释对我很有帮助（<a href="https://realm.io/news/tryswift-gwendolyn-weston-type-erasure/" target="_blank" rel="external">视频在这</a>）。因此文中的示例是受她的演讲启发。Pokemon 将会出现…</p>
+<p>Gwendolyn Weston 在东京 <a href="http://www.tryswiftnyc.com/" target="_blank" rel="noopener">try! Swift 大会</a>上给出的解释对我很有帮助（<a href="https://realm.io/news/tryswift-gwendolyn-weston-type-erasure/" target="_blank" rel="noopener">视频在这</a>）。因此文中的示例是受她的演讲启发。Pokemon 将会出现…</p>
 <a id="more"></a>
-<h3 id="在-PATs-之前"><a href="#在-PATs-之前" class="headerlink" title="在 PATs 之前"></a>在 PATs 之前</h3><p>目前我在 Pokemon Go 中是 9 级，我听说（感谢我的私人教练 <a href="https://twitter.com/ayanonagon" target="_blank" rel="external">@ayanonagon</a>）所有的 Pokemon 有一些共同的特征，比如攻击能力。</p>
+<h3 id="在-PATs-之前"><a href="#在-PATs-之前" class="headerlink" title="在 PATs 之前"></a>在 PATs 之前</h3><p>目前我在 Pokemon Go 中是 9 级，我听说（感谢我的私人教练 <a href="https://twitter.com/ayanonagon" target="_blank" rel="noopener">@ayanonagon</a>）所有的 Pokemon 有一些共同的特征，比如攻击能力。</p>
 <p>对于从 Objective-C 或者其他面向对象语言迁移过来的人来说，使用一个具有所有共同功能的 Pokemon 子类是吸引人的。由于每一个 Pokemon 具有不同的攻击能力——光、水或者火等等——我们可以在我们的子类中使用泛型。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// 我们必须确保泛型 Power 有初始化方法</span></div><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">Initializable</span> </span>&#123;</div><div class="line">    <span class="keyword">init</span>()</div><div class="line">&#125;</div><div class="line"> </div><div class="line"><span class="comment">// Pokemon 子类</span></div><div class="line"><span class="comment">// 每一个 Pokemon 有一个不同的 Power, </span></div><div class="line"><span class="comment">// 因此 Power 是泛型</span></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Pokemon</span>&lt;<span class="title">Power</span>: <span class="title">Initializable</span>&gt; </span>&#123;</div><div class="line">    </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">attack</span><span class="params">()</span></span> -&gt; <span class="type">Power</span> &#123;</div><div class="line">        <span class="keyword">return</span> <span class="type">Power</span>()</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 我们必须确保泛型 Power 有初始化方法</span></span><br><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">Initializable</span> </span>&#123;</span><br><span class="line">    <span class="keyword">init</span>()</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="comment">// Pokemon 子类</span></span><br><span class="line"><span class="comment">// 每一个 Pokemon 有一个不同的 Power, </span></span><br><span class="line"><span class="comment">// 因此 Power 是泛型</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Pokemon</span>&lt;<span class="title">Power</span>: <span class="title">Initializable</span>&gt; </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">attack</span><span class="params">()</span></span> -&gt; <span class="type">Power</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">Power</span>()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>此时，我们有不同的 Power 类型：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> 🌧: <span class="title">Initializable</span> </span>&#123; <span class="comment">// 实现 &#125;</span></div><div class="line"><span class="class"><span class="keyword">struct</span> 🌩: <span class="title">Initializable</span> </span>&#123; <span class="comment">// 实现 &#125;</span></div><div class="line"><span class="class"><span class="keyword">struct</span> 🔥: <span class="title">Initializable</span> </span>&#123; <span class="comment">// 实现 &#125;</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> 🌧: <span class="title">Initializable</span> </span>&#123; <span class="comment">// 实现 &#125;</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> 🌩: <span class="title">Initializable</span> </span>&#123; <span class="comment">// 实现 &#125;</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> 🔥: <span class="title">Initializable</span> </span>&#123; <span class="comment">// 实现 &#125;</span></span><br></pre></td></tr></table></figure>
 <p>现在，其他的 Pokemon 可以从我们的 Pokemon 基类继承，然后他们自动的包含了攻击方法！</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Pikachu</span>: <span class="title">Pokemon</span>&lt;🌩&gt; </span>&#123;&#125;</div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Vaporeon</span>: <span class="title">Pokemon</span>&lt;🌧&gt; </span>&#123;&#125;</div><div class="line"> </div><div class="line"><span class="keyword">let</span> pikachu = <span class="type">Pikachu</span>()</div><div class="line">pikachu.attack() <span class="comment">// 🌩</span></div><div class="line"> </div><div class="line"><span class="keyword">let</span> vaporeon = <span class="type">Vaporeon</span>()</div><div class="line">vaporeon.attack() <span class="comment">// 🌧</span></div></pre></td></tr></table></figure>
-<p>问题是我们使用的是继承。如果你看了 Dave Abrahams 在 WWDC 上的 <a href="https://developer.apple.com/videos/play/wwdc2015/408/" target="_blank" rel="external">Swift 中面向协议编程</a>，你现在的脑海里看到的应该是 Crusty 的脸…</p>
-<p>使用继承的问题是虽然刚开始的意图是好的，但最终随着意外的发生事情会变得越来越糟（比如 Pokemon Eggs 不能攻击）。为了大家更好的理解，我强烈推荐大家读读 Matthijs Hollemans 的 <a href="http://matthijshollemans.com/2015/07/22/mixins-and-traits-in-swift-2/" target="_blank" rel="external">Mixins and Traits in Swift 2.0</a>。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Pikachu</span>: <span class="title">Pokemon</span>&lt;🌩&gt; </span>&#123;&#125;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Vaporeon</span>: <span class="title">Pokemon</span>&lt;🌧&gt; </span>&#123;&#125;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">let</span> pikachu = <span class="type">Pikachu</span>()</span><br><span class="line">pikachu.attack() <span class="comment">// 🌩</span></span><br><span class="line"> </span><br><span class="line"><span class="keyword">let</span> vaporeon = <span class="type">Vaporeon</span>()</span><br><span class="line">vaporeon.attack() <span class="comment">// 🌧</span></span><br></pre></td></tr></table></figure>
+<p>问题是我们使用的是继承。如果你看了 Dave Abrahams 在 WWDC 上的 <a href="https://developer.apple.com/videos/play/wwdc2015/408/" target="_blank" rel="noopener">Swift 中面向协议编程</a>，你现在的脑海里看到的应该是 Crusty 的脸…</p>
+<p>使用继承的问题是虽然刚开始的意图是好的，但最终随着意外的发生事情会变得越来越糟（比如 Pokemon Eggs 不能攻击）。为了大家更好的理解，我强烈推荐大家读读 Matthijs Hollemans 的 <a href="http://matthijshollemans.com/2015/07/22/mixins-and-traits-in-swift-2/" target="_blank" rel="noopener">Mixins and Traits in Swift 2.0</a>。</p>
 <p>毕竟，就像 Dave Abrahams 所说的，Swift 是一门面向协议的语言，所以我们需要改变面向对象的思维模式。</p>
 <h3 id="你好，PATs"><a href="#你好，PATs" class="headerlink" title="你好，PATs"></a>你好，PATs</h3><p>让我们用 PATs 来代替继承！相比于继承所有东西，我们可以创建一个专注于 Pokemon 攻击能力的协议。记住，由于每一个 Pokemon 有不同的 Power，因此我们需要把它变成泛型。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">PowerTrait</span> </span>&#123;</div><div class="line">    <span class="comment">// 就是这样！关联类型只是协议中表示泛型的一种语法</span></div><div class="line">    associatedtype <span class="type">Power</span>: <span class="type">Initializable</span></div><div class="line">    </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">attack</span><span class="params">()</span></span> -&gt; <span class="type">Power</span></div><div class="line">&#125;</div><div class="line"> </div><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">PowerTrait</span> </span>&#123;</div><div class="line">    <span class="comment">// 通过协议扩展，我们现在有一个默认的攻击方法 </span></div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">attack</span><span class="params">()</span></span> -&gt; <span class="type">Power</span> &#123;</div><div class="line">        <span class="keyword">return</span> <span class="type">Power</span>()</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">PowerTrait</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 就是这样！关联类型只是协议中表示泛型的一种语法</span></span><br><span class="line">    associatedtype <span class="type">Power</span>: <span class="type">Initializable</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">attack</span><span class="params">()</span></span> -&gt; <span class="type">Power</span></span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">PowerTrait</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 通过协议扩展，我们现在有一个默认的攻击方法 </span></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">attack</span><span class="params">()</span></span> -&gt; <span class="type">Power</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">Power</span>()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>现在，每一个遵循 PowerTrait 协议的 Pokemon 不必继承就会具有攻击能力了。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Pikachu</span>: <span class="title">PowerTrait</span> </span>&#123;</div><div class="line">    <span class="comment">// 由于我们使用的是默认的攻击方法，就像在继承时我们指定了泛型一样，我们也必须指定关联类型的类型</span></div><div class="line">    <span class="comment">// 注意，这仍然被称为 typealias，但是在 Swift 的未来版本中会变成 associatedtype</span></div><div class="line">    associatedtype <span class="type">Power</span> = 🌩</div><div class="line">&#125;</div><div class="line"><span class="keyword">let</span> pikachu = <span class="type">Pikachu</span>()</div><div class="line">pikachu.attack() <span class="comment">//🌩</span></div><div class="line"> </div><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Vaporeon</span>: <span class="title">PowerTrait</span> </span>&#123;</div><div class="line">    <span class="comment">// 当 attack 方法被重写后，</span></div><div class="line">    <span class="comment">// 基于方法标识，🌧 会被推断为关联类型</span></div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">attack</span><span class="params">()</span></span> -&gt; 🌧 &#123;</div><div class="line">        <span class="comment">// 自定义的攻击逻辑</span></div><div class="line">        <span class="keyword">return</span> 🌧()</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"><span class="keyword">let</span> vaporeon = <span class="type">Vaporeon</span>()</div><div class="line">vaporeon.attack() <span class="comment">//🌧</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Pikachu</span>: <span class="title">PowerTrait</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 由于我们使用的是默认的攻击方法，就像在继承时我们指定了泛型一样，我们也必须指定关联类型的类型</span></span><br><span class="line">    <span class="comment">// 注意，这仍然被称为 typealias，但是在 Swift 的未来版本中会变成 associatedtype</span></span><br><span class="line">    associatedtype <span class="type">Power</span> = 🌩</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">let</span> pikachu = <span class="type">Pikachu</span>()</span><br><span class="line">pikachu.attack() <span class="comment">//🌩</span></span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Vaporeon</span>: <span class="title">PowerTrait</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 当 attack 方法被重写后，</span></span><br><span class="line">    <span class="comment">// 基于方法标识，🌧 会被推断为关联类型</span></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">attack</span><span class="params">()</span></span> -&gt; 🌧 &#123;</span><br><span class="line">        <span class="comment">// 自定义的攻击逻辑</span></span><br><span class="line">        <span class="keyword">return</span> 🌧()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">let</span> vaporeon = <span class="type">Vaporeon</span>()</span><br><span class="line">vaporeon.attack() <span class="comment">//🌧</span></span><br></pre></td></tr></table></figure>
 <h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>就是这样！带有关联类型的协议对于支持泛型的协议是一个新奇的术语。通过使用 PATs 这样强有力的工具我们获得了优雅的组合而不是糟糕的继承。</p>
-<p>为了更多的了解 PATs 的限制以及更深入的学习，我强烈推荐 Alexis Gallagher 的<a href="https://www.youtube.com/watch?v=XWoNjiSPqI8" target="_blank" rel="external">演讲</a>。</p>
+<p>为了更多的了解 PATs 的限制以及更深入的学习，我强烈推荐 Alexis Gallagher 的<a href="https://www.youtube.com/watch?v=XWoNjiSPqI8" target="_blank" rel="noopener">演讲</a>。</p>
 <p>玩得愉快。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
@@ -232,6 +233,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -280,7 +285,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -429,11 +434,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -445,11 +450,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -457,7 +458,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -469,11 +470,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -481,7 +486,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -675,7 +680,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

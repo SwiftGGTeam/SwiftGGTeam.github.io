@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2015/12/11/correction-on-testing-uialertcontroller/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：dom，原文链接，原文日期：2015-11-25译者：小袋子；校对：lfb_CD；定稿：千叶知风   两个月前，我曾发布了一篇如何测试 UIAlertController的文章。一个读者发现测试没有如期地起作用：">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.375Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="UIAlertController 测试的修正">
 <meta name="twitter:description" content="作者：dom，原文链接，原文日期：2015-11-25译者：小袋子；校对：lfb_CD；定稿：千叶知风   两个月前，我曾发布了一篇如何测试 UIAlertController的文章。一个读者发现测试没有如期地起作用：">
@@ -88,7 +89,7 @@
         <a href="/2015/12/11/correction-on-testing-uialertcontroller/" target="_blank" title="UIAlertController 测试的修正" itemprop="url">UIAlertController 测试的修正</a>
     </h1>
     <p class="article-time">
-      <time datetime="2015-12-10T16:00:00.000Z" itemprop="datePublished">2015-12-11</time>
+      <time datetime="2015-12-11T00:00:00.000Z" itemprop="datePublished">2015-12-11</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,28 +97,28 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：dom，<a href="http://swiftandpainless.com/correction-on-testing-uialertcontroller/" target="_blank" rel="external">原文链接</a>，原文日期：2015-11-25<br>译者：<a href="http://daizi.me" target="_blank" rel="external">小袋子</a>；校对：<a href="http://weibo.com/lfbWb" target="_blank" rel="external">lfb_CD</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="external">千叶知风</a></p>
+<p>作者：dom，<a href="http://swiftandpainless.com/correction-on-testing-uialertcontroller/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-11-25<br>译者：<a href="http://daizi.me" target="_blank" rel="noopener">小袋子</a>；校对：<a href="http://weibo.com/lfbWb" target="_blank" rel="noopener">lfb_CD</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p>两个月前，我曾发布了一篇<a href="http://swiftandpainless.com/how-to-test-uialertcontroller-in-swift/" target="_blank" rel="external">如何测试 UIAlertController</a>的文章。一个读者发现测试没有如期地起作用：</p>
+<p>两个月前，我曾发布了一篇<a href="http://swiftandpainless.com/how-to-test-uialertcontroller-in-swift/" target="_blank" rel="noopener">如何测试 UIAlertController</a>的文章。一个读者发现测试没有如期地起作用：</p>
 <a id="more"></a>
 <blockquote>
-<p><a href="https://twitter.com/dasdom" target="_blank" rel="external">@dasdom</a> 你的测试是正常的，但是在 <code>MockUIAction</code> 中的简便 <code>init</code> 方法没有被调用。你不能重写 <code>init</code> 方法，看起来像是 iOS 的bug。<br> — Larhythimx (@Larhythmix) <a href="https://twitter.com/Larhythmix/status/669456137041915905" target="_blank" rel="external">25. November 2015</a></p>
+<p><a href="https://twitter.com/dasdom" target="_blank" rel="noopener">@dasdom</a> 你的测试是正常的，但是在 <code>MockUIAction</code> 中的简便 <code>init</code> 方法没有被调用。你不能重写 <code>init</code> 方法，看起来像是 iOS 的bug。<br> — Larhythimx (@Larhythmix) <a href="https://twitter.com/Larhythmix/status/669456137041915905" target="_blank" rel="noopener">25. November 2015</a></p>
 </blockquote>
 <p>Larhythimx 说的完全正确。模拟程序的初始化方法从来没有调用。为什么我在写这个测试用例的时候没有发觉呢？那是因为 handler 确实被调用了，看起来就像 <code>UIAlertAction</code> 真的把 handler 作为内部变量去存储动作的 handler 闭包。这是非常脆弱的，并且 Larhythimx 在另一个 tweet 指出在他的测试程序中 handler 是 <code>nil</code>。</p>
 <p>所以作为黄金通道（即编写不需要改变实现的测试）走不通，那就退而求其次用别的方法。</p>
 <p>首先，我们在 <code>UIAlertAction</code> 中添加一个类方法去创建 action 。在 <code>ViewController.swift</code> 中增加如下扩展：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UIAlertAction</span> </span>&#123;</div><div class="line">  <span class="class"><span class="keyword">class</span> <span class="title">func</span> <span class="title">makeActionWithTitle</span>(<span class="title">title</span>: <span class="title">String</span>?, <span class="title">style</span>: <span class="title">UIAlertActionStyle</span>, <span class="title">handler</span>: ((<span class="title">UIAlertAction</span>) -&gt; <span class="title">Void</span>)?) -&gt; <span class="title">UIAlertAction</span> </span>&#123;</div><div class="line">    <span class="keyword">return</span> <span class="type">UIAlertAction</span>(title: title, style: style, handler: handler)</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UIAlertAction</span> </span>&#123;</span><br><span class="line">  <span class="class"><span class="keyword">class</span> <span class="title">func</span> <span class="title">makeActionWithTitle</span>(<span class="title">title</span>: <span class="title">String</span>?, <span class="title">style</span>: <span class="title">UIAlertActionStyle</span>, <span class="title">handler</span>: ((<span class="title">UIAlertAction</span>) -&gt; <span class="title">Void</span>)?) -&gt; <span class="title">UIAlertAction</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="type">UIAlertAction</span>(title: title, style: style, handler: handler)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>在 <code>MockAlertAction</code> 中增加这个重写方法：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">override</span> <span class="class"><span class="keyword">class</span> <span class="title">func</span> <span class="title">makeActionWithTitle</span>(<span class="title">title</span>: <span class="title">String</span>?, <span class="title">style</span>: <span class="title">UIAlertActionStyle</span>, <span class="title">handler</span>: ((<span class="title">UIAlertAction</span>) -&gt; <span class="title">Void</span>)?) -&gt; <span class="title">MockAlertAction</span> </span>&#123;</div><div class="line">  <span class="keyword">return</span> <span class="type">MockAlertAction</span>(title: title, style: style, handler: handler)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">override</span> <span class="class"><span class="keyword">class</span> <span class="title">func</span> <span class="title">makeActionWithTitle</span>(<span class="title">title</span>: <span class="title">String</span>?, <span class="title">style</span>: <span class="title">UIAlertActionStyle</span>, <span class="title">handler</span>: ((<span class="title">UIAlertAction</span>) -&gt; <span class="title">Void</span>)?) -&gt; <span class="title">MockAlertAction</span> </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="type">MockAlertAction</span>(title: title, style: style, handler: handler)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>在实现代码中，我们现在可以使用类方法去创建 alert 动作：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> okAction = <span class="type">Action</span>.makeActionWithTitle(<span class="string">"OK"</span>, style: .<span class="type">Default</span>) &#123; (action) -&gt; <span class="type">Void</span> <span class="keyword">in</span></div><div class="line">    <span class="keyword">self</span>.actionString = <span class="string">"OK"</span></div><div class="line">&#125;</div><div class="line"><span class="keyword">let</span> cancelAction = <span class="type">Action</span>.makeActionWithTitle(<span class="string">"Cancel"</span>, style: .<span class="type">Default</span>) &#123; (action) -&gt; <span class="type">Void</span> <span class="keyword">in</span></div><div class="line">    <span class="keyword">self</span>.actionString = <span class="string">"Cancel"</span></div><div class="line">&#125;</div><div class="line">alertViewController.addAction(cancelAction)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> okAction = <span class="type">Action</span>.makeActionWithTitle(<span class="string">"OK"</span>, style: .<span class="type">Default</span>) &#123; (action) -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">    <span class="keyword">self</span>.actionString = <span class="string">"OK"</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">let</span> cancelAction = <span class="type">Action</span>.makeActionWithTitle(<span class="string">"Cancel"</span>, style: .<span class="type">Default</span>) &#123; (action) -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">    <span class="keyword">self</span>.actionString = <span class="string">"Cancel"</span></span><br><span class="line">&#125;</span><br><span class="line">alertViewController.addAction(cancelAction)</span><br></pre></td></tr></table></figure>
 <p>为了确保我们的测试用例正常，如我们预期地工作，将 <code>MockAlertAction</code> 的 <code>handler</code> 属性重命名为 <code>mockHandler</code>： </p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> mockHandler: <span class="type">Handler</span>?</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> mockHandler: <span class="type">Handler</span>?</span><br></pre></td></tr></table></figure>
 <p>此外，我们为动作的模拟标题添加测试。取消动作的测试应该像这样： </p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">testAlert_FirstActionStoresCancel</span><span class="params">()</span></span> &#123;</div><div class="line">  sut.<span class="type">Action</span> = <span class="type">MockAlertAction</span>.<span class="keyword">self</span></div><div class="line">  </div><div class="line">  sut.showAlert(<span class="type">UIButton</span>())</div><div class="line">  </div><div class="line">  <span class="keyword">let</span> alertController = sut.presentedViewController <span class="keyword">as</span>! <span class="type">UIAlertController</span></div><div class="line">  <span class="keyword">let</span> action = alertController.actions.first <span class="keyword">as</span>! <span class="type">MockAlertAction</span></div><div class="line">  action.mockHandler!(action)</div><div class="line">  </div><div class="line">  <span class="type">XCTAssertEqual</span>(sut.actionString, <span class="string">"Cancel"</span>)</div><div class="line">  <span class="type">XCTAssertEqual</span>(action.mockTitle, <span class="string">"Cancel"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">testAlert_FirstActionStoresCancel</span><span class="params">()</span></span> &#123;</span><br><span class="line">  sut.<span class="type">Action</span> = <span class="type">MockAlertAction</span>.<span class="keyword">self</span></span><br><span class="line">  </span><br><span class="line">  sut.showAlert(<span class="type">UIButton</span>())</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">let</span> alertController = sut.presentedViewController <span class="keyword">as</span>! <span class="type">UIAlertController</span></span><br><span class="line">  <span class="keyword">let</span> action = alertController.actions.first <span class="keyword">as</span>! <span class="type">MockAlertAction</span></span><br><span class="line">  action.mockHandler!(action)</span><br><span class="line">  </span><br><span class="line">  <span class="type">XCTAssertEqual</span>(sut.actionString, <span class="string">"Cancel"</span>)</span><br><span class="line">  <span class="type">XCTAssertEqual</span>(action.mockTitle, <span class="string">"Cancel"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这个测试在此前的版本将会失败，因为初始化方法没有被调用，因此模拟标题也没有得到设置。</p>
-<p>你可以在 <a href="https://github.com/dasdom/TestingAlertExperiment" target="_blank" rel="external">github</a> 上找到修正的版本。</p>
+<p>你可以在 <a href="https://github.com/dasdom/TestingAlertExperiment" target="_blank" rel="noopener">github</a> 上找到修正的版本。</p>
 <p>再次感谢 Larhythimx 的推特！</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
@@ -231,6 +232,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -279,7 +284,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -428,11 +433,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -444,11 +449,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -456,7 +457,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -468,11 +469,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -480,7 +485,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -674,7 +679,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

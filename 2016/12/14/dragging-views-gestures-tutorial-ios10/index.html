@@ -20,11 +20,12 @@
 <meta property="og:url" content="https://swift.gg/2016/12/14/dragging-views-gestures-tutorial-ios10/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="iOS 的优势在于可以触摸和手势交互，本文会使用 Xcode 8 和 iOS 10 来展示一些借助拖曳手势识别器来进行拖拽的自定义视图。">
+<meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/5818680a2e69cfd82f6eb336/1477994519169/?format=750w">
 <meta property="og:image" content="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/581868402e69cfd82f6eb457/1477994569950/?format=750w">
 <meta property="og:image" content="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/581868752e69cfd82f6eb55a/1477994622410/?format=750w">
 <meta property="og:image" content="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/581a6663197aea1a94d7f277/1478125165551/?format=500w">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.407Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="教程：使用手势来拖动视图">
 <meta name="twitter:description" content="iOS 的优势在于可以触摸和手势交互，本文会使用 Xcode 8 和 iOS 10 来展示一些借助拖曳手势识别器来进行拖拽的自定义视图。">
@@ -93,7 +94,7 @@
         <a href="/2016/12/14/dragging-views-gestures-tutorial-ios10/" target="_blank" title="教程：使用手势来拖动视图" itemprop="url">教程：使用手势来拖动视图</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-12-13T16:00:00.000Z" itemprop="datePublished">2016-12-14</time>
+      <time datetime="2016-12-14T00:00:00.000Z" itemprop="datePublished">2016-12-14</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -101,7 +102,7 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Arthur Knopper，<a href="https://www.ioscreator.com/tutorials/dragging-views-gestures-tutorial-ios10" target="_blank" rel="external">原文链接</a>，原文日期：2016-11-07<br>译者：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；校对：<a href="http://www.jianshu.com/users/ef1058d2d851" target="_blank" rel="external">星夜暮晨</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+<p>作者：Arthur Knopper，<a href="https://www.ioscreator.com/tutorials/dragging-views-gestures-tutorial-ios10" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-11-07<br>译者：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="noopener">Crystal Sun</a>；校对：<a href="http://www.jianshu.com/users/ef1058d2d851" target="_blank" rel="noopener">星夜暮晨</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>iOS 的优势在于可以触摸和手势交互。在本节教程中，我们会展示一些借助拖曳手势识别器 (pan gesture recognizer) 来进行拖拽的自定义视图 (views)，本节教程使用 Xcode 8 和 iOS 10。</p>
@@ -113,18 +114,18 @@
 <p>首先，先创建随机出现在屏幕上的视图，菜单栏选择 File-&gt;New-&gt;File-&gt;iOS-&gt;Cocoa Touch Class，创建类文件，命名为 <strong>MyView</strong>，Subclass 选择 UIView。</p>
 <p><img src="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/581868752e69cfd82f6eb55a/1477994622410/?format=750w" alt=""></p>
 <p>找到 <strong>MyView.swift</strong> 文件，添加下列属性：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> lastLocation = <span class="type">CGPoint</span>(x: <span class="number">0</span>, y: <span class="number">0</span>)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> lastLocation = <span class="type">CGPoint</span>(x: <span class="number">0</span>, y: <span class="number">0</span>)</span><br></pre></td></tr></table></figure>
 <p>这个变量记录用户触摸点的最后位置。接下来实现 <code>init</code> 方法。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">override</span> <span class="keyword">init</span>(frame: <span class="type">CGRect</span>) &#123;</div><div class="line">    <span class="keyword">super</span>.<span class="keyword">init</span>(frame: frame)</div><div class="line">        </div><div class="line">    <span class="comment">// 初始化代码</span></div><div class="line">    <span class="keyword">let</span> panRecognizer = <span class="type">UIPanGestureRecognizer</span>(target:<span class="keyword">self</span>, action:#selector(<span class="type">MyView</span>.detectPan(<span class="number">_</span>:)))</div><div class="line">    <span class="keyword">self</span>.gestureRecognizers = [panRecognizer]</div><div class="line">        </div><div class="line">    <span class="comment">// 视图的颜色随机显示</span></div><div class="line">    <span class="keyword">let</span> blueValue = <span class="type">CGFloat</span>(<span class="type">Int</span>(arc4random() % <span class="number">255</span>)) / <span class="number">255.0</span></div><div class="line">    <span class="keyword">let</span> greenValue = <span class="type">CGFloat</span>(<span class="type">Int</span>(arc4random() % <span class="number">255</span>)) / <span class="number">255.0</span></div><div class="line">    <span class="keyword">let</span> redValue = <span class="type">CGFloat</span>(<span class="type">Int</span>(arc4random() % <span class="number">255</span>)) / <span class="number">255.0</span></div><div class="line">        </div><div class="line">    <span class="keyword">self</span>.backgroundColor = <span class="type">UIColor</span>(red:redValue, green: greenValue, blue: blueValue, alpha: <span class="number">1.0</span>)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">required</span> <span class="keyword">init</span>?(coder aDecoder: <span class="type">NSCoder</span>) &#123;</div><div class="line">    <span class="built_in">fatalError</span>(<span class="string">"init(coder:) has not been implemented"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">override</span> <span class="keyword">init</span>(frame: <span class="type">CGRect</span>) &#123;</span><br><span class="line">    <span class="keyword">super</span>.<span class="keyword">init</span>(frame: frame)</span><br><span class="line">        </span><br><span class="line">    <span class="comment">// 初始化代码</span></span><br><span class="line">    <span class="keyword">let</span> panRecognizer = <span class="type">UIPanGestureRecognizer</span>(target:<span class="keyword">self</span>, action:#selector(<span class="type">MyView</span>.detectPan(<span class="number">_</span>:)))</span><br><span class="line">    <span class="keyword">self</span>.gestureRecognizers = [panRecognizer]</span><br><span class="line">        </span><br><span class="line">    <span class="comment">// 视图的颜色随机显示</span></span><br><span class="line">    <span class="keyword">let</span> blueValue = <span class="type">CGFloat</span>(<span class="type">Int</span>(arc4random() % <span class="number">255</span>)) / <span class="number">255.0</span></span><br><span class="line">    <span class="keyword">let</span> greenValue = <span class="type">CGFloat</span>(<span class="type">Int</span>(arc4random() % <span class="number">255</span>)) / <span class="number">255.0</span></span><br><span class="line">    <span class="keyword">let</span> redValue = <span class="type">CGFloat</span>(<span class="type">Int</span>(arc4random() % <span class="number">255</span>)) / <span class="number">255.0</span></span><br><span class="line">        </span><br><span class="line">    <span class="keyword">self</span>.backgroundColor = <span class="type">UIColor</span>(red:redValue, green: greenValue, blue: blueValue, alpha: <span class="number">1.0</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">required</span> <span class="keyword">init</span>?(coder aDecoder: <span class="type">NSCoder</span>) &#123;</span><br><span class="line">    <span class="built_in">fatalError</span>(<span class="string">"init(coder:) has not been implemented"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>首先给视图添加一个拖曳手势识别器 (pan gesture recognizer)，这样就可以点击选中并拖拽视图到新的位置。接下来创建随机颜色，以作为视图的背景色。然后实现 <code>detectPan</code> 方法，这样在每次识别到手势后，都会调用 <code>detectPan</code> 方法。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">detectPan</span><span class="params">(<span class="number">_</span> recognizer:UIPanGestureRecognizer)</span></span> &#123;</div><div class="line">    <span class="keyword">let</span> translation  = recognizer.translation(<span class="keyword">in</span>: <span class="keyword">self</span>.superview)</div><div class="line">    <span class="keyword">self</span>.center = <span class="type">CGPoint</span>(x: lastLocation.x + translation.x, y: lastLocation.y + translation.y)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">detectPan</span><span class="params">(<span class="number">_</span> recognizer:UIPanGestureRecognizer)</span></span> &#123;</span><br><span class="line">    <span class="keyword">let</span> translation  = recognizer.translation(<span class="keyword">in</span>: <span class="keyword">self</span>.superview)</span><br><span class="line">    <span class="keyword">self</span>.center = <span class="type">CGPoint</span>(x: lastLocation.x + translation.x, y: lastLocation.y + translation.y)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><code>translation</code> 变量检测到新的坐标值之后，视图的中心将根据改变后的坐标值做出相应调整。当用户点击视图时，调用 <strong>touchesBegan:event</strong> 方法，下面就来实现此方法。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">touchesBegan</span><span class="params">(<span class="number">_</span> touches: <span class="params">(Set&lt;UITouch&gt;!)</span></span></span>, with event: <span class="type">UIEvent</span>!) &#123;</div><div class="line">    <span class="comment">// 把当前被选中的视图放到前面</span></div><div class="line">    <span class="keyword">self</span>.superview?.bringSubview(toFront: <span class="keyword">self</span>)</div><div class="line">      </div><div class="line">    <span class="comment">// 记住原来的位置</span></div><div class="line">    lastLocation = <span class="keyword">self</span>.center</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">touchesBegan</span><span class="params">(<span class="number">_</span> touches: <span class="params">(Set&lt;UITouch&gt;!)</span></span></span>, with event: <span class="type">UIEvent</span>!) &#123;</span><br><span class="line">    <span class="comment">// 把当前被选中的视图放到前面</span></span><br><span class="line">    <span class="keyword">self</span>.superview?.bringSubview(toFront: <span class="keyword">self</span>)</span><br><span class="line">      </span><br><span class="line">    <span class="comment">// 记住原来的位置</span></span><br><span class="line">    lastLocation = <span class="keyword">self</span>.center</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>选中某个视图后，这个视图会出现在其他视图的前面，其中心位置的坐标值就是<code>lastlocation</code> 变量值。现在，自定义的视图差不多完成了，移植到视图控制器 (view controller) 上吧。在 <strong>ViewController.swift</strong> 文件中实现 <strong>viewDidLoad</strong> 方法</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</div><div class="line">    <span class="keyword">super</span>.viewDidLoad()</div><div class="line">        </div><div class="line">    <span class="keyword">let</span> halfSizeOfView = <span class="number">25.0</span></div><div class="line">    <span class="keyword">let</span> maxViews = <span class="number">25</span></div><div class="line">    <span class="keyword">let</span> insetSize = <span class="keyword">self</span>.view.bounds.insetBy(dx: <span class="type">CGFloat</span>(<span class="type">Int</span>(<span class="number">2</span> * halfSizeOfView)), dy: <span class="type">CGFloat</span>(<span class="type">Int</span>(<span class="number">2</span> * halfSizeOfView))).size</div><div class="line">        </div><div class="line">    <span class="comment">// 添加视图</span></div><div class="line">    <span class="keyword">for</span> <span class="number">_</span> <span class="keyword">in</span> <span class="number">0</span>..&lt;maxViews &#123;</div><div class="line">        <span class="keyword">let</span> pointX = <span class="type">CGFloat</span>(<span class="type">UInt</span>(arc4random() % <span class="type">UInt32</span>(<span class="type">UInt</span>(insetSize.width))))</div><div class="line">        <span class="keyword">let</span> pointY = <span class="type">CGFloat</span>(<span class="type">UInt</span>(arc4random() % <span class="type">UInt32</span>(<span class="type">UInt</span>(insetSize.height))))</div><div class="line">            </div><div class="line">        <span class="keyword">let</span> newView = <span class="type">MyView</span>(frame: <span class="type">CGRect</span>(x: pointX, y: pointY, width: <span class="number">50</span>, height: <span class="number">50</span>))</div><div class="line">        <span class="keyword">self</span>.view.addSubview(newView)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">super</span>.viewDidLoad()</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">let</span> halfSizeOfView = <span class="number">25.0</span></span><br><span class="line">    <span class="keyword">let</span> maxViews = <span class="number">25</span></span><br><span class="line">    <span class="keyword">let</span> insetSize = <span class="keyword">self</span>.view.bounds.insetBy(dx: <span class="type">CGFloat</span>(<span class="type">Int</span>(<span class="number">2</span> * halfSizeOfView)), dy: <span class="type">CGFloat</span>(<span class="type">Int</span>(<span class="number">2</span> * halfSizeOfView))).size</span><br><span class="line">        </span><br><span class="line">    <span class="comment">// 添加视图</span></span><br><span class="line">    <span class="keyword">for</span> <span class="number">_</span> <span class="keyword">in</span> <span class="number">0</span>..&lt;maxViews &#123;</span><br><span class="line">        <span class="keyword">let</span> pointX = <span class="type">CGFloat</span>(<span class="type">UInt</span>(arc4random() % <span class="type">UInt32</span>(<span class="type">UInt</span>(insetSize.width))))</span><br><span class="line">        <span class="keyword">let</span> pointY = <span class="type">CGFloat</span>(<span class="type">UInt</span>(arc4random() % <span class="type">UInt32</span>(<span class="type">UInt</span>(insetSize.height))))</span><br><span class="line">            </span><br><span class="line">        <span class="keyword">let</span> newView = <span class="type">MyView</span>(frame: <span class="type">CGRect</span>(x: pointX, y: pointY, width: <span class="number">50</span>, height: <span class="number">50</span>))</span><br><span class="line">        <span class="keyword">self</span>.view.addSubview(newView)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>有 25 个 50x50 大小的视图随机地出现在主界面上，运行工程，点击并拖动一个视图，这个视图会一直在其他视图上面。</p>
 <p><img src="https://static1.squarespace.com/static/52428a0ae4b0c4a5c2a2cede/t/581a6663197aea1a94d7f277/1478125165551/?format=500w" alt=""></p>
-<p>在 ioscreator 的 <a href="https://github.com/ioscreator/ioscreator" target="_blank" rel="external">github</a> 上可以下载到本节课程 <strong>IOS10DraggingViewsTutorial</strong> 的源代码。</p>
+<p>在 ioscreator 的 <a href="https://github.com/ioscreator/ioscreator" target="_blank" rel="noopener">github</a> 上可以下载到本节课程 <strong>IOS10DraggingViewsTutorial</strong> 的源代码。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
@@ -237,6 +238,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -285,7 +290,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -434,11 +439,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -450,11 +455,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -462,7 +463,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -474,11 +475,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -486,7 +491,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -680,7 +685,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

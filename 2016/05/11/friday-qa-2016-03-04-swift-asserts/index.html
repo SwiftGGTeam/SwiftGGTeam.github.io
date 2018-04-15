@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/05/11/friday-qa-2016-03-04-swift-asserts/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="在 Swift 里面怎么实现断言调用呢，下面就来说 Swift 中断言机制的实现细节。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.387Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Friday Q&amp;A 2016-03-04：Swift 断言">
 <meta name="twitter:description" content="在 Swift 里面怎么实现断言调用呢，下面就来说 Swift 中断言机制的实现细节。">
@@ -88,7 +89,7 @@
         <a href="/2016/05/11/friday-qa-2016-03-04-swift-asserts/" target="_blank" title="Friday Q&amp;A 2016-03-04：Swift 断言" itemprop="url">Friday Q&amp;A 2016-03-04：Swift 断言</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-05-11T01:00:00.000Z" itemprop="datePublished">2016-05-11</time>
+      <time datetime="2016-05-11T09:00:00.000Z" itemprop="datePublished">2016-05-11</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,26 +97,26 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Mike Ash，<a href="https://www.mikeash.com/pyblog/friday-qa-2016-03-04-swift-asserts.html" target="_blank" rel="external">原文链接</a>，原文日期：2016-03-04<br>译者：<a href="http://zltunes.com" target="_blank" rel="external">zltunes</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="external">Cee</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
+<p>作者：Mike Ash，<a href="https://www.mikeash.com/pyblog/friday-qa-2016-03-04-swift-asserts.html" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-03-04<br>译者：<a href="http://zltunes.com" target="_blank" rel="noopener">zltunes</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>断言是一种非常有用的机制，它可以检查代码中的假设部分，确保错误能够被及时发现。今天我将探讨 Swift 中提供的断言调用以及它们的实现，这个话题是由读者 Matthew Young 提出的。</p>
-<p>我不会花太多时间讨论一般意义上的断言是什么或者在哪里使用它们。本文将着眼于 Swift 中提供的断言机制以及一些实现的细节。如果你想要了解如何在代码中充分利用断言，可以阅读我以前的文章 <a href="https://www.mikeash.com/pyblog/friday-qa-2013-05-03-proper-use-of-asserts.html" target="_blank" rel="external">Proper Use of Asserts（断言的正确使用）</a>。</p>
+<p>我不会花太多时间讨论一般意义上的断言是什么或者在哪里使用它们。本文将着眼于 Swift 中提供的断言机制以及一些实现的细节。如果你想要了解如何在代码中充分利用断言，可以阅读我以前的文章 <a href="https://www.mikeash.com/pyblog/friday-qa-2013-05-03-proper-use-of-asserts.html" target="_blank" rel="noopener">Proper Use of Asserts（断言的正确使用）</a>。</p>
 <a id="more"></a>
 <h3 id="API"><a href="#API" class="headerlink" title="API"></a>API</h3><p>在 Swift 标准库中有两个主要的断言函数。</p>
 <p>第一个函数被创造性地命名为 <code>assert</code>。调用时需要一个真命题：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="built_in">assert</span>(x &gt;= <span class="number">0</span>) <span class="comment">// x 不能为负</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="built_in">assert</span>(x &gt;= <span class="number">0</span>) <span class="comment">// x 不能为负</span></span><br></pre></td></tr></table></figure>
 <p>该函数提供一个可选参数，用于命题为假时打印错误信息：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="built_in">assert</span>(x &gt;= <span class="number">0</span>, <span class="string">"x can't be negative here"</span>)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="built_in">assert</span>(x &gt;= <span class="number">0</span>, <span class="string">"x can't be negative here"</span>)</span><br></pre></td></tr></table></figure>
 <p><code>assert</code> 只有在非优化构建时有效。在开启优化的情况下这行代码不会被编译。当存在某些条件计算耗性能，从而拖慢构建速度，但这些条件又是有用的，调试时必须进行检查，那么断言的这一特性就显得很有用了。</p>
 <p>有些人倾向仅在调试版本中使用断言，理论上调试的时候去做一些检查是个好习惯，但最好保证 app 不会在实际使用时崩溃。不管在断言检查中有没有出现过，一旦（在实际使用中）出现错误，就会导致非常严重的后果。更好的做法是，如果在实际使用时出现错误，应用能迅速退出。这就引出了下一个函数。</p>
 <p>函数 <code>precondition</code> 与 <code>assert</code> 非常像，调用时二者看起来一样：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="built_in">precondition</span>(x &gt;= <span class="number">0</span>) <span class="comment">// x 不能为负</span></div><div class="line"><span class="built_in">precondition</span>(x &gt;= <span class="number">0</span>, <span class="string">"x can't be negative here"</span>)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="built_in">precondition</span>(x &gt;= <span class="number">0</span>) <span class="comment">// x 不能为负</span></span><br><span class="line"><span class="built_in">precondition</span>(x &gt;= <span class="number">0</span>, <span class="string">"x can't be negative here"</span>)</span><br></pre></td></tr></table></figure>
 <p>不同之处在于该函数在优化构建条件下也会执行检查。这使得它成为断言检查的一个更好的选择，并且检查速度足够快。</p>
 <p>尽管 <code>precondition</code> 在优化构建中有效，在「非检查（unchecked）」的优化构建中仍是无效的。「非检查」的构建是通过在命令行指定 <code>-Ounchecked</code> 来实现的。该指令的执行不仅会移除 <code>precondition</code> 调用，还会进行数组边界检查。这是很危险的，除非你别无选择，不得不执行该命令外尽量不要用。</p>
 <p>关于非检查构建有趣的一点是，尽管 <code>precondition</code> 检查被移除了，优化器仍会假设命题为真，并在此基础上优化下面的代码。在上述例子中，生成代码不会再检查 <code>x</code> 是否为负，但在接下来的编译中会默认 <code>x &gt;= 0</code>。这一点对于 <code>assert</code> 也是成立的。</p>
 <p>这些函数各自有一个不带条件的变体，用来标志失败的情况。上述两个函数的变体分别是 <code>assertionFailure</code> 和 <code>preconditionFailure</code>。当你要进行断言检查的条件与该函数的调用不太相符时，变体就显得很有用了。例如：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">guard</span> <span class="keyword">case</span> .<span class="type">Thingy</span>(<span class="keyword">let</span> value) = someEnum <span class="keyword">else</span> &#123;</div><div class="line">  <span class="built_in">preconditionFailure</span>(<span class="string">"This code should only be called with a Thingy."</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">guard</span> <span class="keyword">case</span> .<span class="type">Thingy</span>(<span class="keyword">let</span> value) = someEnum <span class="keyword">else</span> &#123;</span><br><span class="line">  <span class="built_in">preconditionFailure</span>(<span class="string">"This code should only be called with a Thingy."</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>优化下的行为和带条件时类似，开启优化时 <code>assertionFailure</code> 不会被编译，<code>preconditionFailure</code> 则保留，但在「非检查」优化构建时仍会被移除。「非检查」构建时，优化器假设这些函数永远不会执行，并基于该假设生成代码。</p>
 <p>最后还有个函数 <code>fatalError</code>。该函数表示出现异常并终止程序，而不管构建是否开启优化或检查。</p>
 <h3 id="记录调用者信息"><a href="#记录调用者信息" class="headerlink" title="记录调用者信息"></a>记录调用者信息</h3><p>当断言检查未通过，会得到这样一条信息：</p>
@@ -124,50 +125,50 @@
 </blockquote>
 <p>程序是如何获知文件和代码行的信息的呢？</p>
 <p>在 C 语言中，我们将 <code>assert</code> 当做宏指令来用，同时使用 <code>__FILE__</code> 和 <code>__LINE__</code> 这两个神奇的标识符来获取信息：</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">define</span> assert(condition) do &#123; \</span></div><div class="line">  <span class="meta-keyword">if</span>(!(condition)) &#123; \</div><div class="line">      fprintf(stderr, <span class="meta-string">"Assertion failed %s in file %s line %d\n"</span>, #condition, __FILE__, __LINE__); \</div><div class="line">      abort(); \</div><div class="line">  &#125; \</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> assert(condition) do &#123; \</span></span><br><span class="line">  <span class="keyword">if</span>(!(condition)) &#123; \</span><br><span class="line">      <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"Assertion failed %s in file %s line %d\n"</span>, #condition, __FILE__, __LINE__); \</span><br><span class="line">      <span class="built_in">abort</span>(); \</span><br><span class="line">  &#125; \</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这些函数最终以调用者的文件和代码行信息结尾，就是因为此处的宏定义。Swift 中没有宏的概念，那该怎么办？</p>
 <p>Swift 中可以使用默认参数值达到同样效果。上述神奇的标识符可被当做参数的默认值使用。如果调用者没有提供一个确切的值，便可将调用者所处的文件及代码行作为默认值。目前，这两个神奇的标识符分别是 <code>__FILE__</code> 和 <code>__LINE__</code>，但在 Swift 下一版本中会变成 <code>#file</code> 和 <code>#line</code>，更加符合 Swift 风格。</p>
 <p>探讨实际中的使用前，我们先看看 <code>assert</code> 的定义：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">assert</span><span class="params">(</span></span></div><div class="line">  @autoclosure condition: <span class="params">()</span> -&gt; <span class="type">Bool</span>,</div><div class="line">  <span class="meta">@autoclosure</span> <span class="number">_</span> message: () -&gt; <span class="type">String</span> = <span class="type">String</span>(),</div><div class="line">  file: <span class="type">StaticString</span> = #file, line: <span class="type">UInt</span> = #line</div><div class="line">)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">assert</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">  @autoclosure condition: <span class="params">()</span></span></span> -&gt; <span class="type">Bool</span>,</span><br><span class="line">  <span class="meta">@autoclosure</span> <span class="number">_</span> message: () -&gt; <span class="type">String</span> = <span class="type">String</span>(),</span><br><span class="line">  file: <span class="type">StaticString</span> = #file, line: <span class="type">UInt</span> = #line</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
 <p>通常情况下，调用 <code>assert</code> 仅传递一个或两个参数。<code>file</code> 和 <code>line</code> 参数则作为默认值，用来传递调用者的相关信息。</p>
 <p>没有<em>强制要求</em>必须使用默认值，如果需要的话你可以传入其他的值。比如：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="built_in">assert</span>(<span class="literal">false</span>, <span class="string">"Guess where!"</span>, file: <span class="string">"not here"</span>, line: <span class="number">42</span>)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="built_in">assert</span>(<span class="literal">false</span>, <span class="string">"Guess where!"</span>, file: <span class="string">"not here"</span>, line: <span class="number">42</span>)</span><br></pre></td></tr></table></figure>
 <p>最终输出：</p>
 <blockquote>
 <p>assertion failed: Guess where!: file not here, line 42</p>
 </blockquote>
 <p>有种更加实用的用法，你可以写一个包装器来保留原始调用者的信息，例如：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">assertWrapper</span><span class="params">(</span></span></div><div class="line">  @autoclosure condition: <span class="params">()</span> -&gt; <span class="type">Bool</span>,</div><div class="line">  <span class="meta">@autoclosure</span> <span class="number">_</span> message: () -&gt; <span class="type">String</span> = <span class="type">String</span>(),</div><div class="line">  file: <span class="type">StaticString</span> = #file, line: <span class="type">UInt</span> = #line</div><div class="line">) &#123;</div><div class="line">  <span class="keyword">if</span> !condition() &#123;</div><div class="line">      <span class="built_in">print</span>(<span class="string">"Oh no!"</span>)</div><div class="line">  &#125;</div><div class="line">  <span class="built_in">assert</span>(condition, message, file: file, line: line)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">assertWrapper</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">  @autoclosure condition: <span class="params">()</span></span></span> -&gt; <span class="type">Bool</span>,</span><br><span class="line">  <span class="meta">@autoclosure</span> <span class="number">_</span> message: () -&gt; <span class="type">String</span> = <span class="type">String</span>(),</span><br><span class="line">  file: <span class="type">StaticString</span> = #file, line: <span class="type">UInt</span> = #line</span><br><span class="line">) &#123;</span><br><span class="line">  <span class="keyword">if</span> !condition() &#123;</span><br><span class="line">      <span class="built_in">print</span>(<span class="string">"Oh no!"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">assert</span>(condition, message, file: file, line: line)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>Swift 版的 <code>assert</code> 有个缺陷。上文提到的 C 版本的 <code>assert</code> 提供 <code>#condition</code>关键字，断言检查未通过时可以输出表达式。而在 Swift 中不可以。因此，尽管 Swift 可以打印断言失败时的文件和代码行信息，但用来检查的表达式是无从获知的。</p>
 <h3 id="自动闭包"><a href="#自动闭包" class="headerlink" title="自动闭包"></a>自动闭包</h3><p>上述函数都使用 <code>@autoclosure</code> 来修饰 <code>condition</code> 和 <code>message</code> 参数，为什么？</p>
 <p>先快速回顾一下 <code>@autoclosure</code>。<code>@autoclosure</code> 修饰的无参闭包可作为某个函数的形参，调用该函数时，调用者提供一个表达式作为实参。这个表达式会被包装成闭包并传递给函数，例如：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(@autoclosure value: <span class="params">()</span></span></span> -&gt; <span class="type">Int</span>) &#123;</div><div class="line">  <span class="built_in">print</span>(value())</div><div class="line">&#125;</div><div class="line"></div><div class="line">f(<span class="number">42</span>)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(@autoclosure value: <span class="params">()</span></span></span> -&gt; <span class="type">Int</span>) &#123;</span><br><span class="line">  <span class="built_in">print</span>(value())</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">f(<span class="number">42</span>)</span><br></pre></td></tr></table></figure>
 <p>等价于：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(value: <span class="params">()</span></span></span> -&gt; <span class="type">Int</span>) &#123;</div><div class="line">  <span class="built_in">print</span>(value())</div><div class="line">&#125;</div><div class="line"></div><div class="line">f(&#123; <span class="number">42</span> &#125;)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(value: <span class="params">()</span></span></span> -&gt; <span class="type">Int</span>) &#123;</span><br><span class="line">  <span class="built_in">print</span>(value())</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">f(&#123; <span class="number">42</span> &#125;)</span><br></pre></td></tr></table></figure>
 <p>为什么要把表达式包装成闭包传递？因为这样可以让调用的函数来决定表达式具体执行的时间。例如，对于实现两个布尔类型的 &amp;&amp; 运算符时，我们可以通过传入两个 <code>Bool</code> 参数实现：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> &amp;&amp;<span class="params">(a: Bool, b: Bool)</span></span> -&gt; <span class="type">Bool</span> &#123;</div><div class="line">        <span class="keyword">if</span> a &#123;</div><div class="line">            <span class="keyword">if</span> b &#123;</div><div class="line">                <span class="keyword">return</span> <span class="literal">true</span></div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> <span class="literal">false</span></div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> &amp;&amp;<span class="params">(a: Bool, b: Bool)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> a &#123;</span><br><span class="line">            <span class="keyword">if</span> b &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
 <p>有些情况下我们直接调用就可以：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">x &gt; <span class="number">3</span> &amp;&amp; x &lt; <span class="number">10</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">x &gt; <span class="number">3</span> &amp;&amp; x &lt; <span class="number">10</span></span><br></pre></td></tr></table></figure>
 <p>但如果右操作数计算复杂的话是很耗时的：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">x &gt; <span class="number">3</span> &amp;&amp; expensiveFunction(x) &lt; <span class="number">10</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">x &gt; <span class="number">3</span> &amp;&amp; expensiveFunction(x) &lt; <span class="number">10</span></span><br></pre></td></tr></table></figure>
 <p>假定左操作数为 <code>false</code> 时，右操作数不会被执行的话，还有可能直接崩溃掉：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">optional</span> != <span class="literal">nil</span> &amp;&amp; <span class="keyword">optional</span>!.value &gt; <span class="number">3</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">optional</span> != <span class="literal">nil</span> &amp;&amp; <span class="keyword">optional</span>!.value &gt; <span class="number">3</span></span><br></pre></td></tr></table></figure>
 <p>跟 C 语言一样，Swift 中的 <code>&amp;&amp;</code> 也是短路操作符。左操作数为 <code>false</code> 时就不再计算右操作数了。因此该表达式在 Swift 中是安全的，但对我们的函数则不行。<code>@autoclosure</code> 使得函数可以控制表达式执行的时间，保证只有左操作数为 <code>true</code>的前提下才去执行该表达式：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> &amp;&amp;<span class="params">(a: Bool, @autoclosure b: <span class="params">()</span></span></span> -&gt; <span class="type">Bool</span>) -&gt; <span class="type">Bool</span> &#123;</div><div class="line">  <span class="keyword">if</span> a &#123;</div><div class="line">    <span class="keyword">if</span> b() &#123;</div><div class="line">      <span class="keyword">return</span> <span class="literal">true</span></div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">return</span> <span class="literal">false</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> &amp;&amp;<span class="params">(a: Bool, @autoclosure b: <span class="params">()</span></span></span> -&gt; <span class="type">Bool</span>) -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">  <span class="keyword">if</span> a &#123;</span><br><span class="line">    <span class="keyword">if</span> b() &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>现在就符合 Swift 的语义了，当 a 为 false 时 b 永远不会执行。</p>
 <p>对断言而言，则完全是考虑性能问题。因为断言消息有可能是很耗时的操作。例如：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="built_in">assert</span>(widget.valid, <span class="string">"Widget wasn't valid: <span class="subst">\(widget.<span class="built_in">dump</span>()</span>)"</span>)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="built_in">assert</span>(widget.valid, <span class="string">"Widget wasn't valid: <span class="subst">\(widget.<span class="built_in">dump</span>()</span>)"</span>)</span><br></pre></td></tr></table></figure>
 <p>你肯定不想每次都去计算一长串字符串，即便 <code>widget</code> 是合法、什么都不必输出的时候。对消息参数使用 <code>@autoclosure</code> 修饰，<code>assert</code> 便可避免计算 <code>message</code> 表达式，除非当断言检查不通过的时候。</p>
 <p>条件本身也是 <code>@autoclosure</code>，因为优化构建下 <code>assert</code> 不会去检查条件。既然不去检查，也就不涉及计算了。使用 <code>@autoclosure</code> 意味着不会拖慢优化构建的速度：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="built_in">assert</span>(superExpensiveFunction())</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="built_in">assert</span>(superExpensiveFunction())</span><br></pre></td></tr></table></figure>
 <p>本文提到的 API 中的函数都使用了 <code>@autoclosure</code> 来保证除非不得已情况下，尽量避免参数的计算。出于某种原因，连 <code>fatalError</code> 都使用了 <code>@autoclosure</code> 修饰，尽管它是无条件执行的。</p>
 <h3 id="代码移除"><a href="#代码移除" class="headerlink" title="代码移除"></a>代码移除</h3><p>基于代码的编译情况，这些函数会在代码生成时被移除。它们位于 Swift 标准库，而不是你自己写的代码中，而 Swift 标准库的编译远早于你自己的代码。这一切是怎么协调的？</p>
 <p>在 C 语言中，这一切都跟宏相关。宏仅存在于头部，因此会在执行代码行的时候编译，尽管原则上这些代码隶属于库，实际上它们直接被当做你自己的代码。这意味着它们可以检查是否设置了 <code>DEBUG</code> 宏（或者类似标识），如果未设置就不会生成代码。例如：</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">if</span> DEBUG</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> assert(condition) do &#123; \</span></div><div class="line">        <span class="meta-keyword">if</span>(!(condition)) &#123; \</div><div class="line">            fprintf(stderr, <span class="meta-string">"Assertion failed %s in file %s line %d\n"</span>, #condition, __FILE__, __LINE__); \</div><div class="line">            abort(); \</div><div class="line">        &#125; \</div><div class="line">    &#125;</div><div class="line"><span class="meta">#<span class="meta-keyword">else</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> assert(condition) (void)0</span></div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">if</span> DEBUG</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> assert(condition) do &#123; \</span></span><br><span class="line">        <span class="keyword">if</span>(!(condition)) &#123; \</span><br><span class="line">            <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"Assertion failed %s in file %s line %d\n"</span>, #condition, __FILE__, __LINE__); \</span><br><span class="line">            <span class="built_in">abort</span>(); \</span><br><span class="line">        &#125; \</span><br><span class="line">    &#125;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> assert(condition) (void)0</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure>
 <p>又一次，在 Swift 中没有宏的概念，那是怎么做的呢？</p>
-<p>如果你<a href="https://github.com/apple/swift/blob/0619e57a61f27f721e273ab6f808ac81011aeb2c/stdlib/public/core/Assert.swift" target="_blank" rel="external">看过这些函数在标准库中的定义</a>，会发现它们都用 <code>@_transparent</code> 进行了注释。该特性使得函数有点类似于宏。这些函数的调用都是内联的，而不是当做独立函数来调用。当你在 Swift 代码中写入 <code>precondition(...)</code> 语句的时候，标准库中 <code>precondition</code> 的函数体会被直接插入你的代码中，就好像你自己复制粘贴过去一样。这意味着这部分代码的编译情况跟其余代码一样，优化器完全可以看到函数体内的代码。可以看到，当优化开启的时候 <code>assert</code> 编译器没有做任何事，而是被移除掉了。</p>
+<p>如果你<a href="https://github.com/apple/swift/blob/0619e57a61f27f721e273ab6f808ac81011aeb2c/stdlib/public/core/Assert.swift" target="_blank" rel="noopener">看过这些函数在标准库中的定义</a>，会发现它们都用 <code>@_transparent</code> 进行了注释。该特性使得函数有点类似于宏。这些函数的调用都是内联的，而不是当做独立函数来调用。当你在 Swift 代码中写入 <code>precondition(...)</code> 语句的时候，标准库中 <code>precondition</code> 的函数体会被直接插入你的代码中，就好像你自己复制粘贴过去一样。这意味着这部分代码的编译情况跟其余代码一样，优化器完全可以看到函数体内的代码。可以看到，当优化开启的时候 <code>assert</code> 编译器没有做任何事，而是被移除掉了。</p>
 <p>标准库是一个独立的库，独立库中的函数是怎么内联进你自己的代码中的呢？对 C 语言来讲，库中包括编译对象的代码，这个问题显得没有意义。</p>
-<p>Swift 标准库是一个 <code>.swiftmodule</code> 文件，完全不同于 <code>.dylib</code> 或者 <code>.a</code> 文件。一个 <code>.swiftmodule</code> 文件包含模块中的所有对象的声明，也可以包括完整的实现。引用 <a href="https://github.com/apple/swift/blob/cf8baedee2b09c9dd2d9c5519bf61629d1f6ebc8/docs/Serialization.rst" target="_blank" rel="external">The module format documentation</a> 中的一句话：</p>
+<p>Swift 标准库是一个 <code>.swiftmodule</code> 文件，完全不同于 <code>.dylib</code> 或者 <code>.a</code> 文件。一个 <code>.swiftmodule</code> 文件包含模块中的所有对象的声明，也可以包括完整的实现。引用 <a href="https://github.com/apple/swift/blob/cf8baedee2b09c9dd2d9c5519bf61629d1f6ebc8/docs/Serialization.rst" target="_blank" rel="noopener">The module format documentation</a> 中的一句话：</p>
 <blockquote>
 <p>The SIL block contains SIL-level implementations that can be imported into a client’s SILModule context.（一个 SIL 块包括可以被导入到用户定义的 SILModule 上下文中的 SIL 层实现。）</p>
 </blockquote>
@@ -175,7 +176,7 @@
 <h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>Swift 提供了一系列好用的断言函数。<code>assert</code> 和 <code>assertionFailure</code> 函数仅在优化未开启时有效。这对于检查那些耗性能的条件是很有用的，但通常情况下应尽量避免使用。<code>precondition</code> 和 <code>preconditionFailure</code> 函数在优化开启时也有效。</p>
 <p>这些函数对 <code>condition</code> 和 <code>message</code> 的参数使用了 <code>@autoclosure</code> 修饰，使得函数可以控制参数计算的时机。从而避免了每次断言检查都去计算自定义的 <code>message</code>，同时也避免了在优化开启，断言函数无效时去检查 <code>condition</code>。</p>
 <p>断言函数是标准库的一部分，但它们使用了 <code>@_transparent</code> 修饰，使得生成的中间代码可以导入到模块中。当函数被调用时，整个函数体会被内联至调用处，因此优化器可以在需要的时候移除它们。</p>
-<p>今天就讲到这里！希望这篇文章可以帮助你在自己的代码中更大胆地使用断言。断言是很有用的机制，它可以让问题一旦发生就及时明显地显现出来，而不是发生很久后才显示出一些“症状”。下次会带来一些更棒的想法。每周周五问答都是基于读者的一些想法建立的，如果你也有想在这里讨论的话题，<a href="mailto:mike@mikeash.com" target="_blank" rel="external">就快发过来吧</a>！</p>
+<p>今天就讲到这里！希望这篇文章可以帮助你在自己的代码中更大胆地使用断言。断言是很有用的机制，它可以让问题一旦发生就及时明显地显现出来，而不是发生很久后才显示出一些“症状”。下次会带来一些更棒的想法。每周周五问答都是基于读者的一些想法建立的，如果你也有想在这里讨论的话题，<a href="mailto:mike@mikeash.com" target="_blank" rel="noopener">就快发过来吧</a>！</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
@@ -288,6 +289,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -336,7 +341,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -485,11 +490,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -501,11 +506,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -513,7 +514,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -525,11 +526,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -537,7 +542,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -731,7 +736,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

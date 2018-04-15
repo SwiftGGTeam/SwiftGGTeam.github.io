@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/05/06/units/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="很多开发需要处理度量单位，本文说的就是如何解决不同单位的度量问题，有兴趣的来看下吧。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.387Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="度量单位">
 <meta name="twitter:description" content="很多开发需要处理度量单位，本文说的就是如何解决不同单位的度量问题，有兴趣的来看下吧。">
@@ -88,7 +89,7 @@
         <a href="/2016/05/06/units/" target="_blank" title="度量单位" itemprop="url">度量单位</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-05-05T16:00:00.000Z" itemprop="datePublished">2016-05-06</time>
+      <time datetime="2016-05-06T00:00:00.000Z" itemprop="datePublished">2016-05-06</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,7 +97,7 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：KHANLOU，<a href="http://khanlou.com/2016/03/units/" target="_blank" rel="external">原文链接</a>，原文日期：2016-03-18<br>译者：<a href="http://www.futantan.com" target="_blank" rel="external">Prayer</a>；校对：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="external">千叶知风</a></p>
+<p>作者：KHANLOU，<a href="http://khanlou.com/2016/03/units/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-03-18<br>译者：<a href="http://www.futantan.com" target="_blank" rel="noopener">Prayer</a>；校对：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>在我正在做的一个项目中，有大量关于度量单位的处理。(或许我应该继续去推进项目进展而不是在这儿写这篇博客)</p>
@@ -104,22 +105,22 @@
 <p>然而，7200 这个数字并没有什么实际意义。如果你对着这个数字看很长时间，拥有很好的数学计算功底的话，有可能你会猜到这个数字代表着两个小时包含的秒数。然而如果不是整数个小时换算成秒的话，你可能永远也猜不出来。</p>
 <a id="more"></a>
 <p>在你的应用中，7200 这个魔数不断的传递和使用，这个数字的度量单位是什么将变得越来越不清晰。</p>
-<p>我们需要使用一种方式，将整数和元数据的信息关联起来。<a href="https://nomothetis.svbtle.com/types-as-units" target="_blank" rel="external">将类型描述为度量单位</a> 这篇文章有过相关的讨论，但是我们能否解决不同单位的度量问题，并且使用类型来描述呢？如果这样的话，当我们用 2 小时加上 30 分钟的时候，就不会得到 32 这样无意义的结果。</p>
-<p>（当然，也有一些<a href="https://fsharpforfunandprofit.com/posts/units-of-measure/" target="_blank" rel="external">语言层面解决这个问题的方案</a>，但是大多数的语言不支持这样的操作）</p>
+<p>我们需要使用一种方式，将整数和元数据的信息关联起来。<a href="https://nomothetis.svbtle.com/types-as-units" target="_blank" rel="noopener">将类型描述为度量单位</a> 这篇文章有过相关的讨论，但是我们能否解决不同单位的度量问题，并且使用类型来描述呢？如果这样的话，当我们用 2 小时加上 30 分钟的时候，就不会得到 32 这样无意义的结果。</p>
+<p>（当然，也有一些<a href="https://fsharpforfunandprofit.com/posts/units-of-measure/" target="_blank" rel="noopener">语言层面解决这个问题的方案</a>，但是大多数的语言不支持这样的操作）</p>
 <p>我们仍然希望能够用 2 个小时加上 30 分钟，并且得到一个有意义的结果，所以在我们的类型系统中，<code>Time</code> 需要是一个度量实体，同时 <code>Hours</code> 和 <code>Seconds</code> 也需要是。</p>
 <p>表示 <code>Time</code> 的可以有多个单位，这些单位都必须能够以秒的方式来度量。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">protocol Time &#123;</div><div class="line">    var inSeconds: Double &#123; get &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">protocol Time &#123;</span><br><span class="line">    var inSeconds: Double &#123; get &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>每个时间的单位类型都是独立的，但是都需要遵守 Time 协议。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Hours</span>: <span class="title">Time</span> </span>&#123;</div><div class="line">    <span class="keyword">let</span> value: <span class="type">Double</span></div><div class="line">    </div><div class="line">    <span class="keyword">var</span> inSeconds: <span class="type">Double</span> &#123;</div><div class="line">        <span class="keyword">return</span> value * <span class="number">3600</span></div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Minutes</span>: <span class="title">Time</span> </span>&#123;</div><div class="line">    <span class="keyword">let</span> value: <span class="type">Double</span></div><div class="line">    </div><div class="line">    <span class="keyword">var</span> inSeconds: <span class="type">Double</span> &#123;</div><div class="line">        <span class="keyword">return</span> value * <span class="number">60</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Hours</span>: <span class="title">Time</span> </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> value: <span class="type">Double</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">var</span> inSeconds: <span class="type">Double</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> value * <span class="number">3600</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Minutes</span>: <span class="title">Time</span> </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> value: <span class="type">Double</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">var</span> inSeconds: <span class="type">Double</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> value * <span class="number">60</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>我们可以使用同样的方式来定义 <code>Seconds</code>，<code>Days</code>，<code>Weeks</code> 等等结构体，需要注意的是，如果时间单位过大，将会损失一些精度。</p>
 <p>现在我们理解了度量单位的刻画方式，我们可以来进行一些度量单位的计算了。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> + <span class="params">(lhs: Time, rhs: Time)</span></span> -&gt; <span class="type">Time</span> &#123;</div><div class="line">    <span class="keyword">return</span> <span class="type">Seconds</span>(value: lhs.inSeconds + rhs.inSeconds)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> + <span class="params">(lhs: Time, rhs: Time)</span></span> -&gt; <span class="type">Time</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="type">Seconds</span>(value: lhs.inSeconds + rhs.inSeconds)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>我们还可以加上一些好用的扩展：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Time</span> </span>&#123;</div><div class="line">    <span class="keyword">var</span> inMinutes: <span class="type">Double</span> &#123;</div><div class="line">        <span class="keyword">return</span> inSeconds / <span class="number">60</span></div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="keyword">var</span> inHours: <span class="type">Double</span> &#123;</div><div class="line">        <span class="keyword">return</span> inMinutes / <span class="number">60</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>为系统的 <code>Int</code> 类型加上类似 DSL 的扩展，代码思路是从 <a href="https://github.com/rails/rails/blob/3018f4727621b6f2b117a2b5d75561127f2a8592/activesupport/lib/active_support/core_ext/numeric/time.rb" target="_blank" rel="external">ActiveSupport</a> 中借鉴的：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Int</span> </span>&#123;</div><div class="line">    <span class="keyword">var</span> hours: <span class="type">Time</span> &#123;</div><div class="line">        <span class="keyword">return</span> <span class="type">Hours</span>(value: <span class="type">Double</span>(<span class="keyword">self</span>))</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="keyword">var</span> minutes: <span class="type">Time</span> &#123;</div><div class="line">        <span class="keyword">return</span> <span class="type">Minutes</span>(value: <span class="type">Double</span>(<span class="keyword">self</span>))</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Time</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> inMinutes: <span class="type">Double</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> inSeconds / <span class="number">60</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">var</span> inHours: <span class="type">Double</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> inMinutes / <span class="number">60</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>为系统的 <code>Int</code> 类型加上类似 DSL 的扩展，代码思路是从 <a href="https://github.com/rails/rails/blob/3018f4727621b6f2b117a2b5d75561127f2a8592/activesupport/lib/active_support/core_ext/numeric/time.rb" target="_blank" rel="noopener">ActiveSupport</a> 中借鉴的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Int</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> hours: <span class="type">Time</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">Hours</span>(value: <span class="type">Double</span>(<span class="keyword">self</span>))</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">var</span> minutes: <span class="type">Time</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">Minutes</span>(value: <span class="type">Double</span>(<span class="keyword">self</span>))</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>利用我们的类型系统，我们可以写出短小但是表意明确的代码：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> total = <span class="number">2</span>.hours + <span class="number">30</span>.minutes</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> total = <span class="number">2</span>.hours + <span class="number">30</span>.minutes</span><br></pre></td></tr></table></figure>
 <p>（当然结果是以 <code>Seconds</code> 为单位表示的，可能我们希望引入一个表示层来将这个结果以更加有意义的方式展现给用户。我在做的那个项目中有这方面的工作，不过是用 JavaScript 写的，不支持这样的类型系统，就少了很多乐趣）</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
@@ -233,6 +234,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -281,7 +286,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -430,11 +435,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -446,11 +451,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -458,7 +459,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -470,11 +471,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -482,7 +487,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -676,7 +681,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

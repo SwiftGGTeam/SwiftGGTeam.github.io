@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/12/21/unexpected-precedence-issues-with-try-and-as/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="try? 比 as? 的优先级低导致了将它们结合起来使用的时候会遇到不少的问题，快来看一看解决方案吧！">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.407Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="try? 与 as? 之间的优先级问题">
 <meta name="twitter:description" content="try? 比 as? 的优先级低导致了将它们结合起来使用的时候会遇到不少的问题，快来看一看解决方案吧！">
@@ -88,7 +89,7 @@
         <a href="/2016/12/21/unexpected-precedence-issues-with-try-and-as/" target="_blank" title="try? 与 as? 之间的优先级问题" itemprop="url">try? 与 as? 之间的优先级问题</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-12-20T16:00:00.000Z" itemprop="datePublished">2016-12-21</time>
+      <time datetime="2016-12-21T00:00:00.000Z" itemprop="datePublished">2016-12-21</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,16 +97,16 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Erica Sadun，<a href="http://ericasadun.com/2016/12/15/unexpected-precedence-issues-with-try-and-as/" target="_blank" rel="external">原文链接</a>，原文日期：2016-12-15<br>译者：<a href="http://www.jianshu.com/users/ef1058d2d851" target="_blank" rel="external">星夜暮晨</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+<p>作者：Erica Sadun，<a href="http://ericasadun.com/2016/12/15/unexpected-precedence-issues-with-try-and-as/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-12-15<br>译者：<a href="http://www.jianshu.com/users/ef1058d2d851" target="_blank" rel="noopener">星夜暮晨</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="noopener">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>Tim Vermeulen 最近在 Swift Evolution 列表上，写到 <code>try?</code> 的优先级非常地出人意料：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">if</span> <span class="keyword">let</span> int = <span class="keyword">try</span>? mightReturnInt() <span class="keyword">as</span>? <span class="type">Int</span> &#123;</div><div class="line">  <span class="built_in">print</span>(int) <span class="comment">// =&gt; Optional(3)</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> int = <span class="keyword">try</span>? mightReturnInt() <span class="keyword">as</span>? <span class="type">Int</span> &#123;</span><br><span class="line">  <span class="built_in">print</span>(int) <span class="comment">// =&gt; Optional(3)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <a id="more"></a>
 <p>具体来说，他发现 <code>try?</code> 的优先级比 <code>as?</code> 的优先级低，所以需要添加括号，才能够获取正确的结果。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">if</span> <span class="keyword">let</span> int = (<span class="keyword">try</span>? mightReturnInt()) <span class="keyword">as</span>? <span class="type">Int</span> &#123;</div><div class="line">  <span class="built_in">print</span>(int) <span class="comment">// =&gt; 3</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> int = (<span class="keyword">try</span>? mightReturnInt()) <span class="keyword">as</span>? <span class="type">Int</span> &#123;</span><br><span class="line">  <span class="built_in">print</span>(int) <span class="comment">// =&gt; 3</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>此外，他还发现在既会返回可空值、又会抛出错误的情形下，也存在类似的问题：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">if</span> <span class="keyword">let</span> int = <span class="keyword">try</span>? mightReturnInt() &#123;</div><div class="line">  <span class="built_in">print</span>(int) <span class="comment">// =&gt; Optional(3)</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">if</span> <span class="keyword">let</span> int = (<span class="keyword">try</span>? mightReturnInt()) ?? <span class="literal">nil</span> &#123;</div><div class="line">  <span class="built_in">print</span>(int) <span class="comment">// =&gt; 3</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> int = <span class="keyword">try</span>? mightReturnInt() &#123;</span><br><span class="line">  <span class="built_in">print</span>(int) <span class="comment">// =&gt; Optional(3)</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> int = (<span class="keyword">try</span>? mightReturnInt()) ?? <span class="literal">nil</span> &#123;</span><br><span class="line">  <span class="built_in">print</span>(int) <span class="comment">// =&gt; 3</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>对于 <code>if let item = item as? T</code> 而言，是可以自动对可空值进行提取的，但是似乎目前却没有应用到 <code>try?</code> 当中。如果遇到这种情况，请考虑如示例所示，添加括号或者使用空合运算符 (nil coalescing) 来解决这个问题。</p>
 <p>如果您觉得这种既有可空值又有错误抛出的情形太「罕见」的话，那么可以想一想文件系统请求，可能会抛出一个错误「目录不可读」，也可能会在指定文件不存在的时候返回 <code>nil</code>。尽管这种情况比较少见，但是将 <code>try?</code> 和 <code>as?</code> 结合起来使用的情形还是有可能出现的。</p>
 <blockquote>
@@ -220,6 +221,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -268,7 +273,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -417,11 +422,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -433,11 +438,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -445,7 +446,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -457,11 +458,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -469,7 +474,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -663,7 +668,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

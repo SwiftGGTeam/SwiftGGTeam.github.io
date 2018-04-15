@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/08/08/implementing-dictionary-in-swift/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="怎么在 Swift 实现字典是很多人想知道的吧，那么下面就来详细说下 Swift 字典类型实现过程吧。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.399Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="在 Swift 中实现字典">
 <meta name="twitter:description" content="怎么在 Swift 实现字典是很多人想知道的吧，那么下面就来详细说下 Swift 字典类型实现过程吧。">
@@ -88,7 +89,7 @@
         <a href="/2016/08/08/implementing-dictionary-in-swift/" target="_blank" title="在 Swift 中实现字典" itemprop="url">在 Swift 中实现字典</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-08-07T16:00:00.000Z" itemprop="datePublished">2016-08-08</time>
+      <time datetime="2016-08-08T00:00:00.000Z" itemprop="datePublished">2016-08-08</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,63 +97,63 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Soroush Khanlou，<a href="http://khanlou.com/2016/07/implementing-dictionary-in-swift/" target="_blank" rel="external">原文链接</a>，原文日期：2016-07-05<br>译者：<a href="undefined">jseanj</a>；校对：<a href="http://www.futantan.com" target="_blank" rel="external">Prayer</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
+<p>作者：Soroush Khanlou，<a href="http://khanlou.com/2016/07/implementing-dictionary-in-swift/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-07-05<br>译者：<a href="undefined">jseanj</a>；校对：<a href="http://www.futantan.com" target="_blank" rel="noopener">Prayer</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p>虽然 Swift 原生的字典类型实现得<a href="http://ankit.im/swift/2016/01/20/exploring-swift-dictionary-implementation/" target="_blank" rel="external">很复杂</a>（毫无疑问是为了性能），但是我们可以利用 Swift 提供的工具写出漂亮简洁的实现。我们从一个简单的实现开始，并且逐步添加功能。</p>
+<p>虽然 Swift 原生的字典类型实现得<a href="http://ankit.im/swift/2016/01/20/exploring-swift-dictionary-implementation/" target="_blank" rel="noopener">很复杂</a>（毫无疑问是为了性能），但是我们可以利用 Swift 提供的工具写出漂亮简洁的实现。我们从一个简单的实现开始，并且逐步添加功能。</p>
 <a id="more"></a>
 <p>我们简要看一下字典的工作原理：它通过任意类型的关键字来设置和获取值。这些值常常存储在一个数组中，当然也可以存储在树型结构中。由于我还不太清楚以树作为字典存储结构的工作原理，所以这篇文章中我们主要探索一个由数组存储值的字典。</p>
 <p>由于我们字典中的值是由数组存储，所以我们需要将给定的关键字转换成整数，然后让这个整数落在数组范围内。这两个方法一个是哈希函数，一个是取模操作。通过哈希函数，我们可以将关键字（通常是字符串，也可以是遵循 <code>Hashable</code> 协议的任意类型）转换成一个数值，然后根据数组的长度，通过取模操作我们会得到一个固定位置(consistent slot)来设置和获取值。</p>
 <blockquote>
 <p>译者注: 这里的 consistent slot 是指，字典的 key，通过这种 Hash 和取模运算，每次都会得到相同的数值，从而确保相同的 key 值，每次取得的 value 总是保持一致性。</p>
 </blockquote>
-<p>我从 <code>Mike Ash</code> 的文章 <a href="https://www.mikeash.com/pyblog/friday-qa-2012-03-16-lets-build-nsmutabledictionary.html" target="_blank" rel="external">让我们构建 NSMutableDictionary</a>  获取了一些灵感，特别是重新计算数组容量的规则。</p>
+<p>我从 <code>Mike Ash</code> 的文章 <a href="https://www.mikeash.com/pyblog/friday-qa-2012-03-16-lets-build-nsmutabledictionary.html" target="_blank" rel="noopener">让我们构建 NSMutableDictionary</a>  获取了一些灵感，特别是重新计算数组容量的规则。</p>
 <p>让我们开始吧。我们知道 <code>Key</code> 和 <code>Value</code> 都应该支持泛型，而且 <code>Key</code> 必须遵循 <code>Hashable</code> 协议。遵循 <code>Hashable</code> 协议的也一定同时遵循 <code>Equatable</code> 协议。(译者注，<code>Hashable</code> 协议继承自 <code>Equatable</code> 协议)</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Dictionary</span>&lt;<span class="title">Key</span>, <span class="title">Value</span> <span class="title">where</span> <span class="title">Key</span>: <span class="title">Hashable</span>&gt; </span>&#123;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">var</span> storage = <span class="comment">//some Array...</span></div><div class="line">    </div><div class="line">    <span class="keyword">subscript</span>(key: <span class="type">Key</span>) -&gt; <span class="type">Value</span>? &#123;</div><div class="line">        <span class="keyword">get</span> &#123;</div><div class="line">	        <span class="keyword">return</span> <span class="literal">nil</span></div><div class="line">        &#125;</div><div class="line">        <span class="keyword">set</span> &#123;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Dictionary</span>&lt;<span class="title">Key</span>, <span class="title">Value</span> <span class="title">where</span> <span class="title">Key</span>: <span class="title">Hashable</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> storage = <span class="comment">//some Array...</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">subscript</span>(key: <span class="type">Key</span>) -&gt; <span class="type">Value</span>? &#123;</span><br><span class="line">        <span class="keyword">get</span> &#123;</span><br><span class="line">	        <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">set</span> &#123;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这是我们类型的基本结构。我们知道我们的数组必须是支持泛型的，但是还不知道具体的值是什么。由于两个不同的关键字经过哈希和取模操作后可能会指向数组的同一个位置，这样就会造成冲突，因此每个占位对象需要支持存储多个值。现在让来我们设计 <code>Placeholder</code>：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Placeholder</span>&lt;<span class="title">Key</span>, <span class="title">Value</span> <span class="title">where</span> <span class="title">Key</span>: <span class="title">Hashable</span>&gt; </span>&#123;</div><div class="line">    <span class="keyword">var</span> values: [(<span class="type">Key</span>, <span class="type">Value</span>)] = []</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Placeholder</span>&lt;<span class="title">Key</span>, <span class="title">Value</span> <span class="title">where</span> <span class="title">Key</span>: <span class="title">Hashable</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> values: [(<span class="type">Key</span>, <span class="type">Value</span>)] = []</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这个对象存储很多经过哈希和取模操作后指向字典同一位置的键和值。如果我们很好的设计了字典，那么每个 <code>Placeholder</code> 包含的键值对将不会超过一个，但是超过一个的情况也会发生。一个比较好的实现是用一个链表来存储 <code>Placeholder</code> 的属性 <code>values</code>。我将留作一个练习给读者。</p>
 <p>现在我们大体知道了 <code>Placeholder</code> 是什么样的，接下来我们看看我们的存储器是什么样的。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="keyword">var</span> storage = <span class="type">Array</span>(<span class="built_in">count</span>: <span class="number">8</span>, repeatedValue: <span class="type">Placeholder</span>&lt;<span class="type">Key</span>, <span class="type">Value</span>&gt;())</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">var</span> storage = <span class="type">Array</span>(<span class="built_in">count</span>: <span class="number">8</span>, repeatedValue: <span class="type">Placeholder</span>&lt;<span class="type">Key</span>, <span class="type">Value</span>&gt;())</span><br></pre></td></tr></table></figure>
 <p>初始时我们给数组一个随机的大小。最好选择 2 的整数幂，因为对 2 的幂取模要比其他数更快。除非我们实现如何重新计算数组容量，否则取多大都没有关系。<code>Array(count:repeatedValue:)</code> 构造方法使得数组中的每个位置都有一个可以添加值的占位对象。</p>
 <p>为了设置字典的值，我们需要对键进行哈希（然后取绝对值，因为哈希有时会返回负值），然后根据数组大小进行取模操作。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">set</span> &#123;</div><div class="line">    <span class="keyword">let</span> position = <span class="built_in">abs</span>(key.hashValue) % storage.<span class="built_in">count</span></div><div class="line">    <span class="comment">//...</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">set</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> position = <span class="built_in">abs</span>(key.hashValue) % storage.<span class="built_in">count</span></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>在真正给字典添加值之前，我们需要<br>a）确保新值(newValue)不为 nil<br>b）找到在 <code>position</code> 位置的占位对象<br>c）将键和值添加到占位对象中。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">set</span> &#123;</div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> value = newValue <span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</div><div class="line">    <span class="keyword">let</span> position = <span class="built_in">abs</span>(key.hashValue) % storage.<span class="built_in">count</span></div><div class="line">    storage[position].values.append((key, value))</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">set</span> &#123;</span><br><span class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> value = newValue <span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</span><br><span class="line">    <span class="keyword">let</span> position = <span class="built_in">abs</span>(key.hashValue) % storage.<span class="built_in">count</span></span><br><span class="line">    storage[position].values.append((key, value))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这就是基本满足我们需求的设置方法的实现。（我忽略掉了一些小的细节，比如当你试着对同一个键设置两次时会发生什么。我们很快会处理这种情况。）</p>
 <p>取值的过程相当简单。对键进行哈希，取绝对值，取模操作，然后我们获取了在那个位置上的占位对象。我将会把从占位对象中获取值的过程交给占位对象自己去做。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">get</span> &#123;</div><div class="line">    <span class="keyword">let</span> position = <span class="built_in">abs</span>(key.hashValue) % storage.<span class="built_in">count</span></div><div class="line">    <span class="keyword">return</span> storage[position].firstValue(matchingKey: key)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">get</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> position = <span class="built_in">abs</span>(key.hashValue) % storage.<span class="built_in">count</span></span><br><span class="line">    <span class="keyword">return</span> storage[position].firstValue(matchingKey: key)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>真正神奇的是在下面这个方法。我们需要找到第一个包含那个键的键值对。在 Swift 3 中我们可以使用 <code>SequenceType</code> 协议中的 <code>first(where:)</code> 方法来实现，但目前我们使用普通的写法 <code>lazy.filter( /* block */ ).first</code> 来获取键值对。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">firstValue</span><span class="params">(matchingKey key: Key)</span></span> -&gt; <span class="type">Value</span>? &#123;</div><div class="line">    <span class="keyword">let</span> matchingKeyValuePair = values.<span class="built_in">lazy</span>.<span class="built_in">filter</span>(&#123; $<span class="number">0.0</span> == key &#125;).first</div><div class="line">    <span class="comment">//...</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">firstValue</span><span class="params">(matchingKey key: Key)</span></span> -&gt; <span class="type">Value</span>? &#123;</span><br><span class="line">    <span class="keyword">let</span> matchingKeyValuePair = values.<span class="built_in">lazy</span>.<span class="built_in">filter</span>(&#123; $<span class="number">0.0</span> == key &#125;).first</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>一旦我们拿到表示键值对的元组，我们就可以直接调用 <code>.1</code> 获取对应的值。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">firstValue</span><span class="params">(matchingKey key: Key)</span></span> -&gt; <span class="type">Value</span>? &#123;</div><div class="line">    <span class="keyword">return</span> values.<span class="built_in">lazy</span>.<span class="built_in">filter</span>(&#123; $<span class="number">0.0</span> == key &#125;).first?.<span class="number">1</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这几乎是 <code>Dictionary</code> 的基本实现了。23 行 Swift 代码。所有代码在这个 <a href="https://gist.github.com/khanlou/f01475a2ece9facb8e1cbc97288b4ac8" target="_blank" rel="external">gist</a> 中。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">firstValue</span><span class="params">(matchingKey key: Key)</span></span> -&gt; <span class="type">Value</span>? &#123;</span><br><span class="line">    <span class="keyword">return</span> values.<span class="built_in">lazy</span>.<span class="built_in">filter</span>(&#123; $<span class="number">0.0</span> == key &#125;).first?.<span class="number">1</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这几乎是 <code>Dictionary</code> 的基本实现了。23 行 Swift 代码。所有代码在这个 <a href="https://gist.github.com/khanlou/f01475a2ece9facb8e1cbc97288b4ac8" target="_blank" rel="noopener">gist</a> 中。</p>
 <p>还有几个有意思的事情还没有实现。首先，需要有惰性求值的 <code>generate()</code>，这样的话 <code>Dictionary</code> 就遵循 <code>SequenceType</code> 协议了。</p>
 <blockquote>
 <p>译者注: 遵循 <code>SequenceType</code> 协议之后，就可以使用 <code>for (key, value) in</code> 的方式来遍历字典了</p>
 </blockquote>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Dictionary</span>: <span class="title">SequenceType</span> </span>&#123;</div><div class="line">    <span class="keyword">typealias</span> <span class="type">Generator</span> = <span class="type">IndexingGenerator</span>&lt;[(<span class="type">Key</span>, <span class="type">Value</span>)]&gt;</div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">generate</span><span class="params">()</span></span> -&gt; <span class="type">Dictionary</span>.<span class="type">Generator</span> &#123;</div><div class="line">        <span class="keyword">return</span> storage.flatMap(&#123; $<span class="number">0</span>.values &#125;).generate()</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Dictionary</span>: <span class="title">SequenceType</span> </span>&#123;</span><br><span class="line">    <span class="keyword">typealias</span> <span class="type">Generator</span> = <span class="type">IndexingGenerator</span>&lt;[(<span class="type">Key</span>, <span class="type">Value</span>)]&gt;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">generate</span><span class="params">()</span></span> -&gt; <span class="type">Dictionary</span>.<span class="type">Generator</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> storage.flatMap(&#123; $<span class="number">0</span>.values &#125;).generate()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>接下来是删除键。首先，从占位对象中删除：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Placeholder</span> </span>&#123;</div><div class="line">    <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">removeValue</span><span class="params">(key key: Key)</span></span> &#123;</div><div class="line">        values = values.<span class="built_in">filter</span>(&#123; $<span class="number">0.0</span> != key &#125;)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Placeholder</span> </span>&#123;</span><br><span class="line">    <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">removeValue</span><span class="params">(key key: Key)</span></span> &#123;</span><br><span class="line">        values = values.<span class="built_in">filter</span>(&#123; $<span class="number">0.0</span> != key &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>然后从字典中删除</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Dictionary</span> </span>&#123;</div><div class="line">	<span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">remove</span><span class="params">(key key: Key)</span></span> &#123;</div><div class="line">	    <span class="keyword">let</span> position = <span class="built_in">abs</span>(key.hashValue) % storage.<span class="built_in">count</span></div><div class="line">	    storage[position].removeValue(key: key)</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Dictionary</span> </span>&#123;</span><br><span class="line">	<span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">remove</span><span class="params">(key key: Key)</span></span> &#123;</span><br><span class="line">	    <span class="keyword">let</span> position = <span class="built_in">abs</span>(key.hashValue) % storage.<span class="built_in">count</span></span><br><span class="line">	    storage[position].removeValue(key: key)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>在设置新值时先调用 <code>remove(key:)</code>。这样确保同一个键不会映射到不同的值上。</p>
 <p>最后，我们来看看如何重新计算数组容量。当字典包含非常多对象时，它的实际存储结构需要调整自身大小，可以把“非常多对象”看成一个大于2/3或者3/4的负载系数（对象数量除以数组长度）。我选择 0.7。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Dictionary</span> </span>&#123;</div><div class="line">	<span class="keyword">private</span> <span class="keyword">let</span> maxLoadFactor = <span class="number">0.7</span></div><div class="line">	</div><div class="line">	<span class="keyword">private</span> <span class="keyword">var</span> size: <span class="type">Int</span> &#123;</div><div class="line">		<span class="keyword">return</span> storage.<span class="built_in">count</span></div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	<span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span> &#123;</div><div class="line">		<span class="keyword">return</span> storage.flatMap(&#123; $<span class="number">0</span>.values &#125;).<span class="built_in">count</span></div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	<span class="keyword">var</span> currentLoadFactor: <span class="type">Double</span> &#123;</div><div class="line">		<span class="keyword">return</span> <span class="type">Double</span>(<span class="built_in">count</span>) / <span class="type">Double</span>(size)</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Dictionary</span> </span>&#123;</span><br><span class="line">	<span class="keyword">private</span> <span class="keyword">let</span> maxLoadFactor = <span class="number">0.7</span></span><br><span class="line">	</span><br><span class="line">	<span class="keyword">private</span> <span class="keyword">var</span> size: <span class="type">Int</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> storage.<span class="built_in">count</span></span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> storage.flatMap(&#123; $<span class="number">0</span>.values &#125;).<span class="built_in">count</span></span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">var</span> currentLoadFactor: <span class="type">Double</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="type">Double</span>(<span class="built_in">count</span>) / <span class="type">Double</span>(size)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>（<code>count</code> 的实现还是懒求值。理想情况下，<code>Dictionary</code> 会记录有多少对象被添加和被删除，但实际上很难记录）</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">resizeIfNeeded</span><span class="params">()</span></span> &#123;</div><div class="line">    <span class="keyword">if</span> currentLoadFactor &gt; maxLoadFactor &#123;</div><div class="line">        <span class="comment">//resize storage</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这就是 Swift 的值语法非常奇怪的地方。<code>Mike Ash</code> 在 <a href="https://www.mikeash.com/pyblog/friday-qa-2012-03-16-lets-build-nsmutabledictionary.html" target="_blank" rel="external">构建NSMutableDictionary</a> 文章中，创建了一个固定大小的字典，并且把它封装成一个可变大小的字典。当需要调整大小时，他创建一个新的固定大小的字典（大小加倍），然后手动的把所有元素拷贝到新的字典当中。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">resizeIfNeeded</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> currentLoadFactor &gt; maxLoadFactor &#123;</span><br><span class="line">        <span class="comment">//resize storage</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这就是 Swift 的值语法非常奇怪的地方。<code>Mike Ash</code> 在 <a href="https://www.mikeash.com/pyblog/friday-qa-2012-03-16-lets-build-nsmutabledictionary.html" target="_blank" rel="noopener">构建NSMutableDictionary</a> 文章中，创建了一个固定大小的字典，并且把它封装成一个可变大小的字典。当需要调整大小时，他创建一个新的固定大小的字典（大小加倍），然后手动的把所有元素拷贝到新的字典当中。</p>
 <p>在 Swift 中我们不必如此。Swift 中的结构体对象赋值给一个变量会进行一次完整拷贝。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> oldDictionary = <span class="keyword">self</span></div><div class="line"><span class="comment">//...</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> oldDictionary = <span class="keyword">self</span></span><br><span class="line"><span class="comment">//...</span></span><br></pre></td></tr></table></figure>
 <p>一旦我们拷贝完字典，我们可以重置 <code>storage</code> 变量为原先数组大小的两倍。（大小加倍确保数组大小仍然是2的幂。）</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">//...</span></div><div class="line">storage = <span class="type">Array</span>&lt;<span class="type">Placeholder</span>&lt;<span class="type">Key</span>, <span class="type">Value</span>&gt;&gt;(<span class="built_in">count</span>: size*<span class="number">2</span>, repeatedValue: <span class="type">Placeholder</span>&lt;<span class="type">Key</span>, <span class="type">Value</span>&gt;())</div><div class="line"><span class="comment">//...</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">//...</span></span><br><span class="line">storage = <span class="type">Array</span>&lt;<span class="type">Placeholder</span>&lt;<span class="type">Key</span>, <span class="type">Value</span>&gt;&gt;(<span class="built_in">count</span>: size*<span class="number">2</span>, repeatedValue: <span class="type">Placeholder</span>&lt;<span class="type">Key</span>, <span class="type">Value</span>&gt;())</span><br><span class="line"><span class="comment">//...</span></span><br></pre></td></tr></table></figure>
 <p>一旦设置完成，字典会变成空的，我们必须把 <code>oldDictionary</code> 的所有值拷贝到当前字典中：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">//...</span></div><div class="line"><span class="keyword">for</span> (key, value) <span class="keyword">in</span> oldDictionary &#123;</div><div class="line">	<span class="keyword">self</span>[key] = value</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">//...</span></span><br><span class="line"><span class="keyword">for</span> (key, value) <span class="keyword">in</span> oldDictionary &#123;</span><br><span class="line">	<span class="keyword">self</span>[key] = value</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这是完整的 <code>resizeIfNeeded</code> 函数：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">resizeIfNeeded</span><span class="params">()</span></span> &#123;</div><div class="line">    <span class="keyword">if</span> <span class="type">Double</span>(<span class="built_in">count</span>) / <span class="type">Double</span>(size) &gt; maxLoadFactor &#123;</div><div class="line">        <span class="keyword">let</span> oldDictionary = <span class="keyword">self</span></div><div class="line">        storage = <span class="type">Array</span>&lt;<span class="type">Placeholder</span>&lt;<span class="type">Key</span>, <span class="type">Value</span>&gt;&gt;(<span class="built_in">count</span>: size*<span class="number">2</span>, repeatedValue: <span class="type">Placeholder</span>&lt;<span class="type">Key</span>, <span class="type">Value</span>&gt;())</div><div class="line">        <span class="keyword">for</span> (key, value) <span class="keyword">in</span> oldDictionary &#123;</div><div class="line">            <span class="keyword">self</span>[key] = value</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">resizeIfNeeded</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> <span class="type">Double</span>(<span class="built_in">count</span>) / <span class="type">Double</span>(size) &gt; maxLoadFactor &#123;</span><br><span class="line">        <span class="keyword">let</span> oldDictionary = <span class="keyword">self</span></span><br><span class="line">        storage = <span class="type">Array</span>&lt;<span class="type">Placeholder</span>&lt;<span class="type">Key</span>, <span class="type">Value</span>&gt;&gt;(<span class="built_in">count</span>: size*<span class="number">2</span>, repeatedValue: <span class="type">Placeholder</span>&lt;<span class="type">Key</span>, <span class="type">Value</span>&gt;())</span><br><span class="line">        <span class="keyword">for</span> (key, value) <span class="keyword">in</span> oldDictionary &#123;</span><br><span class="line">            <span class="keyword">self</span>[key] = value</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>在 Swift 的结构体中，<code>self</code> 可以访问当前类型的值和函数，但是它也是可变的。你可以对它设置新值，拷贝它，或者就把它当成另一个变量的引用。</p>
-<p><a href="http://khanlou.com/2016/06/falsiness-in-swift/" target="_blank" rel="external">两周前</a> 我开玩笑说 Swift 是比 Objective-C ，Ruby 或者 Python 更动态的语言。因为你可以改变它的错误行为，但是这里有另一种情况，即你可以在 Swift 中修改一些在 Objective-C 中不能修改的东西：<code>self</code> 本身的引用。我们本可以在该方法中这样写 <code>self = Dictionary(size: size*2)</code>，这在 Swift 是绝对有效的。对于那些觉得对象标识是最重要的面向对象开发者而言，这非常奇怪。</p>
-<p>包含排序，删除，调整数组大小的完整的实现可以在 <a href="https://gist.github.com/khanlou/9168759b202bf35b461d6091ab062e89" target="_blank" rel="external">gist</a> 中找到。除了 <code>count/generate()</code> 懒求值的实现，我非常喜欢这个小工程的表达方式。</p>
+<p><a href="http://khanlou.com/2016/06/falsiness-in-swift/" target="_blank" rel="noopener">两周前</a> 我开玩笑说 Swift 是比 Objective-C ，Ruby 或者 Python 更动态的语言。因为你可以改变它的错误行为，但是这里有另一种情况，即你可以在 Swift 中修改一些在 Objective-C 中不能修改的东西：<code>self</code> 本身的引用。我们本可以在该方法中这样写 <code>self = Dictionary(size: size*2)</code>，这在 Swift 是绝对有效的。对于那些觉得对象标识是最重要的面向对象开发者而言，这非常奇怪。</p>
+<p>包含排序，删除，调整数组大小的完整的实现可以在 <a href="https://gist.github.com/khanlou/9168759b202bf35b461d6091ab062e89" target="_blank" rel="noopener">gist</a> 中找到。除了 <code>count/generate()</code> 懒求值的实现，我非常喜欢这个小工程的表达方式。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
@@ -265,6 +266,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -313,7 +318,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -462,11 +467,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -478,11 +483,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -490,7 +491,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -502,11 +503,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -514,7 +519,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -708,7 +713,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

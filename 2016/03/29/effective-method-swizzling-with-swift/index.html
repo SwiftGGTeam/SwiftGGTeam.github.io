@@ -20,8 +20,9 @@
 <meta property="og:url" content="https://swift.gg/2016/03/29/effective-method-swizzling-with-swift/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="在 Swift 中怎么使用 OC 中很有名 method swizzling 呢，本文来好好给你讲解下。">
+<meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://swift.gg/img/articles/effective-method-swizzling-with-swift/swizzling.png1459213818.9107738">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.387Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="如何在 Swift 中高效地使用 Method Swizzling">
 <meta name="twitter:description" content="在 Swift 中怎么使用 OC 中很有名 method swizzling 呢，本文来好好给你讲解下。">
@@ -90,7 +91,7 @@
         <a href="/2016/03/29/effective-method-swizzling-with-swift/" target="_blank" title="如何在 Swift 中高效地使用 Method Swizzling" itemprop="url">如何在 Swift 中高效地使用 Method Swizzling</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-03-28T16:00:00.000Z" itemprop="datePublished">2016-03-29</time>
+      <time datetime="2016-03-29T00:00:00.000Z" itemprop="datePublished">2016-03-29</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -98,21 +99,21 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：uraimo，<a href="https://www.uraimo.com/2015/10/23/effective-method-swizzling-with-swift/" target="_blank" rel="external">原文链接</a>，原文日期：2015-10-23<br>译者：<a href="http://linusling.com" target="_blank" rel="external">小铁匠Linus</a>；校对：<a href="undefined">100mango</a>；定稿：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="external">Channe</a></p>
+<p>作者：uraimo，<a href="https://www.uraimo.com/2015/10/23/effective-method-swizzling-with-swift/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-10-23<br>译者：<a href="http://linusling.com" target="_blank" rel="noopener">小铁匠Linus</a>；校对：<a href="undefined">100mango</a>；定稿：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="noopener">Channe</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p>示例程序可以从 <a href="https://github.com/uraimo/SwizzlingInSwift/" target="_blank" rel="external">Github</a> 上下载。</p>
-<p>（译者注：译者也写了一篇关于 Method Swizzling 的文章 <a href="http://linusling.com/2016/03/23/method-swizzling-in-ios/" target="_blank" rel="external">Runtime 之 Method Swizzling</a>，顺便写了两个小 demo 来对比 Objective-C 和 Swift 之间 Method Swizzling 的异同，<a href="https://github.com/LinusLing/RuntimeTest" target="_blank" rel="external">示例代码传送门</a>）</p>
+<p>示例程序可以从 <a href="https://github.com/uraimo/SwizzlingInSwift/" target="_blank" rel="noopener">Github</a> 上下载。</p>
+<p>（译者注：译者也写了一篇关于 Method Swizzling 的文章 <a href="http://linusling.com/2016/03/23/method-swizzling-in-ios/" target="_blank" rel="noopener">Runtime 之 Method Swizzling</a>，顺便写了两个小 demo 来对比 Objective-C 和 Swift 之间 Method Swizzling 的异同，<a href="https://github.com/LinusLing/RuntimeTest" target="_blank" rel="noopener">示例代码传送门</a>）</p>
 <p>Method Swizzling 在 Objective-C 或其他语言中是一种很有名的技术，用来支持动态方法派发。</p>
 <p>Method Swizzling 通过改变特定 selector（方法）与实际实现之间的映射，在 <em>runtime</em> 时将一个方法的实现替换成其它方法的实现。</p>
 <p><img src="/img/articles/effective-method-swizzling-with-swift/swizzling.png1459213818.9107738" alt=""></p>
 <p>虽然这看起来非常方便，但是这个功能也有其缺点。在 runtime 执行这类更改时，你就不能在编译时利用那些可用的安全检查了。因此，应该小心使用 Method Swizzling。</p>
 <a id="more"></a>
-<p><a href="http://nshipster.com/method-swizzling/" target="_blank" rel="external">NSHipster</a> 上有一篇关于如何在 Objective-C 中使用 Method Swizzling 的文章（译者注：<a href="http://southpeak.github.io/blog/2014/11/06/objective-c-runtime-yun-xing-shi-zhi-si-:method-swizzling/" target="_blank" rel="external">南峰子的技术博客</a>有这篇文章的译文）（其他详情也可以看<a href="https://www.mikeash.com/pyblog/friday-qa-2010-01-29-method-replacement-for-fun-and-profit.html" target="_blank" rel="external">这里</a>）以及 <a href="http://stackoverflow.com/q/5339276" target="_blank" rel="external">Stackoverflow</a> 上有一些如何使用 Method Swizzling 的讨论。</p>
+<p><a href="http://nshipster.com/method-swizzling/" target="_blank" rel="noopener">NSHipster</a> 上有一篇关于如何在 Objective-C 中使用 Method Swizzling 的文章（译者注：<a href="http://southpeak.github.io/blog/2014/11/06/objective-c-runtime-yun-xing-shi-zhi-si-:method-swizzling/" target="_blank" rel="noopener">南峰子的技术博客</a>有这篇文章的译文）（其他详情也可以看<a href="https://www.mikeash.com/pyblog/friday-qa-2010-01-29-method-replacement-for-fun-and-profit.html" target="_blank" rel="noopener">这里</a>）以及 <a href="http://stackoverflow.com/q/5339276" target="_blank" rel="noopener">Stackoverflow</a> 上有一些如何使用 Method Swizzling 的讨论。</p>
 <p>Swift 关于方法派发是使用静态方法的，但有些情形可能需要用到 Method Swizzling。</p>
 <p>在 Swift 中使用 Method Swizzling 之前，让我再次重申一下这种技术还是尽量少用，<strong>只有当你的问题不能用 Swift 的方式解决，也不能用子类、协议或扩展解决时才使用</strong>。</p>
-<p>正如 NSHipster 上<a href="http://nshipster.com/swift-objc-runtime/" target="_blank" rel="external">另一篇文章</a>描述的那样，在 Swift 中对一个来自基本框架（Foundation、UIKit 等）的类使用 Method Swizzling 与 Objective-C 没什么区别。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UIViewController</span> </span>&#123;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">initialize</span><span class="params">()</span></span> &#123;</div><div class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">Static</span> </span>&#123;</div><div class="line">            <span class="keyword">static</span> <span class="keyword">var</span> token: dispatch_once_t = <span class="number">0</span></div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="comment">// 确保不是子类</span></div><div class="line">        <span class="keyword">if</span> <span class="keyword">self</span> !== <span class="type">UIViewController</span>.<span class="keyword">self</span> &#123;</div><div class="line">            <span class="keyword">return</span></div><div class="line">        &#125;</div><div class="line"></div><div class="line">        dispatch_once(&amp;<span class="type">Static</span>.token) &#123;</div><div class="line">            <span class="keyword">let</span> originalSelector = <span class="type">Selector</span>(<span class="string">"viewWillAppear:"</span>)</div><div class="line">            <span class="keyword">let</span> swizzledSelector = <span class="type">Selector</span>(<span class="string">"newViewWillAppear:"</span>)</div><div class="line"></div><div class="line">            <span class="keyword">let</span> originalMethod = class_getInstanceMethod(<span class="keyword">self</span>, originalSelector)</div><div class="line">            <span class="keyword">let</span> swizzledMethod = class_getInstanceMethod(<span class="keyword">self</span>, swizzledSelector)</div><div class="line"></div><div class="line">            <span class="keyword">let</span> didAddMethod = class_addMethod(<span class="keyword">self</span>, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod))</div><div class="line"></div><div class="line">            <span class="keyword">if</span> didAddMethod &#123;</div><div class="line">                class_replaceMethod(<span class="keyword">self</span>, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod))</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                method_exchangeImplementations(originalMethod, swizzledMethod);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// MARK: - Method Swizzling</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">newViewWillAppear</span><span class="params">(animated: Bool)</span></span> &#123;</div><div class="line">        <span class="keyword">self</span>.newViewWillAppear(animated)</div><div class="line">        <span class="keyword">if</span> <span class="keyword">let</span> name = <span class="keyword">self</span>.descriptiveName &#123;</div><div class="line">            <span class="built_in">print</span>(<span class="string">"viewWillAppear: <span class="subst">\(name)</span>"</span>)</div><div class="line">        &#125; <span class="keyword">else</span> &#123;</div><div class="line">            <span class="built_in">print</span>(<span class="string">"viewWillAppear: <span class="subst">\(<span class="keyword">self</span>)</span>"</span>)</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>正如 NSHipster 上<a href="http://nshipster.com/swift-objc-runtime/" target="_blank" rel="noopener">另一篇文章</a>描述的那样，在 Swift 中对一个来自基本框架（Foundation、UIKit 等）的类使用 Method Swizzling 与 Objective-C 没什么区别。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UIViewController</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">initialize</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">Static</span> </span>&#123;</span><br><span class="line">            <span class="keyword">static</span> <span class="keyword">var</span> token: dispatch_once_t = <span class="number">0</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 确保不是子类</span></span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">self</span> !== <span class="type">UIViewController</span>.<span class="keyword">self</span> &#123;</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        dispatch_once(&amp;<span class="type">Static</span>.token) &#123;</span><br><span class="line">            <span class="keyword">let</span> originalSelector = <span class="type">Selector</span>(<span class="string">"viewWillAppear:"</span>)</span><br><span class="line">            <span class="keyword">let</span> swizzledSelector = <span class="type">Selector</span>(<span class="string">"newViewWillAppear:"</span>)</span><br><span class="line"></span><br><span class="line">            <span class="keyword">let</span> originalMethod = class_getInstanceMethod(<span class="keyword">self</span>, originalSelector)</span><br><span class="line">            <span class="keyword">let</span> swizzledMethod = class_getInstanceMethod(<span class="keyword">self</span>, swizzledSelector)</span><br><span class="line"></span><br><span class="line">            <span class="keyword">let</span> didAddMethod = class_addMethod(<span class="keyword">self</span>, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod))</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> didAddMethod &#123;</span><br><span class="line">                class_replaceMethod(<span class="keyword">self</span>, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod))</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                method_exchangeImplementations(originalMethod, swizzledMethod);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// MARK: - Method Swizzling</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">newViewWillAppear</span><span class="params">(animated: Bool)</span></span> &#123;</span><br><span class="line">        <span class="keyword">self</span>.newViewWillAppear(animated)</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">let</span> name = <span class="keyword">self</span>.descriptiveName &#123;</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">"viewWillAppear: <span class="subst">\(name)</span>"</span>)</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">"viewWillAppear: <span class="subst">\(<span class="keyword">self</span>)</span>"</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>在这个例子中，应用中的每个 UIViewController 都会执行额外的操作，而原始的 <code>viewWillAppear</code> 方法会被保护起来不执行，这种情形只能通过 Method Swizzling 来实现。</p>
 <p><code>viewWillAppear</code> 方法的实现会被替换成 <code>initialize</code> 中 <code>newViewWillAppear</code> 方法的实现。值得注意的是，在 swizzle 后，会递归调用 <code>newViewWillAppear</code> 方法，以替换之前原始的 <code>viewWillAppear</code> 方法。</p>
 <p>与 Objective-C 的第一个不同之处就是 swizzling 不在 <code>load</code> 方法里执行。</p>
@@ -127,13 +128,13 @@
 <li><p>需要 swizzle 的方法必须有动态属性（dynamic attribute）</p>
 </li>
 </ul>
-<p>更多关于为什么必须需要这些可以在苹果的<a href="https://developer.apple.com/library/prerelease/ios/documentation/Swift/Conceptual/BuildingCocoaApps/InteractingWithObjective-CAPIs.html#//apple_ref/doc/uid/TP40014216-CH4-XID_38" target="_blank" rel="external">文档</a>里查看：</p>
+<p>更多关于为什么必须需要这些可以在苹果的<a href="https://developer.apple.com/library/prerelease/ios/documentation/Swift/Conceptual/BuildingCocoaApps/InteractingWithObjective-CAPIs.html#//apple_ref/doc/uid/TP40014216-CH4-XID_38" target="_blank" rel="noopener">文档</a>里查看：</p>
 <p>需要动态派发</p>
 <p>当 @objc 属性将你的 Swift API 暴露给 Objective-C runtime 时，不能确保属性、方法、初始器的动态派发。Swift 编译器可能为了优化你的代码，而绕过 Objective-C runtime。当你指定一个成员变量 为 dynamic 时，访问该变量就总会动态派发了。因为在变量定义时指定 dynamic 后，会使用 Objective-C runtime 来派发。</p>
 <p>动态派发是必须的。但是，你必须使用 dynamic 修饰才能知道在运行时 API 的实现被替换了。举个例子，你可以在 Objective-C runtime 使用 <code>method_exchangeImplementations</code> 方法来交换两个方法的实现。假如 Swift 编译器将方法的实现内联（inline）了或者访问去虚拟化（devirtualize）了，这个交换过来的新的实现就无效了。</p>
 <p>说白了，如果你想要替换的方法没有声明为 dynamic 的话，就不能 swizzle。</p>
 <p>翻译成代码就是这样：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">TestSwizzling</span> : <span class="title">NSObject</span> </span>&#123;</div><div class="line">    <span class="keyword">dynamic</span> <span class="function"><span class="keyword">func</span> <span class="title">methodOne</span><span class="params">()</span></span>-&gt;<span class="type">Int</span>&#123;</div><div class="line">        <span class="keyword">return</span> <span class="number">1</span></div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">TestSwizzling</span> </span>&#123;</div><div class="line">    </div><div class="line">    <span class="comment">//在 Objective-C 中,我们在 load() 方法进行 swizzling。但Swift不允许使用这个方法。</span></div><div class="line">    <span class="keyword">override</span> <span class="class"><span class="keyword">class</span> <span class="title">func</span> <span class="title">initialize</span>()</span></div><div class="line">    &#123;</div><div class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">Static</span></span></div><div class="line">        &#123;</div><div class="line">            <span class="keyword">static</span> <span class="keyword">var</span> token: dispatch_once_t = <span class="number">0</span>;</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        <span class="comment">// 只执行一次</span></div><div class="line">        dispatch_once(&amp;<span class="type">Static</span>.token)</div><div class="line">        &#123;</div><div class="line">                <span class="keyword">let</span> originalSelector = <span class="type">Selector</span>(<span class="string">"methodOne"</span>);</div><div class="line">                <span class="keyword">let</span> swizzledSelector = <span class="type">Selector</span>(<span class="string">"methodTwo"</span>);</div><div class="line">                </div><div class="line">                <span class="keyword">let</span> originalMethod = class_getInstanceMethod(<span class="keyword">self</span>, originalSelector);</div><div class="line">                <span class="keyword">let</span> swizzledMethod = class_getInstanceMethod(<span class="keyword">self</span>, swizzledSelector);</div><div class="line">                </div><div class="line">                method_exchangeImplementations(originalMethod, swizzledMethod);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">methodTwo</span><span class="params">()</span></span>-&gt;<span class="type">Int</span>&#123;</div><div class="line">        <span class="comment">// swizzling 后, 该方法就不会递归调用</span></div><div class="line">        <span class="keyword">return</span> methodTwo()+<span class="number">1</span></div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">var</span> <span class="built_in">c</span> = <span class="type">TestSwizzling</span>()</div><div class="line"><span class="built_in">print</span>(<span class="built_in">c</span>.methodOne())  <span class="comment">//2</span></div><div class="line"><span class="built_in">print</span>(<span class="built_in">c</span>.methodTwo())  <span class="comment">//1</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">TestSwizzling</span> : <span class="title">NSObject</span> </span>&#123;</span><br><span class="line">    <span class="keyword">dynamic</span> <span class="function"><span class="keyword">func</span> <span class="title">methodOne</span><span class="params">()</span></span>-&gt;<span class="type">Int</span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">TestSwizzling</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//在 Objective-C 中,我们在 load() 方法进行 swizzling。但Swift不允许使用这个方法。</span></span><br><span class="line">    <span class="keyword">override</span> <span class="class"><span class="keyword">class</span> <span class="title">func</span> <span class="title">initialize</span>()</span></span><br><span class="line"><span class="class">    </span>&#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">Static</span></span></span><br><span class="line"><span class="class">        </span>&#123;</span><br><span class="line">            <span class="keyword">static</span> <span class="keyword">var</span> token: dispatch_once_t = <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 只执行一次</span></span><br><span class="line">        dispatch_once(&amp;<span class="type">Static</span>.token)</span><br><span class="line">        &#123;</span><br><span class="line">                <span class="keyword">let</span> originalSelector = <span class="type">Selector</span>(<span class="string">"methodOne"</span>);</span><br><span class="line">                <span class="keyword">let</span> swizzledSelector = <span class="type">Selector</span>(<span class="string">"methodTwo"</span>);</span><br><span class="line">                </span><br><span class="line">                <span class="keyword">let</span> originalMethod = class_getInstanceMethod(<span class="keyword">self</span>, originalSelector);</span><br><span class="line">                <span class="keyword">let</span> swizzledMethod = class_getInstanceMethod(<span class="keyword">self</span>, swizzledSelector);</span><br><span class="line">                </span><br><span class="line">                method_exchangeImplementations(originalMethod, swizzledMethod);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">methodTwo</span><span class="params">()</span></span>-&gt;<span class="type">Int</span>&#123;</span><br><span class="line">        <span class="comment">// swizzling 后, 该方法就不会递归调用</span></span><br><span class="line">        <span class="keyword">return</span> methodTwo()+<span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> <span class="built_in">c</span> = <span class="type">TestSwizzling</span>()</span><br><span class="line"><span class="built_in">print</span>(<span class="built_in">c</span>.methodOne())  <span class="comment">//2</span></span><br><span class="line"><span class="built_in">print</span>(<span class="built_in">c</span>.methodTwo())  <span class="comment">//1</span></span><br></pre></td></tr></table></figure>
 <p>这个简单的例子中，在 <code>TestSwizzling</code> 对象第一个方法被调用前，<code>methodOne</code> 和 <code>methodTwo</code> 的实现被相互替换了。</p>
 <h2 id="结束语"><a href="#结束语" class="headerlink" title="结束语"></a>结束语</h2><p>正如你看到的，在 Swift 中还是可以使用 Method Swizzling 的，只是我的意见是，绝大部分时候不应该出现在实际的产品代码里。如果你想通过 swizzling 快速解决问题的话，那更好的办法就是想出一个更好的架构，重构你的代码。</p>
 <blockquote>
@@ -248,6 +249,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -296,7 +301,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -445,11 +450,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -461,11 +466,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -473,7 +474,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -485,11 +486,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -497,7 +502,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -691,7 +696,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

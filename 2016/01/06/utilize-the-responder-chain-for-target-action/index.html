@@ -20,8 +20,9 @@
 <meta property="og:url" content="https://swift.gg/2016/01/06/utilize-the-responder-chain-for-target-action/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Dominik Hauser，原文链接，原文日期：2016-1-1译者：小铁匠Linus；校对：saitjr；定稿：numbbbbb   本文会介绍 iOS 的响应链以及如何在 Target-Action 中使用它。 响应链（The Responder Chain）在 iOS 中，事件（比如，触摸事件（touch event））都使用响应链来传递。响应链由响应者对象（Responder O">
+<meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://swift.gg/img/articles/utilize-the-responder-chain-for-target-action/UIViewDocumentation.png1452047417.154566">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.375Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="在 Target-Action 中使用响应链">
 <meta name="twitter:description" content="作者：Dominik Hauser，原文链接，原文日期：2016-1-1译者：小铁匠Linus；校对：saitjr；定稿：numbbbbb   本文会介绍 iOS 的响应链以及如何在 Target-Action 中使用它。 响应链（The Responder Chain）在 iOS 中，事件（比如，触摸事件（touch event））都使用响应链来传递。响应链由响应者对象（Responder O">
@@ -90,7 +91,7 @@
         <a href="/2016/01/06/utilize-the-responder-chain-for-target-action/" target="_blank" title="在 Target-Action 中使用响应链" itemprop="url">在 Target-Action 中使用响应链</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-01-05T16:00:00.000Z" itemprop="datePublished">2016-01-06</time>
+      <time datetime="2016-01-06T00:00:00.000Z" itemprop="datePublished">2016-01-06</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -98,23 +99,23 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Dominik Hauser，<a href="http://swiftandpainless.com/utilize-the-responder-chain-for-target-action/" target="_blank" rel="external">原文链接</a>，原文日期：2016-1-1<br>译者：<a href="http://linusling.com" target="_blank" rel="external">小铁匠Linus</a>；校对：<a href="http://www.saitjr.com" target="_blank" rel="external">saitjr</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="external">numbbbbb</a></p>
+<p>作者：Dominik Hauser，<a href="http://swiftandpainless.com/utilize-the-responder-chain-for-target-action/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-1-1<br>译者：<a href="http://linusling.com" target="_blank" rel="noopener">小铁匠Linus</a>；校对：<a href="http://www.saitjr.com" target="_blank" rel="noopener">saitjr</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>本文会介绍 iOS 的响应链以及如何在 Target-Action 中使用它。</p>
-<h2 id="响应链（The-Responder-Chain）"><a href="#响应链（The-Responder-Chain）" class="headerlink" title="响应链（The Responder Chain）"></a>响应链（The Responder Chain）</h2><p>在 iOS 中，事件（比如，触摸事件（touch event））都使用响应链来传递。响应链由响应者对象（Responder Objects，<a href="https://developer.apple.com/library/ios/documentation/EventHandling/Conceptual/EventHandlingiPhoneOS/event_delivery_responder_chain/event_delivery_responder_chain.html#//apple_ref/doc/uid/TP40009541-CH4-SW1" target="_blank" rel="external">苹果官方术语</a>）构成。如果你看过官方文档，可能会注意到 <code>UIView</code> 和 <code>UIViewController</code> 都是响应者对象。这就意味着， <code>UIView</code> 和 <code>UIViewController</code> 都继承自 <code>UIResponder</code> ，如下图：</p>
+<h2 id="响应链（The-Responder-Chain）"><a href="#响应链（The-Responder-Chain）" class="headerlink" title="响应链（The Responder Chain）"></a>响应链（The Responder Chain）</h2><p>在 iOS 中，事件（比如，触摸事件（touch event））都使用响应链来传递。响应链由响应者对象（Responder Objects，<a href="https://developer.apple.com/library/ios/documentation/EventHandling/Conceptual/EventHandlingiPhoneOS/event_delivery_responder_chain/event_delivery_responder_chain.html#//apple_ref/doc/uid/TP40009541-CH4-SW1" target="_blank" rel="noopener">苹果官方术语</a>）构成。如果你看过官方文档，可能会注意到 <code>UIView</code> 和 <code>UIViewController</code> 都是响应者对象。这就意味着， <code>UIView</code> 和 <code>UIViewController</code> 都继承自 <code>UIResponder</code> ，如下图：</p>
 <p><img src="/img/articles/utilize-the-responder-chain-for-target-action/UIViewDocumentation.png1452047417.154566" alt=""></p>
 <a id="more"></a>
-<p>当用户点击了视图层级（view hierarchy）中的一个 view 时，iOS 会通过点击测试（hit test）来判定哪个响应者对象优先响应触摸事件。这个过程从最底层的 window 开始，沿着视图层级向上寻找并检查这个 touch 是不是发生在当前 view 边界内。该过程中被点击的最后一个 view 会先收到触摸事件。如果该 view 没有对触摸事件做出反应，触摸事件就会沿着响应链传递到下一个响应者。苹果的官方<a href="https://developer.apple.com/library/ios/documentation/EventHandling/Conceptual/EventHandlingiPhoneOS/event_delivery_responder_chain/event_delivery_responder_chain.html#//apple_ref/doc/uid/TP40009541-CH4-SW4" target="_blank" rel="external">示例</a>很好的解释了这个过程。如果 view 告诉 iOS 它没有被点击，那它的子视图就不会被检查。</p>
+<p>当用户点击了视图层级（view hierarchy）中的一个 view 时，iOS 会通过点击测试（hit test）来判定哪个响应者对象优先响应触摸事件。这个过程从最底层的 window 开始，沿着视图层级向上寻找并检查这个 touch 是不是发生在当前 view 边界内。该过程中被点击的最后一个 view 会先收到触摸事件。如果该 view 没有对触摸事件做出反应，触摸事件就会沿着响应链传递到下一个响应者。苹果的官方<a href="https://developer.apple.com/library/ios/documentation/EventHandling/Conceptual/EventHandlingiPhoneOS/event_delivery_responder_chain/event_delivery_responder_chain.html#//apple_ref/doc/uid/TP40009541-CH4-SW4" target="_blank" rel="noopener">示例</a>很好的解释了这个过程。如果 view 告诉 iOS 它没有被点击，那它的子视图就不会被检查。</p>
 <p>这就会产生一个有趣的事情。当一个正常显示（父视图的 <code>clipsToBounds</code> 被设置为 <code>false</code> 时）的按钮位于父视图边界外时，该按钮不会接收到任何的触摸事件。因此，当一个按钮不能响应事件时，记得检查一下该按钮是否有在父视图的边界内。</p>
-<h2 id="Target-Action"><a href="#Target-Action" class="headerlink" title="Target-Action"></a>Target-Action</h2><p>Target-Action 机制通过设置 <code>target</code> 为 <code>nil</code>来使用响应链。事件触发时，iOS 会询问第一响应者是否要处理传递过来的 action。如果不处理的话，第一响应者就会把该 action 传递给下一个响应者（<a href="https://developer.apple.com/library/ios/documentation/UIKit/Reference/UIResponder_Class/index.html#//apple_ref/occ/instm/UIResponder/nextResponder" target="_blank" rel="external">苹果官方文档 <code>nextResponder</code> </a>）。</p>
+<h2 id="Target-Action"><a href="#Target-Action" class="headerlink" title="Target-Action"></a>Target-Action</h2><p>Target-Action 机制通过设置 <code>target</code> 为 <code>nil</code>来使用响应链。事件触发时，iOS 会询问第一响应者是否要处理传递过来的 action。如果不处理的话，第一响应者就会把该 action 传递给下一个响应者（<a href="https://developer.apple.com/library/ios/documentation/UIKit/Reference/UIResponder_Class/index.html#//apple_ref/occ/instm/UIResponder/nextResponder" target="_blank" rel="noopener">苹果官方文档 <code>nextResponder</code> </a>）。</p>
 <h2 id="举个例子"><a href="#举个例子" class="headerlink" title="举个例子"></a>举个例子</h2><p>让我们来举个例子吧。我们的 view controller 中有一个 view ，里面有一个 button 和一个 label 。我们可以在 <code>viewDidLoad</code> 中把 view controller 设置为 <code>target</code> 来相应按钮的点击事件，像这样 <code>subview.button.addTarget(self, action: &quot;onButtonTap:&quot;, forControlEvents: .TouchUpInside)</code> 。但是，我们也可以把 <code>target</code> 设置为 <code>nil</code>，然后就可以使用响应链了。以下是初始化并添加 button 和 label 的代码：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">ViewWithButtonAndLabel</span>: <span class="title">UIView</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">let</span> button: <span class="type">UIButton</span></div><div class="line">    <span class="keyword">let</span> label: <span class="type">UILabel</span></div><div class="line"></div><div class="line">    <span class="keyword">override</span> <span class="keyword">init</span>(frame: <span class="type">CGRect</span>) &#123;</div><div class="line">        label = <span class="type">UILabel</span>()</div><div class="line">        label.textAlignment = .<span class="type">Center</span></div><div class="line">        label.text = <span class="string">"Touch the button"</span></div><div class="line"></div><div class="line">        button = <span class="type">UIButton</span>(type: .<span class="type">System</span>)</div><div class="line">        button.setTitle(<span class="string">"The Button"</span>, forState: .<span class="type">Normal</span>)</div><div class="line">        button.addTarget(<span class="literal">nil</span>, action: <span class="string">"onButtonTap:"</span>, forControlEvents: .<span class="type">TouchUpInside</span>)</div><div class="line"></div><div class="line">        <span class="keyword">let</span> stackView = <span class="type">UIStackView</span>(arrangedSubviews: [label, button])</div><div class="line">        stackView.translatesAutoresizingMaskIntoConstraints = <span class="literal">false</span></div><div class="line">        stackView.axis = .<span class="type">Vertical</span></div><div class="line"></div><div class="line">        <span class="keyword">super</span>.<span class="keyword">init</span>(frame: frame)</div><div class="line"></div><div class="line">        backgroundColor = .yellowColor()</div><div class="line"></div><div class="line">        addSubview(stackView)</div><div class="line"></div><div class="line">        stackView.centerXAnchor.constraintEqualToAnchor(centerXAnchor).active = <span class="literal">true</span></div><div class="line">        stackView.centerYAnchor.constraintEqualToAnchor(centerYAnchor).active = <span class="literal">true</span></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">required</span> <span class="keyword">init</span>?(coder aDecoder: <span class="type">NSCoder</span>) &#123;</div><div class="line">        <span class="built_in">fatalError</span>(<span class="string">"init(coder:) has not been implemented"</span>)</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ViewWithButtonAndLabel</span>: <span class="title">UIView</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> button: <span class="type">UIButton</span></span><br><span class="line">    <span class="keyword">let</span> label: <span class="type">UILabel</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="keyword">init</span>(frame: <span class="type">CGRect</span>) &#123;</span><br><span class="line">        label = <span class="type">UILabel</span>()</span><br><span class="line">        label.textAlignment = .<span class="type">Center</span></span><br><span class="line">        label.text = <span class="string">"Touch the button"</span></span><br><span class="line"></span><br><span class="line">        button = <span class="type">UIButton</span>(type: .<span class="type">System</span>)</span><br><span class="line">        button.setTitle(<span class="string">"The Button"</span>, forState: .<span class="type">Normal</span>)</span><br><span class="line">        button.addTarget(<span class="literal">nil</span>, action: <span class="string">"onButtonTap:"</span>, forControlEvents: .<span class="type">TouchUpInside</span>)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">let</span> stackView = <span class="type">UIStackView</span>(arrangedSubviews: [label, button])</span><br><span class="line">        stackView.translatesAutoresizingMaskIntoConstraints = <span class="literal">false</span></span><br><span class="line">        stackView.axis = .<span class="type">Vertical</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">super</span>.<span class="keyword">init</span>(frame: frame)</span><br><span class="line"></span><br><span class="line">        backgroundColor = .yellowColor()</span><br><span class="line"></span><br><span class="line">        addSubview(stackView)</span><br><span class="line"></span><br><span class="line">        stackView.centerXAnchor.constraintEqualToAnchor(centerXAnchor).active = <span class="literal">true</span></span><br><span class="line">        stackView.centerYAnchor.constraintEqualToAnchor(centerYAnchor).active = <span class="literal">true</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">required</span> <span class="keyword">init</span>?(coder aDecoder: <span class="type">NSCoder</span>) &#123;</span><br><span class="line">        <span class="built_in">fatalError</span>(<span class="string">"init(coder:) has not been implemented"</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><code>button.addTarget(nil, action: &quot;onButtonTap:&quot;, forControlEvents: .TouchUpInside)</code> 这行代码中，将按钮的 <code>target</code> 设置为 <code>nil</code> 。如之前描述的那样，这就意味着 action 会沿着响应链向下传递，直到一个响应者对象处理该 action 为止。</p>
 <p>以下是 view controller 的部分代码：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">ViewController</span>: <span class="title">UIViewController</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">let</span> viewWithButtonAndLabel = <span class="type">ViewWithButtonAndLabel</span>()</div><div class="line"></div><div class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</div><div class="line">        <span class="keyword">super</span>.viewDidLoad()</div><div class="line"></div><div class="line">        view.backgroundColor = .whiteColor()</div><div class="line"></div><div class="line">        view.addSubview(viewWithButtonAndLabel)</div><div class="line"></div><div class="line">        viewWithButtonAndLabel.translatesAutoresizingMaskIntoConstraints = <span class="literal">false</span></div><div class="line"></div><div class="line">        <span class="keyword">let</span> views = [<span class="string">"subView"</span>: viewWithButtonAndLabel]</div><div class="line">        <span class="keyword">var</span> layoutConstraints = [<span class="type">NSLayoutConstraint</span>]()</div><div class="line">        layoutConstraints += <span class="type">NSLayoutConstraint</span>.constraintsWithVisualFormat(<span class="string">"|-20-[subView]-20-|"</span>, options: [], metrics: <span class="literal">nil</span>, views: views)</div><div class="line">        layoutConstraints += <span class="type">NSLayoutConstraint</span>.constraintsWithVisualFormat(<span class="string">"V:|-20-[subView]-20-|"</span>, options: [], metrics: <span class="literal">nil</span>, views: views)</div><div class="line">        <span class="type">NSLayoutConstraint</span>.activateConstraints(layoutConstraints)</div><div class="line"></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">onButtonTap</span><span class="params">(sender: UIButton)</span></span> &#123;</div><div class="line">        viewWithButtonAndLabel.label.text = viewWithButtonAndLabel.label.text == <span class="string">"Yeah!"</span> ? <span class="string">"Touch the button"</span> : <span class="string">"Yeah!"</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ViewController</span>: <span class="title">UIViewController</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> viewWithButtonAndLabel = <span class="type">ViewWithButtonAndLabel</span>()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.viewDidLoad()</span><br><span class="line"></span><br><span class="line">        view.backgroundColor = .whiteColor()</span><br><span class="line"></span><br><span class="line">        view.addSubview(viewWithButtonAndLabel)</span><br><span class="line"></span><br><span class="line">        viewWithButtonAndLabel.translatesAutoresizingMaskIntoConstraints = <span class="literal">false</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">let</span> views = [<span class="string">"subView"</span>: viewWithButtonAndLabel]</span><br><span class="line">        <span class="keyword">var</span> layoutConstraints = [<span class="type">NSLayoutConstraint</span>]()</span><br><span class="line">        layoutConstraints += <span class="type">NSLayoutConstraint</span>.constraintsWithVisualFormat(<span class="string">"|-20-[subView]-20-|"</span>, options: [], metrics: <span class="literal">nil</span>, views: views)</span><br><span class="line">        layoutConstraints += <span class="type">NSLayoutConstraint</span>.constraintsWithVisualFormat(<span class="string">"V:|-20-[subView]-20-|"</span>, options: [], metrics: <span class="literal">nil</span>, views: views)</span><br><span class="line">        <span class="type">NSLayoutConstraint</span>.activateConstraints(layoutConstraints)</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">onButtonTap</span><span class="params">(sender: UIButton)</span></span> &#123;</span><br><span class="line">        viewWithButtonAndLabel.label.text = viewWithButtonAndLabel.label.text == <span class="string">"Yeah!"</span> ? <span class="string">"Touch the button"</span> : <span class="string">"Yeah!"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>即使我们没有明确的设置 <code>target</code> ，当点击按钮的时候，view controller 里的 <code>onButtonTap(_:)</code> 也会被调用，因为它是第一响应者，且实现了相应的处理。</p>
-<p>你可以去 GitHub 上查看本文的<a href="https://github.com/dasdom/ResponderChainDemo" target="_blank" rel="external">示例代码</a>。</p>
+<p>你可以去 GitHub 上查看本文的<a href="https://github.com/dasdom/ResponderChainDemo" target="_blank" rel="noopener">示例代码</a>。</p>
 <h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>响应链是你的好朋友，试着去了解它。还要多读文档，学习如何使用响应链，让你的代码更牛。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
@@ -155,10 +156,10 @@
 <nav class="article-nav clearfix">
  
  <div class="prev" >
- <a href="/2016/01/06/open-source-swift-weekly-3/" title="聚焦 Swift #3">
+ <a href="/2016/01/06/open-source-swift-weekly-1/" title="聚焦 Swift #1">
   <strong>上一篇</strong><br/>
   <span>
-  聚焦 Swift #3</span>
+  聚焦 Swift #1</span>
 </a>
 </div>
 
@@ -228,6 +229,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -276,7 +281,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -425,11 +430,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -441,11 +446,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -453,7 +454,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -465,11 +466,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -477,7 +482,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -671,7 +676,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

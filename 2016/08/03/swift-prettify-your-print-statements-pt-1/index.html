@@ -20,9 +20,10 @@
 <meta property="og:url" content="https://swift.gg/2016/08/03/swift-prettify-your-print-statements-pt-1/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="在 Swift 中使用 print() 语句你会发现比以前的 NSLog 爽多了。">
+<meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="http://swiftgg-main.b0.upaiyun.com/img/swift-prettify-your-print-statements-pt-1-1.jpeg">
 <meta property="og:image" content="http://swiftgg-main.b0.upaiyun.com/img/swift-prettify-your-print-statements-pt-1-2.jpeg">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.395Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift:如何优雅地使用 print()（一）">
 <meta name="twitter:description" content="在 Swift 中使用 print() 语句你会发现比以前的 NSLog 爽多了。">
@@ -91,7 +92,7 @@
         <a href="/2016/08/03/swift-prettify-your-print-statements-pt-1/" target="_blank" title="Swift:如何优雅地使用 print()（一）" itemprop="url">Swift:如何优雅地使用 print()（一）</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-08-02T16:00:00.000Z" itemprop="datePublished">2016-08-03</time>
+      <time datetime="2016-08-03T00:00:00.000Z" itemprop="datePublished">2016-08-03</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -99,23 +100,23 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Andyy Hope，<a href="https://medium.com/swift-programming/swift-prettify-your-print-statements-pt-1-64832bb7fafa#.8sxylwim2" target="_blank" rel="external">原文链接</a>，原文日期：2016-04-06<br>译者：<a href="https://github.com/Harman-darrenchen" target="_blank" rel="external">Darren</a>；校对：<a href="http://weibo.com/601pucca" target="_blank" rel="external">pucca601</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+<p>作者：Andyy Hope，<a href="https://medium.com/swift-programming/swift-prettify-your-print-statements-pt-1-64832bb7fafa#.8sxylwim2" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-04-06<br>译者：<a href="https://github.com/Harman-darrenchen" target="_blank" rel="noopener">Darren</a>；校对：<a href="http://weibo.com/601pucca" target="_blank" rel="noopener">pucca601</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
 <h4 id="如果说-Log-是一种时尚，那你就是时尚设计师。"><a href="#如果说-Log-是一种时尚，那你就是时尚设计师。" class="headerlink" title="如果说 Log 是一种时尚，那你就是时尚设计师。"></a>如果说 Log 是一种时尚，那你就是时尚设计师。</h4><p>Swift beta 版一出世，社区中最具好奇心的开发者们立刻上了这班车，对新版语言的特性进行试验，并撰文讨论他们从中获取的经验。<br>关于 Swift, 有太多提到 Tailor Swift 的 Twitter 了以至于我没办法列举出最好的， 但直到现在这也很有趣，没有人知道为什么😂。另一个人们讨论得很多的话题是 Swift 代码中可以使用 emoji 表情了。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">func combinedWeatherConditions(lhs: Int, _ rhs: Int) -&gt; Int &#123;</div><div class="line">    return lhs + rhs</div><div class="line">&#125;</div><div class="line">let 🌨 = -10, 🌤 = 10, 💧 = 0</div><div class="line">if combinedWeatherConditions(🌨, 🌤) == 💧 &#123;</div><div class="line">    print(“😔 — No 🏂 Today.”)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">func combinedWeatherConditions(lhs: Int, _ rhs: Int) -&gt; Int &#123;</span><br><span class="line">    return lhs + rhs</span><br><span class="line">&#125;</span><br><span class="line">let 🌨 = -10, 🌤 = 10, 💧 = 0</span><br><span class="line">if combinedWeatherConditions(🌨, 🌤) == 💧 &#123;</span><br><span class="line">    print(“😔 — No 🏂 Today.”)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <blockquote>
 <p>我纯粹是因为表情功能而开始写 Swift 的。—— 没有人这样说</p>
 </blockquote>
 <p>这是一个非常新颖的特性，尽管你也许永远不会需要在你的代码里使用 emoji 或者用在打印语句中。但是既然我们讲到了打印语句，在新的控制台上 <code>print</code> 语句相比古老的前身 <code>NSLog</code> 已经被优雅地简化了。</p>
 <a id="more"></a>
 <h3 id="NSLog"><a href="#NSLog" class="headerlink" title="NSLog"></a>NSLog</h3><p>作为初学者调试的主力，<code>NSLog</code> 用起来相当简单，常作为在运行时检测变量值和通知开发者事件的合适工具。你可以随心所欲地打印所需消息或者对象。但在我看来，默认的 <code>NSLog</code> 消息包含了大量的垃圾：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">2016–04–02 09:15:25.660 Blog_Print[13053:3567169] Hello, cruel world. Why don’t you love me? Whyyy!!!</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">2016–04–02 09:15:25.660 Blog_Print[13053:3567169] Hello, cruel world. Why don’t you love me? Whyyy!!!</span><br></pre></td></tr></table></figure>
 <p>不要误会，我敢肯定创造 <code>NSLog</code> 的工程师在设计一个好的日志上的花了很大的心思。让我们把它拆开来看看：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">[日期戳] [时间戳] [工程名] [进程 ID: 线程 ID] [消息]</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">[日期戳] [时间戳] [工程名] [进程 ID: 线程 ID] [消息]</span><br></pre></td></tr></table></figure>
 <p>但是，的确，这种体量的日志相比于我们所需的信息显得有些过剩了。日期/时间戳、进程/线程ID组合标签占用了大量空间，尤其是当你的控制台窗口在 Xcode 窗口的底部中间偏右时，因为空间本来就不大，再打印这么冗长的信息就显得太小了。</p>
 <h3 id="print"><a href="#print" class="headerlink" title="print"></a>print</h3><p>没必要从 <code>NSLog</code>简化，<code>print</code>从原始信息中去掉了冗余的信息。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">Hello, beautiful world! I love you.</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Hello, beautiful world! I love you.</span><br></pre></td></tr></table></figure>
 <p>但是也许，只是也许，我觉得有时它的确有点太简化了…我知道你现在会怎么想我，😝但请不要介意。</p>
 <blockquote>
 <p>『这家伙一会抱怨 NSLog 太多， 一会又抱怨 print 太少？真难伺候。』—— 你</p>
@@ -126,22 +127,24 @@
 <p>Pro tip:<br>在 OSX 系统中，在任意文本框中点击 Ctrl + Cmd + Space 将会打开一个 emoji 弹出框。</p>
 </blockquote>
 <p><img src="http://swiftgg-main.b0.upaiyun.com/img/swift-prettify-your-print-statements-pt-1-1.jpeg" alt=""></p>
-<h4 id="Strings"><a href="#Strings" class="headerlink" title="Strings"></a>Strings</h4><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">let string = &quot;Emojis are life&quot;</div><div class="line">print(&quot;🔹 &quot; + string)</div><div class="line">// 🔹 Emojis are life</div></pre></td></tr></table></figure>
-<h4 id="NSDate"><a href="#NSDate" class="headerlink" title="NSDate"></a>NSDate</h4><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">let date = NSDate()</div><div class="line">print(&quot;🕒 &quot; + String(date))</div><div class="line">// 🕒 2016-04-02 00:14:18 +0000</div></pre></td></tr></table></figure>
-<h4 id="NSURL"><a href="#NSURL" class="headerlink" title="NSURL"></a>NSURL</h4><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">let url = NSURL(string: &quot;http://www.andyyhope.com&quot;)</div><div class="line">print(&quot;🌏 &quot; + String(url))</div><div class="line">// 🌏 http://www.andyyhope.com</div></pre></td></tr></table></figure>
-<h4 id="NSError"><a href="#NSError" class="headerlink" title="NSError"></a>NSError</h4><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">let userInfo = [NSLocalizedDescriptionKey: &quot;File not found&quot;]</div><div class="line">let error = NSError(domain: &quot;Domain&quot;, code: 404, userInfo: userInfo)</div><div class="line">print(“❗️ “ + “\(error.code): “ + error.localizedDescription)</div><div class="line">// ❗️ 404: File not found</div></pre></td></tr></table></figure>
-<h4 id="AnyObject"><a href="#AnyObject" class="headerlink" title="AnyObject"></a>AnyObject</h4><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">let anyObject = UIColor.redColor()</div><div class="line">print(&quot;◽️ &quot; + String(anyObject))</div><div class="line">// ◽️ UIDeviceRGBColorSpace 1 0 0 1</div></pre></td></tr></table></figure>
-<h4 id="和同事开个小玩笑"><a href="#和同事开个小玩笑" class="headerlink" title="和同事开个小玩笑"></a>和同事开个小玩笑</h4><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">let joke = &quot;What is this... A center for ANTS?!&quot;</div><div class="line">print(&quot;🏫🐜 &quot; + joke)</div><div class="line">// 🏫🐜 What is this... A center for ANTS?!</div></pre></td></tr></table></figure>
+<h4 id="Strings"><a href="#Strings" class="headerlink" title="Strings"></a>Strings</h4><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">let string = &quot;Emojis are life&quot;</span><br><span class="line">print(&quot;🔹 &quot; + string)</span><br><span class="line">// 🔹 Emojis are life</span><br></pre></td></tr></table></figure>
+<h4 id="NSDate"><a href="#NSDate" class="headerlink" title="NSDate"></a>NSDate</h4><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">let date = NSDate()</span><br><span class="line">print(&quot;🕒 &quot; + String(date))</span><br><span class="line">// 🕒 2016-04-02 00:14:18 +0000</span><br></pre></td></tr></table></figure>
+<h4 id="NSURL"><a href="#NSURL" class="headerlink" title="NSURL"></a>NSURL</h4><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">let url = NSURL(string: &quot;http://www.andyyhope.com&quot;)</span><br><span class="line">print(&quot;🌏 &quot; + String(url))</span><br><span class="line">// 🌏 http://www.andyyhope.com</span><br></pre></td></tr></table></figure>
+<h4 id="NSError"><a href="#NSError" class="headerlink" title="NSError"></a>NSError</h4><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">let userInfo = [NSLocalizedDescriptionKey: &quot;File not found&quot;]</span><br><span class="line">let error = NSError(domain: &quot;Domain&quot;, code: 404, userInfo: userInfo)</span><br><span class="line">print(“❗️ “ + “\(error.code): “ + error.localizedDescription)</span><br><span class="line">// ❗️ 404: File not found</span><br></pre></td></tr></table></figure>
+<h4 id="AnyObject"><a href="#AnyObject" class="headerlink" title="AnyObject"></a>AnyObject</h4><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">let anyObject = UIColor.redColor()</span><br><span class="line">print(&quot;◽️ &quot; + String(anyObject))</span><br><span class="line">// ◽️ UIDeviceRGBColorSpace 1 0 0 1</span><br></pre></td></tr></table></figure>
+<h4 id="和同事开个小玩笑"><a href="#和同事开个小玩笑" class="headerlink" title="和同事开个小玩笑"></a>和同事开个小玩笑</h4><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">let joke = &quot;What is this... A center for ANTS?!&quot;</span><br><span class="line">print(&quot;🏫🐜 &quot; + joke)</span><br><span class="line">// 🏫🐜 What is this... A center for ANTS?!</span><br></pre></td></tr></table></figure>
 <p><img src="http://swiftgg-main.b0.upaiyun.com/img/swift-prettify-your-print-statements-pt-1-2.jpeg" alt=""></p>
 <p>鉴于 iOS 9.1 有 184 种表情可供选择，并且将来还会出现更多，你的大多数日志的需求都能用表情来满足。</p>
 <h3 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h3><p>不要误会，上面的实现挺烂的…实际上它烂到 Hoover （译者注：一种吸尘器品牌）想把它扫走。把所有不是字符串的东西都包进 String 的括号里，以及找到合适的表情是一件很痛苦的事，如果你正在寻找的表情并不经常用到，通常不太可能找到。<br>我认为系统能感知到你在寻找哪个表情，故意把它藏在第五个维度来惹你，让你觉得你快疯了。</p>
 <blockquote>
 <p>『也许便便的表情不存在了？或者它从来就没有存在过？』 —— 你</p>
+</blockquote>
+<blockquote>
 <p>『哦，等等，它在这里。我发誓我看到过的？什么鬼！』 —— 你（十分钟后）</p>
 </blockquote>
 <p>然而，这第一篇文章只是为了演示一下，如何在你的日志中使用表情符号，来区分不同形式的日志，并减少认知负荷。</p>
 <p>如果你看完第一部分还能忍受，这个系列的下一部分和最后一部分将具体实现，告诉你如何使这种表情日志的方式更有用。</p>
-<p>这篇文章的<a href="https://github.com/andyyhope/Blog_PrettyPrint" target="_blank" rel="external">示例代码</a>可以在 Github 上找到。</p>
+<p>这篇文章的<a href="https://github.com/andyyhope/Blog_PrettyPrint" target="_blank" rel="noopener">示例代码</a>可以在 Github 上找到。</p>
 <p>第二部分将包含在 log 中使用表情的代码实现。敬请期待！</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
@@ -255,6 +258,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -303,7 +310,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -452,11 +459,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -468,11 +475,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -480,7 +483,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -492,11 +495,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -504,7 +511,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -698,7 +705,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

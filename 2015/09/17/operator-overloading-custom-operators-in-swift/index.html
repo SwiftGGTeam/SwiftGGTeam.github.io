@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2015/09/17/operator-overloading-custom-operators-in-swift/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Raj Kandathi，原文链接，原文日期：2015-09-12译者：pmst；校对：千叶知风；定稿：shanks   重载运算符有时候，我们会遇到需要对自定义的类(class)或结构体(struct)支持某些运算符功能，例如+,-,*,/等。以魔方收集者(Cube Collector)游戏为例，初期你怀揣一个渺小的魔方，身处一个充斥各种尺寸魔方的空间中。你的任务是找寻新的魔方,并通过”">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.363Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift 中的重载运算符和自定义运算符">
 <meta name="twitter:description" content="作者：Raj Kandathi，原文链接，原文日期：2015-09-12译者：pmst；校对：千叶知风；定稿：shanks   重载运算符有时候，我们会遇到需要对自定义的类(class)或结构体(struct)支持某些运算符功能，例如+,-,*,/等。以魔方收集者(Cube Collector)游戏为例，初期你怀揣一个渺小的魔方，身处一个充斥各种尺寸魔方的空间中。你的任务是找寻新的魔方,并通过”">
@@ -88,7 +89,7 @@
         <a href="/2015/09/17/operator-overloading-custom-operators-in-swift/" target="_blank" title="Swift 中的重载运算符和自定义运算符" itemprop="url">Swift 中的重载运算符和自定义运算符</a>
     </h1>
     <p class="article-time">
-      <time datetime="2015-09-17T02:00:00.000Z" itemprop="datePublished">2015-09-17</time>
+      <time datetime="2015-09-17T10:00:00.000Z" itemprop="datePublished">2015-09-17</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,21 +97,21 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Raj Kandathi，<a href="http://rajkandathi.com/operator-overloading-custom-operators-in-swift/" target="_blank" rel="external">原文链接</a>，原文日期：2015-09-12<br>译者：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="external">pmst</a>；校对：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="external">千叶知风</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
+<p>作者：Raj Kandathi，<a href="http://rajkandathi.com/operator-overloading-custom-operators-in-swift/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-09-12<br>译者：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="noopener">pmst</a>；校对：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a></p>
 </blockquote>
 <!--此处开始正文-->
 <h3 id="重载运算符"><a href="#重载运算符" class="headerlink" title="重载运算符"></a>重载运算符</h3><p>有时候，我们会遇到需要对自定义的类(<code>class</code>)或结构体(<code>struct</code>)支持某些运算符功能，例如<code>+,-,*,/</code>等。以魔方收集者(<code>Cube Collector</code>)游戏为例，初期你怀揣一个渺小的魔方，身处一个充斥各种尺寸魔方的空间中。你的任务是找寻新的魔方,并通过”吞噬”新魔方来进化你手中的魔方。(译者注:吞噬解释为原始魔方尺寸加上新的魔方尺寸得到进化后的魔方)<br><a id="more"></a></p>
 <p>魔方(<code>Cube</code>)类定义如下:</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Cube</span></span>&#123;</div><div class="line">  <span class="keyword">var</span> side:<span class="type">Double</span>	<span class="comment">//定义魔方边长</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Cube</span></span>&#123;</span><br><span class="line">  <span class="keyword">var</span> side:<span class="type">Double</span>	<span class="comment">//定义魔方边长</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>在面向对象编程中，实现魔方之间”吞噬”(相加)的功能是往<code>Cube</code>结构体中添加一个加法的方法，具体实现代码如下:      </p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Cube</span> </span>&#123;</div><div class="line">  <span class="keyword">var</span> side: <span class="type">Double</span></div><div class="line">   	</div><div class="line">  <span class="comment">// 译者注: 结构体中，定义的方法修改内部定义变量值时，该方法必须添加mutating关键字</span></div><div class="line">  <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">add</span><span class="params">(newCube: Cube)</span></span> &#123;</div><div class="line">    <span class="keyword">self</span>.side += newCube.side</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">var</span> myCube = <span class="type">Cube</span>(side: <span class="number">10.0</span>)		</div><div class="line"><span class="keyword">let</span> foundCube1 = <span class="type">Cube</span>(side: <span class="number">5.0</span>)</div><div class="line"></div><div class="line">myCube.add(foundCube1)</div><div class="line"><span class="built_in">print</span>(myCube.side, appendNewline: <span class="literal">true</span>)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Cube</span> </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> side: <span class="type">Double</span></span><br><span class="line">   	</span><br><span class="line">  <span class="comment">// 译者注: 结构体中，定义的方法修改内部定义变量值时，该方法必须添加mutating关键字</span></span><br><span class="line">  <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">add</span><span class="params">(newCube: Cube)</span></span> &#123;</span><br><span class="line">    <span class="keyword">self</span>.side += newCube.side</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> myCube = <span class="type">Cube</span>(side: <span class="number">10.0</span>)		</span><br><span class="line"><span class="keyword">let</span> foundCube1 = <span class="type">Cube</span>(side: <span class="number">5.0</span>)</span><br><span class="line"></span><br><span class="line">myCube.add(foundCube1)</span><br><span class="line"><span class="built_in">print</span>(myCube.side, appendNewline: <span class="literal">true</span>)</span><br></pre></td></tr></table></figure>
 <p>除了在结构体中定义<code>add</code>函数实现方式之外，我们更期望使用<code>+</code>运算符来实现<code>Cube</code>魔方之间的相加，就比如通过下面这种方式:</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> newCube = myCube + foundCube1</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> newCube = myCube + foundCube1</span><br></pre></td></tr></table></figure>
 <p>通过重载已存在的运算符(例如<code>+ - * /</code>)的方式，<strong>Swift</strong>允许我们对类或结构体进行运算操作。重载已存在的运算符，言外之意即支持新的数据类型的运算操作。两个魔方(<code>Cube</code>)之间的相加函数定义如下: </p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> + <span class="params">(lhsCube: Cube, rhsCube: Cube)</span></span> -&gt; <span class="type">Cube</span> &#123;</div><div class="line">  <span class="keyword">var</span> resultCube = <span class="type">Cube</span>(side: <span class="number">0.0</span>)</div><div class="line">  resultCube.side = lhsCube.side + rhsCube.side</div><div class="line">  <span class="keyword">return</span> resultCube</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">let</span> existingCube = <span class="type">Cube</span>(side: <span class="number">10.0</span>)</div><div class="line"><span class="keyword">let</span> foundCube2 = <span class="type">Cube</span>(side: <span class="number">20.0</span>)</div><div class="line"><span class="keyword">let</span> newCube = existingCube + foundCube2</div><div class="line"><span class="built_in">print</span>(newCube.side, appendNewline: <span class="literal">true</span>)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> + <span class="params">(lhsCube: Cube, rhsCube: Cube)</span></span> -&gt; <span class="type">Cube</span> &#123;</span><br><span class="line">  <span class="keyword">var</span> resultCube = <span class="type">Cube</span>(side: <span class="number">0.0</span>)</span><br><span class="line">  resultCube.side = lhsCube.side + rhsCube.side</span><br><span class="line">  <span class="keyword">return</span> resultCube</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> existingCube = <span class="type">Cube</span>(side: <span class="number">10.0</span>)</span><br><span class="line"><span class="keyword">let</span> foundCube2 = <span class="type">Cube</span>(side: <span class="number">20.0</span>)</span><br><span class="line"><span class="keyword">let</span> newCube = existingCube + foundCube2</span><br><span class="line"><span class="built_in">print</span>(newCube.side, appendNewline: <span class="literal">true</span>)</span><br></pre></td></tr></table></figure>
 <p>需要注意的是，重载运算函数(如上<code>+(lhsCube:rhsCube:)</code>函数)无法在自定义的类或结构体内声明，重载运算符函数只允许在<strong>全局作用域</strong>下有效！</p>
-<h3 id="自定义运算符"><a href="#自定义运算符" class="headerlink" title="自定义运算符"></a>自定义运算符</h3><p>前文”Cube Collection”游戏不妨再加入一个“宝箱”玩法，每一次玩家收集到一个宝箱，他/她所拥有的魔方尺寸就放大三倍(边长<code>side * 3</code>)。为了实现这个游戏机制，我们创建一个自定义运算符。通常，我们需要为这个自定义运算符<strong>命名</strong>,<strong>指定类型</strong>，<strong>指定优先级</strong>以及<strong>结合性</strong>。想要知道更多这四个方面的知识，请参阅<a href="http://wiki.jikexueyuan.com/project/swift/chapter2/25_Advanced_Operators.html" target="_blank" rel="external">苹果官方文档</a>。既然宝箱的作用是使得魔方尺寸放大三倍，不妨我们将这个自定义运算符命名为<code>***</code>，结合性采用<strong>后缀</strong>方式(译者注:等价于<code>a++</code>中的<code>++</code>作用)。其中将传入运算符操作函数的变量类型用<code>inout</code>关键字修饰声明。代码如下:      </p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">postfix</span> <span class="keyword">operator</span> *** &#123;&#125;</div><div class="line"><span class="keyword">postfix</span> <span class="function"><span class="keyword">func</span> *** <span class="params">(<span class="keyword">inout</span> myCube: Cube)</span></span>&#123;</div><div class="line">  myCube.side = myCube.side * <span class="number">3</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">var</span> myCube = <span class="type">Cube</span>(side: <span class="number">10.0</span>)</div><div class="line">myCube***</div><div class="line"><span class="built_in">print</span>(myCube.side, appendNewline: <span class="literal">true</span>)<span class="comment">//swift2.0新特性 Xcode7下支持</span></div></pre></td></tr></table></figure>
+<h3 id="自定义运算符"><a href="#自定义运算符" class="headerlink" title="自定义运算符"></a>自定义运算符</h3><p>前文”Cube Collection”游戏不妨再加入一个“宝箱”玩法，每一次玩家收集到一个宝箱，他/她所拥有的魔方尺寸就放大三倍(边长<code>side * 3</code>)。为了实现这个游戏机制，我们创建一个自定义运算符。通常，我们需要为这个自定义运算符<strong>命名</strong>,<strong>指定类型</strong>，<strong>指定优先级</strong>以及<strong>结合性</strong>。想要知道更多这四个方面的知识，请参阅<a href="http://wiki.jikexueyuan.com/project/swift/chapter2/25_Advanced_Operators.html" target="_blank" rel="noopener">苹果官方文档</a>。既然宝箱的作用是使得魔方尺寸放大三倍，不妨我们将这个自定义运算符命名为<code>***</code>，结合性采用<strong>后缀</strong>方式(译者注:等价于<code>a++</code>中的<code>++</code>作用)。其中将传入运算符操作函数的变量类型用<code>inout</code>关键字修饰声明。代码如下:      </p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">postfix</span> <span class="keyword">operator</span> *** &#123;&#125;</span><br><span class="line"><span class="keyword">postfix</span> <span class="function"><span class="keyword">func</span> *** <span class="params">(<span class="keyword">inout</span> myCube: Cube)</span></span>&#123;</span><br><span class="line">  myCube.side = myCube.side * <span class="number">3</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> myCube = <span class="type">Cube</span>(side: <span class="number">10.0</span>)</span><br><span class="line">myCube***</span><br><span class="line"><span class="built_in">print</span>(myCube.side, appendNewline: <span class="literal">true</span>)<span class="comment">//swift2.0新特性 Xcode7下支持</span></span><br></pre></td></tr></table></figure>
 <p>正如你所看到的，重载已存在的运算符以及自定义运算符在<strong>Swift</strong>是如此简单。不过重载已存在运算符时，请引起足够重视，防止一些意外情况发生。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
@@ -224,6 +225,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -272,7 +277,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -421,11 +426,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -437,11 +442,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -449,7 +450,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -461,11 +462,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -473,7 +478,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -667,7 +672,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

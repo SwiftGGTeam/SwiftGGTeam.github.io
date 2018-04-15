@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/04/20/selector-and-the-responder-chain/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="Swift 2.2 selector 用法你清楚么，本文就来说下 Swift">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.387Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="#selector() 和响应链">
 <meta name="twitter:description" content="Swift 2.2 selector 用法你清楚么，本文就来说下 Swift">
@@ -88,7 +89,7 @@
         <a href="/2016/04/20/selector-and-the-responder-chain/" target="_blank" title="#selector() 和响应链" itemprop="url">#selector() 和响应链</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-04-19T16:00:00.000Z" itemprop="datePublished">2016-04-20</time>
+      <time datetime="2016-04-20T00:00:00.000Z" itemprop="datePublished">2016-04-20</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,19 +97,19 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Dominik Hauser，<a href="http://swiftandpainless.com/selector-and-the-responder-chain/" target="_blank" rel="external">原文链接</a>，原文日期：2016-04-10<br>译者：<a href="http://lanfordcai.github.io" target="_blank" rel="external">Lanford3_3</a>；校对：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="external">Channe</a>；定稿：<a href="https://github.com/Cee" target="_blank" rel="external">Cee</a></p>
+<p>作者：Dominik Hauser，<a href="http://swiftandpainless.com/selector-and-the-responder-chain/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-04-10<br>译者：<a href="http://lanfordcai.github.io" target="_blank" rel="noopener">Lanford3_3</a>；校对：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="noopener">Channe</a>；定稿：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>因为 Swift 2.2 中 selector 的新语法，我用在「<a href="http://swift.gg/2016/01/06/utilize-the-responder-chain-for-target-action/">在 Target-Action 中使用响应链</a>」中的方法产生了一个警告，让我们来修正它。</p>
 <a id="more"></a>
 <h3 id="总管协议"><a href="#总管协议" class="headerlink" title="总管协议"></a>总管协议</h3><p>首先我们加入一个协议：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="meta">@objc</span> <span class="class"><span class="keyword">protocol</span> <span class="title">DetailShowable</span> </span>&#123;</div><div class="line">    <span class="meta">@objc</span> <span class="function"><span class="keyword">func</span> <span class="title">showDetail</span><span class="params">()</span></span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>之后，我们可以给 <code>Selector</code> 添加一个 extension，就像 <a href="https://twitter.com/AndyyHope" target="_blank" rel="external">Andyy Hope</a> 在他的<a href="https://medium.com/swift-programming/swift-selector-syntax-sugar-81c8a8b10df3#.6gteb7p1s" target="_blank" rel="external">这篇🐂文</a>中提到的那样，这个 extension 就长这样：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="class"><span class="keyword">extension</span> <span class="title">Selector</span> </span>&#123;</div><div class="line">    <span class="keyword">static</span> <span class="keyword">let</span> showDetail = #selector(<span class="type">DetailShowable</span>.showDetail)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="meta">@objc</span> <span class="class"><span class="keyword">protocol</span> <span class="title">DetailShowable</span> </span>&#123;</span><br><span class="line">    <span class="meta">@objc</span> <span class="function"><span class="keyword">func</span> <span class="title">showDetail</span><span class="params">()</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>之后，我们可以给 <code>Selector</code> 添加一个 extension，就像 <a href="https://twitter.com/AndyyHope" target="_blank" rel="noopener">Andyy Hope</a> 在他的<a href="https://medium.com/swift-programming/swift-selector-syntax-sugar-81c8a8b10df3#.6gteb7p1s" target="_blank" rel="noopener">这篇🐂文</a>中提到的那样，这个 extension 就长这样：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="class"><span class="keyword">extension</span> <span class="title">Selector</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">let</span> showDetail = #selector(<span class="type">DetailShowable</span>.showDetail)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>现在把 action 添加到响应链中就变得 so easy 了，就像这样：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">button.addTarget(<span class="literal">nil</span>, </div><div class="line">                 action: .showDetail,</div><div class="line">                 forControlEvents: .<span class="type">TouchUpInside</span>)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">button.addTarget(<span class="literal">nil</span>, </span><br><span class="line">                 action: .showDetail,</span><br><span class="line">                 forControlEvents: .<span class="type">TouchUpInside</span>)</span><br></pre></td></tr></table></figure>
 <p>最后，我们需要让响应链中的一些响应者对象遵循 <code>DetailShowable</code> 协议。</p>
-<p>你可以在 <a href="https://github.com/dasdom/SelectorSyntaxSugar" target="_blank" rel="external">github</a> 上找到这些代码。</p>
+<p>你可以在 <a href="https://github.com/dasdom/SelectorSyntaxSugar" target="_blank" rel="noopener">github</a> 上找到这些代码。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
@@ -221,6 +222,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -269,7 +274,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -418,11 +423,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -434,11 +439,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -446,7 +447,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -458,11 +459,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -470,7 +475,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -664,7 +669,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

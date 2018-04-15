@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2015/10/20/thinking-in-swift-3/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Olivier Halligon，原文链接，原文日期：2015-10-03译者：ray16897188；校对：pmst；定稿：小锅   系列文章地址：  Swift 编程思想，第一部分：拯救小马 Swift 编程思想，第二部分：数组的 Map 方法  继续说咱的”Swift编程思想系列”，今天我们将会做一些小小的改动，使用 struct（结构体） 来使代码得到进一步的简化。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.367Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift 编程思想，第三部分：结构体和类">
 <meta name="twitter:description" content="作者：Olivier Halligon，原文链接，原文日期：2015-10-03译者：ray16897188；校对：pmst；定稿：小锅   系列文章地址：  Swift 编程思想，第一部分：拯救小马 Swift 编程思想，第二部分：数组的 Map 方法  继续说咱的”Swift编程思想系列”，今天我们将会做一些小小的改动，使用 struct（结构体） 来使代码得到进一步的简化。">
@@ -88,7 +89,7 @@
         <a href="/2015/10/20/thinking-in-swift-3/" target="_blank" title="Swift 编程思想，第三部分：结构体和类" itemprop="url">Swift 编程思想，第三部分：结构体和类</a>
     </h1>
     <p class="article-time">
-      <time datetime="2015-10-20T01:00:00.000Z" itemprop="datePublished">2015-10-20</time>
+      <time datetime="2015-10-20T09:00:00.000Z" itemprop="datePublished">2015-10-20</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,7 +97,7 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Olivier Halligon，<a href="http://alisoftware.github.io/swift/2015/10/03/thinking-in-swift-3/" target="_blank" rel="external">原文链接</a>，原文日期：2015-10-03<br>译者：<a href="http://www.jianshu.com/users/97c49dfd1f9f/latest_articles" target="_blank" rel="external">ray16897188</a>；校对：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="external">pmst</a>；定稿：<a href="http://www.swiftyper.com" target="_blank" rel="external">小锅</a></p>
+<p>作者：Olivier Halligon，<a href="http://alisoftware.github.io/swift/2015/10/03/thinking-in-swift-3/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-10-03<br>译者：<a href="http://www.jianshu.com/users/97c49dfd1f9f/latest_articles" target="_blank" rel="noopener">ray16897188</a>；校对：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="noopener">pmst</a>；定稿：<a href="http://www.swiftyper.com" target="_blank" rel="noopener">小锅</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>系列文章地址：</p>
@@ -106,17 +107,17 @@
 </ul>
 <p>继续说咱的”Swift编程思想系列”，今天我们将会做一些小小的改动，使用 <code>struct（结构体）</code> 来使代码得到进一步的简化。</p>
 <a id="more"></a>
-<h3 id="前面的内容"><a href="#前面的内容" class="headerlink" title="前面的内容"></a>前面的内容</h3><p>在<a href="http://alisoftware.github.io/swift/2015/09/20/thinking-in-swift-2/" target="_blank" rel="external">这个系列之前的一篇文章里</a>我们学到了对数组(arrays)使用 <code>map</code> 和 <code>flatMap</code>，消除了中间变量(intermediate variables)形式的状态性(statefulness)，并使用了一些函数式编程<sup>1<sup>。</sup></sup></p>
-<p>下面是我们之前收工时的代码，贴在这里回顾一下：<br><figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">ListItem</span> </span>&#123;</div><div class="line">    <span class="keyword">var</span> icon: <span class="type">UIImage</span>?</div><div class="line">    <span class="keyword">var</span> title: <span class="type">String</span> = <span class="string">""</span></div><div class="line">    <span class="keyword">var</span> url: <span class="type">NSURL</span>!</div><div class="line"></div><div class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">listItemsFromJSONData</span><span class="params">(jsonData: NSData?)</span></span> -&gt; [<span class="type">ListItem</span>] &#123;</div><div class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> nonNilJsonData = jsonData,</div><div class="line">            <span class="keyword">let</span> json = <span class="keyword">try</span>? <span class="type">NSJSONSerialization</span>.<span class="type">JSONObjectWithData</span>(nonNilJsonData, options: []),</div><div class="line">            <span class="keyword">let</span> jsonItems = json <span class="keyword">as</span>? <span class="type">Array</span>&lt;<span class="type">NSDictionary</span>&gt;</div><div class="line">            <span class="keyword">else</span> &#123;</div><div class="line">                <span class="keyword">return</span> []</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="keyword">return</span> jsonItems.flatMap &#123; (itemDesc: <span class="type">NSDictionary</span>) -&gt; <span class="type">ListItem</span>? <span class="keyword">in</span></div><div class="line">            <span class="keyword">guard</span> <span class="keyword">let</span> title = itemDesc[<span class="string">"title"</span>] <span class="keyword">as</span>? <span class="type">String</span>,</div><div class="line">                <span class="keyword">let</span> urlString = itemDesc[<span class="string">"url"</span>] <span class="keyword">as</span>? <span class="type">String</span>,</div><div class="line">                <span class="keyword">let</span> url = <span class="type">NSURL</span>(string: urlString)</div><div class="line">                <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</div><div class="line">            <span class="keyword">let</span> li = <span class="type">ListItem</span>()</div><div class="line">            <span class="keyword">if</span> <span class="keyword">let</span> icon = itemDesc[<span class="string">"icon"</span>] <span class="keyword">as</span>? <span class="type">String</span> &#123;</div><div class="line">                li.icon = <span class="type">UIImage</span>(named: icon)</div><div class="line">            &#125;</div><div class="line">            li.title = title</div><div class="line">            li.url = url</div><div class="line">            <span class="keyword">return</span> li</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h3 id="前面的内容"><a href="#前面的内容" class="headerlink" title="前面的内容"></a>前面的内容</h3><p>在<a href="http://alisoftware.github.io/swift/2015/09/20/thinking-in-swift-2/" target="_blank" rel="noopener">这个系列之前的一篇文章里</a>我们学到了对数组(arrays)使用 <code>map</code> 和 <code>flatMap</code>，消除了中间变量(intermediate variables)形式的状态性(statefulness)，并使用了一些函数式编程<sup>1<sup>。</sup></sup></p>
+<p>下面是我们之前收工时的代码，贴在这里回顾一下：<br><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ListItem</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> icon: <span class="type">UIImage</span>?</span><br><span class="line">    <span class="keyword">var</span> title: <span class="type">String</span> = <span class="string">""</span></span><br><span class="line">    <span class="keyword">var</span> url: <span class="type">NSURL</span>!</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">listItemsFromJSONData</span><span class="params">(jsonData: NSData?)</span></span> -&gt; [<span class="type">ListItem</span>] &#123;</span><br><span class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> nonNilJsonData = jsonData,</span><br><span class="line">            <span class="keyword">let</span> json = <span class="keyword">try</span>? <span class="type">NSJSONSerialization</span>.<span class="type">JSONObjectWithData</span>(nonNilJsonData, options: []),</span><br><span class="line">            <span class="keyword">let</span> jsonItems = json <span class="keyword">as</span>? <span class="type">Array</span>&lt;<span class="type">NSDictionary</span>&gt;</span><br><span class="line">            <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> []</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> jsonItems.flatMap &#123; (itemDesc: <span class="type">NSDictionary</span>) -&gt; <span class="type">ListItem</span>? <span class="keyword">in</span></span><br><span class="line">            <span class="keyword">guard</span> <span class="keyword">let</span> title = itemDesc[<span class="string">"title"</span>] <span class="keyword">as</span>? <span class="type">String</span>,</span><br><span class="line">                <span class="keyword">let</span> urlString = itemDesc[<span class="string">"url"</span>] <span class="keyword">as</span>? <span class="type">String</span>,</span><br><span class="line">                <span class="keyword">let</span> url = <span class="type">NSURL</span>(string: urlString)</span><br><span class="line">                <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</span><br><span class="line">            <span class="keyword">let</span> li = <span class="type">ListItem</span>()</span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">let</span> icon = itemDesc[<span class="string">"icon"</span>] <span class="keyword">as</span>? <span class="type">String</span> &#123;</span><br><span class="line">                li.icon = <span class="type">UIImage</span>(named: icon)</span><br><span class="line">            &#125;</span><br><span class="line">            li.title = title</span><br><span class="line">            li.url = url</span><br><span class="line">            <span class="keyword">return</span> li</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>今天我们将对例子进行相当简单的改动，使得代码更加精简以及显得”雨燕风”(Swift-er)。</p>
 <h3 id="Struct相比Class"><a href="#Struct相比Class" class="headerlink" title="Struct相比Class"></a>Struct相比Class</h3><p>正如上面代码所示，首先考虑使用类(<code>class</code>)是Swift初学者经常犯的一个错误。不过这可以理解，因为在ObjC中我们满世界的用class。</p>
 <p>使用<code>class</code>不是什么原则性错误。在Swift中当然也可以继续用。但是<code>Swift</code>的结构体(<code>struct</code>)比它 C 前身的结构体要强大很多：它们不再只是存储一系列的值。</p>
 <p>Swift的结构体(<code>structs</code>)和类(<code>Class</code>)具有相同的功能 - 除了继承 - 结构体是<strong>值类型(value-types)</strong> (所以每一次变量赋值都是通过值拷贝的形式，与<code>Int</code>类型很相像)，而类属于<strong>引用类型(reference-types)</strong>，以引用方式传递而非值拷贝，这和Objective-C(以及OC中无处不在的难看的<code>*</code>，也代表着引用)中一样。</p>
-<p>我不会在这里展开长篇论述，讨论结构体、值类型和类、引用类型相比较孰胜孰劣：我还是直接强烈建议你看一下<a href="https://realm.io/news/andy-matuschak-controlling-complexity/" target="_blank" rel="external">Andy Matuschak对此话题的精彩论述</a>。我不需要自己再解释了，Andy说的比我好。</p>
+<p>我不会在这里展开长篇论述，讨论结构体、值类型和类、引用类型相比较孰胜孰劣：我还是直接强烈建议你看一下<a href="https://realm.io/news/andy-matuschak-controlling-complexity/" target="_blank" rel="noopener">Andy Matuschak对此话题的精彩论述</a>。我不需要自己再解释了，Andy说的比我好。</p>
 <h3 id="把我们的class转换成struct"><a href="#把我们的class转换成struct" class="headerlink" title="把我们的class转换成struct"></a>把我们的class转换成struct</h3><p>在我们的例子中，使用一个结构体看起来更为合适，因为它保存了一些值，并且并不会要对它们做什么改变(更适合拷贝而非引用)。案例中，我们把它用作一个菜单栏的数据源，一旦创建就不再对其更改，所以这也是使用结构体更为合理的一个场景。</p>
 <p>还有，这里把<code>class</code>迁移成<code>struct</code>的另一个优势是，如果<code>struct</code>没有定义适合一个构造器，则它会生成一个默认的隐式构造器：所以我们可以非常容易的用默认构造器<code>ListItem(icon: …, title: …, url: …)</code>去创建一个<code>ListItem</code>。</p>
-<p>最后一项要点是，由于在之前的文章中我们消除了数据损坏的问题，有问题的<code>ListItem</code>就不会被创建出来了，我们就可以把<code>title</code>的默认值<code>&quot;&quot;</code>消除掉，但更重要的是我们就能把<code>NSURL!</code>转换成<code>NSURL</code>去<strong><a href="http://alisoftware.github.io/swift/2015/09/06/thinking-in-swift-1/" target="_blank" rel="external">拯救最后一匹小马</a></strong>🐴<sup>2<sup>。</sup></sup></p>
-<p>转换之后的代码如下：<br><figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ListItem</span> </span>&#123;</div><div class="line">    <span class="keyword">var</span> icon: <span class="type">UIImage</span>?</div><div class="line">    <span class="keyword">var</span> title: <span class="type">String</span></div><div class="line">    <span class="keyword">var</span> url: <span class="type">NSURL</span></div><div class="line"></div><div class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">listItemsFromJSONData</span><span class="params">(jsonData: NSData?)</span></span> -&gt; [<span class="type">ListItem</span>] &#123;</div><div class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> nonNilJsonData = jsonData,</div><div class="line">            <span class="keyword">let</span> json = <span class="keyword">try</span>? <span class="type">NSJSONSerialization</span>.<span class="type">JSONObjectWithData</span>(nonNilJsonData, options: []),</div><div class="line">            <span class="keyword">let</span> jsonItems = json <span class="keyword">as</span>? <span class="type">Array</span>&lt;<span class="type">NSDictionary</span>&gt; <span class="keyword">else</span> &#123; <span class="keyword">return</span> [] &#125;</div><div class="line"></div><div class="line">        <span class="keyword">return</span> jsonItems.flatMap &#123; (itemDesc: <span class="type">NSDictionary</span>) -&gt; <span class="type">ListItem</span>? <span class="keyword">in</span></div><div class="line">            <span class="keyword">guard</span> <span class="keyword">let</span> title = itemDesc[<span class="string">"title"</span>] <span class="keyword">as</span>? <span class="type">String</span>,</div><div class="line">                <span class="keyword">let</span> urlString = itemDesc[<span class="string">"url"</span>] <span class="keyword">as</span>? <span class="type">String</span>,</div><div class="line">                <span class="keyword">let</span> url = <span class="type">NSURL</span>(string: urlString)</div><div class="line">                <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</div><div class="line">            <span class="keyword">let</span> iconName = itemDesc[<span class="string">"icon"</span>] <span class="keyword">as</span>? <span class="type">String</span></div><div class="line">            <span class="keyword">let</span> icon = <span class="type">UIImage</span>(named: iconName ?? <span class="string">""</span>)</div><div class="line">            <span class="keyword">return</span> <span class="type">ListItem</span>(icon: icon, title: title, url: url)</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>最后一项要点是，由于在之前的文章中我们消除了数据损坏的问题，有问题的<code>ListItem</code>就不会被创建出来了，我们就可以把<code>title</code>的默认值<code>&quot;&quot;</code>消除掉，但更重要的是我们就能把<code>NSURL!</code>转换成<code>NSURL</code>去<strong><a href="http://alisoftware.github.io/swift/2015/09/06/thinking-in-swift-1/" target="_blank" rel="noopener">拯救最后一匹小马</a></strong>🐴<sup>2<sup>。</sup></sup></p>
+<p>转换之后的代码如下：<br><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ListItem</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> icon: <span class="type">UIImage</span>?</span><br><span class="line">    <span class="keyword">var</span> title: <span class="type">String</span></span><br><span class="line">    <span class="keyword">var</span> url: <span class="type">NSURL</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">listItemsFromJSONData</span><span class="params">(jsonData: NSData?)</span></span> -&gt; [<span class="type">ListItem</span>] &#123;</span><br><span class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> nonNilJsonData = jsonData,</span><br><span class="line">            <span class="keyword">let</span> json = <span class="keyword">try</span>? <span class="type">NSJSONSerialization</span>.<span class="type">JSONObjectWithData</span>(nonNilJsonData, options: []),</span><br><span class="line">            <span class="keyword">let</span> jsonItems = json <span class="keyword">as</span>? <span class="type">Array</span>&lt;<span class="type">NSDictionary</span>&gt; <span class="keyword">else</span> &#123; <span class="keyword">return</span> [] &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> jsonItems.flatMap &#123; (itemDesc: <span class="type">NSDictionary</span>) -&gt; <span class="type">ListItem</span>? <span class="keyword">in</span></span><br><span class="line">            <span class="keyword">guard</span> <span class="keyword">let</span> title = itemDesc[<span class="string">"title"</span>] <span class="keyword">as</span>? <span class="type">String</span>,</span><br><span class="line">                <span class="keyword">let</span> urlString = itemDesc[<span class="string">"url"</span>] <span class="keyword">as</span>? <span class="type">String</span>,</span><br><span class="line">                <span class="keyword">let</span> url = <span class="type">NSURL</span>(string: urlString)</span><br><span class="line">                <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</span><br><span class="line">            <span class="keyword">let</span> iconName = itemDesc[<span class="string">"icon"</span>] <span class="keyword">as</span>? <span class="type">String</span></span><br><span class="line">            <span class="keyword">let</span> icon = <span class="type">UIImage</span>(named: iconName ?? <span class="string">""</span>)</span><br><span class="line">            <span class="keyword">return</span> <span class="type">ListItem</span>(icon: icon, title: title, url: url)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>现在当一切都就绪之后，我们只在最后一步创建才创建出<code>ListItem</code>实例，如果你不提供任何<code>init</code>方法的话<code>struct</code>会提供一个默认的<code>init</code>方法为它自己的参数段传值。用<code>class</code>的版本可以做相同的事，但是用<code>class</code>的话我们得自己声明<code>init</code>。</p>
 <h3 id="联合操作符-Coalescing-operator"><a href="#联合操作符-Coalescing-operator" class="headerlink" title="联合操作符(Coalescing operator)"></a>联合操作符(Coalescing operator)</h3><p>上面的例子中我还用了一个新的小技巧，使用<code>??</code>操作符让<code>iconName</code>在是<code>nil</code>的时候给出一个默认值。</p>
 <p><code>??</code>操作符和ObjC的<code>opt ?: val</code>表达式很像，了解它的人都知道：<code>opt ?? val</code>如果在<code>opt</code>非空的时候返回它的值，如果是<code>nil</code>的话会返回<code>val</code>。这意味着如果<code>opt</code>是<code>T?</code>类型，<code>val</code>则必须是<code>T</code>类型，整个表达式的结果也会是<code>T</code>类型。</p>
@@ -124,7 +125,7 @@
 <p>⚠️注意⚠️：将一个为<code>nil</code>的<code>iconName</code>和一个<code>nil</code>的<code>UIImage</code>作为结果来处理，这并<strong>不是</strong>最佳的、最简洁的做法。实际上使用一个假的<code>&quot;&quot;</code>名字来获得一个空图片看起来有点儿难看，还有点儿欺骗的意味。但是这是给你展示<code>??</code>操作符存在感的一个场合…嘿，我们还是为本系列文章的下一篇保留一些好东西吧(剧透：又涉及到了<code>flatMap</code>)。</p>
 <h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>今天就到这里了。</p>
 <p>在第3部分中我们没做太多事情，仅仅就是把<code>class</code>换成了<code>struct</code>。我甚至没讲哪怕一点儿关于两者之间的区别(然而即使我最近特别忙，有段时间没在blog上发东西了，我还是不想你为新文章等待太久)。</p>
-<p>但是我们最终丢弃掉<code>NSURL!</code>，将最后一匹小马拯救🎉。在我下一篇文章发布出来前，看一下<a href="https://realm.io/news/andy-matuschak-controlling-complexity/" target="_blank" rel="external">Andy关于《和值类型交朋友》的超棒讨论</a>，你还是有很多东西要去学的。</p>
+<p>但是我们最终丢弃掉<code>NSURL!</code>，将最后一匹小马拯救🎉。在我下一篇文章发布出来前，看一下<a href="https://realm.io/news/andy-matuschak-controlling-complexity/" target="_blank" rel="noopener">Andy关于《和值类型交朋友》的超棒讨论</a>，你还是有很多东西要去学的。</p>
 <p>我承诺在发布第4部分之前不会让你等太久，第4部分又涉及到<code>map</code>和<code>flatMap</code>，但这一次是基于<code>Optionals</code>。</p>
 <hr>
 <ol>
@@ -245,6 +246,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -293,7 +298,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -442,11 +447,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -458,11 +463,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -470,7 +471,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -482,11 +483,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -494,7 +499,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -688,7 +693,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

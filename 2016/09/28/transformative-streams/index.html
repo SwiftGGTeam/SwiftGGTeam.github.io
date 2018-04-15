@@ -20,9 +20,10 @@
 <meta property="og:url" content="https://swift.gg/2016/09/28/transformative-streams/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="在 Swift 中转换流可以从根本上改变流经它的文本，比如限制大小写或是拼写检查，本文就从一个翻译流来举例讲解下转换流。">
+<meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="http://swiftgg-main.b0.upaiyun.com/image/transformative-streams-1.png">
 <meta property="og:image" content="http://swiftgg-main.b0.upaiyun.com/image/transformative-streams-2.png">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.403Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="转换流">
 <meta name="twitter:description" content="在 Swift 中转换流可以从根本上改变流经它的文本，比如限制大小写或是拼写检查，本文就从一个翻译流来举例讲解下转换流。">
@@ -91,7 +92,7 @@
         <a href="/2016/09/28/transformative-streams/" target="_blank" title="转换流" itemprop="url">转换流</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-09-27T16:00:00.000Z" itemprop="datePublished">2016-09-28</time>
+      <time datetime="2016-09-28T00:00:00.000Z" itemprop="datePublished">2016-09-28</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -99,10 +100,10 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Erica Sadun，<a href="http://ericasadun.com/2016/08/29/transformative-streams/" target="_blank" rel="external">原文链接</a>，原文日期：2016-08-29<br>译者：<a href="https://github.com/Harman-darrenchen" target="_blank" rel="external">Darren</a>；校对：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="external">千叶知风</a></p>
+<p>作者：Erica Sadun，<a href="http://ericasadun.com/2016/08/29/transformative-streams/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-08-29<br>译者：<a href="https://github.com/Harman-darrenchen" target="_blank" rel="noopener">Darren</a>；校对：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p>我在很多地方都表达了我对流的喜爱。我在 <a href="http://www.informit.com/store/swift-developers-cookbook-includes-content-update-program-9780134395265" target="_blank" rel="external">Swift Cookbook </a>中介绍了一些。现在，我将通过 Pearson 的内容更新计划更新 Swift 3 的相关内容，正好我有一些要说的。我想在文章中添加一些有趣的新配方。</p>
+<p>我在很多地方都表达了我对流的喜爱。我在 <a href="http://www.informit.com/store/swift-developers-cookbook-includes-content-update-program-9780134395265" target="_blank" rel="noopener">Swift Cookbook </a>中介绍了一些。现在，我将通过 Pearson 的内容更新计划更新 Swift 3 的相关内容，正好我有一些要说的。我想在文章中添加一些有趣的新配方。</p>
 <a id="more"></a>
 <p>今天，让我们谈谈『转换流』。你写 <code>print(..., to:)</code> 时传递的传统流，只是一个你传递给stdout、stderr或文件的一个目标而已。转换流会从根本上改变流经它的文本。你可以限制文本为全部小写，或者做拼写检查，甚至打印到你的平台的本地通知系统。</p>
 <p>因此我决定创建一个翻译流。如截图所示，当你打印流的时候，会把英文文本转换成其他语言。</p>
@@ -115,11 +116,11 @@
 <li>我需要提供一个可重用的 <code>var</code> 成员，用于需要打印的流。<br>为了实现这些目标，我决定大量使用泛型和面向协议。我希望能够用一个泛型化的流类型来跟踪任意的语言，这反过来将为打印提供一个共享的流实例。这可能听起来有点绕。</li>
 </ul>
 <p>标准库内置的 <code>TextOutputStream</code> 协议刚好满足了一个需求，一个接收一个字符串并做一些处理的方法。下面的代码翻译了字符串并打印了出来。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">/// A text output stream that performs translation in</span></div><div class="line"><span class="comment">/// the process of printing</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">struct</span> <span class="title">TranslationStream</span>&lt;<span class="title">Language</span>: <span class="title">EnglishTranslationProvider</span>&gt;: <span class="title">TextOutputStream</span> </span>&#123;</div><div class="line">    <span class="comment">/// Writes the contents of the string to stdout after</span></div><div class="line">    <span class="comment">/// passing the string through an automatic translator</span></div><div class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">write</span><span class="params">(<span class="number">_</span> string: String)</span></span> &#123;</div><div class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> translation = <span class="type">Language</span>.translate(string) <span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</div><div class="line">        <span class="built_in">print</span>(translation)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">/// A text output stream that performs translation in</span></span><br><span class="line"><span class="comment">/// the process of printing</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">struct</span> <span class="title">TranslationStream</span>&lt;<span class="title">Language</span>: <span class="title">EnglishTranslationProvider</span>&gt;: <span class="title">TextOutputStream</span> </span>&#123;</span><br><span class="line">    <span class="comment">/// Writes the contents of the string to stdout after</span></span><br><span class="line">    <span class="comment">/// passing the string through an automatic translator</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">write</span><span class="params">(<span class="number">_</span> string: String)</span></span> &#123;</span><br><span class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> translation = <span class="type">Language</span>.translate(string) <span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</span><br><span class="line">        <span class="built_in">print</span>(translation)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>比较 tricky 的是我的 <code>TranslationStream</code> 结构是泛型。它需要一个遵循 <code>EnglishTraslationProvider</code> 协议的类型，允许其从 provider 请求翻译。这是协议的内容：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">/// A provider of string translations from English</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">protocol</span> <span class="title">EnglishTranslationProvider</span> </span>&#123;</div><div class="line">    <span class="comment">/// Returns a shared instance of the provider</span></div><div class="line">    <span class="keyword">static</span> <span class="keyword">var</span> shared: <span class="type">TranslationStream</span>&lt;<span class="type">Self</span>&gt; &#123; <span class="keyword">get</span> &#125;</div><div class="line"></div><div class="line">    <span class="comment">/// Returns a translated string</span></div><div class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">translate</span><span class="params">(<span class="number">_</span> string: String)</span></span> -&gt; <span class="type">String</span>?</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">/// A provider of string translations from English</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">protocol</span> <span class="title">EnglishTranslationProvider</span> </span>&#123;</span><br><span class="line">    <span class="comment">/// Returns a shared instance of the provider</span></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">var</span> shared: <span class="type">TranslationStream</span>&lt;<span class="type">Self</span>&gt; &#123; <span class="keyword">get</span> &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/// Returns a translated string</span></span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">translate</span><span class="params">(<span class="number">_</span> string: String)</span></span> -&gt; <span class="type">String</span>?</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>每个语言翻译的 provider 提供一个 <code>shared</code> 翻译流给 <code>TranslationStream</code> 类型供 打印时使用（就像在 <code>ItalianStream.shared</code> 的截图中所看到的那样 ），以及一个 <code>translate</code> 方法来返回字符串翻译后的版本。例如，这是法语 provider 类型的实现：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">/// A stream type that automatically translates from English to French</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">struct</span> <span class="title">FrenchStream</span>: <span class="title">EnglishTranslationProvider</span> </span>&#123;</div><div class="line">    <span class="comment">/// Returns a shared instance of the provider</span></div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">var</span> shared = <span class="type">TranslationStream</span>&lt;<span class="type">FrenchStream</span>&gt;()</div><div class="line">    </div><div class="line">    <span class="comment">/// Returns a translated string</span></div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">translate</span><span class="params">(<span class="number">_</span> string: String)</span></span> -&gt; <span class="type">String</span>? &#123;</div><div class="line">        <span class="keyword">return</span> <span class="type">FrenchStream</span>.translate(string, language: <span class="string">"fr"</span>)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">/// A stream type that automatically translates from English to French</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">struct</span> <span class="title">FrenchStream</span>: <span class="title">EnglishTranslationProvider</span> </span>&#123;</span><br><span class="line">    <span class="comment">/// Returns a shared instance of the provider</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">var</span> shared = <span class="type">TranslationStream</span>&lt;<span class="type">FrenchStream</span>&gt;()</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/// Returns a translated string</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">translate</span><span class="params">(<span class="number">_</span> string: String)</span></span> -&gt; <span class="type">String</span>? &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">FrenchStream</span>.translate(string, language: <span class="string">"fr"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>很简单吧？这真的不难。它实现了两个必要的成员，另一方面作为在协议扩展中声明的默认 <code>translate</code> 方法的代理。我的具体实现用了两个字符的语言代码，并通过 Google 翻译成英语。我在这里并没有包含实际的<code>translate(_ string:, language:)</code> 方法，因为有很多易使用的 API可供选择，它们一般都需要 API key 和费用。</p>
 <p>我试图让本文的重点是『哇，6666，你可以在打印流时转换文本。』，而不是『哦，翻译了。』。我认为翻译流是展示这个特定的 Swift 特性的好方式。</p>
 <p><em>在下面的截图中，我把（第20行）打印到了用户的通知栏。</em></p>
@@ -236,6 +237,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -284,7 +289,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -433,11 +438,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -449,11 +454,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -461,7 +462,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -473,11 +474,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -485,7 +490,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -679,7 +684,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

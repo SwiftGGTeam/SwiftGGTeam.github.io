@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/02/06/when-to-use-mutating-functions-in-swift-structs/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="想知道在Swift结构体怎么使用Mutating函数么，这篇文章就来好好说下在Swift结构体中使用Mutating函数的好时机。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.379Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="在 Swift 结构体中使用 Mutating 函数的最佳时机">
 <meta name="twitter:description" content="想知道在Swift结构体怎么使用Mutating函数么，这篇文章就来好好说下在Swift结构体中使用Mutating函数的好时机。">
@@ -88,7 +89,7 @@
         <a href="/2016/02/06/when-to-use-mutating-functions-in-swift-structs/" target="_blank" title="在 Swift 结构体中使用 Mutating 函数的最佳时机" itemprop="url">在 Swift 结构体中使用 Mutating 函数的最佳时机</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-02-06T01:00:00.000Z" itemprop="datePublished">2016-02-06</time>
+      <time datetime="2016-02-06T09:00:00.000Z" itemprop="datePublished">2016-02-06</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,31 +97,31 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：NatashaTheRobot，<a href="https://www.natashatherobot.com/when-to-use-mutating-functions-in-swift-structs/" target="_blank" rel="external">原文链接</a>，原文日期：2016-1-13<br>译者：<a href="http://chengway.in/" target="_blank" rel="external">walkingway</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="external">Cee</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="external">numbbbbb</a></p>
+<p>作者：NatashaTheRobot，<a href="https://www.natashatherobot.com/when-to-use-mutating-functions-in-swift-structs/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-1-13<br>译者：<a href="http://chengway.in/" target="_blank" rel="noopener">walkingway</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p>我认为关于 Swift 最棒的一个特性就是：在这门语言构建的工程中可以使用大量的不可变对象。这种特性使我们的代码更加清晰，也更加安全（如果你还对此存疑，强烈推荐观看这篇<a href="https://realm.io/news/andy-matuschak-controlling-complexity/" target="_blank" rel="external">演讲</a>）。</p>
+<p>我认为关于 Swift 最棒的一个特性就是：在这门语言构建的工程中可以使用大量的不可变对象。这种特性使我们的代码更加清晰，也更加安全（如果你还对此存疑，强烈推荐观看这篇<a href="https://realm.io/news/andy-matuschak-controlling-complexity/" target="_blank" rel="noopener">演讲</a>）。</p>
 <p>但当我们真正需要去改变数据时，又该怎么处理呢？</p>
 <a id="more"></a>
 <h3 id="函数方式"><a href="#函数方式" class="headerlink" title="函数方式"></a>函数方式</h3><p>举个例子，假如有一个井字棋的游戏棋盘，我需要修改棋盘上各个点的状态：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Position</span> </span>&#123;</div><div class="line">    <span class="keyword">let</span> coordinate: <span class="type">Coordinate</span></div><div class="line">    <span class="keyword">let</span> state: <span class="type">State</span></div><div class="line">    </div><div class="line">    <span class="class"><span class="keyword">enum</span> <span class="title">State</span>: <span class="title">Int</span> </span>&#123;</div><div class="line">        <span class="keyword">case</span> <span class="type">X</span>, <span class="type">O</span>, <span class="type">Empty</span></div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"> </div><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Board</span> </span>&#123;</div><div class="line">    </div><div class="line">    <span class="keyword">let</span> positions: [<span class="type">Position</span>]</div><div class="line"> </div><div class="line">    <span class="comment">// 需要添加一个函数来更新位置</span></div><div class="line">    <span class="comment">// 从空棋盘到 X 或 O </span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>我们采取<a href="https://www.natashatherobot.com/functional-programming-in-swift/" target="_blank" rel="external">函数式编程</a>的方式，可以很轻松地得到一个新棋盘！</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Board</span> </span>&#123;</div><div class="line">    </div><div class="line">    <span class="keyword">let</span> positionsMatrix: [[<span class="type">Position</span>]]</div><div class="line">    </div><div class="line">    <span class="keyword">init</span>() &#123;</div><div class="line">       <span class="comment">// 初始化一个初始棋盘</span></div><div class="line">    &#125;</div><div class="line"> </div><div class="line">    <span class="comment">// 函数式的实现方式</span></div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">boardWithNewPosition</span><span class="params">(position: Position)</span></span> -&gt; <span class="type">Board</span> &#123;</div><div class="line">        <span class="keyword">var</span> positions = positionsMatrix</div><div class="line">        <span class="keyword">let</span> row = position.coordinate.row.rawValue</div><div class="line">        <span class="keyword">let</span> column = position.coordinate.column.rawValue</div><div class="line">        positions[row][column] = position</div><div class="line">        <span class="keyword">return</span> <span class="type">Board</span>(positionsMatrix: positions)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Position</span> </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> coordinate: <span class="type">Coordinate</span></span><br><span class="line">    <span class="keyword">let</span> state: <span class="type">State</span></span><br><span class="line">    </span><br><span class="line">    <span class="class"><span class="keyword">enum</span> <span class="title">State</span>: <span class="title">Int</span> </span>&#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="type">X</span>, <span class="type">O</span>, <span class="type">Empty</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Board</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> positions: [<span class="type">Position</span>]</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// 需要添加一个函数来更新位置</span></span><br><span class="line">    <span class="comment">// 从空棋盘到 X 或 O </span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们采取<a href="https://www.natashatherobot.com/functional-programming-in-swift/" target="_blank" rel="noopener">函数式编程</a>的方式，可以很轻松地得到一个新棋盘！</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Board</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> positionsMatrix: [[<span class="type">Position</span>]]</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>() &#123;</span><br><span class="line">       <span class="comment">// 初始化一个初始棋盘</span></span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// 函数式的实现方式</span></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">boardWithNewPosition</span><span class="params">(position: Position)</span></span> -&gt; <span class="type">Board</span> &#123;</span><br><span class="line">        <span class="keyword">var</span> positions = positionsMatrix</span><br><span class="line">        <span class="keyword">let</span> row = position.coordinate.row.rawValue</span><br><span class="line">        <span class="keyword">let</span> column = position.coordinate.column.rawValue</span><br><span class="line">        positions[row][column] = position</span><br><span class="line">        <span class="keyword">return</span> <span class="type">Board</span>(positionsMatrix: positions)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>我更喜欢函数式编程是因为这种方式没有副作用，将变量统统改为常量，测试起来也是相当容易！</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">BoardTests</span>: <span class="title">XCTestCase</span> </span>&#123;</div><div class="line"> </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">testBoardWithNewPosition</span><span class="params">()</span></span> &#123;</div><div class="line">        <span class="keyword">let</span> board = <span class="type">Board</span>()</div><div class="line">        <span class="keyword">let</span> coordinate = <span class="type">Coordinate</span>(row: .<span class="type">Middle</span>, column: .<span class="type">Middle</span>)</div><div class="line">        </div><div class="line">        <span class="keyword">let</span> initialPosition = board[coordinate]</div><div class="line">        <span class="type">XCTAssertEqual</span>(initialPosition.state, <span class="type">Position</span>.<span class="type">State</span>.<span class="type">Empty</span>)</div><div class="line">        </div><div class="line">        <span class="keyword">let</span> newPosition = <span class="type">Position</span>(coordinate: coordinate, state: .<span class="type">X</span>)</div><div class="line">        <span class="keyword">let</span> newBoard = board.boardWithNewPosition(newPosition)</div><div class="line">        <span class="type">XCTAssertEqual</span>(newBoard[coordinate], newPosition)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BoardTests</span>: <span class="title">XCTestCase</span> </span>&#123;</span><br><span class="line"> </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">testBoardWithNewPosition</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">let</span> board = <span class="type">Board</span>()</span><br><span class="line">        <span class="keyword">let</span> coordinate = <span class="type">Coordinate</span>(row: .<span class="type">Middle</span>, column: .<span class="type">Middle</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">let</span> initialPosition = board[coordinate]</span><br><span class="line">        <span class="type">XCTAssertEqual</span>(initialPosition.state, <span class="type">Position</span>.<span class="type">State</span>.<span class="type">Empty</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">let</span> newPosition = <span class="type">Position</span>(coordinate: coordinate, state: .<span class="type">X</span>)</span><br><span class="line">        <span class="keyword">let</span> newBoard = board.boardWithNewPosition(newPosition)</span><br><span class="line">        <span class="type">XCTAssertEqual</span>(newBoard[coordinate], newPosition)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>但是，我们还有更好的解决方案！</p>
 <h3 id="使用-Mutating-关键字"><a href="#使用-Mutating-关键字" class="headerlink" title="使用 Mutating 关键字"></a>使用 Mutating 关键字</h3><p>让我们来跟踪一下每个用户下井字棋获胜的次数，首先创建一个计数器：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</div><div class="line">    <span class="keyword">let</span> <span class="built_in">count</span>: <span class="type">Int</span></div><div class="line">    </div><div class="line">    <span class="keyword">init</span>(<span class="built_in">count</span>: <span class="type">Int</span> = <span class="number">0</span>) &#123;</div><div class="line">        <span class="keyword">self</span>.<span class="built_in">count</span> = <span class="built_in">count</span></div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="comment">// 需要一个方法来增加计数</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="built_in">count</span>: <span class="type">Int</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>(<span class="built_in">count</span>: <span class="type">Int</span> = <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.<span class="built_in">count</span> = <span class="built_in">count</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 需要一个方法来增加计数</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>当然，我们也可以通过函数式编程的方式来实现这个计数器：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</div><div class="line">    <span class="keyword">let</span> <span class="built_in">count</span>: <span class="type">Int</span></div><div class="line">    </div><div class="line">    <span class="keyword">init</span>(<span class="built_in">count</span>: <span class="type">Int</span> = <span class="number">0</span>) &#123;</div><div class="line">        <span class="keyword">self</span>.<span class="built_in">count</span> = <span class="built_in">count</span></div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="comment">// 函数式的实现方式</span></div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">counterByIncrementing</span><span class="params">()</span></span> -&gt; <span class="type">Counter</span> &#123;</div><div class="line">        <span class="keyword">let</span> newCount = <span class="built_in">count</span> + <span class="number">1</span></div><div class="line">        <span class="keyword">return</span> <span class="type">Counter</span>(<span class="built_in">count</span>: newCount)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="built_in">count</span>: <span class="type">Int</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>(<span class="built_in">count</span>: <span class="type">Int</span> = <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.<span class="built_in">count</span> = <span class="built_in">count</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 函数式的实现方式</span></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">counterByIncrementing</span><span class="params">()</span></span> -&gt; <span class="type">Counter</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> newCount = <span class="built_in">count</span> + <span class="number">1</span></span><br><span class="line">        <span class="keyword">return</span> <span class="type">Counter</span>(<span class="built_in">count</span>: newCount)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>如果你尝试去实现此函数，应该这样写：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> counter = <span class="type">Counter</span>()</div><div class="line">counter = counter.counterByIncrementing()</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> counter = <span class="type">Counter</span>()</span><br><span class="line">counter = counter.counterByIncrementing()</span><br></pre></td></tr></table></figure>
 <p>最终你会发现相当<strong>晦涩难懂</strong>！所以这里我更推荐使用 <code>mutating</code> 关键字而不是函数式编程：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</div><div class="line">    <span class="comment">// 现在这个 count 改为变量了 :/</span></div><div class="line">    <span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span></div><div class="line">    </div><div class="line">    <span class="keyword">init</span>(<span class="built_in">count</span>: <span class="type">Int</span> = <span class="number">0</span>) &#123;</div><div class="line">        <span class="keyword">self</span>.<span class="built_in">count</span> = <span class="built_in">count</span></div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="comment">// 使用 mutating 关键字来实现修改 count </span></div><div class="line">    <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">increment</span><span class="params">()</span></span> &#123;</div><div class="line">        <span class="built_in">count</span> += <span class="number">1</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 现在这个 count 改为变量了 :/</span></span><br><span class="line">    <span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>(<span class="built_in">count</span>: <span class="type">Int</span> = <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.<span class="built_in">count</span> = <span class="built_in">count</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 使用 mutating 关键字来实现修改 count </span></span><br><span class="line">    <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">increment</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="built_in">count</span> += <span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>虽然我不喜欢 <code>increment</code> 函数中的副作用，但为了更好的可读性，这点牺牲是值得的。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> counter = <span class="type">Counter</span>()</div><div class="line">counter.increment()</div></pre></td></tr></table></figure>
-<p>让我们再进一步，通过使用 <a href="https://www.natashatherobot.com/swift-magic-public-getter-private-setter/" target="_blank" rel="external">private setter</a> 阻止了从外部修改 count 变量，从而将潜在危险降到最低：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</div><div class="line">    <span class="comment">// 将 setter 方法设为私有, </span></div><div class="line">    <span class="comment">// 这样只有 increment 函数能够修改它!</span></div><div class="line">    <span class="keyword">private</span>(<span class="keyword">set</span>) <span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span></div><div class="line">    </div><div class="line">    <span class="keyword">init</span>(<span class="built_in">count</span>: <span class="type">Int</span> = <span class="number">0</span>) &#123;</div><div class="line">        <span class="keyword">self</span>.<span class="built_in">count</span> = <span class="built_in">count</span></div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="comment">// 使用 mutating 关键字来实现修改 count </span></div><div class="line">    <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">increment</span><span class="params">()</span></span> &#123;</div><div class="line">        <span class="built_in">count</span> += <span class="number">1</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> counter = <span class="type">Counter</span>()</span><br><span class="line">counter.increment()</span><br></pre></td></tr></table></figure>
+<p>让我们再进一步，通过使用 <a href="https://www.natashatherobot.com/swift-magic-public-getter-private-setter/" target="_blank" rel="noopener">private setter</a> 阻止了从外部修改 count 变量，从而将潜在危险降到最低：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 将 setter 方法设为私有, </span></span><br><span class="line">    <span class="comment">// 这样只有 increment 函数能够修改它!</span></span><br><span class="line">    <span class="keyword">private</span>(<span class="keyword">set</span>) <span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>(<span class="built_in">count</span>: <span class="type">Int</span> = <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.<span class="built_in">count</span> = <span class="built_in">count</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 使用 mutating 关键字来实现修改 count </span></span><br><span class="line">    <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">increment</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="built_in">count</span> += <span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>当我面临要选择 <code>mutating</code> 关键字还是函数式编程时，通常我都会选择函数式编程，但这一些都是有前提的，那就是：<strong>不能牺牲可读性</strong>！</p>
 <p>为你的接口编写测试是一种很好的习惯，可以用来检验你的函数方法是否满足预期。如果你觉得接口写起来很怪异、不直观，那就去换一种方式去实现吧！最后别忘了用私有 <code>setter</code> 设置你的内部变量哦！</p>
 <blockquote>
@@ -235,6 +236,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -283,7 +288,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -432,11 +437,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -448,11 +453,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -460,7 +461,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -472,11 +473,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -484,7 +489,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -678,7 +683,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

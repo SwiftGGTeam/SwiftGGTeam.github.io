@@ -20,8 +20,9 @@
 <meta property="og:url" content="https://swift.gg/2015/10/09/thinking-in-swift-2/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Olivier Halligon，原文链接，原文日期：2015-09-20译者：我偏笑；校对：pmst；定稿：shanks   在本系列的第一篇文章中，介绍了如何避免对可选类型强制解包以及拯救“小马”🐴 。在第二部分中，我们将会精简前文代码来让它看起来更有”雨燕风”(Swift-er : Swift编程语言风格)，同时向你介绍 map() 和 flatMap() 方法。">
+<meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://swift.gg/img/articles/thinking-in-swift-2/map-everywhere.jpg1444352409.5202105">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.367Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift 编程思想，第二部分：数组的 Map 方法">
 <meta name="twitter:description" content="作者：Olivier Halligon，原文链接，原文日期：2015-09-20译者：我偏笑；校对：pmst；定稿：shanks   在本系列的第一篇文章中，介绍了如何避免对可选类型强制解包以及拯救“小马”🐴 。在第二部分中，我们将会精简前文代码来让它看起来更有”雨燕风”(Swift-er : Swift编程语言风格)，同时向你介绍 map() 和 flatMap() 方法。">
@@ -90,7 +91,7 @@
         <a href="/2015/10/09/thinking-in-swift-2/" target="_blank" title="Swift 编程思想，第二部分：数组的 Map 方法" itemprop="url">Swift 编程思想，第二部分：数组的 Map 方法</a>
     </h1>
     <p class="article-time">
-      <time datetime="2015-10-09T01:00:00.000Z" itemprop="datePublished">2015-10-09</time>
+      <time datetime="2015-10-09T09:00:00.000Z" itemprop="datePublished">2015-10-09</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -98,30 +99,30 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Olivier Halligon，<a href="http://alisoftware.github.io/swift/2015/09/20/thinking-in-swift-2/" target="_blank" rel="external">原文链接</a>，原文日期：2015-09-20<br>译者：<a href="http://blog.csdn.net/nsnirvana" target="_blank" rel="external">我偏笑</a>；校对：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="external">pmst</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
+<p>作者：Olivier Halligon，<a href="http://alisoftware.github.io/swift/2015/09/20/thinking-in-swift-2/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-09-20<br>译者：<a href="http://blog.csdn.net/nsnirvana" target="_blank" rel="noopener">我偏笑</a>；校对：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="noopener">pmst</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p>在<a href="http://alisoftware.github.io/swift/2015/09/06/thinking-in-swift-1/" target="_blank" rel="external">本系列的第一篇文章</a>中，介绍了如何避免对可选类型强制解包以及拯救“小马”🐴 。在第二部分中，我们将会精简前文代码来让它看起来更有”雨燕风”(<em>Swift-er</em> : Swift编程语言风格)，同时向你介绍 <code>map()</code> 和 <code>flatMap()</code> 方法。</p>
+<p>在<a href="http://alisoftware.github.io/swift/2015/09/06/thinking-in-swift-1/" target="_blank" rel="noopener">本系列的第一篇文章</a>中，介绍了如何避免对可选类型强制解包以及拯救“小马”🐴 。在第二部分中，我们将会精简前文代码来让它看起来更有”雨燕风”(<em>Swift-er</em> : Swift编程语言风格)，同时向你介绍 <code>map()</code> 和 <code>flatMap()</code> 方法。</p>
 <a id="more"></a>
 <blockquote>
 <p>今天这篇文章我们将要讨论数组的 <code>map()</code> 和 <code>flatMap()</code> 方法。</p>
 </blockquote>
-<h1 id="前情提要1"><a href="#前情提要1" class="headerlink" title="前情提要1"></a>前情提要<a href="thinking-in-swift-2/#note1"><sup>1</sup></a></h1><p>友情提示: 以下为<a href="http://alisoftware.github.io/swift/2015/09/06/thinking-in-swift-1/" target="_blank" rel="external">前文</a>留下的代码:</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">class ListItem &#123;</div><div class="line">    var icon: UIImage?</div><div class="line">    var title: String = &quot;&quot;</div><div class="line">    var url: NSURL!</div><div class="line"></div><div class="line">    static func listItemsFromJSONData(jsonData: NSData?) -&gt; [ListItem] &#123;</div><div class="line">        guard let nonNilJsonData = jsonData,</div><div class="line">            let json = try? NSJSONSerialization.JSONObjectWithData(nonNilJsonData, options: []),</div><div class="line">            let jsonItems = json as? Array&lt;NSDictionary&gt;</div><div class="line">            else &#123;</div><div class="line">                // 倘若JSON序列化失败，或者转换类型失败</div><div class="line">                // 返回一个空数组结果</div><div class="line">                return []</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        var items = [ListItem]()</div><div class="line">        for itemDesc in jsonItems &#123;</div><div class="line">            let item = ListItem()</div><div class="line">            if let icon = itemDesc[&quot;icon&quot;] as? String &#123;</div><div class="line">                item.icon = UIImage(named: icon)</div><div class="line">            &#125;</div><div class="line">            if let title = itemDesc[&quot;title&quot;] as? String &#123;</div><div class="line">                item.title = title</div><div class="line">            &#125;</div><div class="line">            if let urlString = itemDesc[&quot;url&quot;] as? String, let url = NSURL(string: urlString) &#123;</div><div class="line">                item.url = url</div><div class="line">            &#125;</div><div class="line">            items.append(item)</div><div class="line">        &#125;</div><div class="line">        return items</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h1 id="前情提要1"><a href="#前情提要1" class="headerlink" title="前情提要1"></a>前情提要<a href="thinking-in-swift-2/#note1"><sup>1</sup></a></h1><p>友情提示: 以下为<a href="http://alisoftware.github.io/swift/2015/09/06/thinking-in-swift-1/" target="_blank" rel="noopener">前文</a>留下的代码:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">class ListItem &#123;</span><br><span class="line">    var icon: UIImage?</span><br><span class="line">    var title: String = &quot;&quot;</span><br><span class="line">    var url: NSURL!</span><br><span class="line"></span><br><span class="line">    static func listItemsFromJSONData(jsonData: NSData?) -&gt; [ListItem] &#123;</span><br><span class="line">        guard let nonNilJsonData = jsonData,</span><br><span class="line">            let json = try? NSJSONSerialization.JSONObjectWithData(nonNilJsonData, options: []),</span><br><span class="line">            let jsonItems = json as? Array&lt;NSDictionary&gt;</span><br><span class="line">            else &#123;</span><br><span class="line">                // 倘若JSON序列化失败，或者转换类型失败</span><br><span class="line">                // 返回一个空数组结果</span><br><span class="line">                return []</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        var items = [ListItem]()</span><br><span class="line">        for itemDesc in jsonItems &#123;</span><br><span class="line">            let item = ListItem()</span><br><span class="line">            if let icon = itemDesc[&quot;icon&quot;] as? String &#123;</span><br><span class="line">                item.icon = UIImage(named: icon)</span><br><span class="line">            &#125;</span><br><span class="line">            if let title = itemDesc[&quot;title&quot;] as? String &#123;</span><br><span class="line">                item.title = title</span><br><span class="line">            &#125;</span><br><span class="line">            if let urlString = itemDesc[&quot;url&quot;] as? String, let url = NSURL(string: urlString) &#123;</span><br><span class="line">                item.url = url</span><br><span class="line">            &#125;</span><br><span class="line">            items.append(item)</span><br><span class="line">        &#125;</span><br><span class="line">        return items</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>本文的目标是使用更多“雨燕风”的模式和语法，使得代码看起来更棒并且简洁。</p>
 <h1 id="map-方法介绍"><a href="#map-方法介绍" class="headerlink" title="map()方法介绍"></a>map()方法介绍</h1><p><code>map()</code> 是 <code>Array</code> 提供的方法，通过接收一个函数作为传入参数，对数组中每个元素进行函数变换得到新的结果值。这样只需要提供<code>X-&gt;Y</code>的映射关系，就能将数组<code>[X]</code>变换到新数组<code>[Y]</code>，而无需创建一个临时可变数组(注:即上面代码中的<code>items</code>变量)。</p>
 <p>本例中，我们不再像之前一样用 <code>for</code> 来做循环，而是对 <code>jsonItems</code>(<em>JSON</em>数据:存储于类型为字典的数组中)使用 <code>map()</code> 方法，并传入一个变换函数(闭包)，将每个 <code>NSDictionary</code> 类型数组元素转换成我们所需的 <code>ListItem</code> 实例：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">return jsonItems.map &#123; (itemDesc: NSDictionary) -&gt; ListItem in</div><div class="line">    let item = ListItem()</div><div class="line">    if let icon = itemDesc[&quot;icon&quot;] as? String &#123;</div><div class="line">        item.icon = UIImage(named: icon)</div><div class="line">    &#125;</div><div class="line">    if let title = itemDesc[&quot;title&quot;] as? String &#123;</div><div class="line">        item.title = title</div><div class="line">    &#125;</div><div class="line">    if let urlString = itemDesc[&quot;url&quot;] as? String, let url = NSURL(string: urlString) &#123;</div><div class="line">        item.url = url</div><div class="line">    &#125;</div><div class="line">    return item</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">return jsonItems.map &#123; (itemDesc: NSDictionary) -&gt; ListItem in</span><br><span class="line">    let item = ListItem()</span><br><span class="line">    if let icon = itemDesc[&quot;icon&quot;] as? String &#123;</span><br><span class="line">        item.icon = UIImage(named: icon)</span><br><span class="line">    &#125;</span><br><span class="line">    if let title = itemDesc[&quot;title&quot;] as? String &#123;</span><br><span class="line">        item.title = title</span><br><span class="line">    &#125;</span><br><span class="line">    if let urlString = itemDesc[&quot;url&quot;] as? String, let url = NSURL(string: urlString) &#123;</span><br><span class="line">        item.url = url</span><br><span class="line">    &#125;</span><br><span class="line">    return item</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这看起来只是个很小的改动，但是它让我们专注于怎样把 <code>NSDictionary</code> 转化成 <code>ListItem</code>，毕竟这是解决问题的核心。更为重要的是，避免了像在 ObjC 里做的那样，新建一个中间数组。我们应该尽可能地避免这种情况发生。</p>
 <h3 id="错误数据"><a href="#错误数据" class="headerlink" title="错误数据"></a>错误数据</h3><p>目前代码还存在一个问题：即便输入的数据是不可用的，我们依然创建了一个 <code>ListItem</code> 实例(并返回添加到结果数组<code>jsonItems</code>当中)。所以，倘若某些 <code>NSDictionary</code>是无效的，最终的输出数组中，就会添加一些毫无意义的<code>ListItem()</code>空实例。<br>更重要的是，我们仍在杀死一些小马 🐴 。当我们使用<code>NSURL!</code>时，代码允许我们创建那些没有 <code>NSURL</code> 的 <code>ListItem()</code> 实例（我们没有一个有效的<code>url</code>键值，所以访问<code>item.url</code>不起作用），当我们访问无效的<code>NSURL!</code>时，程序将会崩溃。</p>
 <p>为了解决这个问题，我们对变换函数稍加修改，当输入值无效时，返回一个值为<code>nil</code>的<code>ListItem</code>，这比返回一个错误或无内容的<code>ListItem</code>更为合适。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">return jsonItems.map &#123; (itemDesc: NSDictionary) -&gt; ListItem? in</div><div class="line">    guard …/* condition for valid data */… else &#123; return nil &#125;</div><div class="line">    let realValidItem = ListItem()</div><div class="line">    … /* fill the ListItem with the values */</div><div class="line">    return realValidItem</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">return jsonItems.map &#123; (itemDesc: NSDictionary) -&gt; ListItem? in</span><br><span class="line">    guard …/* condition for valid data */… else &#123; return nil &#125;</span><br><span class="line">    let realValidItem = ListItem()</span><br><span class="line">    … /* fill the ListItem with the values */</span><br><span class="line">    return realValidItem</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>但是如果 <code>jsonItems.map</code> 里面传入的函数参数类型为 <code>NSDictionary -&gt; ListItem?</code>，最后我们得到的是一个 <code>[ListItem?]</code> 数组，那些原来是不可用 <code>NSDictionary</code> 的位置就被我们替换成了 <code>nil</code>。比原来要好一些了，但还不够。</p>
 <h1 id="使用flatMap"><a href="#使用flatMap" class="headerlink" title="使用flatMap()"></a>使用flatMap()</h1><p>这个时候就轮到 <code>flatMap()</code> 来救场了。</p>
 <p><code>flatMap()</code> 与 <code>map()</code> 相似，但 <code>flatMap()</code> 用的是 <code>T-&gt;U?</code> 变换而不是 <code>T-&gt;U</code> 转化，而且倘若变换后的数组元素值为 <code>nil</code><a href="thinking-in-swift-1/#note2"><sup>2</sup></a>，则不会被添加到最后的结果数组里面。</p>
 <p>从语法上，你可以这么理解，<code>flatMap</code> 就是先使用 <code>map</code>处理数组，接着将结果数组“压平”（顾名思义)，也就是从输出数组里剔除值为<code>nil</code>的元素。</p>
 <p>通过<code>flatMap</code>方法改写后的实例代码如下:</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">return jsonItems.flatMap &#123; (itemDesc: NSDictionary) -&gt; ListItem? in</div><div class="line">    guard let title = itemDesc[&quot;title&quot;] as? String,</div><div class="line">        let urlString = itemDesc[&quot;url&quot;] as? String,</div><div class="line">        let url = NSURL(string: urlString)</div><div class="line">        else &#123; return nil &#125;</div><div class="line">    let li = ListItem()</div><div class="line">    if let icon = itemDesc[&quot;icon&quot;] as? String &#123;</div><div class="line">        li.icon = UIImage(named: icon)</div><div class="line">    &#125;</div><div class="line">    li.title = title</div><div class="line">    li.url = url</div><div class="line">    return li</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">return jsonItems.flatMap &#123; (itemDesc: NSDictionary) -&gt; ListItem? in</span><br><span class="line">    guard let title = itemDesc[&quot;title&quot;] as? String,</span><br><span class="line">        let urlString = itemDesc[&quot;url&quot;] as? String,</span><br><span class="line">        let url = NSURL(string: urlString)</span><br><span class="line">        else &#123; return nil &#125;</span><br><span class="line">    let li = ListItem()</span><br><span class="line">    if let icon = itemDesc[&quot;icon&quot;] as? String &#123;</span><br><span class="line">        li.icon = UIImage(named: icon)</span><br><span class="line">    &#125;</span><br><span class="line">    li.title = title</span><br><span class="line">    li.url = url</span><br><span class="line">    return li</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>现在我们只返回所有键都存在<a href="/thinking-in-swift-1/#note3"><sup>3</sup></a>并有效的 <code>ListItem</code>对象（保证 <code>NSURL</code>不为<code>nil</code>）。否则执行<code>guard</code>语句，返回<code>nil</code>值通知<code>flatMap</code>不要将这些无效元素添加到返回结果数组中。</p>
 <p>这样做就更好更安全了，对吧？，我们解决了数据异常的问题，当有错误输入时候，避免了无效的<code>ListItem</code>项添加到数组当中。</p>
 <h1 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h1><p>我们仍然有很多工作要做，但是今天就先做这些吧（让我们为本系列文章的下一篇准备一下材料！）</p>
@@ -244,6 +245,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -292,7 +297,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -441,11 +446,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -457,11 +462,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -469,7 +470,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -481,11 +482,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -493,7 +498,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -687,7 +692,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

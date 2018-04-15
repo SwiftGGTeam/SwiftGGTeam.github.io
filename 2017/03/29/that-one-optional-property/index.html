@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2017/03/29/that-one-optional-property/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Ole Begemann，原文链接，原文日期：2017/3/6译者：Cwift；校对：walkingway；定稿：CMB   有时候为了新增一个功能，会去修改你的 ViewController 。但代码总是环环相扣的，你会发现在 ViewController 中引入一个可选型的属性时，在某些情况下该属性会被赋值，而在另一些情况下它不会被赋值。 我认为大多数情况下，这种方案是有缺陷的。原因有">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.411Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="一个可选型的属性">
 <meta name="twitter:description" content="作者：Ole Begemann，原文链接，原文日期：2017/3/6译者：Cwift；校对：walkingway；定稿：CMB   有时候为了新增一个功能，会去修改你的 ViewController 。但代码总是环环相扣的，你会发现在 ViewController 中引入一个可选型的属性时，在某些情况下该属性会被赋值，而在另一些情况下它不会被赋值。 我认为大多数情况下，这种方案是有缺陷的。原因有">
@@ -88,7 +89,7 @@
         <a href="/2017/03/29/that-one-optional-property/" target="_blank" title="一个可选型的属性" itemprop="url">一个可选型的属性</a>
     </h1>
     <p class="article-time">
-      <time datetime="2017-03-28T16:00:00.000Z" itemprop="datePublished">2017-03-29</time>
+      <time datetime="2017-03-29T00:00:00.000Z" itemprop="datePublished">2017-03-29</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,38 +97,38 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Ole Begemann，<a href="http://khanlou.com/2017/03/that-one-optional-property/" target="_blank" rel="external">原文链接</a>，原文日期：2017/3/6<br>译者：<a href="http://weibo.com/277195544" target="_blank" rel="external">Cwift</a>；校对：<a href="http://chengway.in/" target="_blank" rel="external">walkingway</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+<p>作者：Ole Begemann，<a href="http://khanlou.com/2017/03/that-one-optional-property/" target="_blank" rel="noopener">原文链接</a>，原文日期：2017/3/6<br>译者：<a href="http://weibo.com/277195544" target="_blank" rel="noopener">Cwift</a>；校对：<a href="http://chengway.in/" target="_blank" rel="noopener">walkingway</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>有时候为了新增一个功能，会去修改你的 <code>ViewController</code> 。但代码总是环环相扣的，你会发现在 <code>ViewController</code> 中引入一个可选型的属性时，在某些情况下该属性会被赋值，而在另一些情况下它不会被赋值。</p>
-<p>我认为大多数情况下，这种方案是有缺陷的。原因有几点。首先，当一个类含有未使用的可选型属性时，这个类中描述身份的语义会变弱。换句话说，添加可选型属性会模糊 <a href="http://khanlou.com/2017/01/the-underlying-structure/" target="_blank" rel="external">类型的基本语义</a> 。第二，可选型的属性不带任何语义。如果该属性的值是 <code>nil</code> ，那么当前对象处于什么状态呢？如果别人只是粗略浏览你的代码，并不能搞清楚什么情况下属性会是 <code>nil</code> ，或者如果属性是 <code>nil</code> 的话对对象本身有什么影响。第三，代码会继续发生变异。一个可选型的属性会变成两个，然后变成三个，等你发现的时候已经掉坑里了。在某个值还是 <code>nil</code> 的时候你想要表达出该值当前必须存在的意愿，仅靠普通的可选型是办不到的。</p>
+<p>我认为大多数情况下，这种方案是有缺陷的。原因有几点。首先，当一个类含有未使用的可选型属性时，这个类中描述身份的语义会变弱。换句话说，添加可选型属性会模糊 <a href="http://khanlou.com/2017/01/the-underlying-structure/" target="_blank" rel="noopener">类型的基本语义</a> 。第二，可选型的属性不带任何语义。如果该属性的值是 <code>nil</code> ，那么当前对象处于什么状态呢？如果别人只是粗略浏览你的代码，并不能搞清楚什么情况下属性会是 <code>nil</code> ，或者如果属性是 <code>nil</code> 的话对对象本身有什么影响。第三，代码会继续发生变异。一个可选型的属性会变成两个，然后变成三个，等你发现的时候已经掉坑里了。在某个值还是 <code>nil</code> 的时候你想要表达出该值当前必须存在的意愿，仅靠普通的可选型是办不到的。</p>
 <p>在我见过的代码库中，我发现有两种原因可能会致使你在 <code>ViewController</code> 中添加一个可选型的属性。我会对这些情况进行探索，提出有针对性的更好的解决方案。</p>
 <a id="more"></a>
 <p>首先，当你使用某个 <code>ViewController</code> 时，它的内部有一些对象或者数据不是每次都会用到，这可能会导致你定义一个有问题的可选型属性。<br>比如，某些情况下你点击了推送消息打开了一个 <code>ViewController</code> 。它需要展示推送中携带的特殊消息。最简单的解决方式就是添加一个可选型的字符串属性：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">LocationViewController</span>: <span class="title">UIViewController</span> </span>&#123;</div><div class="line"></div><div class="line">	<span class="comment">//...</span></div><div class="line">	</div><div class="line">	<span class="keyword">var</span> notificationMessage: <span class="type">String</span>?</div><div class="line">	</div><div class="line">	<span class="comment">//...</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">LocationViewController</span>: <span class="title">UIViewController</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//...</span></span><br><span class="line">	</span><br><span class="line">	<span class="keyword">var</span> notificationMessage: <span class="type">String</span>?</span><br><span class="line">	</span><br><span class="line">	<span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><code>ViewController</code> 上的其他代码根据该消息是否存在来确定视图该如何分配，如何布局等等。属性的可选型身份所体现的含义不仅仅局限于该字符串是否存在。它对 <code>ViewController</code> 和 <code>View</code> 层的其余部分都有影响。</p>
 <p>更重要的是，该字符串现在不再代表一个字符串是否存在 —— 它现在表示 <code>ViewController</code> 的呈现样式或模式。那么该字符串是在推送通知的上下文中创建的，还是通过正常浏览创建的呢？你只能勉强从这个属性上寻找答案！</p>
 <p>想要解决这个问题，必须使这种模式完全显化。一旦某个对象成为 <code>ViewController</code> 中的一等公民，它对 <code>ViewController</code> 的影响将更加明显。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">LocationViewController</span>: <span class="title">UIViewController</span> </span>&#123;</div><div class="line"></div><div class="line">	<span class="comment">//...</span></div><div class="line">	</div><div class="line">	<span class="class"><span class="keyword">enum</span> <span class="title">Mode</span> </span>&#123;</div><div class="line">		<span class="keyword">case</span> fromNotification(message: <span class="type">String</span>)</div><div class="line">		<span class="keyword">case</span> normal</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	<span class="keyword">var</span> mode: <span class="type">Mode</span></div><div class="line">	</div><div class="line">	<span class="comment">//...</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>正如 Sandi Metz 所说，<a href="https://www.youtube.com/watch?v=OMPfEXIlTVE" target="_blank" rel="external">代码的行为不具有特殊性</a>。一个开发者观念中的——有时候——我——这样——使用的可选型属性，代码不会承认这个属性为 <code>nil</code> 的情况也有意义，更何况是要承认它自带特殊性。使用枚举，特殊性就可以被代码重组并格式化。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">LocationViewController</span>: <span class="title">UIViewController</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//...</span></span><br><span class="line">	</span><br><span class="line">	<span class="class"><span class="keyword">enum</span> <span class="title">Mode</span> </span>&#123;</span><br><span class="line">		<span class="keyword">case</span> fromNotification(message: <span class="type">String</span>)</span><br><span class="line">		<span class="keyword">case</span> normal</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">var</span> mode: <span class="type">Mode</span></span><br><span class="line">	</span><br><span class="line">	<span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>正如 Sandi Metz 所说，<a href="https://www.youtube.com/watch?v=OMPfEXIlTVE" target="_blank" rel="noopener">代码的行为不具有特殊性</a>。一个开发者观念中的——有时候——我——这样——使用的可选型属性，代码不会承认这个属性为 <code>nil</code> 的情况也有意义，更何况是要承认它自带特殊性。使用枚举，特殊性就可以被代码重组并格式化。</p>
 <p>注意新定义的枚举与 <code>Optional</code> 枚举的定义格式非常相似。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">enum</span> <span class="title">Optional</span>&lt;<span class="title">Wrapped</span>&gt; </span>&#123;</div><div class="line">	<span class="keyword">case</span> some(<span class="type">Wrapped</span>)</div><div class="line">	<span class="keyword">case</span> <span class="keyword">none</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">Optional</span>&lt;<span class="title">Wrapped</span>&gt; </span>&#123;</span><br><span class="line">	<span class="keyword">case</span> some(<span class="type">Wrapped</span>)</span><br><span class="line">	<span class="keyword">case</span> <span class="keyword">none</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>不过，二者之间有一些非常有价值的区别。</p>
 <p>首先，语义。<code>some</code> 和 <code>none</code> 是抽象的；<code>normal</code> 和 <code>fromNotification</code> 具有与字面值相关的意义。代码的读者会感谢你的。</p>
 <p>其次，可扩展性。此时如果向 <code>ViewController</code> 中添加另一种模式，我们有更好的方式完整地描述它。如果新模式永远不能与前两种模式重叠，我们可以在枚举中新增一个 <code>case</code> ，并关联必要的类型。如果该新模式可以与当前的两种模式相重叠，则它可以成为一个新的枚举或者一个新的属性。这样做使得对象的状态更加易于描述。这两种选择都好于向对象中添加一个描述新模式的可选型属性。</p>
 <p>第三点，还是可扩展性。因为 <code>LaunchViewController.Mode</code> 是一等公民，所以可以向其中添加函数和计算属性。例如，保存通知消息的 Label 高度可能取决于消息的长度。因此，我们可以把这段代码移动到枚举的定义中：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Mode</span> </span>&#123;</div><div class="line">	<span class="keyword">var</span> notificationLabelHeight: <span class="type">CGFloat</span> &#123;</div><div class="line">		<span class="keyword">switch</span> <span class="keyword">self</span> &#123;</div><div class="line">		<span class="keyword">case</span> .normal: <span class="keyword">return</span> <span class="number">0</span></div><div class="line">		<span class="keyword">case</span> .fromNotification(<span class="keyword">let</span> message): <span class="keyword">return</span> message.size().height</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Mode</span> </span>&#123;</span><br><span class="line">	<span class="keyword">var</span> notificationLabelHeight: <span class="type">CGFloat</span> &#123;</span><br><span class="line">		<span class="keyword">switch</span> <span class="keyword">self</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> .normal: <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line">		<span class="keyword">case</span> .fromNotification(<span class="keyword">let</span> message): <span class="keyword">return</span> message.size().height</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>把数据迁移到更强大的类型中，你只需编写极少的代码便能从前沿的特性中获益。</p>
 <p>使用可选型属性的第二个原因是第一个原因的子集。在某些情况下，可选型的属性不用来表示 <code>ViewController</code> 的不同模式，它表示的是代码的时间维度。因为当前还没有获得该值，所以无法初始化对应的属性。常见的例子是通过网络请求数据，或者对系统资源进行耗时的异步检索。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">UserViewController</span>: <span class="title">UIViewController</span> </span>&#123;</div><div class="line">	</div><div class="line">	<span class="comment">//...</span></div><div class="line">	</div><div class="line">	<span class="comment">// 会被异步加载</span></div><div class="line">	<span class="keyword">var</span> user: <span class="type">User</span>?</div><div class="line">	</div><div class="line">	<span class="comment">//...</span></div><div class="line">	</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UserViewController</span>: <span class="title">UIViewController</span> </span>&#123;</span><br><span class="line">	</span><br><span class="line">	<span class="comment">//...</span></span><br><span class="line">	</span><br><span class="line">	<span class="comment">// 会被异步加载</span></span><br><span class="line">	<span class="keyword">var</span> user: <span class="type">User</span>?</span><br><span class="line">	</span><br><span class="line">	<span class="comment">//...</span></span><br><span class="line">	</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>如果以数组的形式返回数据那么则不需要写成可选型。因为可以用空数组表示数据不存在的状态，不过即便不使用可选型这个问题也依旧存在。每次我想要给 <code>TableViewController</code> 设置一个空状态都感到难以下手，这足以说明该问题的严重程度。</p>
 <p>由于第二个问题是第一个问题的子集，所以可以用相同的方式解决它，使用枚举：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">enum</span> <span class="title">LoadingState</span>&lt;<span class="title">Wrapped</span>&gt; </span>&#123;</div><div class="line">	<span class="keyword">case</span> initial</div><div class="line">	<span class="keyword">case</span> loading</div><div class="line">	<span class="keyword">case</span> loaded(<span class="type">Wrapped</span>)</div><div class="line">	<span class="keyword">case</span> error(<span class="type">Error</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">LoadingState</span>&lt;<span class="title">Wrapped</span>&gt; </span>&#123;</span><br><span class="line">	<span class="keyword">case</span> initial</span><br><span class="line">	<span class="keyword">case</span> loading</span><br><span class="line">	<span class="keyword">case</span> loaded(<span class="type">Wrapped</span>)</span><br><span class="line">	<span class="keyword">case</span> error(<span class="type">Error</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>虽然这个方案可以奏效，但是有更好的抽象模型来管理异步状态。一个当前不存在，但是会在未来某个时刻被赋值的值正适合使用 <code>Promise</code> 来表示。<code>Promise</code> 有几个优点，具体的情况取决于你的应用情景。</p>
 <p>首先，<code>Promise</code> 允许突变，但只有一次机会，并且只能从挂起状态突变。一旦 <code>Promise</code> 发生突变（状态变为“完成”），它就不能再改变了。（如果你需要可以多次更新的对象，使用 <code>Signal</code> 或者 <code>Observable</code> 都可以。）这意味着你可以拥有类似 <code>let</code> 的语义，但管理的仍旧是异步的数据。</p>
 <p>其次，<code>Promise</code> 可以添加闭包，当发生赋值时该闭包会执行。假设属性的类型仍然是一个简单的可选型，那这些添加的闭包就相当于属性观察器 <code>didSet</code> 中的代码。不过 <code>Promise</code> 的闭包更加强大，因为你可以添加多个，并且你可以在类的任何地方添加它们。这之后，当 <code>Promise</code> 被赋值后进入完成状态，此时闭包中的代码会立即执行。</p>
 <p>最后，如果有必要，<code>Promise</code> 也可以处理错误。对于某些类型的异步数据，这一点很重要，现在你可以免费得到这些功能。</p>
-<p>如果你正在用 <a href="https://github.com/khanlou/Promise" target="_blank" rel="external">我编写的 <code>Promise</code> 库</a> ，你可以使用无参的构造器创建一个挂起状态的 <code>Promise</code>，稍后调用 <code>fulfill</code> 方法来完成它。</p>
+<p>如果你正在用 <a href="https://github.com/khanlou/Promise" target="_blank" rel="noopener">我编写的 <code>Promise</code> 库</a> ，你可以使用无参的构造器创建一个挂起状态的 <code>Promise</code>，稍后调用 <code>fulfill</code> 方法来完成它。</p>
 <p>当遇到可选型的属性时，它可能会揭示之前未察觉到的代码问题。当你发现自己正在向一个 <code>ViewController</code> 添加一个可选型的参数时，不妨扪心自问，这个可选型是什么意思？有没有更好的方式来表示这个数据？</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
@@ -241,6 +242,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -289,7 +294,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -438,11 +443,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -454,11 +459,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -466,7 +467,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -478,11 +479,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -490,7 +495,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -684,7 +689,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

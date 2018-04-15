@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/02/23/cocoa-icu-text-transforms/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="ICU库有一整套强大的文本变换功能，那么我们就在讲下在Cocoa中实现ICU文本变换吧。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.383Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="在 Cocoa 中实现 ICU 文本变换">
 <meta name="twitter:description" content="ICU库有一整套强大的文本变换功能，那么我们就在讲下在Cocoa中实现ICU文本变换吧。">
@@ -88,7 +89,7 @@
         <a href="/2016/02/23/cocoa-icu-text-transforms/" target="_blank" title="在 Cocoa 中实现 ICU 文本变换" itemprop="url">在 Cocoa 中实现 ICU 文本变换</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-02-23T01:00:00.000Z" itemprop="datePublished">2016-02-23</time>
+      <time datetime="2016-02-23T09:00:00.000Z" itemprop="datePublished">2016-02-23</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,18 +97,18 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Ole Begemann，<a href="http://oleb.net/blog/2016/01/icu-text-transforms/" target="_blank" rel="external">原文链接</a>，原文日期：2016-01-03<br>译者：<a href="http://www.jianshu.com/users/9efd08855d3a/" target="_blank" rel="external">aaaron7</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="external">numbbbbb</a>；定稿：<a href="https://github.com/Cee" target="_blank" rel="external">Cee</a></p>
+<p>作者：Ole Begemann，<a href="http://oleb.net/blog/2016/01/icu-text-transforms/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-01-03<br>译者：<a href="http://www.jianshu.com/users/9efd08855d3a/" target="_blank" rel="noopener">aaaron7</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>；定稿：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p><a href="http://userguide.icu-project.org/transforms/general" target="_blank" rel="external">ICU 的字符串变换</a>很酷。<a href="http://site.icu-project.org/" target="_blank" rel="external">ICU 库</a>提供了一整套强大的文本变换功能，在处理用户输入、特别是当你的程序需要处理一些英语之外的语言或者非拉丁字符时非常有用。举个例子，你可以把一段简体中文转码成拉丁字符，同时清除音调符号、修饰符和隐藏字符，最后全部转换成小写，使其成为可以被你的数据库搜索 API 识别的字符串，而所有这些变换，只要一行代码就可完成。</p>
-<p>在 Apple 的平台中，字符串变换一直以来都是通过 Core Foundation 的 <a href="https://developer.apple.com/library/ios/documentation/CoreFoundation/Reference/CFMutableStringRef/index.html#//apple_ref/c/func/CFStringTransform" target="_blank" rel="external">CFStringTranform</a> 函数来实现。Mattt Thompson 在 NSHipster 上对该 API 有<a href="http://nshipster.com/cfstringtransform/" target="_blank" rel="external">非常棒的介绍</a>，推荐阅读。</p>
+<p><a href="http://userguide.icu-project.org/transforms/general" target="_blank" rel="noopener">ICU 的字符串变换</a>很酷。<a href="http://site.icu-project.org/" target="_blank" rel="noopener">ICU 库</a>提供了一整套强大的文本变换功能，在处理用户输入、特别是当你的程序需要处理一些英语之外的语言或者非拉丁字符时非常有用。举个例子，你可以把一段简体中文转码成拉丁字符，同时清除音调符号、修饰符和隐藏字符，最后全部转换成小写，使其成为可以被你的数据库搜索 API 识别的字符串，而所有这些变换，只要一行代码就可完成。</p>
+<p>在 Apple 的平台中，字符串变换一直以来都是通过 Core Foundation 的 <a href="https://developer.apple.com/library/ios/documentation/CoreFoundation/Reference/CFMutableStringRef/index.html#//apple_ref/c/func/CFStringTransform" target="_blank" rel="noopener">CFStringTranform</a> 函数来实现。Mattt Thompson 在 NSHipster 上对该 API 有<a href="http://nshipster.com/cfstringtransform/" target="_blank" rel="noopener">非常棒的介绍</a>，推荐阅读。</p>
 <a id="more"></a>
-<p>随着 iOS 9 和 OS X 10.11 的发布，字符串变换被整合到了 Foundation 框架中。虽然在文档中还没有介绍 <a href="https://developer.apple.com/library/ios/documentation/Cocoa/Reference/Foundation/Classes/NSString_Class/" target="_blank" rel="external">NSString</a> 的新方法 <code>stringByApplyingTransform(_:reverse:)</code>，但是 <code>CFStringTransform</code> 文档已经对它进行了说明，而且 Nate Cook 在 <a href="http://nshipster.com/ios9/" target="_blank" rel="external">这篇 NSHipster 的文章中</a>也展示了一些具体的例子。下面的代码演示了如何实现中文到拉丁字符的转换：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> Foundation</div><div class="line"><span class="keyword">let</span> shanghai = <span class="string">"上海"</span></div><div class="line">shanghai.stringByApplyingTransform(<span class="type">NSStringTransformToLatin</span>,</div><div class="line">    <span class="built_in">reverse</span>: <span class="literal">false</span>) <span class="comment">// 返回 "shàng hǎi"</span></div></pre></td></tr></table></figure>
-<p>看起来还不错。Apple 提供了 16 种固定的变换，绝大多数都是字符转码（译者注：Script Transliterations，指的是把其中一种语言的字符变换成另一种语言的字符。详情可参考<a href="http://userguide.icu-project.org/transforms/general" target="_blank" rel="external">这里</a>），其中一些方法允许你清除输入字符的组合标记符号和读音符号、转换为码点以及转换为标准的 Unicode 形式。另外，绝大多数变换都是可逆的，只要设置 <code>stringByApplyingTransform(_:reverse:)</code> 函数的第二个参数即可。特别是做链式调用变换操作的时候，这显得非常强大（比如首先转码，然后去除变音符号）。</p>
+<p>随着 iOS 9 和 OS X 10.11 的发布，字符串变换被整合到了 Foundation 框架中。虽然在文档中还没有介绍 <a href="https://developer.apple.com/library/ios/documentation/Cocoa/Reference/Foundation/Classes/NSString_Class/" target="_blank" rel="noopener">NSString</a> 的新方法 <code>stringByApplyingTransform(_:reverse:)</code>，但是 <code>CFStringTransform</code> 文档已经对它进行了说明，而且 Nate Cook 在 <a href="http://nshipster.com/ios9/" target="_blank" rel="noopener">这篇 NSHipster 的文章中</a>也展示了一些具体的例子。下面的代码演示了如何实现中文到拉丁字符的转换：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"><span class="keyword">let</span> shanghai = <span class="string">"上海"</span></span><br><span class="line">shanghai.stringByApplyingTransform(<span class="type">NSStringTransformToLatin</span>,</span><br><span class="line">    <span class="built_in">reverse</span>: <span class="literal">false</span>) <span class="comment">// 返回 "shàng hǎi"</span></span><br></pre></td></tr></table></figure>
+<p>看起来还不错。Apple 提供了 16 种固定的变换，绝大多数都是字符转码（译者注：Script Transliterations，指的是把其中一种语言的字符变换成另一种语言的字符。详情可参考<a href="http://userguide.icu-project.org/transforms/general" target="_blank" rel="noopener">这里</a>），其中一些方法允许你清除输入字符的组合标记符号和读音符号、转换为码点以及转换为标准的 Unicode 形式。另外，绝大多数变换都是可逆的，只要设置 <code>stringByApplyingTransform(_:reverse:)</code> 函数的第二个参数即可。特别是做链式调用变换操作的时候，这显得非常强大（比如首先转码，然后去除变音符号）。</p>
 <h3 id="自由变换"><a href="#自由变换" class="headerlink" title="自由变换"></a>自由变换</h3><p>有一个牛逼功能，<code>CFStringTransform</code> 文档和 NSHipster 的文章中都有提到，但我之前一直没意识到，它就是自由变换。 ICU 自己定义了一套语法来表示变换，如果你把遵循这套语法的字符串作为参数传给 <code>stringByApplyingTransform(_:reverse:)</code> ，它就可以识别！比如这样：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// Convert non-ASCII characters to ASCII,</span></div><div class="line"><span class="comment">// convert to lowercase, delete spaces</span></div><div class="line"><span class="string">"Café au lait"</span>.stringByApplyingTransform(</div><div class="line">    <span class="string">"Latin-ASCII; Lower; [:Separator:] Remove;"</span>, <span class="built_in">reverse</span>: <span class="literal">false</span>)</div><div class="line"><span class="comment">// returns "cafeaulait"</span></div></pre></td></tr></table></figure>
-<p>这篇 <a href="http://userguide.icu-project.org/transforms/general" target="_blank" rel="external">ICU 用户手册</a>写的非常好，并且包含很多例子。强烈推荐你学习一下。这里是几个我做的例子：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Convert non-ASCII characters to ASCII,</span></span><br><span class="line"><span class="comment">// convert to lowercase, delete spaces</span></span><br><span class="line"><span class="string">"Café au lait"</span>.stringByApplyingTransform(</span><br><span class="line">    <span class="string">"Latin-ASCII; Lower; [:Separator:] Remove;"</span>, <span class="built_in">reverse</span>: <span class="literal">false</span>)</span><br><span class="line"><span class="comment">// returns "cafeaulait"</span></span><br></pre></td></tr></table></figure>
+<p>这篇 <a href="http://userguide.icu-project.org/transforms/general" target="_blank" rel="noopener">ICU 用户手册</a>写的非常好，并且包含很多例子。强烈推荐你学习一下。这里是几个我做的例子：</p>
 <p><strong>转换成小写。</strong></p>
 <table>
 <thead>
@@ -179,7 +180,7 @@
 </tr>
 </tbody>
 </table>
-<p><strong>删除标点。</strong> 删除规则非常强大。上面的例子都是用方括号加一些字符串规则来表示过滤条件，但过滤器也可以像这个例子一样，由 <a href="https://en.wikipedia.org/wiki/Unicode_character_property#General_Category" target="_blank" rel="external">Unicode 字符类</a>给出。</p>
+<p><strong>删除标点。</strong> 删除规则非常强大。上面的例子都是用方括号加一些字符串规则来表示过滤条件，但过滤器也可以像这个例子一样，由 <a href="https://en.wikipedia.org/wiki/Unicode_character_property#General_Category" target="_blank" rel="noopener">Unicode 字符类</a>给出。</p>
 <table>
 <thead>
 <tr>
@@ -300,7 +301,7 @@
 </tbody>
 </table>
 <p>想象一下，自己实现上述转换方法多么蛋疼……</p>
-<p>自由变换的知识我是从 Florian 和 Daniel 写的那本 <a href="http://oleb.net/blog/2015/12/core-data-book/" target="_blank" rel="external">Core Data</a> 里学来的。他们介绍了如何把用户输入的搜索词标准化后再提交到数据库。 这样既可以有效提升搜索性能，也能让搜索的结果更加准确。</p>
+<p>自由变换的知识我是从 Florian 和 Daniel 写的那本 <a href="http://oleb.net/blog/2015/12/core-data-book/" target="_blank" rel="noopener">Core Data</a> 里学来的。他们介绍了如何把用户输入的搜索词标准化后再提交到数据库。 这样既可以有效提升搜索性能，也能让搜索的结果更加准确。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
@@ -413,6 +414,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -461,7 +466,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -610,11 +615,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -626,11 +631,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -638,7 +639,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -650,11 +651,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -662,7 +667,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -856,7 +861,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

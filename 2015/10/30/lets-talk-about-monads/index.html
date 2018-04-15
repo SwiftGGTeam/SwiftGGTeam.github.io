@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2015/10/30/lets-talk-about-monads/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Olivier Halligon，原文链接，原文日期：2015-10-17译者：ray16897188；校对：小袋子；定稿：numbbbbb   之前的一篇文章中，我们用map、flatMap这两种基于Optional和Array类型的方法做了很多好玩儿的事情。但你可能并没有意识到，你已经在不自知的情况下使用了单子(单子，即 Monad：一个函数式编程的术语 - 译者注)。那么什么是单子？">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.367Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="聊一聊单子（Monad）">
 <meta name="twitter:description" content="作者：Olivier Halligon，原文链接，原文日期：2015-10-17译者：ray16897188；校对：小袋子；定稿：numbbbbb   之前的一篇文章中，我们用map、flatMap这两种基于Optional和Array类型的方法做了很多好玩儿的事情。但你可能并没有意识到，你已经在不自知的情况下使用了单子(单子，即 Monad：一个函数式编程的术语 - 译者注)。那么什么是单子？">
@@ -88,7 +89,7 @@
         <a href="/2015/10/30/lets-talk-about-monads/" target="_blank" title="聊一聊单子（Monad）" itemprop="url">聊一聊单子（Monad）</a>
     </h1>
     <p class="article-time">
-      <time datetime="2015-10-30T01:00:00.000Z" itemprop="datePublished">2015-10-30</time>
+      <time datetime="2015-10-30T09:00:00.000Z" itemprop="datePublished">2015-10-30</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,12 +97,12 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Olivier Halligon，<a href="http://alisoftware.github.io/swift/2015/10/17/lets-talk-about-monads/" target="_blank" rel="external">原文链接</a>，原文日期：2015-10-17<br>译者：<a href="http://www.jianshu.com/users/97c49dfd1f9f/latest_articles" target="_blank" rel="external">ray16897188</a>；校对：<a href="http://daizi.me" target="_blank" rel="external">小袋子</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="external">numbbbbb</a></p>
+<p>作者：Olivier Halligon，<a href="http://alisoftware.github.io/swift/2015/10/17/lets-talk-about-monads/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-10-17<br>译者：<a href="http://www.jianshu.com/users/97c49dfd1f9f/latest_articles" target="_blank" rel="noopener">ray16897188</a>；校对：<a href="http://daizi.me" target="_blank" rel="noopener">小袋子</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p><a href="http://alisoftware.github.io/swift/2015/10/11/thinking-in-swift-4/" target="_blank" rel="external">之前的一篇文章</a>中，我们用<code>map</code>、<code>flatMap</code>这两种基于<code>Optional</code>和<code>Array</code>类型的方法做了很多好玩儿的事情。但你可能并没有意识到，你已经在不自知的情况下使用了单子<em>(单子，即 Monad：一个函数式编程的术语 - 译者注)</em>。那么什么是单子？</p>
+<p><a href="http://alisoftware.github.io/swift/2015/10/11/thinking-in-swift-4/" target="_blank" rel="noopener">之前的一篇文章</a>中，我们用<code>map</code>、<code>flatMap</code>这两种基于<code>Optional</code>和<code>Array</code>类型的方法做了很多好玩儿的事情。但你可能并没有意识到，你已经在不自知的情况下使用了单子<em>(单子，即 Monad：一个函数式编程的术语 - 译者注)</em>。那么什么是单子？</p>
 <a id="more"></a>
-<h3 id="什么是函子（Functors）和单子"><a href="#什么是函子（Functors）和单子" class="headerlink" title="什么是函子（Functors）和单子"></a>什么是函子（Functors）和单子</h3><p>我们在<a href="http://alisoftware.github.io/swift/2015/10/11/thinking-in-swift-4/" target="_blank" rel="external">之前的一篇文章</a>中得知了<code>map</code>和<code>flatMap</code>对于<code>Array</code>和<code>Optional</code>来说有着相似的作用，甚至连函数签名都十分相似。</p>
+<h3 id="什么是函子（Functors）和单子"><a href="#什么是函子（Functors）和单子" class="headerlink" title="什么是函子（Functors）和单子"></a>什么是函子（Functors）和单子</h3><p>我们在<a href="http://alisoftware.github.io/swift/2015/10/11/thinking-in-swift-4/" target="_blank" rel="noopener">之前的一篇文章</a>中得知了<code>map</code>和<code>flatMap</code>对于<code>Array</code>和<code>Optional</code>来说有着相似的作用，甚至连函数签名都十分相似。</p>
 <p>实际上这并不是一个特例：很多类型都有类似<code>map</code>和<code>flatMap</code>的方法，而这些方法都有那种类型的签名。这是一种十分常见的模式，这种模式的名字叫做<em>单子</em>。</p>
 <p>你可能之前在网上看过单子这个术语(也可能叫做函子)，还看过尝试解释该术语的各种比喻。但是大部分比喻都让它更加复杂难懂。</p>
 <p><strong>事实上，单子和函子是非常简单的概念。</strong>它可以最终归结为：</p>
@@ -117,11 +118,11 @@
 </ul>
 <p>这就是对<em>单子</em>和<em>函子</em>所需要了解的一切！<strong>一个<em>单子</em>就是一种带有<code>flatMap</code>方法的类型，一个<em>函子</em>就是一种带有一个<code>map</code>方法的类型。</strong>很简单，不是么？</p>
 <h3 id="各种类型的单子"><a href="#各种类型的单子" class="headerlink" title="各种类型的单子"></a>各种类型的单子</h3><p>你已经学过两种既是<em>函子</em>又是<em>单子</em>的类型，它们是：<code>Array&lt;T&gt;</code>和<code>Optional&lt;T&gt;</code>。当然，这样的类型还有很多。</p>
-<p>实际上这些类型的方法会有其他的名字，不限于<code>map</code>和<code>flatMap</code>。例如一个<a href="http://promisekit.org/" target="_blank" rel="external">Promise</a>也是一个单子，而它的相对应的<code>map</code>和<code>flatMap</code>方法叫做<code>then</code>。</p>
+<p>实际上这些类型的方法会有其他的名字，不限于<code>map</code>和<code>flatMap</code>。例如一个<a href="http://promisekit.org/" target="_blank" rel="noopener">Promise</a>也是一个单子，而它的相对应的<code>map</code>和<code>flatMap</code>方法叫做<code>then</code>。</p>
 <p>仔细看一下<code>Promise&lt;T&gt;</code>的<code>then</code>方法签名，思考一下：它拿到未来返回的值<code>T</code>，进行处理，然后要么返回一个新类型<code>U</code>，要么返回一个封装了这个新类型的、新的<code>Promise&lt;U&gt;</code>… 没错，我们又一次得到了相同的方法签名，所以<code>Promise</code>实际上也是一个<code>单子</code>！</p>
 <p>有很多类型都符合单子的定义。比如<code>Result</code>，<code>Signal</code>，… 你还可以想到更多（如果需要的话你甚至可以创建你自己的单子）。</p>
 <p>看出相似性了吗？（为方便对比加了空格）</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// Array, Optional, Promise, Result 都是函子</span></div><div class="line">   anArray     .<span class="built_in">map</span>( transform: <span class="type">T</span> -&gt;          <span class="type">U</span>  ) -&gt;    <span class="type">Array</span>&lt;<span class="type">U</span>&gt;</div><div class="line">anOptional     .<span class="built_in">map</span>( transform: <span class="type">T</span> -&gt;          <span class="type">U</span>  ) -&gt; <span class="type">Optional</span>&lt;<span class="type">U</span>&gt;</div><div class="line"> aPromise     .then( transform: <span class="type">T</span> -&gt;          <span class="type">U</span>  ) -&gt;  <span class="type">Promise</span>&lt;<span class="type">U</span>&gt;</div><div class="line">   aResult     .<span class="built_in">map</span>( transform: <span class="type">T</span> -&gt;          <span class="type">U</span>  ) -&gt;   <span class="type">Result</span>&lt;<span class="type">U</span>&gt;</div><div class="line"></div><div class="line"><span class="comment">// Array, Optional, Promise, Result 都是单子</span></div><div class="line">   anArray .flatMap( transform: <span class="type">T</span> -&gt;    <span class="type">Array</span>&lt;<span class="type">U</span>&gt; ) -&gt;    <span class="type">Array</span>&lt;<span class="type">U</span>&gt;</div><div class="line">anOptional .flatMap( transform: <span class="type">T</span> -&gt; <span class="type">Optional</span>&lt;<span class="type">U</span>&gt; ) -&gt; <span class="type">Optional</span>&lt;<span class="type">U</span>&gt;</div><div class="line">  aPromise    .then( transform: <span class="type">T</span> -&gt;  <span class="type">Promise</span>&lt;<span class="type">U</span>&gt; ) -&gt;  <span class="type">Promise</span>&lt;<span class="type">U</span>&gt;</div><div class="line">   aResult .flatMap( transform: <span class="type">T</span> -&gt;   <span class="type">Result</span>&lt;<span class="type">U</span>&gt; ) -&gt;   <span class="type">Result</span>&lt;<span class="type">U</span>&gt;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Array, Optional, Promise, Result 都是函子</span></span><br><span class="line">   anArray     .<span class="built_in">map</span>( transform: <span class="type">T</span> -&gt;          <span class="type">U</span>  ) -&gt;    <span class="type">Array</span>&lt;<span class="type">U</span>&gt;</span><br><span class="line">anOptional     .<span class="built_in">map</span>( transform: <span class="type">T</span> -&gt;          <span class="type">U</span>  ) -&gt; <span class="type">Optional</span>&lt;<span class="type">U</span>&gt;</span><br><span class="line"> aPromise     .then( transform: <span class="type">T</span> -&gt;          <span class="type">U</span>  ) -&gt;  <span class="type">Promise</span>&lt;<span class="type">U</span>&gt;</span><br><span class="line">   aResult     .<span class="built_in">map</span>( transform: <span class="type">T</span> -&gt;          <span class="type">U</span>  ) -&gt;   <span class="type">Result</span>&lt;<span class="type">U</span>&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Array, Optional, Promise, Result 都是单子</span></span><br><span class="line">   anArray .flatMap( transform: <span class="type">T</span> -&gt;    <span class="type">Array</span>&lt;<span class="type">U</span>&gt; ) -&gt;    <span class="type">Array</span>&lt;<span class="type">U</span>&gt;</span><br><span class="line">anOptional .flatMap( transform: <span class="type">T</span> -&gt; <span class="type">Optional</span>&lt;<span class="type">U</span>&gt; ) -&gt; <span class="type">Optional</span>&lt;<span class="type">U</span>&gt;</span><br><span class="line">  aPromise    .then( transform: <span class="type">T</span> -&gt;  <span class="type">Promise</span>&lt;<span class="type">U</span>&gt; ) -&gt;  <span class="type">Promise</span>&lt;<span class="type">U</span>&gt;</span><br><span class="line">   aResult .flatMap( transform: <span class="type">T</span> -&gt;   <span class="type">Result</span>&lt;<span class="type">U</span>&gt; ) -&gt;   <span class="type">Result</span>&lt;<span class="type">U</span>&gt;</span><br></pre></td></tr></table></figure>
 <h3 id="把map-和flatMap-级联起来"><a href="#把map-和flatMap-级联起来" class="headerlink" title="把map()和flatMap()级联起来"></a>把<code>map()</code>和<code>flatMap()</code>级联起来</h3><p>通常你还可以把这两个方法级联，这会使它们更加强大。例如，最开始你有一个<code>Array&lt;T&gt;</code>，通过使用<code>map</code>来对它做<code>转换</code>操作，得到一个<code>Array&lt;U&gt;</code>，然后对这个<code>Array&lt;U&gt;</code>再级联上一个<code>map</code>，对它做另一个<code>转换</code>操作将其转换成一个<code>Array&lt;Z&gt;</code>，等等。这会让你的代码看起来就像是在生产线上一样：把一个初始值拿来，让他经过一系列的黑盒子处理，然后得到一个最终的结果。这时你就可以说你实际上是在做<em>函数式编程</em>了！</p>
 <p>下面是一个示范如何将<code>map</code>和<code>flatMap</code>的调用级联起来去做多次转换的例子。我们从一个字符串开始，把它按单词分开，然后依次做如下转换：</p>
 <ol>
@@ -131,7 +132,7 @@
 <li>对每个字符串结果做%转义</li>
 <li>把每个字符串结果转换成一个<code>NSURL</code></li>
 </ol>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> formatter = <span class="type">NSNumberFormatter</span>()</div><div class="line">formatter.numberStyle = .<span class="type">SpellOutStyle</span></div><div class="line"><span class="keyword">let</span> string = <span class="string">"This is Functional Programming"</span></div><div class="line"><span class="keyword">let</span> translateURLs = string</div><div class="line">    <span class="comment">// Split the characters into words</span></div><div class="line">    .characters.<span class="built_in">split</span>(<span class="string">" "</span>)</div><div class="line">    <span class="comment">// Count the number of characters on each word</span></div><div class="line">    .<span class="built_in">map</span> &#123; $<span class="number">0</span>.<span class="built_in">count</span> &#125;</div><div class="line">     <span class="comment">// Spell out this number of chars (`stringFromNumber` can return nil)</span></div><div class="line">    .flatMap &#123; (n: <span class="type">Int</span>) -&gt; <span class="type">String</span>? <span class="keyword">in</span> formatter.stringFromNumber(n) &#125;</div><div class="line">     <span class="comment">// add " letters" suffix</span></div><div class="line">    .<span class="built_in">map</span> &#123; <span class="string">"<span class="subst">\($<span class="number">0</span>)</span> letters"</span> &#125;</div><div class="line">    <span class="comment">// encode the string so it can be used in an NSURL framgment after the # (the stringByAdding… method can return nil)</span></div><div class="line">    .flatMap &#123; $<span class="number">0</span>.stringByAddingPercentEncodingWithAllowedCharacters(.<span class="type">URLFragmentAllowedCharacterSet</span>()) &#125;</div><div class="line">    <span class="comment">// Build an NSURL using that string (`NSURL(string: …)` is failable: it can return nil)</span></div><div class="line">    .flatMap &#123; <span class="type">NSURL</span>(string: <span class="string">"https://translate.google.com/#auto/fr/<span class="subst">\($<span class="number">0</span>)</span>"</span>) &#125;</div><div class="line"></div><div class="line"><span class="built_in">print</span>(translateURLs)</div><div class="line"><span class="comment">// [https://translate.google.com/#auto/fr/four%20letters, https://translate.google.com/#auto/fr/two%20letters, https://translate.google.com/#auto/fr/ten%20letters, https://translate.google.com/#auto/fr/eleven%20letters]</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> formatter = <span class="type">NSNumberFormatter</span>()</span><br><span class="line">formatter.numberStyle = .<span class="type">SpellOutStyle</span></span><br><span class="line"><span class="keyword">let</span> string = <span class="string">"This is Functional Programming"</span></span><br><span class="line"><span class="keyword">let</span> translateURLs = string</span><br><span class="line">    <span class="comment">// Split the characters into words</span></span><br><span class="line">    .characters.<span class="built_in">split</span>(<span class="string">" "</span>)</span><br><span class="line">    <span class="comment">// Count the number of characters on each word</span></span><br><span class="line">    .<span class="built_in">map</span> &#123; $<span class="number">0</span>.<span class="built_in">count</span> &#125;</span><br><span class="line">     <span class="comment">// Spell out this number of chars (`stringFromNumber` can return nil)</span></span><br><span class="line">    .flatMap &#123; (n: <span class="type">Int</span>) -&gt; <span class="type">String</span>? <span class="keyword">in</span> formatter.stringFromNumber(n) &#125;</span><br><span class="line">     <span class="comment">// add " letters" suffix</span></span><br><span class="line">    .<span class="built_in">map</span> &#123; <span class="string">"<span class="subst">\($<span class="number">0</span>)</span> letters"</span> &#125;</span><br><span class="line">    <span class="comment">// encode the string so it can be used in an NSURL framgment after the # (the stringByAdding… method can return nil)</span></span><br><span class="line">    .flatMap &#123; $<span class="number">0</span>.stringByAddingPercentEncodingWithAllowedCharacters(.<span class="type">URLFragmentAllowedCharacterSet</span>()) &#125;</span><br><span class="line">    <span class="comment">// Build an NSURL using that string (`NSURL(string: …)` is failable: it can return nil)</span></span><br><span class="line">    .flatMap &#123; <span class="type">NSURL</span>(string: <span class="string">"https://translate.google.com/#auto/fr/<span class="subst">\($<span class="number">0</span>)</span>"</span>) &#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(translateURLs)</span><br><span class="line"><span class="comment">// [https://translate.google.com/#auto/fr/four%20letters, https://translate.google.com/#auto/fr/two%20letters, https://translate.google.com/#auto/fr/ten%20letters, https://translate.google.com/#auto/fr/eleven%20letters]</span></span><br></pre></td></tr></table></figure>
 <p>上面这段代码可能需要你研究一会儿，尝试去理解每一个中间阶段的<code>map</code>和<code>flatMap</code>的签名是什么，并搞清楚每一步都发生了什么事。</p>
 <p>但无论如何，你能看出来对于描述一系列处理流程来说，这是一种很好的方式。这种方式可以被看做是一条生产线，从<code>原材料</code>开始，然后对它做多种<code>转换</code>，最终在生产线的尽头拿到<code>成品</code>。</p>
 <h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>尽管看起来很吓人，但单子很简单。</p>
@@ -250,6 +251,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -298,7 +303,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -447,11 +452,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -463,11 +468,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -475,7 +476,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -487,11 +488,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -499,7 +504,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -693,7 +698,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

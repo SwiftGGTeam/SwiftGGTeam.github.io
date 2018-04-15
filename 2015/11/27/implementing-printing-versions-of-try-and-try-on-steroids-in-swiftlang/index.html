@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2015/11/27/implementing-printing-versions-of-try-and-try-on-steroids-in-swiftlang/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Erica Sadun，原文链接，原文日期：2015-11-5译者：pmst；校对：千叶知风；定稿：numbbbbb   Swift 2 中的try?运算符在可选类型(optionals)和错误处理机制中抛出 error 转换为输出 nil 结果值之间建立了桥接。这样你就可以使用 guard 语句和条件绑定，只关注处理成功的用例(case)。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.371Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="实现可打印内容的 try? 和 try!">
 <meta name="twitter:description" content="作者：Erica Sadun，原文链接，原文日期：2015-11-5译者：pmst；校对：千叶知风；定稿：numbbbbb   Swift 2 中的try?运算符在可选类型(optionals)和错误处理机制中抛出 error 转换为输出 nil 结果值之间建立了桥接。这样你就可以使用 guard 语句和条件绑定，只关注处理成功的用例(case)。">
@@ -88,7 +89,7 @@
         <a href="/2015/11/27/implementing-printing-versions-of-try-and-try-on-steroids-in-swiftlang/" target="_blank" title="实现可打印内容的 try? 和 try!" itemprop="url">实现可打印内容的 try? 和 try!</a>
     </h1>
     <p class="article-time">
-      <time datetime="2015-11-27T01:20:00.000Z" itemprop="datePublished">2015-11-27</time>
+      <time datetime="2015-11-27T09:20:00.000Z" itemprop="datePublished">2015-11-27</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,24 +97,24 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Erica Sadun，<a href="http://ericasadun.com/2015/11/05/implementing-printing-versions-of-try-and-try-on-steroids-in-swiftlang/" target="_blank" rel="external">原文链接</a>，原文日期：2015-11-5<br>译者：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="external">pmst</a>；校对：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="external">千叶知风</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="external">numbbbbb</a></p>
+<p>作者：Erica Sadun，<a href="http://ericasadun.com/2015/11/05/implementing-printing-versions-of-try-and-try-on-steroids-in-swiftlang/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-11-5<br>译者：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="noopener">pmst</a>；校对：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>Swift 2 中的<code>try?</code>运算符在可选类型(optionals)和错误处理机制中抛出 error 转换为输出 nil 结果值之间建立了桥接。这样你就可以使用 guard 语句和条件绑定，只关注处理成功的用例(case)。</p>
 <a id="more"></a>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">/// try? 没有错误输出正确结果值</span></div><div class="line"><span class="comment">///      有错误发生，输出nil值</span></div><div class="line"><span class="keyword">guard</span> <span class="keyword">let</span> foo = <span class="keyword">try</span>? somethingThatMayThrow <span class="keyword">else</span> &#123;</div><div class="line">    <span class="comment">//处理错误情况并退出作用域</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">/// try? 没有错误输出正确结果值</span></span><br><span class="line"><span class="comment">///      有错误发生，输出nil值</span></span><br><span class="line"><span class="keyword">guard</span> <span class="keyword">let</span> foo = <span class="keyword">try</span>? somethingThatMayThrow <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">//处理错误情况并退出作用域</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>倘若你使用这种方式进行错误处理，需要注意，它并不会返回 error 信息。本文想说的是：抛弃错误信息是一件让人郁闷的事情！为什么不有选择地使用<code>try?</code>和<code>try!</code>来自动建立上下文并打印错误信息呢？</p>
 <p>前阵子，我分享了一个模仿<code>try?</code>语句的基础实现，可以保留错误信息。下面的实现首先打印返回的错误，接着继续返回你想要得到的<code>try?</code>的处理结果：结果是一个值或 nil。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">attempt</span>&lt;T&gt;<span class="params">(block: <span class="params">()</span></span></span> <span class="keyword">throws</span> -&gt; <span class="type">T</span>) -&gt; <span class="type">Optional</span>&lt;<span class="type">T</span>&gt;&#123; </div><div class="line">    <span class="keyword">do</span> &#123; <span class="keyword">return</span> <span class="keyword">try</span> block() &#125; </div><div class="line">    <span class="keyword">catch</span> &#123; <span class="built_in">print</span>(error); <span class="keyword">return</span> <span class="literal">nil</span> &#125; </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">attempt</span>&lt;T&gt;<span class="params">(block: <span class="params">()</span></span></span> <span class="keyword">throws</span> -&gt; <span class="type">T</span>) -&gt; <span class="type">Optional</span>&lt;<span class="type">T</span>&gt;&#123; </span><br><span class="line">    <span class="keyword">do</span> &#123; <span class="keyword">return</span> <span class="keyword">try</span> block() &#125; </span><br><span class="line">    <span class="keyword">catch</span> &#123; <span class="built_in">print</span>(error); <span class="keyword">return</span> <span class="literal">nil</span> &#125; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这很有效，尤其是当你想要进一步使用返回值却发现 guard 语句在失败时无法返回错误信息。使用 attemp 函数就可以打印错误信息。举个例子，如果我们要使用 NSFileManager 来删除文件。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="type">NSFileManager</span>.defaultManager().removeItemAtURL(someURL)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="type">NSFileManager</span>.defaultManager().removeItemAtURL(someURL)</span><br></pre></td></tr></table></figure>
 <p>你应该这样做：将上述代码包裹到<code>do-catch</code>的 block 中(略显冗长)，在 attempt 函数中使用<code>try?</code>，接着处理返回 nil 值的情况，或者使用<code>try!</code>忽视所有错误信息(译者注:倘若实际有错误发生，程序会直接崩溃，使用它之前你必须确保不会有错误产生)。</p>
 <p>当然这里还有另外一种方式。在文章的最后，我构建了一个 attemptFailable 函数，它把 throwing 声明封装到 guard/try 的迷你打印系统中，后者会返回一个布尔类型值。下面是使用方法：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">if</span> <span class="type">NSFileManager</span>.defaultManager().fileExistsAtPath(myPath) &#123;</div><div class="line">    <span class="keyword">guard</span> (attemptFailable&#123;<span class="keyword">try</span> <span class="type">NSFileManager</span>.defaultManager()</div><div class="line">         .removeItemAtURL(myURL)&#125;) <span class="keyword">else</span> &#123;abort()&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>显然不是很理想，但是在 playground 中写一些小东西时相当方便，最近我经常使用。(Playground 相当不错，作者书籍<a href="https://itunes.apple.com/us/book/playground-secrets-power-tips/id982838034?mt=11" target="_blank" rel="external">购买链接</a>)。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> <span class="type">NSFileManager</span>.defaultManager().fileExistsAtPath(myPath) &#123;</span><br><span class="line">    <span class="keyword">guard</span> (attemptFailable&#123;<span class="keyword">try</span> <span class="type">NSFileManager</span>.defaultManager()</span><br><span class="line">         .removeItemAtURL(myURL)&#125;) <span class="keyword">else</span> &#123;abort()&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>显然不是很理想，但是在 playground 中写一些小东西时相当方便，最近我经常使用。(Playground 相当不错，作者书籍<a href="https://itunes.apple.com/us/book/playground-secrets-power-tips/id982838034?mt=11" target="_blank" rel="noopener">购买链接</a>)。</p>
 <p>你可以使用类似的方式增强<code>try!</code>。相比 Swift 的可选值，<code>doOrDie</code>函数提供了更多信息。就像<code>attemp</code>和<code>attemptFailable</code>函数一样，它能够捕获上下文，在继续使用标准<code>try!</code>终止执行前抛出并打印错误。</p>
 <p>以下是完整代码：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> Foundation</div><div class="line"></div><div class="line"><span class="comment">// 错误泛型</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">struct</span> <span class="title">Error</span>: <span class="title">ErrorType</span> </span>&#123;<span class="keyword">let</span> reason: <span class="type">String</span>&#125;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> Printing version of try? Call either with standard or autoclosure approach</div><div class="line"> </div><div class="line"> let contents = attempt&#123;try NSFileManager.defaultManager().contentsOfDirectoryAtPath(fakePath)&#125;</div><div class="line"> let contents = attempt&#123;try NSFileManager.defaultManager().contentsOfDirectoryAtPath(XCPlaygroundSharedDataDirectoryURL.path!)&#125;</div><div class="line"> </div><div class="line"> </div><div class="line"> - Returns: Optional that is nil when the called closure throws</div><div class="line"> */</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">attempt</span>&lt;T&gt;<span class="params">(source source: String = <span class="keyword">__FUNCTION__</span>, file: String = <span class="keyword">__FILE__</span>, line: Int = <span class="keyword">__LINE__</span>, closure: <span class="params">()</span></span></span> <span class="keyword">throws</span> -&gt; <span class="type">T</span>) -&gt; <span class="type">Optional</span>&lt;<span class="type">T</span>&gt;&#123;</div><div class="line">    <span class="keyword">do</span> &#123;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">try</span> closure()</div><div class="line">    &#125; <span class="keyword">catch</span> &#123;</div><div class="line">        <span class="keyword">let</span> fileName = (file <span class="keyword">as</span> <span class="type">NSString</span>).lastPathComponent</div><div class="line">        <span class="keyword">let</span> report = <span class="string">"Error <span class="subst">\(fileName)</span>:<span class="subst">\(source)</span>:<span class="subst">\(line)</span>:\n    <span class="subst">\(error)</span>"</span></div><div class="line">        <span class="built_in">print</span>(report)</div><div class="line">        <span class="keyword">return</span> <span class="literal">nil</span></div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> 可以打印内容并返回布尔值的 try? 可选实现</div><div class="line"> </div><div class="line"> </div><div class="line"> let success = attemptFailable&#123;try "Test".writeToFile(fakePath, atomically: true, encoding: NSUTF8StringEncoding)&#125;</div><div class="line"> </div><div class="line"> </div><div class="line"> - Returns: Boolean 值，如果被调用的闭包抛出错误返回 false，否则返回 true</div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">attemptFailable</span><span class="params">(source source: String = <span class="keyword">__FUNCTION__</span>, file: String = <span class="keyword">__FILE__</span>, line: Int = <span class="keyword">__LINE__</span>, closure: <span class="params">()</span></span></span> <span class="keyword">throws</span> -&gt; <span class="type">Void</span>) -&gt; <span class="type">Bool</span> &#123;</div><div class="line">    <span class="keyword">do</span> &#123;</div><div class="line">        <span class="keyword">try</span> closure()</div><div class="line">        <span class="keyword">return</span> <span class="literal">true</span></div><div class="line">    &#125; <span class="keyword">catch</span> &#123;</div><div class="line">        <span class="keyword">let</span> fileName = (file <span class="keyword">as</span> <span class="type">NSString</span>).lastPathComponent</div><div class="line">        <span class="keyword">let</span> report = <span class="string">"Error <span class="subst">\(fileName)</span>:<span class="subst">\(source)</span>:<span class="subst">\(line)</span>:\n    <span class="subst">\(error)</span>"</span></div><div class="line">        <span class="built_in">print</span>(report)</div><div class="line">        <span class="keyword">return</span> <span class="literal">false</span></div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> 另外一个包含更多信息的 try! 版本。shouldCrash 是 false 时，即使有错误抛出，也会继续执行</div><div class="line"> </div><div class="line"> </div><div class="line"> doOrDie(shouldCrash: false, closure: &#123;try "Test".writeToFile(fakePath, atomically: true, encoding: NSUTF8StringEncoding)&#125;)</div><div class="line"> // 或</div><div class="line"> doOrDie(shouldCrash:false)&#123;try NSFileManager.defaultManager().removeItemAtURL(fakeURL)&#125;</div><div class="line"> // 或</div><div class="line"> doOrDie&#123;try "Test".writeToFile(fakePath, atomically: true, encoding: NSUTF8StringEncoding)&#125;</div><div class="line"> </div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">doOrDie</span><span class="params">(source: String = <span class="keyword">__FUNCTION__</span>,</span></span></div><div class="line">    file: String = <span class="keyword">__FILE__</span>, line: Int = <span class="keyword">__LINE__</span>, shouldCrash: Bool = <span class="literal">true</span>, closure: <span class="params">()</span> <span class="keyword">throws</span> -&gt; <span class="type">Void</span>) &#123;</div><div class="line">        <span class="keyword">let</span> success = attemptFailable(source: source, file: file, line: line, closure: closure)</div><div class="line">        <span class="keyword">if</span> shouldCrash &amp;&amp; !success &#123;<span class="built_in">fatalError</span>(<span class="string">"Goodbye cruel world"</span>)&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"></span><br><span class="line"><span class="comment">// 错误泛型</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">struct</span> <span class="title">Error</span>: <span class="title">ErrorType</span> </span>&#123;<span class="keyword">let</span> reason: <span class="type">String</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> Printing version of try? Call either with standard or autoclosure approach</span></span><br><span class="line"><span class="comment"> </span></span><br><span class="line"><span class="comment"> let contents = attempt&#123;try NSFileManager.defaultManager().contentsOfDirectoryAtPath(fakePath)&#125;</span></span><br><span class="line"><span class="comment"> let contents = attempt&#123;try NSFileManager.defaultManager().contentsOfDirectoryAtPath(XCPlaygroundSharedDataDirectoryURL.path!)&#125;</span></span><br><span class="line"><span class="comment"> </span></span><br><span class="line"><span class="comment"> </span></span><br><span class="line"><span class="comment"> - Returns: Optional that is nil when the called closure throws</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">attempt</span>&lt;T&gt;<span class="params">(source source: String = <span class="keyword">__FUNCTION__</span>, file: String = <span class="keyword">__FILE__</span>, line: Int = <span class="keyword">__LINE__</span>, closure: <span class="params">()</span></span></span> <span class="keyword">throws</span> -&gt; <span class="type">T</span>) -&gt; <span class="type">Optional</span>&lt;<span class="type">T</span>&gt;&#123;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">try</span> closure()</span><br><span class="line">    &#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> fileName = (file <span class="keyword">as</span> <span class="type">NSString</span>).lastPathComponent</span><br><span class="line">        <span class="keyword">let</span> report = <span class="string">"Error <span class="subst">\(fileName)</span>:<span class="subst">\(source)</span>:<span class="subst">\(line)</span>:\n    <span class="subst">\(error)</span>"</span></span><br><span class="line">        <span class="built_in">print</span>(report)</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> 可以打印内容并返回布尔值的 try? 可选实现</span></span><br><span class="line"><span class="comment"> </span></span><br><span class="line"><span class="comment"> </span></span><br><span class="line"><span class="comment"> let success = attemptFailable&#123;try "Test".writeToFile(fakePath, atomically: true, encoding: NSUTF8StringEncoding)&#125;</span></span><br><span class="line"><span class="comment"> </span></span><br><span class="line"><span class="comment"> </span></span><br><span class="line"><span class="comment"> - Returns: Boolean 值，如果被调用的闭包抛出错误返回 false，否则返回 true</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">attemptFailable</span><span class="params">(source source: String = <span class="keyword">__FUNCTION__</span>, file: String = <span class="keyword">__FILE__</span>, line: Int = <span class="keyword">__LINE__</span>, closure: <span class="params">()</span></span></span> <span class="keyword">throws</span> -&gt; <span class="type">Void</span>) -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        <span class="keyword">try</span> closure()</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">    &#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> fileName = (file <span class="keyword">as</span> <span class="type">NSString</span>).lastPathComponent</span><br><span class="line">        <span class="keyword">let</span> report = <span class="string">"Error <span class="subst">\(fileName)</span>:<span class="subst">\(source)</span>:<span class="subst">\(line)</span>:\n    <span class="subst">\(error)</span>"</span></span><br><span class="line">        <span class="built_in">print</span>(report)</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> 另外一个包含更多信息的 try! 版本。shouldCrash 是 false 时，即使有错误抛出，也会继续执行</span></span><br><span class="line"><span class="comment"> </span></span><br><span class="line"><span class="comment"> </span></span><br><span class="line"><span class="comment"> doOrDie(shouldCrash: false, closure: &#123;try "Test".writeToFile(fakePath, atomically: true, encoding: NSUTF8StringEncoding)&#125;)</span></span><br><span class="line"><span class="comment"> // 或</span></span><br><span class="line"><span class="comment"> doOrDie(shouldCrash:false)&#123;try NSFileManager.defaultManager().removeItemAtURL(fakeURL)&#125;</span></span><br><span class="line"><span class="comment"> // 或</span></span><br><span class="line"><span class="comment"> doOrDie&#123;try "Test".writeToFile(fakePath, atomically: true, encoding: NSUTF8StringEncoding)&#125;</span></span><br><span class="line"><span class="comment"> </span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">doOrDie</span><span class="params">(source: String = <span class="keyword">__FUNCTION__</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">    file: String = <span class="keyword">__FILE__</span>, line: Int = <span class="keyword">__LINE__</span>, shouldCrash: Bool = <span class="literal">true</span>, closure: <span class="params">()</span></span></span> <span class="keyword">throws</span> -&gt; <span class="type">Void</span>) &#123;</span><br><span class="line">        <span class="keyword">let</span> success = attemptFailable(source: source, file: file, line: line, closure: closure)</span><br><span class="line">        <span class="keyword">if</span> shouldCrash &amp;&amp; !success &#123;<span class="built_in">fatalError</span>(<span class="string">"Goodbye cruel world"</span>)&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
@@ -226,6 +227,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -274,7 +279,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -423,11 +428,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -439,11 +444,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -451,7 +452,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -463,11 +464,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -475,7 +480,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -669,7 +674,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

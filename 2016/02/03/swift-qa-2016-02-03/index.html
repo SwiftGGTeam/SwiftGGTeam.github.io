@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/02/03/swift-qa-2016-02-03/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：shanks 本周共整理了 5 个问题。主要涉及到的知识点有：defer关键字，emoji表情提取，便利构造器的继承，元组的存在感和如何重写didSet。 本周整理问题如下：  Is “defer” guaranteed to be called in Swift? How to extract emojis from a string? Subclassing a class that h">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:22.217Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="每周 Swift 社区问答 2016-02-03">
 <meta name="twitter:description" content="作者：shanks 本周共整理了 5 个问题。主要涉及到的知识点有：defer关键字，emoji表情提取，便利构造器的继承，元组的存在感和如何重写didSet。 本周整理问题如下：  Is “defer” guaranteed to be called in Swift? How to extract emojis from a string? Subclassing a class that h">
@@ -88,14 +89,14 @@
         <a href="/2016/02/03/swift-qa-2016-02-03/" target="_blank" title="每周 Swift 社区问答 2016-02-03" itemprop="url">每周 Swift 社区问答 2016-02-03</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-02-03T06:00:00.000Z" itemprop="datePublished">2016-02-03</time>
+      <time datetime="2016-02-03T14:00:00.000Z" itemprop="datePublished">2016-02-03</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
 
 	<div class="article-content">
 		
-		<p>作者：<a href="http://codebuild.me" target="_blank" rel="external">shanks</a></p>
+		<p>作者：<a href="http://codebuild.me" target="_blank" rel="noopener">shanks</a></p>
 <p>本周共整理了 5 个问题。主要涉及到的知识点有：defer关键字，emoji表情提取，便利构造器的继承，元组的存在感和如何重写didSet。</p>
 <p>本周整理问题如下：</p>
 <ul>
@@ -106,44 +107,44 @@
 <li><a href="#Q5">Overriding didSet</a></li>
 </ul>
 <a id="more"></a>
-<p>对应的代码都放到了 github 上，有兴趣的同学可以下载下来研究：<a href="https://github.com/SwiftGGTeam/SwiftCommunityWeeklyQA/tree/master/20160203" target="_blank" rel="external">点击下载</a></p>
+<p>对应的代码都放到了 github 上，有兴趣的同学可以下载下来研究：<a href="https://github.com/SwiftGGTeam/SwiftCommunityWeeklyQA/tree/master/20160203" target="_blank" rel="noopener">点击下载</a></p>
 <!--more-->
 <p><a name="Q1"></a></p>
-<h2 id="Question1-Is-“defer”-guaranteed-to-be-called-in-Swift"><a href="#Question1-Is-“defer”-guaranteed-to-be-called-in-Swift" class="headerlink" title="Question1: Is “defer” guaranteed to be called in Swift?"></a>Question1: Is “defer” guaranteed to be called in Swift?</h2><p><a href="http://stackoverflow.com/questions/35108261/is-defer-guaranteed-to-be-called-in-swift" target="_blank" rel="external">Q1链接地址</a></p>
+<h2 id="Question1-Is-“defer”-guaranteed-to-be-called-in-Swift"><a href="#Question1-Is-“defer”-guaranteed-to-be-called-in-Swift" class="headerlink" title="Question1: Is “defer” guaranteed to be called in Swift?"></a>Question1: Is “defer” guaranteed to be called in Swift?</h2><p><a href="http://stackoverflow.com/questions/35108261/is-defer-guaranteed-to-be-called-in-swift" target="_blank" rel="noopener">Q1链接地址</a></p>
 <h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>这个问题比较有意思，楼主贴出以下代码，第一个 <code>defer</code> 顺利执行，而第二个 <code>defer</code> 没有执行。中间夹杂着一个 <code>try</code> 语句抛出了异常。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">enum SomeError: ErrorType &#123;</div><div class="line">    case BadLuck</div><div class="line">&#125;</div><div class="line"></div><div class="line">func unluckey() throws &#123;</div><div class="line">    print(&quot;\n\tunluckey(💥) -&gt; someone will have a bad day ;)\n&quot;)</div><div class="line">    throw SomeError.BadLuck</div><div class="line">&#125;</div><div class="line"></div><div class="line">func callsUnluckey() throws &#123;</div><div class="line">    </div><div class="line">    print(&quot;callsUnluckey() -&gt; OPENING something&quot;)</div><div class="line">    defer &#123;</div><div class="line">        print(&quot;callsUnluckey(😎) -&gt; CLOSEING something&quot;)</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    print(&quot;callsUnluckey() -&gt; WORKING with something&quot;)</div><div class="line">    </div><div class="line">    try unluckey()</div><div class="line">    print(&quot;callsUnluckey() -&gt; will never get here so chill...&quot;)</div><div class="line">    </div><div class="line">    defer &#123;</div><div class="line">        print(&quot;callsUnluckey(💩) -&gt; why this is not getting called?&quot;)</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">do &#123;</div><div class="line">    try callsUnluckey()</div><div class="line">&#125; catch &#123;</div><div class="line">    print(&quot;&quot;)</div><div class="line">    print(&quot;someone had a bad day&quot;)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">enum SomeError: ErrorType &#123;</span><br><span class="line">    case BadLuck</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func unluckey() throws &#123;</span><br><span class="line">    print(&quot;\n\tunluckey(💥) -&gt; someone will have a bad day ;)\n&quot;)</span><br><span class="line">    throw SomeError.BadLuck</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func callsUnluckey() throws &#123;</span><br><span class="line">    </span><br><span class="line">    print(&quot;callsUnluckey() -&gt; OPENING something&quot;)</span><br><span class="line">    defer &#123;</span><br><span class="line">        print(&quot;callsUnluckey(😎) -&gt; CLOSEING something&quot;)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    print(&quot;callsUnluckey() -&gt; WORKING with something&quot;)</span><br><span class="line">    </span><br><span class="line">    try unluckey()</span><br><span class="line">    print(&quot;callsUnluckey() -&gt; will never get here so chill...&quot;)</span><br><span class="line">    </span><br><span class="line">    defer &#123;</span><br><span class="line">        print(&quot;callsUnluckey(💩) -&gt; why this is not getting called?&quot;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">do &#123;</span><br><span class="line">    try callsUnluckey()</span><br><span class="line">&#125; catch &#123;</span><br><span class="line">    print(&quot;&quot;)</span><br><span class="line">    print(&quot;someone had a bad day&quot;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h3 id="问题解答"><a href="#问题解答" class="headerlink" title="问题解答"></a>问题解答</h3><p>官方文档对这个隐藏逻辑应该没有提到，如果是程序运行中，没有运行到  <code>defer</code> 的代码段，在函数结束之前， <code>defer</code> 代码也不会执行。大家可以试试，去掉 <code>try</code> 语句，加上 <code>return</code> 语句也是一样的效果。也就是说。 <code>defer</code> 最好写在 <code>try</code> 和 <code>return</code> 之前。</p>
 <p><a name="Q2"></a></p>
-<h2 id="Question2-How-to-extract-emojis-from-a-string"><a href="#Question2-How-to-extract-emojis-from-a-string" class="headerlink" title="Question2: How to extract emojis from a string?"></a>Question2: How to extract emojis from a string?</h2><p><a href="http://stackoverflow.com/questions/35106059/how-to-extract-emojis-from-a-string" target="_blank" rel="external">Q2链接地址</a></p>
+<h2 id="Question2-How-to-extract-emojis-from-a-string"><a href="#Question2-How-to-extract-emojis-from-a-string" class="headerlink" title="Question2: How to extract emojis from a string?"></a>Question2: How to extract emojis from a string?</h2><p><a href="http://stackoverflow.com/questions/35106059/how-to-extract-emojis-from-a-string" target="_blank" rel="noopener">Q2链接地址</a></p>
 <h3 id="问题描述-1"><a href="#问题描述-1" class="headerlink" title="问题描述"></a>问题描述</h3><p>这是一个纯知识点的问题：如何找出字符串中的 <code>emoji</code> 表情？</p>
 <h3 id="问题解答-1"><a href="#问题解答-1" class="headerlink" title="问题解答"></a>问题解答</h3><p>直接看代码注释：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">// 获取字符编码对应的数值</div><div class="line">extension Character &#123;</div><div class="line">    private var unicodeScalarCodePoint: Int &#123;</div><div class="line">        let characterString = String(self)</div><div class="line">        let scalars = characterString.unicodeScalars</div><div class="line">        return Int(scalars[scalars.startIndex].value)</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">//扩展定义字符串的一个计算属性，得到字符串中的emoji字符数组。</div><div class="line">extension String &#123;</div><div class="line">    var emojis:[Character] &#123;</div><div class="line">        let emojiRanges = [0x1F601...0x1F64F, 0x2702...0x27B0] // emoji 的范围，可以自己扩充</div><div class="line">        let emojiSet = emojiRanges.reduce(Set&lt;Int&gt;()) &#123; (result, elm) -&gt; Set&lt;Int&gt; in</div><div class="line">            return result.union(elm)</div><div class="line">        &#125;</div><div class="line">        return self.characters.filter &#123; emojiSet.contains($0.unicodeScalarCodePoint) &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">let sentence = &quot;😃 hello world 🙃&quot;</div><div class="line">sentence.emojis // [&quot;😃&quot;, &quot;🙃&quot;]</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">// 获取字符编码对应的数值</span><br><span class="line">extension Character &#123;</span><br><span class="line">    private var unicodeScalarCodePoint: Int &#123;</span><br><span class="line">        let characterString = String(self)</span><br><span class="line">        let scalars = characterString.unicodeScalars</span><br><span class="line">        return Int(scalars[scalars.startIndex].value)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">//扩展定义字符串的一个计算属性，得到字符串中的emoji字符数组。</span><br><span class="line">extension String &#123;</span><br><span class="line">    var emojis:[Character] &#123;</span><br><span class="line">        let emojiRanges = [0x1F601...0x1F64F, 0x2702...0x27B0] // emoji 的范围，可以自己扩充</span><br><span class="line">        let emojiSet = emojiRanges.reduce(Set&lt;Int&gt;()) &#123; (result, elm) -&gt; Set&lt;Int&gt; in</span><br><span class="line">            return result.union(elm)</span><br><span class="line">        &#125;</span><br><span class="line">        return self.characters.filter &#123; emojiSet.contains($0.unicodeScalarCodePoint) &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">let sentence = &quot;😃 hello world 🙃&quot;</span><br><span class="line">sentence.emojis // [&quot;😃&quot;, &quot;🙃&quot;]</span><br></pre></td></tr></table></figure>
 <p><a name="Q3"></a></p>
-<h2 id="Question3-Subclassing-a-class-that-has-convenience-initializers"><a href="#Question3-Subclassing-a-class-that-has-convenience-initializers" class="headerlink" title="Question3: Subclassing a class that has convenience initializers."></a>Question3: Subclassing a class that has convenience initializers.</h2><p><a href="https://forums.developer.apple.com/thread/30537" target="_blank" rel="external">Q3链接地址</a></p>
+<h2 id="Question3-Subclassing-a-class-that-has-convenience-initializers"><a href="#Question3-Subclassing-a-class-that-has-convenience-initializers" class="headerlink" title="Question3: Subclassing a class that has convenience initializers."></a>Question3: Subclassing a class that has convenience initializers.</h2><p><a href="https://forums.developer.apple.com/thread/30537" target="_blank" rel="noopener">Q3链接地址</a></p>
 <h3 id="问题描述-2"><a href="#问题描述-2" class="headerlink" title="问题描述"></a>问题描述</h3><p>请看代码描述：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">class BaseClass &#123;</div><div class="line">    var property1 = 0</div><div class="line">    </div><div class="line">    init(property1: Int) &#123;</div><div class="line">        self.property1 = property1</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    convenience init(value1: Int, value2: Int) &#123;</div><div class="line">        self.init(property1: value1 + value2)</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">class SubClass: BaseClass &#123;</div><div class="line">    var property2: Int?</div><div class="line">    </div><div class="line">    init(property2: Int) &#123;</div><div class="line">        super.init(property1: 10)</div><div class="line">        self.property2 = property2</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">let c1 = SubClass(property2: 4)</div><div class="line">print(c1.property2!)</div><div class="line"></div><div class="line">// 以下代码报错</div><div class="line">let c2 = SubClass(value1: 5, value2: 5)</div><div class="line">print(c2.property1)</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">class BaseClass &#123;</span><br><span class="line">    var property1 = 0</span><br><span class="line">    </span><br><span class="line">    init(property1: Int) &#123;</span><br><span class="line">        self.property1 = property1</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    convenience init(value1: Int, value2: Int) &#123;</span><br><span class="line">        self.init(property1: value1 + value2)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class SubClass: BaseClass &#123;</span><br><span class="line">    var property2: Int?</span><br><span class="line">    </span><br><span class="line">    init(property2: Int) &#123;</span><br><span class="line">        super.init(property1: 10)</span><br><span class="line">        self.property2 = property2</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">let c1 = SubClass(property2: 4)</span><br><span class="line">print(c1.property2!)</span><br><span class="line"></span><br><span class="line">// 以下代码报错</span><br><span class="line">let c2 = SubClass(value1: 5, value2: 5)</span><br><span class="line">print(c2.property1)</span><br></pre></td></tr></table></figure>
 <h3 id="问题解答-2"><a href="#问题解答-2" class="headerlink" title="问题解答"></a>问题解答</h3><p><code>Swift</code> 官方教程里面说明了，如果要继承父类的便利构造器，那么子类需要重写所有父类的指定构造器，把代码变成下面的样子就行啦：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">class SubClass1: BaseClass &#123;</div><div class="line">    var property2: Int?</div><div class="line">    </div><div class="line">    override init(property1: Int) &#123;</div><div class="line">        super.init(property1: 10)</div><div class="line">        self.property2 = property1</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">let c3 = SubClass1(property1: 4)</div><div class="line">print(c3.property2!)</div><div class="line"></div><div class="line">// 以下代码报错</div><div class="line">let c4 = SubClass1(value1: 5, value2: 5)</div><div class="line">print(c4.property1)</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">class SubClass1: BaseClass &#123;</span><br><span class="line">    var property2: Int?</span><br><span class="line">    </span><br><span class="line">    override init(property1: Int) &#123;</span><br><span class="line">        super.init(property1: 10)</span><br><span class="line">        self.property2 = property1</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">let c3 = SubClass1(property1: 4)</span><br><span class="line">print(c3.property2!)</span><br><span class="line"></span><br><span class="line">// 以下代码报错</span><br><span class="line">let c4 = SubClass1(value1: 5, value2: 5)</span><br><span class="line">print(c4.property1)</span><br></pre></td></tr></table></figure>
 <p><a name="Q4"></a></p>
-<h2 id="Question4-Tuple-vs-Struct-in-Swift"><a href="#Question4-Tuple-vs-Struct-in-Swift" class="headerlink" title="Question4: Tuple vs Struct in Swift"></a>Question4: Tuple vs Struct in Swift</h2><h3 id="问题链接"><a href="#问题链接" class="headerlink" title="问题链接"></a>问题链接</h3><p><a href="http://stackoverflow.com/questions/35153873/tuple-vs-struct-in-swift" target="_blank" rel="external">Q4链接地址</a></p>
+<h2 id="Question4-Tuple-vs-Struct-in-Swift"><a href="#Question4-Tuple-vs-Struct-in-Swift" class="headerlink" title="Question4: Tuple vs Struct in Swift"></a>Question4: Tuple vs Struct in Swift</h2><h3 id="问题链接"><a href="#问题链接" class="headerlink" title="问题链接"></a>问题链接</h3><p><a href="http://stackoverflow.com/questions/35153873/tuple-vs-struct-in-swift" target="_blank" rel="noopener">Q4链接地址</a></p>
 <h3 id="问题描述-3"><a href="#问题描述-3" class="headerlink" title="问题描述"></a>问题描述</h3><p>楼主的问题：结构体也可以定义多个属性，而且看起来更加间接，为啥还有元组( <code>Tuples</code> )这样的东西存在？</p>
 <h3 id="问题解答-3"><a href="#问题解答-3" class="headerlink" title="问题解答"></a>问题解答</h3><p>跟帖中提到了2点，来试图解释 <code>Tuples</code> 的作用，仅供参考：</p>
 <ul>
 <li>第一点：要实现一个结构体的对象的 “=” 操作符，那我们需要去显式的实现它，比如以下的例子：</li>
 </ul>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">struct Foo &#123;</div><div class="line">    var a : Int = 1</div><div class="line">    var b : Double = 2.0</div><div class="line">    var c : String = &quot;3&quot;</div><div class="line">&#125;</div><div class="line"></div><div class="line">var a = Foo()</div><div class="line">var b = Foo()</div><div class="line">func == (lhs: Foo, rhs: Foo) -&gt; Bool &#123;</div><div class="line">    return lhs.a == rhs.a &amp;&amp; lhs.b == rhs.b &amp;&amp; lhs.c == rhs.c</div><div class="line">&#125;</div><div class="line"></div><div class="line">a == b</div></pre></td></tr></table></figure>
-<p>而在即将到来的 <code>Swift 2.2</code> 中，有一个关于元组的提议，已经被实现了，请参见<a href="https://github.com/apple/swift-evolution/blob/master/proposals/0015-tuple-comparison-operators.md" target="_blank" rel="external">Tuple comparison operators</a>, 带来的变化是：<br>    如果元组的中的元素个数 <code>&lt;=6</code>，那么编译器会帮你解决元组比较的问题，前提是元素中的满足 <code>Equatable</code> 协议，如果满足 <code>Comparable</code> 协议，甚至是支持 <code>&lt;</code> , <code>&lt;=</code>, <code>&gt;=</code> , <code>&gt;</code> 等比较操作符。见以下例子：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">/* 以下代码将在 Swift 2.2 中实现，不用自己实现 */</div><div class="line">@warn_unused_result</div><div class="line">public func == &lt;A: Equatable, B: Equatable, C: Equatable&gt;(lhs: (A,B,C), rhs: (A,B,C)) -&gt; Bool &#123;</div><div class="line">    return lhs.0 == rhs.0 &amp;&amp; lhs.1 == rhs.1 &amp;&amp; lhs.2 == rhs.2</div><div class="line">&#125;</div><div class="line">/* 更多的比较 ...           */</div><div class="line"></div><div class="line">var aa = (1, 2.0, &quot;3&quot;)</div><div class="line">var bb = (1, 2.0, &quot;3&quot;)</div><div class="line"></div><div class="line">aa == bb // true</div><div class="line">aa.0 = 2</div><div class="line">aa == bb // false</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">struct Foo &#123;</span><br><span class="line">    var a : Int = 1</span><br><span class="line">    var b : Double = 2.0</span><br><span class="line">    var c : String = &quot;3&quot;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var a = Foo()</span><br><span class="line">var b = Foo()</span><br><span class="line">func == (lhs: Foo, rhs: Foo) -&gt; Bool &#123;</span><br><span class="line">    return lhs.a == rhs.a &amp;&amp; lhs.b == rhs.b &amp;&amp; lhs.c == rhs.c</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">a == b</span><br></pre></td></tr></table></figure>
+<p>而在即将到来的 <code>Swift 2.2</code> 中，有一个关于元组的提议，已经被实现了，请参见<a href="https://github.com/apple/swift-evolution/blob/master/proposals/0015-tuple-comparison-operators.md" target="_blank" rel="noopener">Tuple comparison operators</a>, 带来的变化是：<br>    如果元组的中的元素个数 <code>&lt;=6</code>，那么编译器会帮你解决元组比较的问题，前提是元素中的满足 <code>Equatable</code> 协议，如果满足 <code>Comparable</code> 协议，甚至是支持 <code>&lt;</code> , <code>&lt;=</code>, <code>&gt;=</code> , <code>&gt;</code> 等比较操作符。见以下例子：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">/* 以下代码将在 Swift 2.2 中实现，不用自己实现 */</span><br><span class="line">@warn_unused_result</span><br><span class="line">public func == &lt;A: Equatable, B: Equatable, C: Equatable&gt;(lhs: (A,B,C), rhs: (A,B,C)) -&gt; Bool &#123;</span><br><span class="line">    return lhs.0 == rhs.0 &amp;&amp; lhs.1 == rhs.1 &amp;&amp; lhs.2 == rhs.2</span><br><span class="line">&#125;</span><br><span class="line">/* 更多的比较 ...           */</span><br><span class="line"></span><br><span class="line">var aa = (1, 2.0, &quot;3&quot;)</span><br><span class="line">var bb = (1, 2.0, &quot;3&quot;)</span><br><span class="line"></span><br><span class="line">aa == bb // true</span><br><span class="line">aa.0 = 2</span><br><span class="line">aa == bb // false</span><br></pre></td></tr></table></figure>
 <ul>
 <li>第二点：<code>Tuples</code> 的访问可以更加灵活，可以使用 <code>.0</code>,<code>.1</code>这样的访问方式，也可以使用标签。而结构体只能访问定义的属性。</li>
 </ul>
 <p><a name="Q5"></a></p>
-<h2 id="Question5-Overriding-didSet"><a href="#Question5-Overriding-didSet" class="headerlink" title="Question5: Overriding didSet"></a>Question5: Overriding didSet</h2><h3 id="问题链接-1"><a href="#问题链接-1" class="headerlink" title="问题链接"></a>问题链接</h3><p><a href="http://stackoverflow.com/questions/35128118/overriding-didset" target="_blank" rel="external">Q5链接地址</a></p>
+<h2 id="Question5-Overriding-didSet"><a href="#Question5-Overriding-didSet" class="headerlink" title="Question5: Overriding didSet"></a>Question5: Overriding didSet</h2><h3 id="问题链接-1"><a href="#问题链接-1" class="headerlink" title="问题链接"></a>问题链接</h3><p><a href="http://stackoverflow.com/questions/35128118/overriding-didset" target="_blank" rel="noopener">Q5链接地址</a></p>
 <h3 id="问题描述-4"><a href="#问题描述-4" class="headerlink" title="问题描述"></a>问题描述</h3><p>楼主的问题：为神马不能重写 <code>didSet？</code> 见以下代码：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">class Foo &#123;</div><div class="line">    var name: String = &quot;&quot; &#123; didSet &#123; print(&quot;name has been set&quot;) &#125; &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">let foo = Foo();</div><div class="line">foo.name = &quot;test&quot;</div><div class="line">class Bar: Foo &#123;</div><div class="line">    override var name: String = &quot;&quot; &#123;</div><div class="line">        didSet &#123;</div><div class="line">            print(&quot;print this first&quot;)</div><div class="line">            // print the line set in the superclass</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">class Foo &#123;</span><br><span class="line">    var name: String = &quot;&quot; &#123; didSet &#123; print(&quot;name has been set&quot;) &#125; &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">let foo = Foo();</span><br><span class="line">foo.name = &quot;test&quot;</span><br><span class="line">class Bar: Foo &#123;</span><br><span class="line">    override var name: String = &quot;&quot; &#123;</span><br><span class="line">        didSet &#123;</span><br><span class="line">            print(&quot;print this first&quot;)</span><br><span class="line">            // print the line set in the superclass</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h3 id="问题解答-4"><a href="#问题解答-4" class="headerlink" title="问题解答"></a>问题解答</h3><p>实际上，不是不能重写，在重写时报错：具有 <code>getter</code> 和 <code>setter</code> 的变量不能有初始值。适用于子类重写属性的情况。不过这个错误提示有一些歧义，在父类中，其实是可以赋初始值的，见以下代码：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">class Foo &#123;</div><div class="line">    var name: String = &quot;&quot; &#123; didSet &#123; print(&quot;name has been set&quot;) &#125; &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">class Bar: Foo &#123;</div><div class="line">    override var name: String  &#123;</div><div class="line">        didSet &#123;</div><div class="line">            print(&quot;print this first&quot;)</div><div class="line">            // print the line set in the superclass</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">let bar = Bar()</div><div class="line">bar.name = &quot;name&quot;</div></pre></td></tr></table></figure>
-<p>更多关于继承属性和 <code>didSet</code> 的介绍，见<a href="http://wiki.jikexueyuan.com/project/swift/chapter2/13_Inheritance.html#overriding" target="_blank" rel="external">官方教程</a></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">class Foo &#123;</span><br><span class="line">    var name: String = &quot;&quot; &#123; didSet &#123; print(&quot;name has been set&quot;) &#125; &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class Bar: Foo &#123;</span><br><span class="line">    override var name: String  &#123;</span><br><span class="line">        didSet &#123;</span><br><span class="line">            print(&quot;print this first&quot;)</span><br><span class="line">            // print the line set in the superclass</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">let bar = Bar()</span><br><span class="line">bar.name = &quot;name&quot;</span><br></pre></td></tr></table></figure>
+<p>更多关于继承属性和 <code>didSet</code> 的介绍，见<a href="http://wiki.jikexueyuan.com/project/swift/chapter2/13_Inheritance.html#overriding" target="_blank" rel="noopener">官方教程</a></p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -253,6 +254,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -301,7 +306,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -450,11 +455,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -466,11 +471,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -478,7 +479,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -490,11 +491,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -502,7 +507,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -696,7 +701,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

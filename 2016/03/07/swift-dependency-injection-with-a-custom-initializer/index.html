@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/03/07/swift-dependency-injection-with-a-custom-initializer/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="Swift自定义初始化方法来依赖注入是很多人还不会吧，那么来学习本文就会让你知晓哦。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.383Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift：使用自定义初始化方法进行依赖注入">
 <meta name="twitter:description" content="Swift自定义初始化方法来依赖注入是很多人还不会吧，那么来学习本文就会让你知晓哦。">
@@ -88,7 +89,7 @@
         <a href="/2016/03/07/swift-dependency-injection-with-a-custom-initializer/" target="_blank" title="Swift：使用自定义初始化方法进行依赖注入" itemprop="url">Swift：使用自定义初始化方法进行依赖注入</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-03-07T01:00:00.000Z" itemprop="datePublished">2016-03-07</time>
+      <time datetime="2016-03-07T09:00:00.000Z" itemprop="datePublished">2016-03-07</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,24 +97,24 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Natasha The Robot，<a href="https://www.natashatherobot.com/swift-dependency-injection-with-a-custom-initializer/" target="_blank" rel="external">原文链接</a>，原文日期：2016-01-08<br>译者：<a href="undefined">littledogboy</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="external">Cee</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="external">千叶知风</a></p>
+<p>作者：Natasha The Robot，<a href="https://www.natashatherobot.com/swift-dependency-injection-with-a-custom-initializer/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-01-08<br>译者：<a href="undefined">littledogboy</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p>作为我今年的第一个项目，我正在做 <a href="http://www.catehuston.com/blog/2015/04/15/launching-ios-unit-testing-beyond-the-model/" target="_blank" rel="external">@catehstn’s iOS Unit Testing Workshop</a> 的 <strong>Swift 版本</strong>。如果感兴趣的话，可以在<a href="https://docs.google.com/forms/d/1IrOYxAMES34uXdJoCiqmzXtkDsHfVM3SUueZViHjstM/viewform?c=0&amp;w=1" target="_blank" rel="external">这里注册</a>。</p>
+<p>作为我今年的第一个项目，我正在做 <a href="http://www.catehuston.com/blog/2015/04/15/launching-ios-unit-testing-beyond-the-model/" target="_blank" rel="noopener">@catehstn’s iOS Unit Testing Workshop</a> 的 <strong>Swift 版本</strong>。如果感兴趣的话，可以在<a href="https://docs.google.com/forms/d/1IrOYxAMES34uXdJoCiqmzXtkDsHfVM3SUueZViHjstM/viewform?c=0&amp;w=1" target="_blank" rel="noopener">这里注册</a>。</p>
 <p>在我写代码和测试期间，我遇到了下面的问题…</p>
 <a id="more"></a>
 <p>假设我使用 Swift 创建了一个简单的计数器：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// Counter.swift</span></div><div class="line"> </div><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</div><div class="line">    <span class="comment">// `count` 在这里为一个变量</span></div><div class="line">    <span class="comment">// 但是我不想把 `count` 设置为外部可访问的 </span></div><div class="line">    <span class="comment">// 因此我把 `count` 设置为私有的（这里有小提示！https://twitter.com/mipstian/status/685489964403003393）</span></div><div class="line">    <span class="keyword">private</span>(<span class="keyword">set</span>) <span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span></div><div class="line">    </div><div class="line">    <span class="keyword">init</span>() &#123;</div><div class="line">        <span class="comment">// 我想让计数器默认从 0 开始</span></div><div class="line">        <span class="built_in">count</span> = <span class="number">0</span></div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="comment">// 我只想让 `count` 通过此函数被修改</span></div><div class="line">	<span class="comment">// 通过像这样的函数 </span></div><div class="line">    <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">increment</span><span class="params">()</span></span> &#123;</div><div class="line">        <span class="built_in">count</span> += <span class="number">1</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Counter.swift</span></span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</span><br><span class="line">    <span class="comment">// `count` 在这里为一个变量</span></span><br><span class="line">    <span class="comment">// 但是我不想把 `count` 设置为外部可访问的 </span></span><br><span class="line">    <span class="comment">// 因此我把 `count` 设置为私有的（这里有小提示！https://twitter.com/mipstian/status/685489964403003393）</span></span><br><span class="line">    <span class="keyword">private</span>(<span class="keyword">set</span>) <span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>() &#123;</span><br><span class="line">        <span class="comment">// 我想让计数器默认从 0 开始</span></span><br><span class="line">        <span class="built_in">count</span> = <span class="number">0</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 我只想让 `count` 通过此函数被修改</span></span><br><span class="line">	<span class="comment">// 通过像这样的函数 </span></span><br><span class="line">    <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">increment</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="built_in">count</span> += <span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这个结构体超级简单，我也很容易地编写了一个 increment 测试用例。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// CounterTests.swift</span></div><div class="line"> </div><div class="line"> </div><div class="line"><span class="keyword">import</span> XCTest</div><div class="line"><span class="meta">@testable</span> <span class="keyword">import</span> Counter</div><div class="line"> </div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">CounterTests</span>: <span class="title">XCTestCase</span> </span>&#123;</div><div class="line"> </div><div class="line">   <span class="function"><span class="keyword">func</span> <span class="title">testIncrement</span><span class="params">()</span></span> &#123;</div><div class="line">       <span class="keyword">var</span> counter = <span class="type">Counter</span>()</div><div class="line">       <span class="type">XCTAssertEqual</span>(counter.<span class="built_in">count</span>, <span class="number">0</span>)</div><div class="line">       counter.increment()</div><div class="line">       <span class="type">XCTAssertEqual</span>(counter.<span class="built_in">count</span>, <span class="number">1</span>)</div><div class="line">   &#125;</div><div class="line">  </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// CounterTests.swift</span></span><br><span class="line"> </span><br><span class="line"> </span><br><span class="line"><span class="keyword">import</span> XCTest</span><br><span class="line"><span class="meta">@testable</span> <span class="keyword">import</span> Counter</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CounterTests</span>: <span class="title">XCTestCase</span> </span>&#123;</span><br><span class="line"> </span><br><span class="line">   <span class="function"><span class="keyword">func</span> <span class="title">testIncrement</span><span class="params">()</span></span> &#123;</span><br><span class="line">       <span class="keyword">var</span> counter = <span class="type">Counter</span>()</span><br><span class="line">       <span class="type">XCTAssertEqual</span>(counter.<span class="built_in">count</span>, <span class="number">0</span>)</span><br><span class="line">       counter.increment()</span><br><span class="line">       <span class="type">XCTAssertEqual</span>(counter.<span class="built_in">count</span>, <span class="number">1</span>)</span><br><span class="line">   &#125;</span><br><span class="line">  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>测试正确，但是下面这种情况呢！</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// Counter.swift</span></div><div class="line"> </div><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span>(<span class="keyword">set</span>) <span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span></div><div class="line">   </div><div class="line">    <span class="keyword">init</span>() &#123;</div><div class="line">        <span class="built_in">count</span> = <span class="number">0</span></div><div class="line">    &#125;</div><div class="line"> </div><div class="line">    <span class="comment">// 代码缩减 (见上面)</span></div><div class="line"> </div><div class="line">    <span class="comment">// 当用户进行内购</span></div><div class="line">    <span class="comment">// 提升了他们的分数！</span></div><div class="line"></div><div class="line">    <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">scaleBy</span><span class="params">(multiplier: Int)</span></span> &#123;</div><div class="line">        <span class="built_in">count</span> = <span class="built_in">count</span> * multiplier</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Counter.swift</span></span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span>(<span class="keyword">set</span>) <span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span></span><br><span class="line">   </span><br><span class="line">    <span class="keyword">init</span>() &#123;</span><br><span class="line">        <span class="built_in">count</span> = <span class="number">0</span></span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// 代码缩减 (见上面)</span></span><br><span class="line"> </span><br><span class="line">    <span class="comment">// 当用户进行内购</span></span><br><span class="line">    <span class="comment">// 提升了他们的分数！</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">scaleBy</span><span class="params">(multiplier: Int)</span></span> &#123;</span><br><span class="line">        <span class="built_in">count</span> = <span class="built_in">count</span> * multiplier</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>因为 Counter 的值初始化为 0，乘法测试没有效果。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// CounterTests.swift</span></div><div class="line"> </div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">CounterTests</span>: <span class="title">XCTestCase</span> </span>&#123;</div><div class="line"> </div><div class="line">   <span class="function"><span class="keyword">func</span> <span class="title">testScaleBy</span><span class="params">()</span></span> &#123;</div><div class="line">      <span class="keyword">var</span> counter = <span class="type">Counter</span>()</div><div class="line">      <span class="type">XCTAssertEqual</span>(counter.<span class="built_in">count</span>, <span class="number">0</span>)</div><div class="line">      counter.scaleBy(<span class="number">5</span>)</div><div class="line">      <span class="comment">// 正如我们所知，scaleBy 可以做多次乘法运算和除法运算</span></div><div class="line">      <span class="comment">// 要么只是返回 count ，要么只是返回 0</span></div><div class="line">      <span class="type">XCTAssertEqual</span>(counter.<span class="built_in">count</span>, <span class="number">0</span>)</div><div class="line">   &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// CounterTests.swift</span></span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CounterTests</span>: <span class="title">XCTestCase</span> </span>&#123;</span><br><span class="line"> </span><br><span class="line">   <span class="function"><span class="keyword">func</span> <span class="title">testScaleBy</span><span class="params">()</span></span> &#123;</span><br><span class="line">      <span class="keyword">var</span> counter = <span class="type">Counter</span>()</span><br><span class="line">      <span class="type">XCTAssertEqual</span>(counter.<span class="built_in">count</span>, <span class="number">0</span>)</span><br><span class="line">      counter.scaleBy(<span class="number">5</span>)</span><br><span class="line">      <span class="comment">// 正如我们所知，scaleBy 可以做多次乘法运算和除法运算</span></span><br><span class="line">      <span class="comment">// 要么只是返回 count ，要么只是返回 0</span></span><br><span class="line">      <span class="type">XCTAssertEqual</span>(counter.<span class="built_in">count</span>, <span class="number">0</span>)</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>为了进行有效的测试,我们需要在 count 不为 0 的情况下测试我们的 scaleBy 方法，所以我们需要控制计数器的初始值。我们可以使用默认值和正确的初始值注入 init 函数（译者注：作者这里的意思是，如果初始化的时候，不给 init 函数参数，则使用默认值；反之则使用给定的初始值。）：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// Counter.swift</span></div><div class="line"> </div><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span>(<span class="keyword">set</span>) <span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span></div><div class="line">    </div><div class="line">    <span class="comment">// 依赖注入</span></div><div class="line">    <span class="comment">// 计数器的初始值是注入的</span></div><div class="line">    <span class="keyword">init</span>(<span class="built_in">count</span>: <span class="type">Int</span> = <span class="number">0</span>) &#123;</div><div class="line">        <span class="keyword">self</span>.<span class="built_in">count</span> = <span class="built_in">count</span></div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">scaleBy</span><span class="params">(multiplier: Int)</span></span> &#123;</div><div class="line">        <span class="built_in">count</span> = <span class="built_in">count</span> * multiplier</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Counter.swift</span></span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Counter</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span>(<span class="keyword">set</span>) <span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 依赖注入</span></span><br><span class="line">    <span class="comment">// 计数器的初始值是注入的</span></span><br><span class="line">    <span class="keyword">init</span>(<span class="built_in">count</span>: <span class="type">Int</span> = <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.<span class="built_in">count</span> = <span class="built_in">count</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">scaleBy</span><span class="params">(multiplier: Int)</span></span> &#123;</span><br><span class="line">        <span class="built_in">count</span> = <span class="built_in">count</span> * multiplier</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>现在测试如下！</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// CounterTests.swift</span></div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">CounterTests</span>: <span class="title">XCTestCase</span> </span>&#123;</div><div class="line"></div><div class="line">   <span class="function"><span class="keyword">func</span> <span class="title">testScaleBy</span><span class="params">()</span></span> &#123;</div><div class="line">      <span class="comment">// 这次计数器从一个不为零的值开始</span></div><div class="line">      <span class="keyword">var</span> counter = <span class="type">Counter</span>(<span class="built_in">count</span>: <span class="number">5</span>)</div><div class="line">      <span class="type">XCTAssertEqual</span>(counter.<span class="built_in">count</span>, <span class="number">5</span>)</div><div class="line">      counter.scaleBy(<span class="number">5</span>)</div><div class="line">      <span class="type">XCTAssertEqual</span>(counter.<span class="built_in">count</span>, <span class="number">25</span>)</div><div class="line">   &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// CounterTests.swift</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CounterTests</span>: <span class="title">XCTestCase</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">   <span class="function"><span class="keyword">func</span> <span class="title">testScaleBy</span><span class="params">()</span></span> &#123;</span><br><span class="line">      <span class="comment">// 这次计数器从一个不为零的值开始</span></span><br><span class="line">      <span class="keyword">var</span> counter = <span class="type">Counter</span>(<span class="built_in">count</span>: <span class="number">5</span>)</span><br><span class="line">      <span class="type">XCTAssertEqual</span>(counter.<span class="built_in">count</span>, <span class="number">5</span>)</span><br><span class="line">      counter.scaleBy(<span class="number">5</span>)</span><br><span class="line">      <span class="type">XCTAssertEqual</span>(counter.<span class="built_in">count</span>, <span class="number">25</span>)</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>就是这样！通过添加一个初始值是我们想要的初始化函数，我们保持了计数器的完整性，该函数的作用是编写有效的测试！</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
@@ -227,6 +228,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -275,7 +280,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -424,11 +429,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -440,11 +445,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -452,7 +453,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -464,11 +465,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -476,7 +481,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -670,7 +675,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

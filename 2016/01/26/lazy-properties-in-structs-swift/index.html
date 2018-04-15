@@ -13,17 +13,18 @@
 
     <meta name="keywords" content="swift语言,swift翻译,swift学习">
     <meta name="applicable-device" content="pc,mobile">
-    <meta name="description" content="作者：Ole Begemann，原文链接，原文日期：2015-12-17译者：pmst；校对：Cee；定稿：小锅    定稿注：原文没有提供源码，作为一个走心的翻译组，我们已经将本篇文章的最终版源码作成 Playground，可以到这个地址进行下载。 更新： 2015-12-17 提到 Swift evolution 邮件列表中一个关于行为属性的新提案，如果这个提案被采取，则本篇文章中的大部分将">
+    <meta name="description" content="作者：Ole Begemann，原文链接，原文日期：2015-12-17译者：pmst；校对：Cee；定稿：小锅    定稿注：原文没有提供源码，作为一个走心的翻译组，我们已经将本篇文章的最终版源码作成 Playground，可以到这个地址进行下载。   更新： 2015-12-17 提到 Swift evolution 邮件列表中一个关于行为属性的新提案，如果这个提案被采取，则本篇文章中的大部">
 <meta name="keywords" content="Swift 进阶">
 <meta property="og:type" content="article">
 <meta property="og:title" content="结构体中的 Lazy 属性探究">
 <meta property="og:url" content="https://swift.gg/2016/01/26/lazy-properties-in-structs-swift/index.html">
 <meta property="og:site_name" content="SwiftGG">
-<meta property="og:description" content="作者：Ole Begemann，原文链接，原文日期：2015-12-17译者：pmst；校对：Cee；定稿：小锅    定稿注：原文没有提供源码，作为一个走心的翻译组，我们已经将本篇文章的最终版源码作成 Playground，可以到这个地址进行下载。 更新： 2015-12-17 提到 Swift evolution 邮件列表中一个关于行为属性的新提案，如果这个提案被采取，则本篇文章中的大部分将">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:description" content="作者：Ole Begemann，原文链接，原文日期：2015-12-17译者：pmst；校对：Cee；定稿：小锅    定稿注：原文没有提供源码，作为一个走心的翻译组，我们已经将本篇文章的最终版源码作成 Playground，可以到这个地址进行下载。   更新： 2015-12-17 提到 Swift evolution 邮件列表中一个关于行为属性的新提案，如果这个提案被采取，则本篇文章中的大部">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.379Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="结构体中的 Lazy 属性探究">
-<meta name="twitter:description" content="作者：Ole Begemann，原文链接，原文日期：2015-12-17译者：pmst；校对：Cee；定稿：小锅    定稿注：原文没有提供源码，作为一个走心的翻译组，我们已经将本篇文章的最终版源码作成 Playground，可以到这个地址进行下载。 更新： 2015-12-17 提到 Swift evolution 邮件列表中一个关于行为属性的新提案，如果这个提案被采取，则本篇文章中的大部分将">
+<meta name="twitter:description" content="作者：Ole Begemann，原文链接，原文日期：2015-12-17译者：pmst；校对：Cee；定稿：小锅    定稿注：原文没有提供源码，作为一个走心的翻译组，我们已经将本篇文章的最终版源码作成 Playground，可以到这个地址进行下载。   更新： 2015-12-17 提到 Swift evolution 邮件列表中一个关于行为属性的新提案，如果这个提案被采取，则本篇文章中的大部">
 
     
     <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
@@ -88,7 +89,7 @@
         <a href="/2016/01/26/lazy-properties-in-structs-swift/" target="_blank" title="结构体中的 Lazy 属性探究" itemprop="url">结构体中的 Lazy 属性探究</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-01-25T16:00:00.000Z" itemprop="datePublished">2016-01-26</time>
+      <time datetime="2016-01-26T00:00:00.000Z" itemprop="datePublished">2016-01-26</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,41 +97,43 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Ole Begemann，<a href="http://oleb.net/blog/2015/12/lazy-properties-in-structs-swift/" target="_blank" rel="external">原文链接</a>，原文日期：2015-12-17<br>译者：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="external">pmst</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="external">Cee</a>；定稿：<a href="http://www.swiftyper.com" target="_blank" rel="external">小锅</a></p>
+<p>作者：Ole Begemann，<a href="http://oleb.net/blog/2015/12/lazy-properties-in-structs-swift/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-12-17<br>译者：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="noopener">pmst</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a>；定稿：<a href="http://www.swiftyper.com" target="_blank" rel="noopener">小锅</a></p>
 </blockquote>
 <!--此处开始正文-->
 <blockquote>
-<p>定稿注：原文没有提供源码，作为一个走心的翻译组，我们已经将本篇文章的最终版源码作成 Playground，可以到<a href="https://github.com/buginux/SwiftGGArticleCode" target="_blank" rel="external">这个地址</a>进行下载。</p>
+<p>定稿注：原文没有提供源码，作为一个走心的翻译组，我们已经将本篇文章的最终版源码作成 Playground，可以到<a href="https://github.com/buginux/SwiftGGArticleCode" target="_blank" rel="noopener">这个地址</a>进行下载。</p>
+</blockquote>
+<blockquote>
 <p>更新：</p>
 <p>2015-12-17 提到 Swift evolution 邮件列表中一个关于行为属性的新提案，如果这个提案被采取，则本篇文章中的大部分将成为过时的内容</p>
 </blockquote>
-<p>Swift 中的 <a href="https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/Properties.html#//apple_ref/doc/uid/TP40014097-CH14-ID257" target="_blank" rel="external">lazy 关键字</a>允许你定义这么一个属性：它的初始值在当它被首次访问的时候才计算。举个例子，试想通过一个结构体来描述一副图像。该图像的元数据（metadata）字典创建操作所需要的开销代价也许很大，因此我们更倾向于推迟这个行为直至需要该数据的时候。我们可以像这样声明一个 <code>lazy var</code> 属性：</p>
+<p>Swift 中的 <a href="https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/Properties.html#//apple_ref/doc/uid/TP40014097-CH14-ID257" target="_blank" rel="noopener">lazy 关键字</a>允许你定义这么一个属性：它的初始值在当它被首次访问的时候才计算。举个例子，试想通过一个结构体来描述一副图像。该图像的元数据（metadata）字典创建操作所需要的开销代价也许很大，因此我们更倾向于推迟这个行为直至需要该数据的时候。我们可以像这样声明一个 <code>lazy var</code> 属性：</p>
 <a id="more"></a>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Image</span> </span>&#123;</div><div class="line">    <span class="built_in">lazy</span> <span class="keyword">var</span> metadata: [<span class="type">String</span>:<span class="type">AnyObject</span>] = &#123;</div><div class="line">        <span class="comment">// 加载图片和解析 metadata，相当占内存</span></div><div class="line">        <span class="comment">// ...</span></div><div class="line">        <span class="keyword">return</span> ...</div><div class="line">    &#125;()</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Image</span> </span>&#123;</span><br><span class="line">    <span class="built_in">lazy</span> <span class="keyword">var</span> metadata: [<span class="type">String</span>:<span class="type">AnyObject</span>] = &#123;</span><br><span class="line">        <span class="comment">// 加载图片和解析 metadata，相当占内存</span></span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">        <span class="keyword">return</span> ...</span><br><span class="line">    &#125;()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>注意我们必须使用 <code>var</code> 关键字声明属性。<code>let</code> 关键字声明的常量必须在实例初始化完成前拥有一个值，显然对于 <code>lazy</code> 变量无法保证初始化前有值。（译者注：实例指结构体实例）</p>
 <p>访问 <code>lazy</code> 属性是一个 <code>mutating</code> 操作，因为属性的初始值只在第一次访问时才计算确定。当结构体（属于值类型）包含一个 <code>lazy</code> 属性时，任何该结构体的拥有者同样必须声明为一个变量（<code>var</code> 关键字声明），因为访问该属性意味着可能改变结构体内容。所以以下行为是不被允许的：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> image = <span class="type">Image</span>()</div><div class="line"><span class="built_in">print</span>(image.metadata)</div><div class="line"><span class="comment">// error: Cannot use mutating getter on immutable value: 'image' is a 'let' constant.</span></div></pre></td></tr></table></figure>
-<p>你可以强制要求用户使用 <code>var</code> 关键字来声明 <code>Image</code> 类型，但是这可能有些不合适（比如，<a href="https://github.com/apple/swift-evolution/blob/master/proposals/0003-remove-var-parameters-patterns.md" target="_blank" rel="external">函数中作为变量的情况</a>）或容易混淆（因为 getter 方法通常并不是可变的）。</p>
-<h3 id="使用Box包装类型"><a href="#使用Box包装类型" class="headerlink" title="使用Box包装类型"></a>使用Box包装类型</h3><p>另外一种选择是将 <code>lazy</code> 值封装到一个类中，有点类似经常使用的 <a href="https://github.com/robrix/Box" target="_blank" rel="external"><code>Box type</code></a>。由于类是引用类型，结构体可以包含一个 <code>let</code> 常量指向一个类实例，如此结构体依旧是不可变的，但它指向的引用对象本身是可以改变的。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> image = <span class="type">Image</span>()</span><br><span class="line"><span class="built_in">print</span>(image.metadata)</span><br><span class="line"><span class="comment">// error: Cannot use mutating getter on immutable value: 'image' is a 'let' constant.</span></span><br></pre></td></tr></table></figure>
+<p>你可以强制要求用户使用 <code>var</code> 关键字来声明 <code>Image</code> 类型，但是这可能有些不合适（比如，<a href="https://github.com/apple/swift-evolution/blob/master/proposals/0003-remove-var-parameters-patterns.md" target="_blank" rel="noopener">函数中作为变量的情况</a>）或容易混淆（因为 getter 方法通常并不是可变的）。</p>
+<h3 id="使用Box包装类型"><a href="#使用Box包装类型" class="headerlink" title="使用Box包装类型"></a>使用Box包装类型</h3><p>另外一种选择是将 <code>lazy</code> 值封装到一个类中，有点类似经常使用的 <a href="https://github.com/robrix/Box" target="_blank" rel="noopener"><code>Box type</code></a>。由于类是引用类型，结构体可以包含一个 <code>let</code> 常量指向一个类实例，如此结构体依旧是不可变的，但它指向的引用对象本身是可以改变的。</p>
 <p>首先我们定义一个枚举类型，命名为 <code>LazyValue</code>，用于表示值类型 <code>T</code> 能够被懒加载（有时又称延迟加载）。它具有两个可能状态：要么还未执行计算操作，要么已经执行计算并得到结果值。在前一种情况中，它存储用于执行计算的函数（闭包）。后一种情况中，它存储计算值。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="class"><span class="keyword">enum</span> <span class="title">LazyValue</span>&lt;<span class="title">T</span>&gt; </span>&#123;</div><div class="line">    <span class="keyword">case</span> <span class="type">NotYetComputed</span>(() -&gt; <span class="type">T</span>)</div><div class="line">    <span class="keyword">case</span> <span class="type">Computed</span>(<span class="type">T</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="class"><span class="keyword">enum</span> <span class="title">LazyValue</span>&lt;<span class="title">T</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="type">NotYetComputed</span>(() -&gt; <span class="type">T</span>)</span><br><span class="line">    <span class="keyword">case</span> <span class="type">Computed</span>(<span class="type">T</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>现在我们将封装该枚举到一个类中，命名为 <code>LazyBox</code>，这样我们就能够独立地在它内部做一些改变。而 <code>LazyBox</code>实例的拥有者依旧能够保持不可变状态。实现如下：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">LazyBox</span>&lt;<span class="title">T</span>&gt; </span>&#123;</div><div class="line">    <span class="keyword">init</span>(computation: () -&gt; <span class="type">T</span>) &#123;</div><div class="line">        _value = .<span class="type">NotYetComputed</span>(computation)</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">var</span> _value: <span class="type">LazyValue</span>&lt;<span class="type">T</span>&gt;</div><div class="line"></div><div class="line">    <span class="keyword">var</span> value: <span class="type">T</span> &#123;</div><div class="line">        <span class="keyword">switch</span> <span class="keyword">self</span>._value &#123;</div><div class="line">        <span class="keyword">case</span> .<span class="type">NotYetComputed</span>(<span class="keyword">let</span> computation):</div><div class="line">            <span class="keyword">let</span> result = computation()</div><div class="line">            <span class="keyword">self</span>._value = .<span class="type">Computed</span>(result)</div><div class="line">            <span class="keyword">return</span> result</div><div class="line">        <span class="keyword">case</span> .<span class="type">Computed</span>(<span class="keyword">let</span> result):</div><div class="line">            <span class="keyword">return</span> result</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">LazyBox</span>&lt;<span class="title">T</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">init</span>(computation: () -&gt; <span class="type">T</span>) &#123;</span><br><span class="line">        _value = .<span class="type">NotYetComputed</span>(computation)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> _value: <span class="type">LazyValue</span>&lt;<span class="type">T</span>&gt;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> value: <span class="type">T</span> &#123;</span><br><span class="line">        <span class="keyword">switch</span> <span class="keyword">self</span>._value &#123;</span><br><span class="line">        <span class="keyword">case</span> .<span class="type">NotYetComputed</span>(<span class="keyword">let</span> computation):</span><br><span class="line">            <span class="keyword">let</span> result = computation()</span><br><span class="line">            <span class="keyword">self</span>._value = .<span class="type">Computed</span>(result)</span><br><span class="line">            <span class="keyword">return</span> result</span><br><span class="line">        <span class="keyword">case</span> .<span class="type">Computed</span>(<span class="keyword">let</span> result):</span><br><span class="line">            <span class="keyword">return</span> result</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><code>LazyBox</code> 类构造方法接收一个闭包作为变量，用于计算值。我们将该函数存储到一个私有的 <code>LazyValue</code> 属性中，等待需要时进行访问。该类的公有接口是一个只读属性 <code>value</code>。在 <code>value</code> 的 <code>getter</code> 方法中我们检查是否已经拥有一个计算属性，如果是则返回该值。否则我们执行一次计算函数并缓存结果值到 <code>_value</code> 等待之后的读取操作。</p>
 <p>我们可以像这样使用 <code>LazyBox</code>，并且验证计算函数确实仅被执行了一次：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> counter = <span class="number">0</span></div><div class="line"><span class="keyword">let</span> box = <span class="type">LazyBox</span>&lt;<span class="type">Int</span>&gt; &#123;</div><div class="line">    counter += <span class="number">1</span>;</div><div class="line">    <span class="keyword">return</span> counter * <span class="number">10</span></div><div class="line">&#125;</div><div class="line"><span class="built_in">assert</span>(box.value == <span class="number">10</span>)</div><div class="line"><span class="built_in">assert</span>(box.value == <span class="number">10</span>)</div><div class="line"><span class="built_in">assert</span>(counter == <span class="number">1</span>)<span class="comment">// 倘若你把 1 改成 2，就会报错</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> counter = <span class="number">0</span></span><br><span class="line"><span class="keyword">let</span> box = <span class="type">LazyBox</span>&lt;<span class="type">Int</span>&gt; &#123;</span><br><span class="line">    counter += <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">return</span> counter * <span class="number">10</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">assert</span>(box.value == <span class="number">10</span>)</span><br><span class="line"><span class="built_in">assert</span>(box.value == <span class="number">10</span>)</span><br><span class="line"><span class="built_in">assert</span>(counter == <span class="number">1</span>)<span class="comment">// 倘若你把 1 改成 2，就会报错</span></span><br></pre></td></tr></table></figure>
 <p>上面这种方式的优势在于它能够应用到常量结构体中。而在其他方面，它相比较 <code>lazy</code> 变量使用略逊一筹，因为用户需要通过 <code>value</code> 属性才能访问结果值。如果感觉这样不直观的话，我们可以隐藏具体的实现，而向用户提供另外一个计算属性返回 <code>LazyBox.value</code>，同时我们将 <code>LazyBox</code> 属性设置为私有。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Image</span> </span>&#123;</div><div class="line">    <span class="comment">// 延迟存储</span></div><div class="line">    <span class="keyword">private</span> <span class="keyword">let</span> _metadata = <span class="type">LazyBox</span>&lt;[<span class="type">String</span>:<span class="type">AnyObject</span>]&gt; &#123;</div><div class="line">        <span class="comment">// 加载图片和解析 metadata，相当占内存</span></div><div class="line">        <span class="comment">// ...</span></div><div class="line">        <span class="keyword">return</span> ...</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">var</span> metadata: [<span class="type">String</span>:<span class="type">AnyObject</span>] &#123;</div><div class="line">        <span class="keyword">return</span> _metadata.value</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">let</span> image = <span class="type">Image</span>()</div><div class="line"><span class="built_in">print</span>(image.metadata) <span class="comment">// 不报错</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Image</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 延迟存储</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">let</span> _metadata = <span class="type">LazyBox</span>&lt;[<span class="type">String</span>:<span class="type">AnyObject</span>]&gt; &#123;</span><br><span class="line">        <span class="comment">// 加载图片和解析 metadata，相当占内存</span></span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">        <span class="keyword">return</span> ...</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> metadata: [<span class="type">String</span>:<span class="type">AnyObject</span>] &#123;</span><br><span class="line">        <span class="keyword">return</span> _metadata.value</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> image = <span class="type">Image</span>()</span><br><span class="line"><span class="built_in">print</span>(image.metadata) <span class="comment">// 不报错</span></span><br></pre></td></tr></table></figure>
 <p>这样该结构体依旧保留了它的值语义。值类型内部使用引用类型是惯用伎俩，以这种方式实现能够保证值语义。标准库中许多集合类型都是以这种方式实现的。</p>
 <h3 id="并发性"><a href="#并发性" class="headerlink" title="并发性"></a>并发性</h3><p>这种实现方式还存在最后一个潜在问题，也就是未考虑并发性。倘若 <code>LazyBox.value</code> 还未完成值计算操作，同时被多个线程访问，那么计算函数就将被执行多次。这些都是你需要避免的情况，万一计算函数会产生副作用或相当耗内存呢，对吧？</p>
 <p>我们可以将内部 <code>_value</code> 属性的所有读写操作都安排到一个私有串行队列中，这样就能够保证函数仅被执行一次。下面是新的实现方式：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">LazyBox</span>&lt;<span class="title">T</span>&gt; </span>&#123;</div><div class="line">    <span class="keyword">init</span>(computation: () -&gt; <span class="type">T</span>) &#123;</div><div class="line">        _value = .<span class="type">NotYetComputed</span>(computation)</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">var</span> _value: <span class="type">LazyValue</span>&lt;<span class="type">T</span>&gt;</div><div class="line"></div><div class="line">    <span class="comment">/// 所有对于 `_value` 的读写都在这个线程队列中。</span></div><div class="line">    <span class="keyword">private</span> <span class="keyword">let</span> queue = dispatch_queue_create(</div><div class="line">        <span class="string">"LazyBox._value"</span>, <span class="type">DISPATCH_QUEUE_SERIAL</span>)</div><div class="line"></div><div class="line">    <span class="keyword">var</span> value: <span class="type">T</span> &#123;</div><div class="line">        <span class="keyword">var</span> returnValue: <span class="type">T</span>? = <span class="literal">nil</span></div><div class="line">        dispatch_sync(queue) &#123;</div><div class="line">            <span class="keyword">switch</span> <span class="keyword">self</span>._value &#123;</div><div class="line">            <span class="keyword">case</span> .<span class="type">NotYetComputed</span>(<span class="keyword">let</span> computation):</div><div class="line">                <span class="keyword">let</span> result = computation()</div><div class="line">                <span class="keyword">self</span>._value = .<span class="type">Computed</span>(result)</div><div class="line">                returnValue = result</div><div class="line">            <span class="keyword">case</span> .<span class="type">Computed</span>(<span class="keyword">let</span> result):</div><div class="line">                returnValue = result</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="built_in">assert</span>(returnValue != <span class="literal">nil</span>)</div><div class="line">        <span class="keyword">return</span> returnValue!</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">LazyBox</span>&lt;<span class="title">T</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">init</span>(computation: () -&gt; <span class="type">T</span>) &#123;</span><br><span class="line">        _value = .<span class="type">NotYetComputed</span>(computation)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> _value: <span class="type">LazyValue</span>&lt;<span class="type">T</span>&gt;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/// 所有对于 `_value` 的读写都在这个线程队列中。</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">let</span> queue = dispatch_queue_create(</span><br><span class="line">        <span class="string">"LazyBox._value"</span>, <span class="type">DISPATCH_QUEUE_SERIAL</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> value: <span class="type">T</span> &#123;</span><br><span class="line">        <span class="keyword">var</span> returnValue: <span class="type">T</span>? = <span class="literal">nil</span></span><br><span class="line">        dispatch_sync(queue) &#123;</span><br><span class="line">            <span class="keyword">switch</span> <span class="keyword">self</span>._value &#123;</span><br><span class="line">            <span class="keyword">case</span> .<span class="type">NotYetComputed</span>(<span class="keyword">let</span> computation):</span><br><span class="line">                <span class="keyword">let</span> result = computation()</span><br><span class="line">                <span class="keyword">self</span>._value = .<span class="type">Computed</span>(result)</span><br><span class="line">                returnValue = result</span><br><span class="line">            <span class="keyword">case</span> .<span class="type">Computed</span>(<span class="keyword">let</span> result):</span><br><span class="line">                returnValue = result</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">assert</span>(returnValue != <span class="literal">nil</span>)</span><br><span class="line">        <span class="keyword">return</span> returnValue!</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>使用这种方式的缺点是每次访问 <code>value</code> 时都会造成一个小的性能影响，倘若多个线程同时读取该值时可能引起争用，毕竟它们都要经过同一个串行队列。鉴于每次缓存值被计算后队列中要执行的工作量相当少，在大多数情况中都可以忽略不计。</p>
-<p>值得注意的是 Swift 并没有为 <code>lazy</code> 关键字提供上述保证。<a href="https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/Properties.html#//apple_ref/doc/uid/TP40014097-CH14-ID257" target="_blank" rel="external">官方文档</a>里是这么说的：</p>
+<p>值得注意的是 Swift 并没有为 <code>lazy</code> 关键字提供上述保证。<a href="https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/Properties.html#//apple_ref/doc/uid/TP40014097-CH14-ID257" target="_blank" rel="noopener">官方文档</a>里是这么说的：</p>
 <blockquote>
 <p>注意：倘若一个标记为 lazy 的属性同时被多个线程修改时，且该属性还未进行初始化操作，那么将无法保证该属性仅被初始化一次。</p>
 </blockquote>
-<p><strong>最新更新：</strong>就在我发布该文章之后的一个小时，<a href="https://twitter.com/jckarter" target="_blank" rel="external">Joe Groff</a> 在 Swift evolution 中为属性行为发布了一个影响深远的提议，邮件内容请点击<a href="https://lists.swift.org/pipermail/swift-evolution/Week-of-Mon-20151214/003148.html" target="_blank" rel="external">这里</a>，一旦被采纳，将实现我在本文中讨论的内容（且远远不止），并以一个更自然的方式来实现。我强烈建议你看一下。</p>
+<p><strong>最新更新：</strong>就在我发布该文章之后的一个小时，<a href="https://twitter.com/jckarter" target="_blank" rel="noopener">Joe Groff</a> 在 Swift evolution 中为属性行为发布了一个影响深远的提议，邮件内容请点击<a href="https://lists.swift.org/pipermail/swift-evolution/Week-of-Mon-20151214/003148.html" target="_blank" rel="noopener">这里</a>，一旦被采纳，将实现我在本文中讨论的内容（且远远不止），并以一个更自然的方式来实现。我强烈建议你看一下。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
@@ -243,6 +246,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -291,7 +298,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -440,11 +447,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -456,11 +463,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -468,7 +471,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -480,11 +483,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -492,7 +499,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -686,7 +693,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

@@ -20,8 +20,9 @@
 <meta property="og:url" content="https://swift.gg/2017/01/13/holy-war-forced-unwrapping-urls/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="如何优雅的为URL解包">
+<meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="http://ericasadun.com/wp-content/uploads/2017/01/rq6ZVbB.png">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.407Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="URL 强制解包带来的问题">
 <meta name="twitter:description" content="如何优雅的为URL解包">
@@ -90,7 +91,7 @@
         <a href="/2017/01/13/holy-war-forced-unwrapping-urls/" target="_blank" title="URL 强制解包带来的问题" itemprop="url">URL 强制解包带来的问题</a>
     </h1>
     <p class="article-time">
-      <time datetime="2017-01-12T16:00:00.000Z" itemprop="datePublished">2017-01-13</time>
+      <time datetime="2017-01-13T00:00:00.000Z" itemprop="datePublished">2017-01-13</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -98,20 +99,20 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Erica Sadun，<a href="http://ericasadun.com/2017/01/06/holy-war-forced-unwrapping-urls/" target="_blank" rel="external">原文链接</a>，原文日期：2017-01-06<br>译者：<a href="http://www.jianshu.com/users/ef1058d2d851" target="_blank" rel="external">星夜暮晨</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+<p>作者：Erica Sadun，<a href="http://ericasadun.com/2017/01/06/holy-war-forced-unwrapping-urls/" target="_blank" rel="noopener">原文链接</a>，原文日期：2017-01-06<br>译者：<a href="http://www.jianshu.com/users/ef1058d2d851" target="_blank" rel="noopener">星夜暮晨</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="noopener">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p>让我先阐述一下撰写这篇文章的背景。<a href="https://github.com/Laptopmini" target="_blank" rel="external">Laptopmini</a> 想要知道为什么下面这段代码无法完成编译。诚然，Swift 的错误提示尚存有改进的余地。简而言之：他需要将第二行和第三行代码进行互换，才能够完成编译。这就需要让这两个属性在引用 <code>self</code> 之前，完成初始化操作。</p>
+<p>让我先阐述一下撰写这篇文章的背景。<a href="https://github.com/Laptopmini" target="_blank" rel="noopener">Laptopmini</a> 想要知道为什么下面这段代码无法完成编译。诚然，Swift 的错误提示尚存有改进的余地。简而言之：他需要将第二行和第三行代码进行互换，才能够完成编译。这就需要让这两个属性在引用 <code>self</code> 之前，完成初始化操作。</p>
 <a id="more"></a>
 <p><img src="http://ericasadun.com/wp-content/uploads/2017/01/rq6ZVbB.png" alt=""></p>
 <p>我很快将目光放在了这些感叹号上。「是否存在会导致 URL 构建失败的情况呢？如果有，为什么不去阻止这些潜在的崩溃发生呢？」Laptop 指出：他的 URL 在任何情况下都不会发生异常，因此在这里使用感叹号进行强制解包是非常安全的。</p>
 <p>除此之外，他的这种做法也让我的代码洁癖发作了。无论如何，URL 都不应该在这个构造器当中创建。我在想应该有更好的方法来进行处理，也就是将 URL 的构造从构造器当中移出，并且辅以完好的错误处理，以便获得更佳的错误消息提示。</p>
 <p>首先，对 <code>URL</code> 进行扩展，以提供一个更为安全的非空构造器 (non-optional initializer)。以下代码片段提供了「安全着陆」的功效，当某个字符串无法构造成 URL 的时候，提供有用的反馈信息。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">URL</span> </span>&#123;</div><div class="line">    <span class="comment">/// 非空构造器能够提供更好的错误输出</span></div><div class="line">    <span class="keyword">public</span> <span class="keyword">init</span>(safeString string: <span class="type">String</span>) &#123;</div><div class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> instance = <span class="type">URL</span>(string: string) <span class="keyword">else</span> &#123;</div><div class="line">            <span class="built_in">fatalError</span>(<span class="string">"Unconstructable URL: <span class="subst">\(string)</span>"</span>)</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">self</span> = instance</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">URL</span> </span>&#123;</span><br><span class="line">    <span class="comment">/// 非空构造器能够提供更好的错误输出</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">init</span>(safeString string: <span class="type">String</span>) &#123;</span><br><span class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> instance = <span class="type">URL</span>(string: string) <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="built_in">fatalError</span>(<span class="string">"Unconstructable URL: <span class="subst">\(string)</span>"</span>)</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">self</span> = instance</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>不过对这个问题而言，似乎有点小题大做。因此，我推荐使用这种方案：在 <code>SocketEndPoint</code> 类型当中添加相同的方法。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// 返回 `URL`，同时也可以明确指出错误</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">enum</span> <span class="title">SocketEndPoint</span>: <span class="title">String</span> </span>&#123;</div><div class="line">    <span class="keyword">case</span> events = <span class="string">"http://nowhere.com/events"</span></div><div class="line">    <span class="keyword">case</span> live = <span class="string">"http://nowhere.com/live"</span></div><div class="line">    </div><div class="line">    <span class="keyword">public</span> <span class="keyword">var</span> url: <span class="type">URL</span> &#123;</div><div class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> url = <span class="type">URL</span>(string: <span class="keyword">self</span>.rawValue) <span class="keyword">else</span> &#123;</div><div class="line">            <span class="built_in">fatalError</span>(<span class="string">"Unconstructable URL: <span class="subst">\(<span class="keyword">self</span>.rawValue)</span>"</span>)</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> url</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 返回 `URL`，同时也可以明确指出错误</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">enum</span> <span class="title">SocketEndPoint</span>: <span class="title">String</span> </span>&#123;</span><br><span class="line">    <span class="keyword">case</span> events = <span class="string">"http://nowhere.com/events"</span></span><br><span class="line">    <span class="keyword">case</span> live = <span class="string">"http://nowhere.com/live"</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">var</span> url: <span class="type">URL</span> &#123;</span><br><span class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> url = <span class="type">URL</span>(string: <span class="keyword">self</span>.rawValue) <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="built_in">fatalError</span>(<span class="string">"Unconstructable URL: <span class="subst">\(<span class="keyword">self</span>.rawValue)</span>"</span>)</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> url</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这种方法使得他的初始化方法更加简洁明了。基于这种新的设计，我们在构造器当中使用标准化的 URL，不再使用强制解包。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// 改造过的构造器</span></div><div class="line"><span class="keyword">fileprivate</span> <span class="keyword">init</span>() &#123;</div><div class="line">    <span class="keyword">self</span>.eventSocket = <span class="type">WebSocket</span>(url: <span class="type">SocketEndPoint</span>.events.url))</div><div class="line">    <span class="keyword">self</span>.liveSocket = <span class="type">WebSocket</span>(url: <span class="type">SocketEndPoint</span>.live.url))</div><div class="line">    <span class="keyword">self</span>.eventSocket.delegate = <span class="keyword">self</span></div><div class="line">    <span class="keyword">self</span>.liveSocket.delegate = <span class="keyword">self</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 改造过的构造器</span></span><br><span class="line"><span class="keyword">fileprivate</span> <span class="keyword">init</span>() &#123;</span><br><span class="line">    <span class="keyword">self</span>.eventSocket = <span class="type">WebSocket</span>(url: <span class="type">SocketEndPoint</span>.events.url))</span><br><span class="line">    <span class="keyword">self</span>.liveSocket = <span class="type">WebSocket</span>(url: <span class="type">SocketEndPoint</span>.live.url))</span><br><span class="line">    <span class="keyword">self</span>.eventSocket.delegate = <span class="keyword">self</span></span><br><span class="line">    <span class="keyword">self</span>.liveSocket.delegate = <span class="keyword">self</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>总而言之：</p>
 <ul>
 <li>字符串枚举的确很方便，但是 <code>SocketEndPoint</code> 却没有做好它自己的职责。它的工作应该是提供合法的 URL。无论类型实现的方式如何，它都应该提供这样的功能。物尽其用，既然在语言内部存在一个「差不多」的解决方案，何乐而不为呢？</li>
@@ -119,7 +120,7 @@
 <li>在权衡通用的全局解决方案和简单的本地解决方案的时候，有些时候最好从简单的方案着手，尽量在紧邻的上下文之间就解决好相关的问题。</li>
 <li>我觉得使用正常的 URL 构造器（返回有可空值），然后再创建一个带有隐式可空值解包（<code>public init(url: URL!)</code>）的 <code>WebSocket</code> 构造器并没有带来任何好处，当字符串的结构出现异常的时候，就没有办法报告这个错误。此外，还十分地丑陋。</li>
 </ul>
-<p>您可以在<a href="https://gist.github.com/erica/d300f8dac3baa7d40aadd18bd1902172" target="_blank" rel="external">这个 gist</a> 当中看到我所提及的这几种方法。</p>
+<p>您可以在<a href="https://gist.github.com/erica/d300f8dac3baa7d40aadd18bd1902172" target="_blank" rel="noopener">这个 gist</a> 当中看到我所提及的这几种方法。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
@@ -232,6 +233,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -280,7 +285,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -429,11 +434,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -445,11 +450,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -457,7 +458,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -469,11 +470,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -481,7 +486,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -675,7 +680,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

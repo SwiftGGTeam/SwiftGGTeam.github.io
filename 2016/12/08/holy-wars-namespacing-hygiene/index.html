@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/12/08/holy-wars-namespacing-hygiene/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="本文描述了如何才能保持 Swift 的命名空间干净、集中、便于管理。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.407Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift 圣战：干净的命名空间">
 <meta name="twitter:description" content="本文描述了如何才能保持 Swift 的命名空间干净、集中、便于管理。">
@@ -88,7 +89,7 @@
         <a href="/2016/12/08/holy-wars-namespacing-hygiene/" target="_blank" title="Swift 圣战：干净的命名空间" itemprop="url">Swift 圣战：干净的命名空间</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-12-07T16:00:00.000Z" itemprop="datePublished">2016-12-08</time>
+      <time datetime="2016-12-08T00:00:00.000Z" itemprop="datePublished">2016-12-08</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,10 +97,10 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Erica Sadun，<a href="http://ericasadun.com/2016/11/17/holy-wars-namespacing-hygiene/" target="_blank" rel="external">原文链接</a>，原文日期：2016-11-17<br>译者：<a href="http://www.jianshu.com/users/ef1058d2d851" target="_blank" rel="external">星夜暮晨</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+<p>作者：Erica Sadun，<a href="http://ericasadun.com/2016/11/17/holy-wars-namespacing-hygiene/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-11-17<br>译者：<a href="http://www.jianshu.com/users/ef1058d2d851" target="_blank" rel="noopener">星夜暮晨</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="noopener">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p><a href="https://github.com/sssilver" target="_blank" rel="external">sssilver</a> 留言说：<em>「我发现我司的代码普遍都是这种情况：每个类都包含了一堆的静态方法。我问同事为什么不直接编写方法，他们回答说是不想污染命名空间。在类似 Rust 之类的语言当中，所有内容都位于模块内部。那么在 Swift 当中常见的做法是如何呢？」</em></p>
+<p><a href="https://github.com/sssilver" target="_blank" rel="noopener">sssilver</a> 留言说：<em>「我发现我司的代码普遍都是这种情况：每个类都包含了一堆的静态方法。我问同事为什么不直接编写方法，他们回答说是不想污染命名空间。在类似 Rust 之类的语言当中，所有内容都位于模块内部。那么在 Swift 当中常见的做法是如何呢？」</em></p>
 <a id="more"></a>
 <p>Swift 偏好于使用命名空间将函数及常量独立出来。这同样适用于模块内部的 API，您可以很轻易地获取常见的命名空间。如果您想要让命名空间保持干净、集中的话，那么通常而言，将内容限制在类型和协议当中是挺不错的选择。</p>
 <p>这种做法使得 Swift 较以前的版本而言，更倾向于使用层次结构。Swift 更适合：</p>
@@ -111,7 +112,7 @@
 <li>将运算符实现代码移到它们所作用的类型当中，这样便可以减少全局命名空间当中所实现的运算符数目。</li>
 </ul>
 <p>此前您很可能创建了如下锁匙的公共常量和函数，现在最好是将它们合并到既有类型或者工具 (utility) 类型当中：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">let</span> π = <span class="type">CGFloat</span>(<span class="type">Double</span>.pi) <span class="comment">// 不建议</span></div><div class="line"><span class="keyword">public</span> <span class="keyword">let</span> τ = π * <span class="number">2.0</span> <span class="comment">// 不建议</span></div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">halt</span><span class="params">()</span></span> &#123; <span class="comment">// 不建议</span></div><div class="line">    <span class="type">PlaygroundPage</span>.current.finishExecution()</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">CGFloat</span> </span>&#123; </div><div class="line">    <span class="comment">/// 存放 π 常量，建议</span></div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">let</span> (pi, π) = (<span class="type">CGFloat</span>(<span class="type">Double</span>.pi), <span class="type">CGFloat</span>(<span class="type">Double</span>.pi))</div><div class="line"> </div><div class="line">    <span class="comment">/// 存放 τ 常量，建议</span></div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">let</span> (tau, τ) = (<span class="number">2</span> * pi, <span class="number">2</span> * pi)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">PlaygroundPage</span> </span>&#123;</div><div class="line">    <span class="comment">// 这看起来好看不少</span></div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">halt</span><span class="params">()</span></span> &#123;</div><div class="line">        current.finishExecution()</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">let</span> π = <span class="type">CGFloat</span>(<span class="type">Double</span>.pi) <span class="comment">// 不建议</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">let</span> τ = π * <span class="number">2.0</span> <span class="comment">// 不建议</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">halt</span><span class="params">()</span></span> &#123; <span class="comment">// 不建议</span></span><br><span class="line">    <span class="type">PlaygroundPage</span>.current.finishExecution()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">CGFloat</span> </span>&#123; </span><br><span class="line">    <span class="comment">/// 存放 π 常量，建议</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">let</span> (pi, π) = (<span class="type">CGFloat</span>(<span class="type">Double</span>.pi), <span class="type">CGFloat</span>(<span class="type">Double</span>.pi))</span><br><span class="line"> </span><br><span class="line">    <span class="comment">/// 存放 τ 常量，建议</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">let</span> (tau, τ) = (<span class="number">2</span> * pi, <span class="number">2</span> * pi)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">PlaygroundPage</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 这看起来好看不少</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">halt</span><span class="params">()</span></span> &#123;</span><br><span class="line">        current.finishExecution()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>将全局量作为静态成员嵌入到类型当中，使得命名空间更加干净、Swift 化，并且还让性能开销降到最低。只要条件允许，您应该尽量去扩展苹果所提供的类型 (例如 <code>CGFloat</code> 以及 <code>PlaygroundPage</code> )，而不是创建新的类型 (例如 <code>MathConstants</code> 或者 <code>PlaygroundRuntimeSupport</code>)。</p>
 <p>与此同时，不要强行将常量和函数放到并不适合的类当中。如果您必须要创建一个新的类型来生成一个新的命名空间，那么请使用不包含枚举值的枚举，这将保证这个类型无法被构造出来。</p>
 <p>在文章发布之后，我可能还会有新的思路，所以如果我遗漏了些什么，请联系我，我会及时地更新这篇文章。</p>
@@ -227,6 +228,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -275,7 +280,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -424,11 +429,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -440,11 +445,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -452,7 +453,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -464,11 +465,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -476,7 +481,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -670,7 +675,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

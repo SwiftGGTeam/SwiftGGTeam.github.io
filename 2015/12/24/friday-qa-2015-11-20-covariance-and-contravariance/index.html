@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2015/12/24/friday-qa-2015-11-20-covariance-and-contravariance/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Mike Ash，原文链接，原文日期：2015-11-20译者：Cee；校对：千叶知风；定稿：numbbbbb   在现代的编程语言中，子类型（Subtypes）和超类型（Supertypes）已经成为了非常常见的一部分了。协变（Convariance）和逆变（Contravariance）则能告诉我们什么时候使用子类型或超类型会优于原来使用的类型。这在我们使用的大多数编程语言中非常的常见">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.375Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Friday Q&amp;A 2015-11-20：协变与逆变">
 <meta name="twitter:description" content="作者：Mike Ash，原文链接，原文日期：2015-11-20译者：Cee；校对：千叶知风；定稿：numbbbbb   在现代的编程语言中，子类型（Subtypes）和超类型（Supertypes）已经成为了非常常见的一部分了。协变（Convariance）和逆变（Contravariance）则能告诉我们什么时候使用子类型或超类型会优于原来使用的类型。这在我们使用的大多数编程语言中非常的常见">
@@ -88,7 +89,7 @@
         <a href="/2015/12/24/friday-qa-2015-11-20-covariance-and-contravariance/" target="_blank" title="Friday Q&amp;A 2015-11-20：协变与逆变" itemprop="url">Friday Q&amp;A 2015-11-20：协变与逆变</a>
     </h1>
     <p class="article-time">
-      <time datetime="2015-12-23T16:00:00.000Z" itemprop="datePublished">2015-12-24</time>
+      <time datetime="2015-12-24T00:00:00.000Z" itemprop="datePublished">2015-12-24</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,75 +97,75 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Mike Ash，<a href="https://mikeash.com/pyblog/friday-qa-2015-11-20-covariance-and-contravariance.html" target="_blank" rel="external">原文链接</a>，原文日期：2015-11-20<br>译者：<a href="https://github.com/Cee" target="_blank" rel="external">Cee</a>；校对：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="external">千叶知风</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="external">numbbbbb</a></p>
+<p>作者：Mike Ash，<a href="https://mikeash.com/pyblog/friday-qa-2015-11-20-covariance-and-contravariance.html" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-11-20<br>译者：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a>；校对：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>在现代的编程语言中，子类型（Subtypes）和超类型（Supertypes）已经成为了非常常见的一部分了。协变（Convariance）和逆变（Contravariance）则能告诉我们什么时候使用子类型或超类型会优于原来使用的类型。这在我们使用的大多数编程语言中非常的常见，但是很多开发者仍然对这些概念感到模糊不清。今天我们就来详细讨论一下。</p>
 <a id="more"></a>
 <h3 id="子类型（Subtypes）和超类型（Supertypes）"><a href="#子类型（Subtypes）和超类型（Supertypes）" class="headerlink" title="子类型（Subtypes）和超类型（Supertypes）"></a>子类型（Subtypes）和超类型（Supertypes）</h3><p>我们都知道子类（Subclass）是什么。当你创建一个子类的时候，你就在创建一个子类型。用一个经典的例子来讲，就是用 <code>Animal</code> 的子类去创建一只 <code>Cat</code>：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Animal</span> </span>&#123;</div><div class="line">    ...</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Cat</span>: <span class="title">Animal</span> </span>&#123;</div><div class="line">    ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Animal</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Cat</span>: <span class="title">Animal</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这让 <code>Cat</code> 成为了 <code>Animal</code> 的子类型，也就意味着所有的 <code>Cat</code> 都是 <code>Animal</code>。但并不意味着所有的 <code>Animal</code> 都是 <code>Cat</code>。</p>
 <p>子类型通常能够替代超类型。很明显懂一点编程知识的任何程序员都知道，在 Swift 中，下面的代码的第一行能够正常的运行，然而第二行则不能：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> animal: <span class="type">Animal</span> = <span class="type">Cat</span>()</div><div class="line"><span class="keyword">let</span> cat: <span class="type">Cat</span> = <span class="type">Animal</span>()</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> animal: <span class="type">Animal</span> = <span class="type">Cat</span>()</span><br><span class="line"><span class="keyword">let</span> cat: <span class="type">Cat</span> = <span class="type">Animal</span>()</span><br></pre></td></tr></table></figure>
 <p>对于函数类型也是适用的：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">animalF</span><span class="params">()</span></span> -&gt; <span class="type">Animal</span> &#123;</div><div class="line">    <span class="keyword">return</span> <span class="type">Animal</span>()</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">catF</span><span class="params">()</span></span> -&gt; <span class="type">Cat</span> &#123;</div><div class="line">    <span class="keyword">return</span> <span class="type">Cat</span>()</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">let</span> returnsAnimal: () -&gt; <span class="type">Animal</span> = catF  <span class="comment">//可以运行</span></div><div class="line"><span class="keyword">let</span> returnsCat: () -&gt; <span class="type">Cat</span> = animalF  <span class="comment">//出错</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">animalF</span><span class="params">()</span></span> -&gt; <span class="type">Animal</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="type">Animal</span>()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">catF</span><span class="params">()</span></span> -&gt; <span class="type">Cat</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="type">Cat</span>()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> returnsAnimal: () -&gt; <span class="type">Animal</span> = catF  <span class="comment">//可以运行</span></span><br><span class="line"><span class="keyword">let</span> returnsCat: () -&gt; <span class="type">Cat</span> = animalF  <span class="comment">//出错</span></span><br></pre></td></tr></table></figure>
 <p>这些在 Objective-C 下也能实现，只不过要用 block，而且语法上会显得比较丑。所以我坚定地使用 Swift。</p>
 <p>注意，以下的代码是有问题的：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">catCatF</span><span class="params">(inCat: Cat)</span></span> -&gt; <span class="type">Cat</span> &#123;</div><div class="line">    <span class="keyword">return</span> inCat</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">let</span> animalAnimal: <span class="type">Animal</span> -&gt; <span class="type">Animal</span> = catCatF</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">catCatF</span><span class="params">(inCat: Cat)</span></span> -&gt; <span class="type">Cat</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> inCat</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> animalAnimal: <span class="type">Animal</span> -&gt; <span class="type">Animal</span> = catCatF</span><br></pre></td></tr></table></figure>
 <p>很困惑，不是吗？不用担心，整篇文章就是为了彻底了解为什么第一个版本是可行而第二个版本是不可行的。除此之外，我们在探索的过程中还会了解很多非常有用的东西。</p>
 <h3 id="重写（Override）方法"><a href="#重写（Override）方法" class="headerlink" title="重写（Override）方法"></a>重写（Override）方法</h3><p>类似的事情在重写方法中也能正确地执行，想象一下有这样一个类：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Person</span> </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">purchaseAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Animal</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Person</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">purchaseAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Animal</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>现在我们建立它的子类，然后重写父类的方法，并改变返回值的类型：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">CrazyCatLady</span>: <span class="title">Person</span> </span>&#123;</div><div class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">purchaseAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Cat</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CrazyCatLady</span>: <span class="title">Person</span> </span>&#123;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">purchaseAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Cat</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这样做对吗？对。为什么呢？</p>
-<p><a href="https://en.wikipedia.org/wiki/Liskov_substitution_principle" target="_blank" rel="external">Liskov 替换原则</a>被用于指导何时该使用子类。简明扼要的来说，它指出任何子类的实例总是能够替代父类的实例。比如你有一个 <code>Animal</code>，你就能用 <code>Cat</code> 替代它；你也总是能够用 <code>CrazyCatLady</code> 替代 <code>Person</code>。</p>
+<p><a href="https://en.wikipedia.org/wiki/Liskov_substitution_principle" target="_blank" rel="noopener">Liskov 替换原则</a>被用于指导何时该使用子类。简明扼要的来说，它指出任何子类的实例总是能够替代父类的实例。比如你有一个 <code>Animal</code>，你就能用 <code>Cat</code> 替代它；你也总是能够用 <code>CrazyCatLady</code> 替代 <code>Person</code>。</p>
 <p>下面是使用 <code>Person</code> 作为例子写的一段代码，接下来会有解释来解释清楚：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> person: <span class="type">Person</span> = getAPerson()</div><div class="line"><span class="keyword">let</span> animal: <span class="type">Animal</span> = person.purchaseAnimal()</div><div class="line">animal.pet()</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> person: <span class="type">Person</span> = getAPerson()</span><br><span class="line"><span class="keyword">let</span> animal: <span class="type">Animal</span> = person.purchaseAnimal()</span><br><span class="line">animal.pet()</span><br></pre></td></tr></table></figure>
 <p>想象一下当 <code>getAPerson</code> 返回一位 <code>CrazyCatLady</code>。整段代码还可行吗？<code>CrazyCatLady.purchaseAnimal</code> 会返回一只 <code>Cat</code>。这个实例被放入了 <code>animal</code> 中。<code>Cat</code> 是 <code>Animal</code> 的一种，所以它也能够做 <code>Animal</code> 能够做的事情，包括 <code>pet</code> 方法。类似，<code>CrazyCatLady</code> 返回的 <code>Cat</code> 也是有效的。</p>
 <p>我们这时把 <code>pet</code> 函数放入 <code>Person</code> 类中，所以我们能够知道一个人所养的特定的动物：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Person</span> </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">purchaseAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Animal</span></div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">pet</span><span class="params">(animal: Animal)</span></span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Person</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">purchaseAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Animal</span></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">pet</span><span class="params">(animal: Animal)</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>自然，<code>CrazyCatLady</code> 只拥有宠物猫：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">CrazyCatLady</span>: <span class="title">Person</span> </span>&#123;</div><div class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">purchaseAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Cat</span></div><div class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">pet</span><span class="params">(animal: Cat)</span></span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CrazyCatLady</span>: <span class="title">Person</span> </span>&#123;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">purchaseAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Cat</span></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">pet</span><span class="params">(animal: Cat)</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>现在这样对吗？<em>不对！</em></p>
 <p>为了理解为什么不对，我们来看一下使用这个方法的代码片段：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> person: <span class="type">Person</span> = getAPerson()</div><div class="line"><span class="keyword">let</span> animal: <span class="type">Animal</span> = getAnAnimal()</div><div class="line">person.pet(animal)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> person: <span class="type">Person</span> = getAPerson()</span><br><span class="line"><span class="keyword">let</span> animal: <span class="type">Animal</span> = getAnAnimal()</span><br><span class="line">person.pet(animal)</span><br></pre></td></tr></table></figure>
 <p>假设 <code>getAPerson</code> 方法返回了一位 <code>CrazyCatLady</code>，第一行非常的正确：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> person: <span class="type">Person</span> = getAPerson()</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> person: <span class="type">Person</span> = getAPerson()</span><br></pre></td></tr></table></figure>
 <p>如果 <code>getAnAnimal</code> 方法返回了一只 <code>Dog</code>，它也是 <code>Animal</code> 的子类但是和 <code>Cat</code> 有截然不同的表现。接下来的一行看上去也非常的正确：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> animal: <span class="type">Animal</span> = getAnAnimal()</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> animal: <span class="type">Animal</span> = getAnAnimal()</span><br></pre></td></tr></table></figure>
 <p>接下来我们的 <code>person</code> 变量中有一位 <code>CrazyCatLady</code>，以及在 <code>animal</code> 变量中有一只 <code>Dog</code>，然后执行了这一行：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">person.pet(animal)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">person.pet(animal)</span><br></pre></td></tr></table></figure>
 <p>爆炸了噜！<code>CrazyCatLady</code> 的 <code>pet</code> 方法期望参数是一只 <code>Cat</code>。对于这只 <code>Dog</code> 就显得无计可施。这个方法也有可能会访问其他的属性或者调用其他 <code>Dog</code> 类所不具备的方法。</p>
 <p>这段代码原本是完全正确的。首先它得到 <code>Person</code> 和 <code>Animal</code>，然后调用 <code>Person</code> 中的方法让人拥有这个 <code>Animal</code>。上面的问题在于我们把 <code>CrazyCatLady.pet</code> 方法的参数类型变成了 <code>Cat</code>。这破坏了 Liskov 替换原则：此时的 <code>CrazyCatLady</code> 并不能在任意的地方替代 <code>Person</code> 的使用。</p>
 <p>感谢编译器给我们留了一手。它明白使用子类型用于重写方法的参数类型是不正确的，会拒绝编译这个代码。</p>
 <p>那在重写方法时使用不同的类型究竟对不对呢？对！事实上，你需要<em>超类型（Supertype）</em>。举一个例子，假设 <code>Animal</code> 是 <code>Thing</code> 的子类，那么当我们重写 <code>pet</code> 方法时，参数类型变为 <code>Thing</code>：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">pet</span><span class="params">(thing: Thing)</span></span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">pet</span><span class="params">(thing: Thing)</span></span></span><br></pre></td></tr></table></figure>
 <p>这保证了可替换性。如果是一个 <code>Person</code>，那么这个方法所传进来的参数类型始终是 <code>Animal</code>，这是 <code>Thing</code> 的一种。</p>
 <p>有个重要的规则来了：函数的返回值可以换成原类型的<em>子类型</em>，在层级上<em>降</em>了一级；反之函数的参数可以换成原类型的<em>超类型</em>，在层级上<em>升</em>了一级。</p>
 <h3 id="单独的函数（Standalone-functions）"><a href="#单独的函数（Standalone-functions）" class="headerlink" title="单独的函数（Standalone functions）"></a>单独的函数（Standalone functions）</h3><p>这种子类型和超类型的关系我们已经在类上面了解得很清楚了。它能够通过类与类之间的层级关系直接推出。那么如果是单独的函数关系呢？</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> f1: <span class="type">A</span> -&gt; <span class="type">B</span> = ...</div><div class="line"><span class="keyword">let</span> f2: <span class="type">C</span> -&gt; <span class="type">D</span> = f1</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> f1: <span class="type">A</span> -&gt; <span class="type">B</span> = ...</span><br><span class="line"><span class="keyword">let</span> f2: <span class="type">C</span> -&gt; <span class="type">D</span> = f1</span><br></pre></td></tr></table></figure>
 <p>这种关系什么时候是对的，什么时候又是错的呢？</p>
 <p>这可以被看做是 Liskov 替换原则的一种精简版本。 事实上，你可以把函数想象成是非常小的（mini-objects）、只有一个方法的对象。当你有两个不同的对象类型时，怎么做才能够让这两个对象也遵循我们的原则呢？只有当原对象类型是后者类型的子类型就可以了。那什么时候函数是另一个函数的子类型呢？正如上面所见，当前者的参数是后者的超类型并且返回值是后者的子类型即可。</p>
 <p>把这个方法应用在这儿，上面的代码当 <code>A</code> 是 <code>C</code> 的超类型且 <code>B</code> 是 <code>D</code> 的子类型时可以正常的执行。用具体的例子来说：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> f1: <span class="type">Animal</span> -&gt; <span class="type">Animal</span> = ...</div><div class="line"><span class="keyword">let</span> f2: <span class="type">Cat</span> -&gt; <span class="type">Thing</span> = f1</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> f1: <span class="type">Animal</span> -&gt; <span class="type">Animal</span> = ...</span><br><span class="line"><span class="keyword">let</span> f2: <span class="type">Cat</span> -&gt; <span class="type">Thing</span> = f1</span><br></pre></td></tr></table></figure>
 <p>参数和返回值的类型朝着相反的方向移动。可能不是你所想的那样，但是这就是能让函数正确执行的唯一方法。</p>
-<p>这又是一个重要的规则：一个函数若是另外一个函数的子类型，那么它的参数是原函数参数的<em>超类型</em>，返回值是原函数返回值的<em>子类型</em>（译者注：又叫做 <a href="http://www.wikiwand.com/en/Robustness_principle" target="_blank" rel="external">Robustness 原则</a>）。</p>
+<p>这又是一个重要的规则：一个函数若是另外一个函数的子类型，那么它的参数是原函数参数的<em>超类型</em>，返回值是原函数返回值的<em>子类型</em>（译者注：又叫做 <a href="http://www.wikiwand.com/en/Robustness_principle" target="_blank" rel="noopener">Robustness 原则</a>）。</p>
 <h3 id="属性（Property）"><a href="#属性（Property）" class="headerlink" title="属性（Property）"></a>属性（Property）</h3><p>如果是只读的属性那就很简单。子类的属性必须是父类属性的子类型。只读的属性本质上是一个不接收参数而返回成员值的函数，所以上述的规则依旧适用。</p>
 <p>可读可写的属性其实也非常的简单。子类的属性必须和父类的属性类型相同。一个可读可写的属性其实由一对函数组成。<code>Getter</code> 是一个不接收参数而返回成员值的函数，<code>Setter</code> 则是一个需要传入一个参数但无需返回值的函数。看下面的例子：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> animal: <span class="type">Animal</span></div><div class="line"><span class="comment">// 这等价于：</span></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">getAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Animal</span></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">setAnimal</span><span class="params">(animal: Animal)</span></span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> animal: <span class="type">Animal</span></span><br><span class="line"><span class="comment">// 这等价于：</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Animal</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">setAnimal</span><span class="params">(animal: Animal)</span></span></span><br></pre></td></tr></table></figure>
 <p>正如我们之前得到的结论一样，函数的参数和返回值需要各自向上和向下改变一级。然而参数和返回值的类型却是固定的，所以它们的类型都不能被改变：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// 注意到 animal 的类型是 Animal</span></div><div class="line"><span class="comment">// 这样不对（向下）</span></div><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">getAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Cat</span></div><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">setAnimal</span><span class="params">(animal: Cat)</span></span></div><div class="line"></div><div class="line"><span class="comment">// 这样也不对（向上）</span></div><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">getAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Thing</span></div><div class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">setAnimal</span><span class="params">(animal: Thing)</span></span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 注意到 animal 的类型是 Animal</span></span><br><span class="line"><span class="comment">// 这样不对（向下）</span></span><br><span class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">getAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Cat</span></span><br><span class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">setAnimal</span><span class="params">(animal: Cat)</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 这样也不对（向上）</span></span><br><span class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">getAnimal</span><span class="params">()</span></span> -&gt; <span class="type">Thing</span></span><br><span class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">setAnimal</span><span class="params">(animal: Thing)</span></span></span><br></pre></td></tr></table></figure>
 <h3 id="泛型（Generics）"><a href="#泛型（Generics）" class="headerlink" title="泛型（Generics）"></a>泛型（Generics）</h3><p>那如果是泛型呢？给定泛型类型的参数，什么时候又是正确的呢？</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> var1: <span class="type">SomeType</span>&lt;<span class="type">A</span>&gt; = ...</div><div class="line"><span class="keyword">let</span> var2: <span class="type">SomeType</span>&lt;<span class="type">B</span>&gt; = var1</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> var1: <span class="type">SomeType</span>&lt;<span class="type">A</span>&gt; = ...</span><br><span class="line"><span class="keyword">let</span> var2: <span class="type">SomeType</span>&lt;<span class="type">B</span>&gt; = var1</span><br></pre></td></tr></table></figure>
 <p>理论上来说，这要看泛型参数是如何使用的。一个泛型类型参数本身并不做什么事情，但是它会被用作于属性的类型、函数方法的参数类型和返回类型。</p>
 <p>如果泛型参数仅仅被用作函数返回值的类型和只读属性身上，那么 <code>B</code> 需要是 <code>A</code> 的超类型：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> var1: <span class="type">SomeType</span>&lt;<span class="type">Cat</span>&gt; = ...</div><div class="line"><span class="keyword">let</span> var2: <span class="type">SomeType</span>&lt;<span class="type">Animal</span>&gt; = var1</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> var1: <span class="type">SomeType</span>&lt;<span class="type">Cat</span>&gt; = ...</span><br><span class="line"><span class="keyword">let</span> var2: <span class="type">SomeType</span>&lt;<span class="type">Animal</span>&gt; = var1</span><br></pre></td></tr></table></figure>
 <p>如果泛型参数仅被用作于函数方法的参数类型，那么 <code>B</code> 需要是 <code>A</code> 的子类型：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> var1: <span class="type">SomeType</span>&lt;<span class="type">Animal</span>&gt; = ...</div><div class="line"><span class="keyword">let</span> var2: <span class="type">SomeType</span>&lt;<span class="type">Cat</span>&gt; = var1</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> var1: <span class="type">SomeType</span>&lt;<span class="type">Animal</span>&gt; = ...</span><br><span class="line"><span class="keyword">let</span> var2: <span class="type">SomeType</span>&lt;<span class="type">Cat</span>&gt; = var1</span><br></pre></td></tr></table></figure>
 <p>如果泛型参数在上述提到的两方面都被使用了，那么当且仅当 <code>A</code> 和 <code>B</code> 是相同类型的时候才是有效的。这也同样适用于当泛型参数作为可读可写属性的情况。</p>
 <p>这就是理论部分，看上去有些复杂但其实很简短。与此同时，Swift 寻求到了其简便的解决之道。对于两个需要相互匹配的泛型类型，Swift 要求它们的泛型参数的类型也需要相同。子类型和超类型都是不被允许的，尽管理论上可行。</p>
 <p>Objective-C 事实上比 Swift 更好一些。一个在 Objective-C 中的泛型参数可以在声明时增加 <code>__covariant</code> 关键字来表示它能够接受子类型，而在声明时增加 <code>__contravariant</code> 关键字来表示它能够接受超类型。这在 <code>NSArray</code> 和其他的类的接口中有所体现：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">@interface NSArray&lt;__covariant ObjectType&gt; : NSObject ...</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">@interface NSArray&lt;__covariant ObjectType&gt; : NSObject ...</span><br></pre></td></tr></table></figure>
 <h3 id="协变和逆变（Convariance-and-Contravariance）"><a href="#协变和逆变（Convariance-and-Contravariance）" class="headerlink" title="协变和逆变（Convariance and Contravariance）"></a>协变和逆变（Convariance and Contravariance）</h3><p>那些细心的读者会注意到：在标题中提到的两个词至今为止我通篇未提。现在我们既然了解了这些概念，那就来谈一下这几个专业术语。</p>
 <p><em>协变（Convariance）</em>指可接受子类型。重写只读的属性是「协变的」。</p>
 <p><em>逆变（Contravariance）</em>指可接受超类型。重写方法中的参数是「逆变的」。</p>
@@ -172,17 +173,17 @@
 <p><em>双向协变（Bivariate）</em>指既接受子类型，又接受超类型。我想不到在 Objective-C 或 Swift 中的任何例子。</p>
 <p>你会发现这种专业术语非常难记。那就对了，因为这并不重要。只要你懂得子类型、超类型，以及什么时候在特定位置适用一个类的子类或者超类就够了。在需要用到术语的时候看一下就够了。</p>
 <h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>协变和逆变决定了在特定位置该怎样使用子类型或超类型。通常出现在重写方法以及改变传入参数或者返回值类型的地方。这种情况下我们已经知道返回值必须是原来的子类型，而参数是原来的超类型。整个指导我们这么做的原则就叫做 Liskov 替换原则，意思是任何子类的实例总是能够使用在父类的实例所使用的地方。子类型和超类型就是从这条原则中衍生出来。</p>
-<p>今天就到这儿了。记得回来探索更多有趣的事情；或者说就来探索有趣的事情。「更多」可能在这不适用，因为协变这件事并不是那么的令人激动。无论如何，我们的 Friday Q&amp;A 都会听从读者的建议，所以有什么更高的建议或者文章的话，记得<a href="mailto:mike@mikeash.com" target="_blank" rel="external">给我们写信</a>！</p>
+<p>今天就到这儿了。记得回来探索更多有趣的事情；或者说就来探索有趣的事情。「更多」可能在这不适用，因为协变这件事并不是那么的令人激动。无论如何，我们的 Friday Q&amp;A 都会听从读者的建议，所以有什么更高的建议或者文章的话，记得<a href="mailto:mike@mikeash.com" target="_blank" rel="noopener">给我们写信</a>！</p>
 <hr>
 <p>译者注：</p>
 <ol>
 <li>Swift 中的泛型的确是「不变的（Invariance）」，但是 Swift 标准库中的 Collection 类型通常情况下是「协变的（Convariance）」。举个例子：</li>
 </ol>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> UIKit </div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Thing</span>&lt;<span class="title">T</span>&gt; </span>&#123; <span class="comment">// 亦可以使用结构体 struct 声明</span></div><div class="line">    <span class="keyword">var</span> thing: <span class="type">T</span> </div><div class="line">    <span class="keyword">init</span>(<span class="number">_</span> thing: <span class="type">T</span>) &#123; <span class="keyword">self</span>.thing = thing &#125; </div><div class="line">&#125; </div><div class="line"><span class="keyword">var</span> foo: <span class="type">Thing</span>&lt;<span class="type">UIView</span>&gt; = <span class="type">Thing</span>(<span class="type">UIView</span>()) </div><div class="line"><span class="keyword">var</span> bar: <span class="type">Thing</span>&lt;<span class="type">UIButton</span>&gt; = <span class="type">Thing</span>(<span class="type">UIButton</span>()) </div><div class="line">foo = bar <span class="comment">// 报错：error: cannot assign value of type 'Thing&lt;UIButton&gt;' to type 'Thing&lt;UIView&gt;' </span></div><div class="line"></div><div class="line"><span class="comment">// Array 则不会报错 </span></div><div class="line"></div><div class="line"><span class="keyword">var</span> views: <span class="type">Array</span>&lt;<span class="type">UIView</span>&gt; = [<span class="type">UIView</span>()] </div><div class="line"><span class="keyword">var</span> buttons: <span class="type">Array</span>&lt;<span class="type">UIButton</span>&gt; = [<span class="type">UIButton</span>()] </div><div class="line">views = buttons</div></pre></td></tr></table></figure>
-<ol>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> UIKit </span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Thing</span>&lt;<span class="title">T</span>&gt; </span>&#123; <span class="comment">// 亦可以使用结构体 struct 声明</span></span><br><span class="line">    <span class="keyword">var</span> thing: <span class="type">T</span> </span><br><span class="line">    <span class="keyword">init</span>(<span class="number">_</span> thing: <span class="type">T</span>) &#123; <span class="keyword">self</span>.thing = thing &#125; </span><br><span class="line">&#125; </span><br><span class="line"><span class="keyword">var</span> foo: <span class="type">Thing</span>&lt;<span class="type">UIView</span>&gt; = <span class="type">Thing</span>(<span class="type">UIView</span>()) </span><br><span class="line"><span class="keyword">var</span> bar: <span class="type">Thing</span>&lt;<span class="type">UIButton</span>&gt; = <span class="type">Thing</span>(<span class="type">UIButton</span>()) </span><br><span class="line">foo = bar <span class="comment">// 报错：error: cannot assign value of type 'Thing&lt;UIButton&gt;' to type 'Thing&lt;UIView&gt;' </span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Array 则不会报错 </span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> views: <span class="type">Array</span>&lt;<span class="type">UIView</span>&gt; = [<span class="type">UIView</span>()] </span><br><span class="line"><span class="keyword">var</span> buttons: <span class="type">Array</span>&lt;<span class="type">UIButton</span>&gt; = [<span class="type">UIButton</span>()] </span><br><span class="line">views = buttons</span><br></pre></td></tr></table></figure>
+<ol start="2">
 <li>Swift 中的 Protocol 不支持这里的类型改变。如果某个协议是继承自另外一个协议而且尝试着「重写」父协议的方法，Swift 会把它当做是另外一个方法。举个例子：</li>
 </ol>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Thing</span> </span>&#123;&#125; </div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Animal</span>: <span class="title">Thing</span> </span>&#123;&#125; </div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Cat</span>: <span class="title">Animal</span> </span>&#123;&#125; </div><div class="line"></div><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">SuperP</span> </span>&#123; </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(animal: Animal)</span></span> -&gt; <span class="type">Animal</span> </div><div class="line">&#125; </div><div class="line"></div><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">SubP1</span>: <span class="title">SuperP</span> </span>&#123; </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(thing: Thing)</span></span> -&gt; <span class="type">Cat</span> </div><div class="line">&#125; </div><div class="line"></div><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">SubP2</span>: <span class="title">SuperP</span> </span>&#123; </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(cat: Cat)</span></span> -&gt; <span class="type">Thing</span> </div><div class="line">&#125; </div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">ImplementsSubP1</span>: <span class="title">SubP1</span> </span>&#123; </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(thing: Thing)</span></span> -&gt; <span class="type">Cat</span> &#123; </div><div class="line">        <span class="keyword">return</span> <span class="type">Cat</span>() </div><div class="line">    &#125; </div><div class="line">&#125; </div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">ImplementsSubP2</span>: <span class="title">SubP2</span> </span>&#123; </div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(cat: Cat)</span></span> -&gt; <span class="type">Thing</span> &#123; </div><div class="line">        <span class="keyword">return</span> <span class="type">Thing</span>() </div><div class="line">    &#125; </div><div class="line">&#125; </div><div class="line"><span class="comment">// ImplementSubP1 和 ImplementSubP2 将不被认为遵循了 SuperP 的协议</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Thing</span> </span>&#123;&#125; </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Animal</span>: <span class="title">Thing</span> </span>&#123;&#125; </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Cat</span>: <span class="title">Animal</span> </span>&#123;&#125; </span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">SuperP</span> </span>&#123; </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(animal: Animal)</span></span> -&gt; <span class="type">Animal</span> </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">SubP1</span>: <span class="title">SuperP</span> </span>&#123; </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(thing: Thing)</span></span> -&gt; <span class="type">Cat</span> </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">SubP2</span>: <span class="title">SuperP</span> </span>&#123; </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(cat: Cat)</span></span> -&gt; <span class="type">Thing</span> </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ImplementsSubP1</span>: <span class="title">SubP1</span> </span>&#123; </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(thing: Thing)</span></span> -&gt; <span class="type">Cat</span> &#123; </span><br><span class="line">        <span class="keyword">return</span> <span class="type">Cat</span>() </span><br><span class="line">    &#125; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ImplementsSubP2</span>: <span class="title">SubP2</span> </span>&#123; </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(cat: Cat)</span></span> -&gt; <span class="type">Thing</span> &#123; </span><br><span class="line">        <span class="keyword">return</span> <span class="type">Thing</span>() </span><br><span class="line">    &#125; </span><br><span class="line">&#125; </span><br><span class="line"><span class="comment">// ImplementSubP1 和 ImplementSubP2 将不被认为遵循了 SuperP 的协议</span></span><br></pre></td></tr></table></figure>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
@@ -231,9 +232,9 @@
 
 
 <div class="next">
-<a href="/2015/12/23/swift-3/"  title="Swift 3 及展望">
+<a href="/2015/12/23/swift-qa-2015-12-23/"  title="[原创] 每周 Swift 社区问答 2015-12-23">
  <strong>下一篇</strong><br/> 
- <span>Swift 3 及展望
+ <span>[原创] 每周 Swift 社区问答 2015-12-23
 </span>
 </a>
 </div>
@@ -295,6 +296,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -343,7 +348,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -492,11 +497,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -508,11 +513,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -520,7 +521,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -532,11 +533,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -544,7 +549,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -738,7 +743,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

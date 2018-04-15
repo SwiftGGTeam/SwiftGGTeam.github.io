@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/10/11/swift-extensions-can-add-stored-properties/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Tikitu de Jager，原文链接，原文日期：2015-10-31译者：Darren；校对：Cee；定稿：CMB   好吧，其实我标题党了：Swift 扩展只能添加计算属性。然而如果你愿意用 Objective-C 的关联对象，你可以在 Swift 中做一些同样有趣的事。有很多的模板可供选择，然而如果你用这些太过显然的方式，你也就牺牲了类型安全。我们可以做得更好吗？">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.403Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift 扩展「可以」添加存储属性">
 <meta name="twitter:description" content="作者：Tikitu de Jager，原文链接，原文日期：2015-10-31译者：Darren；校对：Cee；定稿：CMB   好吧，其实我标题党了：Swift 扩展只能添加计算属性。然而如果你愿意用 Objective-C 的关联对象，你可以在 Swift 中做一些同样有趣的事。有很多的模板可供选择，然而如果你用这些太过显然的方式，你也就牺牲了类型安全。我们可以做得更好吗？">
@@ -88,7 +89,7 @@
         <a href="/2016/10/11/swift-extensions-can-add-stored-properties/" target="_blank" title="Swift 扩展「可以」添加存储属性" itemprop="url">Swift 扩展「可以」添加存储属性</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-10-10T16:00:00.000Z" itemprop="datePublished">2016-10-11</time>
+      <time datetime="2016-10-11T00:00:00.000Z" itemprop="datePublished">2016-10-11</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,20 +97,20 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Tikitu de Jager，<a href="https://medium.com/@ttikitu/swift-extensions-can-add-stored-properties-92db66bce6cd#.js5g1kawe" target="_blank" rel="external">原文链接</a>，原文日期：2015-10-31<br>译者：<a href="https://github.com/Harman-darrenchen" target="_blank" rel="external">Darren</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="external">Cee</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+<p>作者：Tikitu de Jager，<a href="https://medium.com/@ttikitu/swift-extensions-can-add-stored-properties-92db66bce6cd#.js5g1kawe" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-10-31<br>译者：<a href="https://github.com/Harman-darrenchen" target="_blank" rel="noopener">Darren</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p>好吧，其实我标题党了：Swift 扩展<a href="https://developer.apple.com/library/prerelease/ios/documentation/Swift/Conceptual/Swift_Programming_Language/Extensions.html#//apple_ref/doc/uid/TP40014097-CH24-ID152" target="_blank" rel="external">只能添加计算属性</a>。然而如果你愿意用 <a href="http://nshipster.cn/associated-objects/" target="_blank" rel="external">Objective-C 的关联对象</a>，你可以在 Swift 中做一些同样有趣的事。有很多的模板可供选择，然而如果你用这些<a href="http://stackoverflow.com/a/25428409/323083" target="_blank" rel="external">太过显然的方式</a>，你也就牺牲了类型安全。我们可以做得更好吗？</p>
+<p>好吧，其实我标题党了：Swift 扩展<a href="https://developer.apple.com/library/prerelease/ios/documentation/Swift/Conceptual/Swift_Programming_Language/Extensions.html#//apple_ref/doc/uid/TP40014097-CH24-ID152" target="_blank" rel="noopener">只能添加计算属性</a>。然而如果你愿意用 <a href="http://nshipster.cn/associated-objects/" target="_blank" rel="noopener">Objective-C 的关联对象</a>，你可以在 Swift 中做一些同样有趣的事。有很多的模板可供选择，然而如果你用这些<a href="http://stackoverflow.com/a/25428409/323083" target="_blank" rel="noopener">太过显然的方式</a>，你也就牺牲了类型安全。我们可以做得更好吗？</p>
 <a id="more"></a>
 <p>当然可以。这里就是一些这样的函数，使用 Swift 类型推断的黑魔法，使你在类或协议扩展中写类型安全的非 Optional 计算属性时，就像存储属性一样。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> Foundation</div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">associatedObject</span>&lt;ValueType: AnyObject&gt;<span class="params">(</span></span></div><div class="line">        base: AnyObject, </div><div class="line">        key: UnsafePointer&lt;UInt8&gt;, </div><div class="line">        initialiser: <span class="params">()</span> -&gt; <span class="type">ValueType</span>) </div><div class="line">        -&gt; <span class="type">ValueType</span> &#123;</div><div class="line">    <span class="keyword">if</span> <span class="keyword">let</span> associated = objc_getAssociatedObject(base, key) </div><div class="line">        <span class="keyword">as</span>? <span class="type">ValueType</span> &#123; <span class="keyword">return</span> associated &#125;</div><div class="line">    <span class="keyword">let</span> associated = initialiser()</div><div class="line">    objc_setAssociatedObject(base, key, associated, </div><div class="line">                             .<span class="type">OBJC_ASSOCIATION_RETAIN</span>)</div><div class="line">    <span class="keyword">return</span> associated</div><div class="line">&#125;</div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">associateObject</span>&lt;ValueType: AnyObject&gt;<span class="params">(</span></span></div><div class="line">        base: AnyObject, </div><div class="line">        key: UnsafePointer&lt;UInt8&gt;, </div><div class="line">        value: ValueType) &#123;</div><div class="line">    objc_setAssociatedObject(base, key, value, </div><div class="line">                             .<span class="type">OBJC_ASSOCIATION_RETAIN</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">associatedObject</span>&lt;ValueType: AnyObject&gt;<span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">        base: AnyObject, </span></span></span><br><span class="line"><span class="function"><span class="params">        key: UnsafePointer&lt;UInt8&gt;, </span></span></span><br><span class="line"><span class="function"><span class="params">        initialiser: <span class="params">()</span></span></span> -&gt; <span class="type">ValueType</span>) </span><br><span class="line">        -&gt; <span class="type">ValueType</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">let</span> associated = objc_getAssociatedObject(base, key) </span><br><span class="line">        <span class="keyword">as</span>? <span class="type">ValueType</span> &#123; <span class="keyword">return</span> associated &#125;</span><br><span class="line">    <span class="keyword">let</span> associated = initialiser()</span><br><span class="line">    objc_setAssociatedObject(base, key, associated, </span><br><span class="line">                             .<span class="type">OBJC_ASSOCIATION_RETAIN</span>)</span><br><span class="line">    <span class="keyword">return</span> associated</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">associateObject</span>&lt;ValueType: AnyObject&gt;<span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">        base: AnyObject, </span></span></span><br><span class="line"><span class="function"><span class="params">        key: UnsafePointer&lt;UInt8&gt;, </span></span></span><br><span class="line"><span class="function"><span class="params">        value: ValueType)</span></span> &#123;</span><br><span class="line">    objc_setAssociatedObject(base, key, value, </span><br><span class="line">                             .<span class="type">OBJC_ASSOCIATION_RETAIN</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>函数就那么长。你可以这样使用它们：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Miller</span> </span>&#123;&#125; <span class="comment">// 这是我们要扩展的类</span></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Cat</span> </span>&#123; <span class="comment">// 每个磨坊主都有一只猫</span></div><div class="line">    <span class="keyword">var</span> name = “<span class="type">Puss</span>”</div><div class="line">&#125;</div><div class="line"><span class="keyword">private</span> <span class="keyword">var</span> catKey: <span class="type">UInt8</span> = <span class="number">0</span> <span class="comment">// 我们还是需要这样的模板</span></div><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Miller</span> </span>&#123;</div><div class="line">    <span class="keyword">var</span> cat: <span class="type">Cat</span> &#123; <span class="comment">// cat「实际上」是一个存储属性</span></div><div class="line">        <span class="keyword">get</span> &#123; </div><div class="line">            <span class="keyword">return</span> associatedObject(<span class="keyword">self</span>, key: &amp;catKey) </div><div class="line">                &#123; <span class="keyword">return</span> <span class="type">Cat</span>() &#125; <span class="comment">// 设置变量的初始值</span></div><div class="line">        &#125;</div><div class="line">        <span class="keyword">set</span> &#123; associateObject(<span class="keyword">self</span>, key: &amp;catKey, value: newValue) &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Miller</span> </span>&#123;&#125; <span class="comment">// 这是我们要扩展的类</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Cat</span> </span>&#123; <span class="comment">// 每个磨坊主都有一只猫</span></span><br><span class="line">    <span class="keyword">var</span> name = “<span class="type">Puss</span>”</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">var</span> catKey: <span class="type">UInt8</span> = <span class="number">0</span> <span class="comment">// 我们还是需要这样的模板</span></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Miller</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> cat: <span class="type">Cat</span> &#123; <span class="comment">// cat「实际上」是一个存储属性</span></span><br><span class="line">        <span class="keyword">get</span> &#123; </span><br><span class="line">            <span class="keyword">return</span> associatedObject(<span class="keyword">self</span>, key: &amp;catKey) </span><br><span class="line">                &#123; <span class="keyword">return</span> <span class="type">Cat</span>() &#125; <span class="comment">// 设置变量的初始值</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">set</span> &#123; associateObject(<span class="keyword">self</span>, key: &amp;catKey, value: newValue) &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>如果你在家可以跟着练习的话，你可以在 playground 中敲下下面几行代码，来确保它能正常工作。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">let</span> grumpy = <span class="type">Miller</span>()</div><div class="line">grumpy.cat.name <span class="comment">// 显示 Puss</span></div><div class="line">grumpy.cat.name = “<span class="type">Hephaestos</span>”</div><div class="line">grumpy.cat.name <span class="comment">// 显示 Hephaestos</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> grumpy = <span class="type">Miller</span>()</span><br><span class="line">grumpy.cat.name <span class="comment">// 显示 Puss</span></span><br><span class="line">grumpy.cat.name = “<span class="type">Hephaestos</span>”</span><br><span class="line">grumpy.cat.name <span class="comment">// 显示 Hephaestos</span></span><br></pre></td></tr></table></figure>
 <p>就这么简单！</p>
 <hr>
-<p>致谢：这个实现至少一半来自于 <a href="http://epologee.com/" target="_blank" rel="external">Eric-Paul Lecluse</a>。他在扩展中使用了关联对象，我把这个模式提出来作为一个可重用的类，然后我们一起把这个类修改成了你看到的那两个方法。代码是我写的，如果其中有任何错误，都是我的锅。</p>
+<p>致谢：这个实现至少一半来自于 <a href="http://epologee.com/" target="_blank" rel="noopener">Eric-Paul Lecluse</a>。他在扩展中使用了关联对象，我把这个模式提出来作为一个可重用的类，然后我们一起把这个类修改成了你看到的那两个方法。代码是我写的，如果其中有任何错误，都是我的锅。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
@@ -222,6 +223,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -270,7 +275,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -419,11 +424,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -435,11 +440,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -447,7 +448,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -459,11 +460,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -471,7 +476,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -665,7 +670,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

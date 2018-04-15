@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/05/04/swift-qa-2016-05-04/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="今天我们来介绍一下@NSApplicationMain和@UIApplicationMain。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:22.217Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="每周 Swift 社区问答：@NSApplicationMain 和 @UIApplicationMain">
 <meta name="twitter:description" content="今天我们来介绍一下@NSApplicationMain和@UIApplicationMain。">
@@ -88,7 +89,7 @@
         <a href="/2016/05/04/swift-qa-2016-05-04/" target="_blank" title="每周 Swift 社区问答：@NSApplicationMain 和 @UIApplicationMain" itemprop="url">每周 Swift 社区问答：@NSApplicationMain 和 @UIApplicationMain</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-05-04T15:00:00.000Z" itemprop="datePublished">2016-05-04</time>
+      <time datetime="2016-05-04T23:00:00.000Z" itemprop="datePublished">2016-05-04</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -98,44 +99,50 @@
 		<p>今天我们来介绍一下<code>@NSApplicationMain</code>和<code>@UIApplicationMain</code>。</p>
 <a id="more"></a>
 <h2 id="用法"><a href="#用法" class="headerlink" title="用法"></a>用法</h2><p>回想一下我们在 XCode 中创建一个基于 Objective-C 的 iOS App 工程。<code>Supporting Files</code>目录下会自动创建一个<code>main.m</code>文件。里面的代码段如下：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">#import &lt;UIKit/UIKit.h&gt;</div><div class="line">#import &quot;AppDelegate.h&quot;</div><div class="line"></div><div class="line">int main(int argc, char * argv[]) &#123;</div><div class="line">    @autoreleasepool &#123;</div><div class="line">        return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#import &lt;UIKit/UIKit.h&gt;</span><br><span class="line">#import &quot;AppDelegate.h&quot;</span><br><span class="line"></span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    @autoreleasepool &#123;</span><br><span class="line">        return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>简单解释一下这段代码的作用：</p>
 <ul>
 <li><code>main</code> 函数与 C 语言中的入口函数含义是一样的。表示整个 app 的入口。</li>
-<li><code>@autoreleasepool</code> 建立了一个自动释放池，用于匹配内存管理中的 ARC 机制。更多的解释，可以看看喵神的 Tips：<a href="http://swifter.tips/autoreleasepool/" target="_blank" rel="external">@AUTORELEASEPOOL</a>。这里不展开讨论。</li>
+<li><code>@autoreleasepool</code> 建立了一个自动释放池，用于匹配内存管理中的 ARC 机制。更多的解释，可以看看喵神的 Tips：<a href="http://swifter.tips/autoreleasepool/" target="_blank" rel="noopener">@AUTORELEASEPOOL</a>。这里不展开讨论。</li>
 <li><code>UIApplicationMain</code>函数是整个 app 的启动函数, 函数解释如下：</li>
 </ul>
 <blockquote>
 <p>接收 main 传入的2个参数，直接透传下去，进行一些处理。</p>
+</blockquote>
+<blockquote>
 <p>根据传入的第三个参数创建<code>UIApplication</code>对象，如果传入 <code>nil</code>, 则创建一个默认的<code>UIApplication</code>对象。</p>
+</blockquote>
+<blockquote>
 <p> 根据传入的第四个产生创建<code>UIApplication</code>对象的代理，赋值给<code>UIApplication</code>的 delegate 属性，用于在程序处于各种状态下，去做一下响应的处理，对应的默认类就是<code>AppDelegate</code>, 用的最多的代理方法是，表示程序加载完成后调用：</p>
 </blockquote>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions &#123;</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions &#123;</span><br></pre></td></tr></table></figure>
 <blockquote>
 <p>接着会建立应用程序的Main Runloop(事件循环),进行事件的处理。</p>
+</blockquote>
+<blockquote>
 <p>程序正常退出时<code>UIApplicationMain</code>函数才返回。</p>
 </blockquote>
 <p>以上基于 OC 的 iOS 项目的入口代码。那么在 Swift 的项目中，是不是一样的呢？这里就会引入<code>@NSApplicationMain</code> 和 <code>@UIApplicationMain</code>2个特性。<br>苹果对 Swift 的项目进行了简化，使用<code>@NSApplicationMain</code> 放在 OSX 桌面应用工程代理类前面，使用<code>@UIApplicationMain</code>放在 iOS app 工程代理类前面。与 OC 工程中的<code>main.m</code>的功能一模一样。这里我们使用 iOS app作为例子，<code>@NSApplicationMain</code> 在 OSX 桌面应用工程里面的用法是一样的, 当你使用Xcode 创建一个 Swift iOS 工程时，自动生成的 <code>AppDelegate.swift</code> 里面，会看到以下代码：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">@UIApplicationMain</div><div class="line">class AppDelegate: UIResponder, UIApplicationDelegate &#123;</div><div class="line">...</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">@UIApplicationMain</span><br><span class="line">class AppDelegate: UIResponder, UIApplicationDelegate &#123;</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
 <p>大家平时可以忽悠这个特性点，因为 Xcode 已经自动帮你加上了。不用自己添加任何东西，只需要关注代理类中要去实现的相关的业务逻辑。但是对这个特性的理解，有助于你去理解整个 app 的生命周期。</p>
-<p>另外，<a href="http://richardallen.me/2015/05/16/main-swift.html" target="_blank" rel="external">这篇文章</a>还提到了如何使用自建的<code>main.swift</code>去替代<code>@ UIApplicationMain</code> 和 <code>@NSApplicationMain</code>。回归到 OC 的实现模式去。</p>
+<p>另外，<a href="http://richardallen.me/2015/05/16/main-swift.html" target="_blank" rel="noopener">这篇文章</a>还提到了如何使用自建的<code>main.swift</code>去替代<code>@ UIApplicationMain</code> 和 <code>@NSApplicationMain</code>。回归到 OC 的实现模式去。</p>
 <h2 id="stackoverflow-相关问题整理"><a href="#stackoverflow-相关问题整理" class="headerlink" title="stackoverflow 相关问题整理"></a>stackoverflow 相关问题整理</h2><ul>
-<li><p><a href="http://stackoverflow.com/questions/33504159/is-nsapplicationmain-documentation-for-swift-correct" target="_blank" rel="external">Is @NSApplicationMain documentation for swift correct?</a></p>
+<li><p><a href="http://stackoverflow.com/questions/33504159/is-nsapplicationmain-documentation-for-swift-correct" target="_blank" rel="noopener">Is @NSApplicationMain documentation for swift correct?</a></p>
 <p>  问题是<code>@NSApplicationMain</code>和<code>NSApplicationMain(_:_:)</code>的对应关系。官方文档说的没错。</p>
 </li>
-<li><p><a href="http://stackoverflow.com/questions/27469436/what-is-use-of-nsapplicationmain-in-swift-programming-project-in-xcode" target="_blank" rel="external">What is use of @NSApplicationMain in swift programming project in xcode</a></p>
+<li><p><a href="http://stackoverflow.com/questions/27469436/what-is-use-of-nsapplicationmain-in-swift-programming-project-in-xcode" target="_blank" rel="noopener">What is use of @NSApplicationMain in swift programming project in xcode</a></p>
 </li>
-<li><p><a href="http://stackoverflow.com/questions/24516250/what-does-uiapplicationmain-mean/35156436#35156436" target="_blank" rel="external">What does “@UIApplicationMain” mean?</a></p>
+<li><p><a href="http://stackoverflow.com/questions/24516250/what-does-uiapplicationmain-mean/35156436#35156436" target="_blank" rel="noopener">What does “@UIApplicationMain” mean?</a></p>
 <p>  以上2个问题都是关于此特性点的含义的疑问，就不多说了。上面已经说的比较详细啦。</p>
 </li>
 </ul>
 <h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
-<li><a href="http://wiki.jikexueyuan.com/project/swift/chapter3/06_Attributes.html" target="_blank" rel="external">官方文档</a></li>
-<li><p><a href="http://richardallen.me/2015/05/16/main-swift.html" target="_blank" rel="external">Replace @NSApplicationMain or @UIApplicationMain with main.swift</a></p>
+<li><a href="http://wiki.jikexueyuan.com/project/swift/chapter3/06_Attributes.html" target="_blank" rel="noopener">官方文档</a></li>
+<li><p><a href="http://richardallen.me/2015/05/16/main-swift.html" target="_blank" rel="noopener">Replace @NSApplicationMain or @UIApplicationMain with main.swift</a></p>
 </li>
-<li><p><a href="http://www.cnblogs.com/wendingding/p/3766347.html" target="_blank" rel="external">iOS开发UI篇—程序启动原理和UIApplication</a></p>
+<li><p><a href="http://www.cnblogs.com/wendingding/p/3766347.html" target="_blank" rel="noopener">iOS开发UI篇—程序启动原理和UIApplication</a></p>
 </li>
-<li><a href="http://www.tuicool.com/articles/nEbmUnE" target="_blank" rel="external">@autoreleasepool-内存的分配与释放</a></li>
+<li><a href="http://www.tuicool.com/articles/nEbmUnE" target="_blank" rel="noopener">@autoreleasepool-内存的分配与释放</a></li>
 </ul>
   
 	</div>
@@ -246,6 +253,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -294,7 +305,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -443,11 +454,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -459,11 +470,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -471,7 +478,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -483,11 +490,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -495,7 +506,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -689,7 +700,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

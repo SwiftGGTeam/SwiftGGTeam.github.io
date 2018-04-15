@@ -20,8 +20,9 @@
 <meta property="og:url" content="https://swift.gg/2015/09/21/building-memory-efficient-apps/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Thomas Hanning，原文链接，原文日期：2015-08-06译者：BridgeQ；校对：lfb_CD；定稿：shanks   近年来，移动设备的性能越来越强大。然而，同桌面电脑相比，性能上总还是有一段不小的差距。同时，用户界面和交互设计的要求也越来越高。所以，为移动设备编写内存高效的应用仍然很有必要。">
+<meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://swift.gg/img/articles/building-memory-efficient-apps/Bildschirmfoto-2015-08-01-um-10.23.22.png1444269940.235203">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.367Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="构建内存高效的应用">
 <meta name="twitter:description" content="作者：Thomas Hanning，原文链接，原文日期：2015-08-06译者：BridgeQ；校对：lfb_CD；定稿：shanks   近年来，移动设备的性能越来越强大。然而，同桌面电脑相比，性能上总还是有一段不小的差距。同时，用户界面和交互设计的要求也越来越高。所以，为移动设备编写内存高效的应用仍然很有必要。">
@@ -90,7 +91,7 @@
         <a href="/2015/09/21/building-memory-efficient-apps/" target="_blank" title="构建内存高效的应用" itemprop="url">构建内存高效的应用</a>
     </h1>
     <p class="article-time">
-      <time datetime="2015-09-21T02:00:00.000Z" itemprop="datePublished">2015-09-21</time>
+      <time datetime="2015-09-21T10:00:00.000Z" itemprop="datePublished">2015-09-21</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -98,7 +99,7 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Thomas Hanning，<a href="http://www.thomashanning.com/building-memory-efficient-apps/" target="_blank" rel="external">原文链接</a>，原文日期：2015-08-06<br>译者：<a href="http://wxgbridgeq.github.io/" target="_blank" rel="external">BridgeQ</a>；校对：<a href="http://weibo.com/lfbWb" target="_blank" rel="external">lfb_CD</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
+<p>作者：Thomas Hanning，<a href="http://www.thomashanning.com/building-memory-efficient-apps/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-08-06<br>译者：<a href="http://wxgbridgeq.github.io/" target="_blank" rel="noopener">BridgeQ</a>；校对：<a href="http://weibo.com/lfbWb" target="_blank" rel="noopener">lfb_CD</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>近年来，移动设备的性能越来越强大。然而，同桌面电脑相比，性能上总还是有一段不小的差距。同时，用户界面和交互设计的要求也越来越高。所以，为移动设备编写内存高效的应用仍然很有必要。</p>
@@ -130,15 +131,15 @@
 <li>可以避免加载那些可能不需要的资源</li>
 </ul>
 <p>那么在 iOS 开发中如何使用延迟加载技术呢？正如前文提到的，表格视图就是一个很好的使用延迟加载技术的栗子。另一种使用延迟加载的方法是使用<code>lazy</code>关键字来修饰属性。想象一下你需要一个包含所有产品的数组，当用户进行一定交互时需要使用到它们。</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><div class="line">var products: [Products] = modelClass.loadProducts()</div></pre></td></tr></table></figure>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">var products: [Products] = modelClass.loadProducts()</span><br></pre></td></tr></table></figure>
 <p>如上代码，这个数组即使在用户没有进行任何交互的情况下仍然会被加载，这是一种内存浪费。如果加上<code>lazy</code>关键字进行修饰，那么只有在用户第一次访问数组的时候它才会初始化。</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><div class="line">lazy var products: [Products] = modelClass.loadProducts()</div></pre></td></tr></table></figure>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">lazy var products: [Products] = modelClass.loadProducts()</span><br></pre></td></tr></table></figure>
 <p>即使只是一些小的数组和变量，合理地使用延迟加载技术也能节省很大一部分内存。</p>
 <h1 id="视图控制器和循环引用"><a href="#视图控制器和循环引用" class="headerlink" title="视图控制器和循环引用"></a>视图控制器和循环引用</h1><p>在所有内存问题中最坏的一种情况就是视图控制器不再需要的时候却没有被释放，出现这种情况最通常的原因是循环引用。试想一下，现在有一个控制器 A，它拥有一个控制器 B 作为它的子控制器，而且，控制器 B 还有一个指向控制器 A 的引用，这样它们都互相强引用着对方。</p>
 <p>现在，即使控制器 A 从屏幕中离开，两个控制器也不会被释放，因为它们还都强引用着对方。要避免这种情况你可以使用<code>weak</code>关键字。举个栗子，想要将控制器 A 设置为控制器 B 的代理，正确的属性声明应该如下所示：</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><div class="line"><span class="keyword">weak</span> var delegate: DelegateType?</div></pre></td></tr></table></figure>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="keyword">weak</span> var delegate: DelegateType?</span><br></pre></td></tr></table></figure>
 <p>如果想检查控制器是否被正确释放，可以在控制器的<code>deinit</code>方法中打印消息来查看，代码如下：</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><div class="line">deinit &#123;</div><div class="line">     println(<span class="string">"deinit"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">deinit &#123;</span><br><span class="line">     println(<span class="string">"deinit"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>接下来你就可以通过在控制台中观察，是否有输出来检查控制器对象是否被正确释放。比如说，当你的控制器是被导航控制器通过<code>push</code>方法展现出来的时候，如果你点击了导航条上的返回按钮，控制器应该被释放并且在控制台中输出信息。</p>
 <h1 id="监测你的内存使用量"><a href="#监测你的内存使用量" class="headerlink" title="监测你的内存使用量"></a>监测你的内存使用量</h1><p>我们通常是在项目开发的最后阶段才发现内存管理的很糟糕，不幸的是，这样已经太晚了。所以在项目开发过程中，经常对内存使用量进行监测是非常重要的。你只需在一台真机上运行你的应用，然后点击Xcode中调试选项卡下的<code>Memory</code>。</p>
 <p><img src="/img/articles/building-memory-efficient-apps/Bildschirmfoto-2015-08-01-um-10.23.22.png1444269940.235203" alt=""></p>
@@ -255,6 +256,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -303,7 +308,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -452,11 +457,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -468,11 +473,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -480,7 +481,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -492,11 +493,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -504,7 +509,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -698,7 +703,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

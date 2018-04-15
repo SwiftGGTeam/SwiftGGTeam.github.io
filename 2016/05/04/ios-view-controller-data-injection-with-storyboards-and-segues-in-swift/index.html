@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/05/04/ios-view-controller-data-injection-with-storyboards-and-segues-in-swift/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="在 Swift 中怎么实现 viewcontroller 之间传值呢，用 Storyboard 和 segue 就能搞定哦。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.387Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="使用 Storyboard 和 segue 实现 View Controller 数据注入">
 <meta name="twitter:description" content="在 Swift 中怎么实现 viewcontroller 之间传值呢，用 Storyboard 和 segue 就能搞定哦。">
@@ -88,7 +89,7 @@
         <a href="/2016/05/04/ios-view-controller-data-injection-with-storyboards-and-segues-in-swift/" target="_blank" title="使用 Storyboard 和 segue 实现 View Controller 数据注入" itemprop="url">使用 Storyboard 和 segue 实现 View Controller 数据注入</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-05-03T16:00:00.000Z" itemprop="datePublished">2016-05-04</time>
+      <time datetime="2016-05-04T00:00:00.000Z" itemprop="datePublished">2016-05-04</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,23 +97,23 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Joe，<a href="https://www.natashatherobot.com/ios-view-controller-data-injection-with-storyboards-and-segues-in-swift/" target="_blank" rel="external">原文链接</a>，原文日期：2015-12-28<br>译者：<a href="http://www.jianshu.com/users/9efd08855d3a/" target="_blank" rel="external">aaaron7</a>；校对：<a href="http://chengway.in/" target="_blank" rel="external">walkingway</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="external">numbbbbb</a></p>
+<p>作者：Joe，<a href="https://www.natashatherobot.com/ios-view-controller-data-injection-with-storyboards-and-segues-in-swift/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-12-28<br>译者：<a href="http://www.jianshu.com/users/9efd08855d3a/" target="_blank" rel="noopener">aaaron7</a>；校对：<a href="http://chengway.in/" target="_blank" rel="noopener">walkingway</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p>自从我之前在<a href="https://www.natashatherobot.com/i-heart-storyboards-nibs/" target="_blank" rel="external">这篇文章</a>中公开表达我对 Storyboard 和 Nib 的热爱之后，就一直有很多人问我如何不用自定义的初始化方法来实现不同的 ViewController 之间的数据传递。现在我来分享一下。</p>
+<p>自从我之前在<a href="https://www.natashatherobot.com/i-heart-storyboards-nibs/" target="_blank" rel="noopener">这篇文章</a>中公开表达我对 Storyboard 和 Nib 的热爱之后，就一直有很多人问我如何不用自定义的初始化方法来实现不同的 ViewController 之间的数据传递。现在我来分享一下。</p>
 <a id="more"></a>
 <p>首先声明一点，我的解决办法并不完美，它是基于 ViewController 工作原理的一种变通方案。希望 Apple 今后能够提供更加友好、Swift 风格的 API(即用 Protocol 来替代继承) 来实现更加通用的依赖注入的方法。</p>
 <p>其次，我之所以反对使用自定义的初始化方法，是因为我们必须从 UIKit 的 UIViewController 派生出我们的类，它原本就已经有很多初始化方法了。而且如果我们自己做初始化，还得手动去调用父类的初始化方法，因为 UIKit 需要在父类的初始化方法中做一些工作(这部分源代码是看不到的)。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// 注释来自于苹果的官方文档</span></div><div class="line"><span class="comment">/*</span></div><div class="line">      指定初始化方法，如果你创建 UIViewController 的子类，则必须调用其父类方法，即使你并没有使用 NIB（方便期间，默认的 init 方法</div><div class="line">      会为你处理这一切，而且针对这些方法的参数都设为 nil）对于指定的 NIB，该文件的所有者代理拥有的类应当为你视图控制器的子类，</div><div class="line">      这一过程是通过 view outlet 与 main view 的连接完成的。如果你在初始化方法中传入空的 nib 名，那么 -loadView </div><div class="line">      方法会尝试载入一个与 view controller 同名的 NIB，如果没有对应的 NIB 存在，则你必须在 -view 被执行前调用 -setView: 方法，</div><div class="line">      或者覆盖 -loadView 方法来手动指定你的 view</div><div class="line">    */</div><div class="line">    <span class="keyword">public</span> <span class="keyword">init</span>(nibName nibNameOrNil: <span class="type">String</span>?, bundle nibBundleOrNil: <span class="type">NSBundle</span>?)</div><div class="line">    <span class="keyword">public</span> <span class="keyword">init</span>?(coder aDecoder: <span class="type">NSCoder</span>)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 注释来自于苹果的官方文档</span></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">      指定初始化方法，如果你创建 UIViewController 的子类，则必须调用其父类方法，即使你并没有使用 NIB（方便期间，默认的 init 方法</span></span><br><span class="line"><span class="comment">      会为你处理这一切，而且针对这些方法的参数都设为 nil）对于指定的 NIB，该文件的所有者代理拥有的类应当为你视图控制器的子类，</span></span><br><span class="line"><span class="comment">      这一过程是通过 view outlet 与 main view 的连接完成的。如果你在初始化方法中传入空的 nib 名，那么 -loadView </span></span><br><span class="line"><span class="comment">      方法会尝试载入一个与 view controller 同名的 NIB，如果没有对应的 NIB 存在，则你必须在 -view 被执行前调用 -setView: 方法，</span></span><br><span class="line"><span class="comment">      或者覆盖 -loadView 方法来手动指定你的 view</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">init</span>(nibName nibNameOrNil: <span class="type">String</span>?, bundle nibBundleOrNil: <span class="type">NSBundle</span>?)</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">init</span>?(coder aDecoder: <span class="type">NSCoder</span>)</span><br></pre></td></tr></table></figure>
 <p>当然，他们看上去差不多，并且似乎不会改变，但我并不能控制或者看到 UIKit 内部的实现。我更愿意去试着使用它们，而不是创建一个自己的初始化方法。</p>
 <p>这里我打算通过<strong>Optional 的隐式解包</strong>来解决这个问题😱😱😱。</p>
-<p>我会用<a href="https://www.natashatherobot.com/protocol-oriented-segue-identifiers-swift/" target="_blank" rel="external">这个工程来作例子</a>。它的详情页显示的内容依赖于前一个页面传过来的值，在这里我用一个隐式解包的 Optional 来存储这个值，该值在页面初始化或者完成载入时必须被赋值。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// Detail View Controller</span></div><div class="line"><span class="keyword">import</span> UIKit</div><div class="line"> </div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">RedPillViewController</span>: <span class="title">UIViewController</span> </span>&#123;</div><div class="line"> </div><div class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">weak</span> <span class="keyword">private</span> <span class="keyword">var</span> mainLabel: <span class="type">UILabel</span>!</div><div class="line">    </div><div class="line">    <span class="comment">// 隐式解封包!</span></div><div class="line">    <span class="keyword">var</span> mainText: <span class="type">String</span>!</div><div class="line">    </div><div class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</div><div class="line">        <span class="keyword">super</span>.viewDidLoad()</div><div class="line"> </div><div class="line">        <span class="comment">// 他在这里使用!</span></div><div class="line">        mainLabel.text = mainText</div><div class="line">    &#125;</div><div class="line"> </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>我会用<a href="https://www.natashatherobot.com/protocol-oriented-segue-identifiers-swift/" target="_blank" rel="noopener">这个工程来作例子</a>。它的详情页显示的内容依赖于前一个页面传过来的值，在这里我用一个隐式解包的 Optional 来存储这个值，该值在页面初始化或者完成载入时必须被赋值。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Detail View Controller</span></span><br><span class="line"><span class="keyword">import</span> UIKit</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">RedPillViewController</span>: <span class="title">UIViewController</span> </span>&#123;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">weak</span> <span class="keyword">private</span> <span class="keyword">var</span> mainLabel: <span class="type">UILabel</span>!</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 隐式解封包!</span></span><br><span class="line">    <span class="keyword">var</span> mainText: <span class="type">String</span>!</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.viewDidLoad()</span><br><span class="line"> </span><br><span class="line">        <span class="comment">// 他在这里使用!</span></span><br><span class="line">        mainLabel.text = mainText</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这个例子中，<strong>如果 <code>mainText</code> 没有在 <code>prepareForSegue</code> 中被赋值</strong>，这个页面就会马上 crash。这就可以帮助开发者快速定位到问题并为这个依赖赋值。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// 在父类中 / 更为通用的 View Controller</span></div><div class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">prepareForSegue</span><span class="params">(segue: UIStoryboardSegue, sender: AnyObject?)</span></span> &#123;</div><div class="line">        </div><div class="line">        <span class="keyword">switch</span> segueIdentifierForSegue(segue) &#123;</div><div class="line">            </div><div class="line">        <span class="keyword">case</span> .<span class="type">TheRedPillExperience</span>:</div><div class="line">            <span class="keyword">let</span> redPillVC = segue.destinationViewController <span class="keyword">as</span>! <span class="type">RedPillViewController</span></div><div class="line">            <span class="comment">// 在这里为隐式解包赋值!</span></div><div class="line">            redPillVC.mainText = <span class="string">"😈"</span></div><div class="line">        <span class="keyword">case</span> .<span class="type">TheBluePillExperience</span>:</div><div class="line">            <span class="keyword">let</span> bluePillVC = segue.destinationViewController <span class="keyword">as</span>! <span class="type">BluePillViewController</span></div><div class="line">            <span class="comment">// 在这里为隐式解包赋值!</span></div><div class="line">            bluePillVC.mainText = <span class="string">"👼"</span></div><div class="line">        &#125;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
-<p>这里的关键在于<strong>确保隐式解包的值在页面的初始化方法中被使用，或者被赋值</strong>。如果初始化之后才用，那页面就不会马上 crash。就像<a href="https://twitter.com/justMaku" target="_blank" rel="external">@justMaku</a>在<a href="https://twitter.com/justMaku/status/714116530926125057?ref_src=twsrc%5Etfw" target="_blank" rel="external">这里</a> 所指出的那样。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 在父类中 / 更为通用的 View Controller</span></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">prepareForSegue</span><span class="params">(segue: UIStoryboardSegue, sender: AnyObject?)</span></span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">switch</span> segueIdentifierForSegue(segue) &#123;</span><br><span class="line">            </span><br><span class="line">        <span class="keyword">case</span> .<span class="type">TheRedPillExperience</span>:</span><br><span class="line">            <span class="keyword">let</span> redPillVC = segue.destinationViewController <span class="keyword">as</span>! <span class="type">RedPillViewController</span></span><br><span class="line">            <span class="comment">// 在这里为隐式解包赋值!</span></span><br><span class="line">            redPillVC.mainText = <span class="string">"😈"</span></span><br><span class="line">        <span class="keyword">case</span> .<span class="type">TheBluePillExperience</span>:</span><br><span class="line">            <span class="keyword">let</span> bluePillVC = segue.destinationViewController <span class="keyword">as</span>! <span class="type">BluePillViewController</span></span><br><span class="line">            <span class="comment">// 在这里为隐式解包赋值!</span></span><br><span class="line">            bluePillVC.mainText = <span class="string">"👼"</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>这里的关键在于<strong>确保隐式解包的值在页面的初始化方法中被使用，或者被赋值</strong>。如果初始化之后才用，那页面就不会马上 crash。就像<a href="https://twitter.com/justMaku" target="_blank" rel="noopener">@justMaku</a>在<a href="https://twitter.com/justMaku/status/714116530926125057?ref_src=twsrc%5Etfw" target="_blank" rel="noopener">这里</a> 所指出的那样。</p>
 <p>我刚才也提到，这非完美的解决方案，只是一个比额外自定义初始化方法更好的方案。</p>
-<p>你可以在这里看到<a href="https://github.com/NatashaTheRobot/POSegueIdentifiers" target="_blank" rel="external">完整的例子工程</a></p>
+<p>你可以在这里看到<a href="https://github.com/NatashaTheRobot/POSegueIdentifiers" target="_blank" rel="noopener">完整的例子工程</a></p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
@@ -225,6 +226,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -273,7 +278,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -422,11 +427,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -438,11 +443,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -450,7 +451,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -462,11 +463,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -474,7 +479,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -668,7 +673,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

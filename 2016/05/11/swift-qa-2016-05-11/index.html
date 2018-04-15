@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/05/11/swift-qa-2016-05-11/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="今天我们来介绍一下@NSCopying。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:22.217Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="每周 Swift 社区问答：@NSCopying">
 <meta name="twitter:description" content="今天我们来介绍一下@NSCopying。">
@@ -88,7 +89,7 @@
         <a href="/2016/05/11/swift-qa-2016-05-11/" target="_blank" title="每周 Swift 社区问答：@NSCopying" itemprop="url">每周 Swift 社区问答：@NSCopying</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-05-11T15:00:00.000Z" itemprop="datePublished">2016-05-11</time>
+      <time datetime="2016-05-11T23:00:00.000Z" itemprop="datePublished">2016-05-11</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -97,32 +98,32 @@
 		
 		<p>今天我们来介绍一下<code>@NSCopying</code>。</p>
 <a id="more"></a>
-<h2 id="copy关键字和NSCopying协议"><a href="#copy关键字和NSCopying协议" class="headerlink" title="copy关键字和NSCopying协议"></a><code>copy</code>关键字和<code>NSCopying</code>协议</h2><p>在介绍<code>@NSCopying</code>之前，我们首先来回顾一下 Objective-C 中与之相关一些知识点。首先是<code>copy</code>关键字。相信大家在初学 Objective-C 时， 会去理解<code>copy</code>，<code>retain</code>，<code>assign</code>等常用到的关键字。这几个关键字对应着赋值时候内存分配，理解起来也比较简单。<a href="http://www.cnblogs.com/pengyingh/articles/2375080.html" target="_blank" rel="external">这篇文章</a>讲的比较详细，这里只说说<code>copy</code>关键字的作用。</p>
+<h2 id="copy关键字和NSCopying协议"><a href="#copy关键字和NSCopying协议" class="headerlink" title="copy关键字和NSCopying协议"></a><code>copy</code>关键字和<code>NSCopying</code>协议</h2><p>在介绍<code>@NSCopying</code>之前，我们首先来回顾一下 Objective-C 中与之相关一些知识点。首先是<code>copy</code>关键字。相信大家在初学 Objective-C 时， 会去理解<code>copy</code>，<code>retain</code>，<code>assign</code>等常用到的关键字。这几个关键字对应着赋值时候内存分配，理解起来也比较简单。<a href="http://www.cnblogs.com/pengyingh/articles/2375080.html" target="_blank" rel="noopener">这篇文章</a>讲的比较详细，这里只说说<code>copy</code>关键字的作用。</p>
 <p><code>copy</code>关键字的作用，基本就是字面意思：生成新的对象，并且对内容进行拷贝。举一个<code>NSString</code> 的例子：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">//声明copy属性的</div><div class="line">@property (nonatomic, copy) NSString *copyedString;</div><div class="line"></div><div class="line">//使用可变字符串对copyedString进行赋值</div><div class="line">NSMutableString *string = [NSMutableString stringWithFormat:@&quot;test&quot;];</div><div class="line">self.copyedMString = string;</div><div class="line">NSLog(@&quot;origin string: %p, %p&quot;, string, &amp;string);</div><div class="line">NSLog(@&quot;copyed string: %p, %p&quot;, _copyedString, &amp;_copyedString);</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">//声明copy属性的</span><br><span class="line">@property (nonatomic, copy) NSString *copyedString;</span><br><span class="line"></span><br><span class="line">//使用可变字符串对copyedString进行赋值</span><br><span class="line">NSMutableString *string = [NSMutableString stringWithFormat:@&quot;test&quot;];</span><br><span class="line">self.copyedMString = string;</span><br><span class="line">NSLog(@&quot;origin string: %p, %p&quot;, string, &amp;string);</span><br><span class="line">NSLog(@&quot;copyed string: %p, %p&quot;, _copyedString, &amp;_copyedString);</span><br></pre></td></tr></table></figure>
 <p>输出结果：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">strong string: 0x7fddc060b460, 0x7fddc0698600</div><div class="line">copy string: 0xa000000747365744, 0x7fddc0698608</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">strong string: 0x7fddc060b460, 0x7fddc0698600</span><br><span class="line">copy string: 0xa000000747365744, 0x7fddc0698608</span><br></pre></td></tr></table></figure>
 <p>可以看到，赋值以后的<code>copyedString</code>已经是一个与<code>string</code>不相关的字符串。这就是所谓的<code>深拷贝</code>，地址和内容都赋值了一份。实际应用中，我们还会用到<code>strong</code>这个关键字，关于<code>copy</code>和<code>strong</code>的区别和联系。可以阅读文章最后的参考资料和 stackoverflow 相关问题展开阅读。</p>
-<p>实际上，使用<code>copy</code>关键字修饰的类必须遵循<code>NSCopying</code>协议才能在赋值时候进行<code>深拷贝</code>或者<code>浅拷贝</code>（是<code>深拷贝</code>还是<code>浅拷贝</code>取决于该协议的实现方法<code>- (id)copyWithZone:(NSZone *)zone</code>）。<a href="http://www.cnblogs.com/gaoxiao228/archive/2012/04/21/2462561.html" target="_blank" rel="external">IOS开发之深拷贝与浅拷贝(mutableCopy与Copy)详解</a>说到了如何理解和实现<code>深拷贝</code>和<code>浅拷贝</code>。</p>
+<p>实际上，使用<code>copy</code>关键字修饰的类必须遵循<code>NSCopying</code>协议才能在赋值时候进行<code>深拷贝</code>或者<code>浅拷贝</code>（是<code>深拷贝</code>还是<code>浅拷贝</code>取决于该协议的实现方法<code>- (id)copyWithZone:(NSZone *)zone</code>）。<a href="http://www.cnblogs.com/gaoxiao228/archive/2012/04/21/2462561.html" target="_blank" rel="noopener">IOS开发之深拷贝与浅拷贝(mutableCopy与Copy)详解</a>说到了如何理解和实现<code>深拷贝</code>和<code>浅拷贝</code>。</p>
 <h2 id="NSCopying"><a href="#NSCopying" class="headerlink" title="@NSCopying"></a><code>@NSCopying</code></h2><p>Swift 中的<code>@NSCopying</code>和 Objective-C 中的<code>copy</code>关键字类似。<code>@NSCopying</code>修饰的属性必须是遵循<code>NSCopying</code>协议的，而在 Swift 中， <code>NSCopying</code>协议被限制给类使用。由于 Swift 中的 String 类型已经是值类型了。所以 String 不能通过扩展遵循<code>NSCopying</code>协议。值类型的赋值，只可能是值的拷贝，当然，结构体里面有对象类型，就另当别论了。</p>
 <p>以下是一个使用<code>@NSCopying</code>的案例：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">class Foo : NSObject, NSCopying &#123;</div><div class="line">    var bar = &quot;bar&quot;</div><div class="line">    var baz = 1</div><div class="line">    func copyWithZone(zone: NSZone) -&gt; AnyObject &#123;</div><div class="line">        let copy = Foo()</div><div class="line">        print(&quot;copyed&quot;)</div><div class="line">        copy.bar = bar</div><div class="line">        copy.baz = baz</div><div class="line">        return copy</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">class Test : NSObject &#123;</div><div class="line">    @NSCopying private(set) var foo : Foo</div><div class="line">    init(foo : Foo) &#123;</div><div class="line">        self.foo = foo</div><div class="line">        super.init()</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">var initialFoo = Foo()</div><div class="line">initialFoo.bar = &quot;initial&quot;</div><div class="line">initialFoo.baz = 0</div><div class="line"></div><div class="line">let test = Test(foo: initialFoo)</div><div class="line">test.foo.bar // &quot;initial&quot;</div><div class="line">test.foo.baz // 0</div><div class="line"></div><div class="line">var readFoo = Foo()</div><div class="line">readFoo.bar = &quot;new&quot;</div><div class="line">readFoo.baz = 0</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line">test.foo = readFoo // 调用copyWithZone返回一个新的对象</div><div class="line"></div><div class="line">initialFoo === readFoo // 2个对象不一样了</div><div class="line"></div><div class="line">//readFoo变化了，但是test.foo没有变</div><div class="line">readFoo.bar = &quot;changed&quot;</div><div class="line">readFoo.baz = 100</div><div class="line"></div><div class="line">test.foo.bar // &quot;new&quot;</div><div class="line">test.foo.baz // 0</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">class Foo : NSObject, NSCopying &#123;</span><br><span class="line">    var bar = &quot;bar&quot;</span><br><span class="line">    var baz = 1</span><br><span class="line">    func copyWithZone(zone: NSZone) -&gt; AnyObject &#123;</span><br><span class="line">        let copy = Foo()</span><br><span class="line">        print(&quot;copyed&quot;)</span><br><span class="line">        copy.bar = bar</span><br><span class="line">        copy.baz = baz</span><br><span class="line">        return copy</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class Test : NSObject &#123;</span><br><span class="line">    @NSCopying private(set) var foo : Foo</span><br><span class="line">    init(foo : Foo) &#123;</span><br><span class="line">        self.foo = foo</span><br><span class="line">        super.init()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var initialFoo = Foo()</span><br><span class="line">initialFoo.bar = &quot;initial&quot;</span><br><span class="line">initialFoo.baz = 0</span><br><span class="line"></span><br><span class="line">let test = Test(foo: initialFoo)</span><br><span class="line">test.foo.bar // &quot;initial&quot;</span><br><span class="line">test.foo.baz // 0</span><br><span class="line"></span><br><span class="line">var readFoo = Foo()</span><br><span class="line">readFoo.bar = &quot;new&quot;</span><br><span class="line">readFoo.baz = 0</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">test.foo = readFoo // 调用copyWithZone返回一个新的对象</span><br><span class="line"></span><br><span class="line">initialFoo === readFoo // 2个对象不一样了</span><br><span class="line"></span><br><span class="line">//readFoo变化了，但是test.foo没有变</span><br><span class="line">readFoo.bar = &quot;changed&quot;</span><br><span class="line">readFoo.baz = 100</span><br><span class="line"></span><br><span class="line">test.foo.bar // &quot;new&quot;</span><br><span class="line">test.foo.baz // 0</span><br></pre></td></tr></table></figure>
 <p>大部分情况下，<code>@NSCopying</code>在 Swift 中的使用场景都是放在调用 Objective-C 中的类型时候使用。自定义类去遵循<code>NSCopying</code>协议，不太符合 Swift 的类型体系：请使用结构体！</p>
 <h2 id="stackoverflow-相关问题整理"><a href="#stackoverflow-相关问题整理" class="headerlink" title="stackoverflow 相关问题整理"></a>stackoverflow 相关问题整理</h2><ul>
-<li><p><a href="http://stackoverflow.com/questions/9859719/objective-c-declared-property-attributes-nonatomic-copy-strong-weak" target="_blank" rel="external">Objective-C declared @property attributes (nonatomic, copy, strong, weak)</a></p>
+<li><p><a href="http://stackoverflow.com/questions/9859719/objective-c-declared-property-attributes-nonatomic-copy-strong-weak" target="_blank" rel="noopener">Objective-C declared @property attributes (nonatomic, copy, strong, weak)</a></p>
 <p>  Objective-C 中几个关键字nonatomic, copy, strong, weak的区别和联系。</p>
 </li>
-<li><p><a href="http://stackoverflow.com/questions/32111868/how-to-conform-to-nscopying-and-implement-copywithzone-in-swift-2" target="_blank" rel="external">How to conform to NSCopying and implement copyWithZone in Swift 2?</a><br>  如何在 Swift 2 中实现<code>NSCopying</code>协议？</p>
+<li><p><a href="http://stackoverflow.com/questions/32111868/how-to-conform-to-nscopying-and-implement-copywithzone-in-swift-2" target="_blank" rel="noopener">How to conform to NSCopying and implement copyWithZone in Swift 2?</a><br>  如何在 Swift 2 中实现<code>NSCopying</code>协议？</p>
 </li>
-<li><p><a href="http://stackoverflow.com/questions/24754559/how-to-do-deep-copy-in-swift/35126740#35126740" target="_blank" rel="external">How to do “Deep Copy” in Swift?</a><br>如何在 Swift 实现 <code>深拷贝</code>，楼下的回答都导向使用值类型。。</p>
+<li><p><a href="http://stackoverflow.com/questions/24754559/how-to-do-deep-copy-in-swift/35126740#35126740" target="_blank" rel="noopener">How to do “Deep Copy” in Swift?</a><br>如何在 Swift 实现 <code>深拷贝</code>，楼下的回答都导向使用值类型。。</p>
 </li>
 </ul>
 <h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
-<li><p><a href="http://wiki.jikexueyuan.com/project/swift/chapter3/06_Attributes.html" target="_blank" rel="external">官方文档</a></p>
+<li><p><a href="http://wiki.jikexueyuan.com/project/swift/chapter3/06_Attributes.html" target="_blank" rel="noopener">官方文档</a></p>
 </li>
-<li><p><a href="http://www.jianshu.com/p/731bdaf5f123" target="_blank" rel="external">NSString到底是用copy还是strong?</a></p>
+<li><p><a href="http://www.jianshu.com/p/731bdaf5f123" target="_blank" rel="noopener">NSString到底是用copy还是strong?</a></p>
 </li>
-<li><p><a href="http://www.cnblogs.com/gaoxiao228/archive/2012/04/21/2462561.html" target="_blank" rel="external">IOS开发之深拷贝与浅拷贝(mutableCopy与Copy)详解</a></p>
+<li><p><a href="http://www.cnblogs.com/gaoxiao228/archive/2012/04/21/2462561.html" target="_blank" rel="noopener">IOS开发之深拷贝与浅拷贝(mutableCopy与Copy)详解</a></p>
 </li>
 </ul>
   
@@ -234,6 +235,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -282,7 +287,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -431,11 +436,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -447,11 +452,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -459,7 +460,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -471,11 +472,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -483,7 +488,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -677,7 +682,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

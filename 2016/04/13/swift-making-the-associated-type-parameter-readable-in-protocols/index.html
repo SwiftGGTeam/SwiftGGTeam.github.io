@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/04/13/swift-making-the-associated-type-parameter-readable-in-protocols/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="本文主要是讲解在 Swift 里面让协议中的关联类型参数可读，感兴趣的网友来看下吧。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.387Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift：使协议中的关联类型参数可读">
 <meta name="twitter:description" content="本文主要是讲解在 Swift 里面让协议中的关联类型参数可读，感兴趣的网友来看下吧。">
@@ -88,7 +89,7 @@
         <a href="/2016/04/13/swift-making-the-associated-type-parameter-readable-in-protocols/" target="_blank" title="Swift：使协议中的关联类型参数可读" itemprop="url">Swift：使协议中的关联类型参数可读</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-04-13T01:00:00.000Z" itemprop="datePublished">2016-04-13</time>
+      <time datetime="2016-04-13T09:00:00.000Z" itemprop="datePublished">2016-04-13</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,19 +97,19 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Natasha，<a href="https://www.natashatherobot.com/swift-making-the-associated-type-parameter-readable-in-protocols/" target="_blank" rel="external">原文链接</a>，原文日期：2016-04-09<br>译者：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="external">Crystal Sun</a>；校对：<a href="http://www.swiftyper.com" target="_blank" rel="external">小锅</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="external">shanks</a></p>
+<p>作者：Natasha，<a href="https://www.natashatherobot.com/swift-making-the-associated-type-parameter-readable-in-protocols/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-04-09<br>译者：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="noopener">Crystal Sun</a>；校对：<a href="http://www.swiftyper.com" target="_blank" rel="noopener">小锅</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p>我还在习惯 Swift 中的关联类型(Associated Type)，尽管它们已经出现好一阵子了，我最初是从<a href="https://www.youtube.com/watch?v=XWoNjiSPqI8" target="_blank" rel="external">这篇文章 @alexisgallagher</a>里开始<a href="https://www.natashatherobot.com/swift-protocols-with-associated-types/" target="_blank" rel="external">理解它们</a>的。 </p>
-<p>我很开心昨天能在 iOS 开发中用它们解决 iOS 开发中的一个常见问题：<a href="https://www.natashatherobot.com/update-view-controller-data-injection-with-storyboards-and-segues-in-swift/" target="_blank" rel="external">在 Swift 中对使用 Storyboard 和 Segue 的 View Controller 进行依赖注入</a>。</p>
+<p>我还在习惯 Swift 中的关联类型(Associated Type)，尽管它们已经出现好一阵子了，我最初是从<a href="https://www.youtube.com/watch?v=XWoNjiSPqI8" target="_blank" rel="noopener">这篇文章 @alexisgallagher</a>里开始<a href="https://www.natashatherobot.com/swift-protocols-with-associated-types/" target="_blank" rel="noopener">理解它们</a>的。 </p>
+<p>我很开心昨天能在 iOS 开发中用它们解决 iOS 开发中的一个常见问题：<a href="https://www.natashatherobot.com/update-view-controller-data-injection-with-storyboards-and-segues-in-swift/" target="_blank" rel="noopener">在 Swift 中对使用 Storyboard 和 Segue 的 View Controller 进行依赖注入</a>。</p>
 <a id="more"></a>
 <p>昨天我更新了博客，但是我的协议一开始看起来是这样的：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">Injectable</span> </span>&#123;</div><div class="line">	</div><div class="line">	associatedType <span class="type">T</span></div><div class="line">	<span class="function"><span class="keyword">func</span> <span class="title">inject</span><span class="params">(thing: T)</span></span></div><div class="line">	<span class="function"><span class="keyword">func</span> <span class="title">assertDependencies</span><span class="params">()</span></span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">Injectable</span> </span>&#123;</span><br><span class="line">	</span><br><span class="line">	associatedType <span class="type">T</span></span><br><span class="line">	<span class="function"><span class="keyword">func</span> <span class="title">inject</span><span class="params">(thing: T)</span></span></span><br><span class="line">	<span class="function"><span class="keyword">func</span> <span class="title">assertDependencies</span><span class="params">()</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>注意 <strong>thing</strong> 这个参数！因为每个 View Controller 都会被注入一些特别具体的东西 —— 有可能是基于文本的、基于数值的、基于数组的，或者其他任何类型！我不知道如何更好地对参数命名。所以 <strong>thing</strong> 看起来是最合适的参数名字了。</p>
 <p>实现看起来是这样子的： </p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">inject</span><span class="params">(thing: T)</span></span> &#123;</div><div class="line">	textDependency = thing</div><div class="line">&#125;</div><div class="line">``` </div><div class="line"></div><div class="line">我实在不喜欢 **thing** 这个名字 —— 完全没有可读性。所以今天早上，我想到了一个疯狂的解决方案，不用 thing 了，结果这方法竟然走得通！</div><div class="line"></div><div class="line">```swift</div><div class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">Injectable</span> </span>&#123;</div><div class="line">	associatedType <span class="type">T</span></div><div class="line">	</div><div class="line">	<span class="comment">// 用 _ 替换掉 thing</span></div><div class="line">	<span class="function"><span class="keyword">func</span> <span class="title">inject</span><span class="params">(<span class="number">_</span>: T)</span></span></div><div class="line">	</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">inject</span><span class="params">(thing: T)</span></span> &#123;</span><br><span class="line">	textDependency = thing</span><br><span class="line">&#125;</span><br><span class="line">``` </span><br><span class="line"></span><br><span class="line">我实在不喜欢 **thing** 这个名字 —— 完全没有可读性。所以今天早上，我想到了一个疯狂的解决方案，不用 thing 了，结果这方法竟然走得通！</span><br><span class="line"></span><br><span class="line">```swift</span><br><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">Injectable</span> </span>&#123;</span><br><span class="line">	associatedType <span class="type">T</span></span><br><span class="line">	</span><br><span class="line">	<span class="comment">// 用 _ 替换掉 thing</span></span><br><span class="line">	<span class="function"><span class="keyword">func</span> <span class="title">inject</span><span class="params">(<span class="number">_</span>: T)</span></span></span><br><span class="line">	</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>替换掉 <strong>thing</strong>，我在协议里把参数名字留空（即改成 <code>_</code>）！<br>很明显，现在实现此协议时，我可以把参数命名成任何名字了。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyStringDependencyViewController</span>: <span class="title">UIViewController</span>, <span class="title">Injectable</span> </span>&#123;</div><div class="line">    </div><div class="line">    <span class="keyword">private</span> <span class="keyword">var</span> textDependency: <span class="type">String</span>!</div><div class="line">    </div><div class="line">    <span class="comment">// 在这个地方，thing 是 text</span></div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">inject</span><span class="params">(text: String)</span></span> &#123;</div><div class="line">        textDependency = text</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyIntDependencyViewController</span>: <span class="title">UIViewController</span>, <span class="title">Injectable</span> </span>&#123;</div><div class="line">    </div><div class="line">    <span class="keyword">private</span> <span class="keyword">var</span> numberDependency: <span class="type">Int</span>!</div><div class="line">    </div><div class="line">    <span class="comment">// 在这个地方，thing 是 number</span></div><div class="line">    <span class="function"><span class="keyword">func</span> <span class="title">inject</span><span class="params">(number: Int)</span></span> &#123;</div><div class="line">        numberDependency = number</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyStringDependencyViewController</span>: <span class="title">UIViewController</span>, <span class="title">Injectable</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> textDependency: <span class="type">String</span>!</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 在这个地方，thing 是 text</span></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">inject</span><span class="params">(text: String)</span></span> &#123;</span><br><span class="line">        textDependency = text</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyIntDependencyViewController</span>: <span class="title">UIViewController</span>, <span class="title">Injectable</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> numberDependency: <span class="type">Int</span>!</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 在这个地方，thing 是 number</span></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">inject</span><span class="params">(number: Int)</span></span> &#123;</span><br><span class="line">        numberDependency = number</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>现在，实现过程非常清晰，随着使用关联类型的次数增多，我越来越喜欢它了。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
@@ -222,6 +223,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -270,7 +275,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -419,11 +424,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -435,11 +440,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -447,7 +448,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -459,11 +460,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -471,7 +476,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -665,7 +670,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

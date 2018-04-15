@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/02/14/swift-guard-radix/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="在Swift中怎么正确使用swift guard语句呢，本文就来详细说下swift guard let的使用方法吧。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.379Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="使用 guard 的正确姿势">
 <meta name="twitter:description" content="在Swift中怎么正确使用swift guard语句呢，本文就来详细说下swift guard let的使用方法吧。">
@@ -88,7 +89,7 @@
         <a href="/2016/02/14/swift-guard-radix/" target="_blank" title="使用 guard 的正确姿势" itemprop="url">使用 guard 的正确姿势</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-02-14T02:00:00.000Z" itemprop="datePublished">2016-02-14</time>
+      <time datetime="2016-02-14T10:00:00.000Z" itemprop="datePublished">2016-02-14</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,7 +97,7 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Radek Pietruszewski，<a href="http://radex.io/swift/guard/" target="_blank" rel="external">原文链接</a>，原文日期：2015-12-14<br>译者：<a href="http://www.futantan.com" target="_blank" rel="external">Prayer</a>；校对：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="external">Channe</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="external">numbbbbb</a></p>
+<p>作者：Radek Pietruszewski，<a href="http://radex.io/swift/guard/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-12-14<br>译者：<a href="http://www.futantan.com" target="_blank" rel="noopener">Prayer</a>；校对：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="noopener">Channe</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p><code>guard</code> 是 Swift 2 中我最喜爱的特性之一。虽然完全不使用 <code>guard</code> 也没有什么影响，它只是给我们提供了更微妙的句法表达，但是如果能够正确使用 <code>guard</code> 语句，无疑是一件令人愉快的事。它可以让我们的方法表意更加明确，更易于阅读，它能够表达『提前退出』的意图，同时提高了程序的健壮性。</p>
@@ -105,15 +106,15 @@
 <a id="more"></a>
 <h2 id="可以用-guard：在验证入口条件时"><a href="#可以用-guard：在验证入口条件时" class="headerlink" title="可以用 guard：在验证入口条件时"></a>可以用 <code>guard</code>：在验证入口条件时</h2><p>这可能是最简单和最常用的情况。你写了一个方法来完成某个工作，但是只有在满足某些先决条件的情况下，方法才能够被继续执行。</p>
 <p>例如：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">updateWatchApplicationContext</span><span class="params">()</span></span> &#123;</div><div class="line">    <span class="keyword">let</span> session = <span class="type">WCSession</span>.defaultSession()</div><div class="line">    </div><div class="line">    <span class="keyword">guard</span> session.watchAppInstalled <span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</div><div class="line">    </div><div class="line">    <span class="keyword">do</span> &#123;</div><div class="line">        <span class="keyword">let</span> context = [<span class="string">"token"</span>: api.token]</div><div class="line">        <span class="keyword">try</span> session.updateApplicationContext(context)</div><div class="line">    &#125; <span class="keyword">catch</span> &#123;</div><div class="line">        <span class="built_in">print</span>(error)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">updateWatchApplicationContext</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">let</span> session = <span class="type">WCSession</span>.defaultSession()</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">guard</span> session.watchAppInstalled <span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> context = [<span class="string">"token"</span>: api.token]</span><br><span class="line">        <span class="keyword">try</span> session.updateApplicationContext(context)</span><br><span class="line">    &#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">        <span class="built_in">print</span>(error)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这样写有两个好处：</p>
 <p>首先，在方法开头进行条件的检查，而不是将其包裹在整个的 <code>if</code> 语句之中。这样一眼就能看出，这个条件检查并不是函数本身的功用，而是函数执行的先决条件。</p>
 <p>其次，使用 <code>guard</code> 语句时，读者和编译器就会知道如果条件为 <code>false</code>，方法将会直接 <code>return</code>。虽然这只是对编译器检查的一个细微的说明，但是从长远来看，代码的可维护性得到了加强——如果有人不小心将提前退出的语句从 <code>else</code> 表达式中移除了，编译器会及时告诉你这个错误。</p>
 <h2 id="可以用-guard：在成功路径上提前退出"><a href="#可以用-guard：在成功路径上提前退出" class="headerlink" title="可以用 guard：在成功路径上提前退出"></a>可以用 <code>guard</code>：在成功路径上提前退出</h2><p>使用场景：方法中存在非常长的执行路径，在最终结果得到之前，中间会有多个需要被满足的条件，这些条件都应该为真，否则应该直接 <code>return</code> 或者抛出异常。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">vendAllNamed</span><span class="params">(itemName: String)</span></span> <span class="keyword">throws</span> &#123;</div><div class="line">    <span class="keyword">guard</span> isEnabled <span class="keyword">else</span> &#123;</div><div class="line">        <span class="keyword">throw</span> <span class="type">VendingMachineError</span>.<span class="type">Disabled</span></div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="keyword">let</span> items = getItemsNamed(itemName)</div><div class="line">    </div><div class="line">    <span class="keyword">guard</span> items.<span class="built_in">count</span> &gt; <span class="number">0</span> <span class="keyword">else</span> &#123;</div><div class="line">        <span class="keyword">throw</span> <span class="type">VendingMachineError</span>.<span class="type">OutOfStock</span></div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="keyword">let</span> totalPrice = items.<span class="built_in">reduce</span>(<span class="number">0</span>, combine: +)</div><div class="line">    </div><div class="line">    <span class="keyword">guard</span> coinsDeposited &gt;= totalPrice <span class="keyword">else</span> &#123;</div><div class="line">        <span class="keyword">throw</span> <span class="type">VendingMachineError</span>.<span class="type">InsufficientFunds</span></div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    coinsDeposited -= totalPrice</div><div class="line">    removeFromInventory(itemName)</div><div class="line">    dispenseSnacks(items)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">vendAllNamed</span><span class="params">(itemName: String)</span></span> <span class="keyword">throws</span> &#123;</span><br><span class="line">    <span class="keyword">guard</span> isEnabled <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="type">VendingMachineError</span>.<span class="type">Disabled</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> items = getItemsNamed(itemName)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">guard</span> items.<span class="built_in">count</span> &gt; <span class="number">0</span> <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="type">VendingMachineError</span>.<span class="type">OutOfStock</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> totalPrice = items.<span class="built_in">reduce</span>(<span class="number">0</span>, combine: +)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">guard</span> coinsDeposited &gt;= totalPrice <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="type">VendingMachineError</span>.<span class="type">InsufficientFunds</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    coinsDeposited -= totalPrice</span><br><span class="line">    removeFromInventory(itemName)</span><br><span class="line">    dispenseSnacks(items)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h2 id="可以用-guard：在可选值解包时（拍扁-if-let-else-金字塔）"><a href="#可以用-guard：在可选值解包时（拍扁-if-let-else-金字塔）" class="headerlink" title="可以用 guard：在可选值解包时（拍扁 if let..else 金字塔）"></a>可以用 <code>guard</code>：在可选值解包时（拍扁 <code>if let..else</code> 金字塔）</h2><p>可能的场景：需要确保执行的先决条件，或者需要在很长的执行路径中，确保某些检查点的条件能够满足。但是和一些返回 <code>boolean</code> 类型的普通检查不同，你想要确保某些可选值非空且需要将它解包。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">taskFromJSONResponse</span><span class="params">(jsonData: NSData)</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Task</span> &#123;</div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> json = decodeJSON(jsonData) <span class="keyword">as</span>? [<span class="type">String</span>: <span class="type">AnyObject</span>] <span class="keyword">else</span> &#123;</div><div class="line">        <span class="keyword">throw</span> <span class="type">ParsingError</span>.<span class="type">InvalidJSON</span></div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> id = json[<span class="string">"id"</span>] <span class="keyword">as</span>? <span class="type">Int</span>,</div><div class="line">          <span class="keyword">let</span> name = json[<span class="string">"name"</span>] <span class="keyword">as</span>? <span class="type">String</span>,</div><div class="line">          <span class="keyword">let</span> userId = json[<span class="string">"user_id"</span>] <span class="keyword">as</span>? <span class="type">Int</span>,</div><div class="line">          <span class="keyword">let</span> position = json[<span class="string">"pos"</span>] <span class="keyword">as</span>? <span class="type">Double</span></div><div class="line">    <span class="keyword">else</span> &#123;</div><div class="line">        <span class="keyword">throw</span> <span class="type">ParsingError</span>.<span class="type">MissingData</span></div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="keyword">return</span> <span class="type">Task</span>(id: id, name: name, userId: userId, position: position)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p><strong>进阶 Tip：</strong>在 Swift 中更好的处理 JSON 方式可以<a href="https://github.com/LoganWright/Genome" target="_blank" rel="external">参考这里</a></p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">taskFromJSONResponse</span><span class="params">(jsonData: NSData)</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Task</span> &#123;</span><br><span class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> json = decodeJSON(jsonData) <span class="keyword">as</span>? [<span class="type">String</span>: <span class="type">AnyObject</span>] <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="type">ParsingError</span>.<span class="type">InvalidJSON</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> id = json[<span class="string">"id"</span>] <span class="keyword">as</span>? <span class="type">Int</span>,</span><br><span class="line">          <span class="keyword">let</span> name = json[<span class="string">"name"</span>] <span class="keyword">as</span>? <span class="type">String</span>,</span><br><span class="line">          <span class="keyword">let</span> userId = json[<span class="string">"user_id"</span>] <span class="keyword">as</span>? <span class="type">Int</span>,</span><br><span class="line">          <span class="keyword">let</span> position = json[<span class="string">"pos"</span>] <span class="keyword">as</span>? <span class="type">Double</span></span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="type">ParsingError</span>.<span class="type">MissingData</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="type">Task</span>(id: id, name: name, userId: userId, position: position)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>进阶 Tip：</strong>在 Swift 中更好的处理 JSON 方式可以<a href="https://github.com/LoganWright/Genome" target="_blank" rel="noopener">参考这里</a></p>
 <p>使用 <code>guard</code> 的方式来解包可选值是非常推荐的。<code>if let</code> 的方式需要在大括号内使用解包之后的值，而 <code>guard</code> 语句将解包之后的值添加到了之后的作用域之中——所以你可以在使用 <code>guard</code> 解包之后直接使用它，不用包裹在大括号内。</p>
 <p>我们更推荐使用 <code>guard</code> 的方式，因为如果你有多个需要解包的可选值，使用 <code>guard</code> 的方式可以避免金字塔灾难（多个层级的 <code>if let</code> 嵌套）</p>
 <p>对我们的大脑来说，在简单的情况下，理解一个扁平的代码路径相比于理解分析嵌套的分支结构更为容易。</p>
@@ -146,23 +147,23 @@
 <p><strong>致命状态（Fatal conditions）</strong></p>
 <p>程序的执行的条件不能够被满足，如果这是个非常严重的程序错误，那么故意让这种状况 crash 掉，这种处理方式将非常有意义。如果你的应用无论哪种方式都会 crash 掉，又或者程序最终会处于一种非法的状态的话，这种情形最好自己去处理。通过 <code>guard</code> 的方式，你可以确保程序在可知的情况下退出，在 crash 的时候能够显示相应的原因。</p>
 <p>这种的使用场景通常是<strong>precondition</strong>：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="built_in">precondition</span>(internet.kittenCount == <span class="type">Int</span>.<span class="built_in">max</span>, <span class="string">"Not enough kittens in the internet"</span>)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="built_in">precondition</span>(internet.kittenCount == <span class="type">Int</span>.<span class="built_in">max</span>, <span class="string">"Not enough kittens in the internet"</span>)</span><br></pre></td></tr></table></figure>
 <p>然而，如果判断的条件不仅是简单的布尔表达式而涉及到可选值的解包，可以使用 <code>guard</code>：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">guard</span> <span class="keyword">let</span> kittens = internet.kittens <span class="keyword">else</span> &#123;</div><div class="line">    <span class="built_in">fatalError</span>(<span class="string">"OMG ran out of kittens!"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">guard</span> <span class="keyword">let</span> kittens = internet.kittens <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="built_in">fatalError</span>(<span class="string">"OMG ran out of kittens!"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><strong>断言</strong></p>
 <p>有时候，总是期望在某种条件能够被满足，然而即使条件不满足也不是什么大不了的程序错误。在这种情况下，可以考虑像下面这样使用 <code>assertionFailure</code>：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">guard</span> <span class="keyword">let</span> puppies = internet.puppies <span class="keyword">else</span> &#123;</div><div class="line">    <span class="built_in">assertionFailure</span>(<span class="string">"Huh, no dogs"</span>)</div><div class="line">    <span class="keyword">return</span> <span class="literal">nil</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">guard</span> <span class="keyword">let</span> puppies = internet.puppies <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="built_in">assertionFailure</span>(<span class="string">"Huh, no dogs"</span>)</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>通过这种 crash 的方式，可以在开发和内测期间很容易的找到 bug 位置，但是在正式发布的时候，应用不会 crash 掉（虽然可能 bug 满天飞）。</p>
 <p>在提醒一次，如果判断的条件仅仅是个布尔类型，使用 <code>assert(condition)</code> 就可以胜任。</p>
 <h2 id="不要用-guard：替代琐碎的-if-else-语句"><a href="#不要用-guard：替代琐碎的-if-else-语句" class="headerlink" title="不要用 guard：替代琐碎的 if..else 语句"></a>不要用 <code>guard</code>：替代琐碎的 <code>if..else</code> 语句</h2><p>如果有一个简单的方法，只包含一个简单的 if..else 语句，不要使用 guard：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// Don't:</span></div><div class="line"><span class="keyword">var</span> projectName: <span class="type">String</span>? &#123;</div><div class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> project = task.project <span class="keyword">where</span> project.isValid <span class="keyword">else</span> &#123;</div><div class="line">        <span class="keyword">return</span> <span class="literal">nil</span></div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="keyword">return</span> project.name</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Don't:</span></span><br><span class="line"><span class="keyword">var</span> projectName: <span class="type">String</span>? &#123;</span><br><span class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> project = task.project <span class="keyword">where</span> project.isValid <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> project.name</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>对这种简单的情况而言，使用两个分支的 <code>if..else</code> 语句比起没有分支的 <code>guard</code> 更加容易理解。虽然可能在其他的情形中使用 <code>guard</code> 也是一个很好的候选项。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// Better!</span></div><div class="line"><span class="keyword">var</span> projectName: <span class="type">String</span>? &#123;</div><div class="line">    <span class="keyword">if</span> <span class="keyword">let</span> project = task.project <span class="keyword">where</span> project.isValid &#123;</div><div class="line">        <span class="keyword">return</span> project.name</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        <span class="keyword">return</span> <span class="literal">nil</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p><strong>进阶 Tip：</strong>请确保自己理解了<a href="https://developer.apple.com/library/mac/documentation/Swift/Conceptual/Swift_Programming_Language/OptionalChaining.html#//apple_ref/doc/uid/TP40014097-CH21-ID245" target="_blank" rel="external">可选链</a>：<code>Optional.map</code> 和 <code>Optional.flatMap</code>；通过使用这些工具，通常可以避免使用显式的 <code>if let</code> 来解包。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Better!</span></span><br><span class="line"><span class="keyword">var</span> projectName: <span class="type">String</span>? &#123;</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">let</span> project = task.project <span class="keyword">where</span> project.isValid &#123;</span><br><span class="line">        <span class="keyword">return</span> project.name</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>进阶 Tip：</strong>请确保自己理解了<a href="https://developer.apple.com/library/mac/documentation/Swift/Conceptual/Swift_Programming_Language/OptionalChaining.html#//apple_ref/doc/uid/TP40014097-CH21-ID245" target="_blank" rel="noopener">可选链</a>：<code>Optional.map</code> 和 <code>Optional.flatMap</code>；通过使用这些工具，通常可以避免使用显式的 <code>if let</code> 来解包。</p>
 <h2 id="不要用-guard：作为-if-的相反情况"><a href="#不要用-guard：作为-if-的相反情况" class="headerlink" title="不要用 guard：作为 if 的相反情况"></a>不要用 <code>guard</code>：作为 <code>if</code> 的相反情况</h2><p>在一些语言中，例如 Ruby，有 <code>unless</code> 语句，本质上是 <code>if</code> 的相反情况（reverse if）——作用域内的代码只有在传递进来的条件被判断为 <code>false</code> 的时候执行。</p>
 <p>Swift 中的 <code>guard</code>，虽然有一些类似，但是它们是不同的东西。<code>guard</code> 不是通常意义上的分支语义。它特别强调，在某些期望的条件不满足时，提前退出。</p>
 <p>虽然在一些情况下，你可以将 <code>guard</code> 强行掰弯，当做 reverse if 来使用，但是，亲不要啊！使用 <code>if..else</code> 语句或者考虑将代码分割成多个函数。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// Don't:</span></div><div class="line"><span class="keyword">guard</span> <span class="keyword">let</span> s = sequence <span class="keyword">as</span>? <span class="type">Set</span>&lt;<span class="type">Element</span>&gt; <span class="keyword">else</span> &#123;</div><div class="line">    <span class="keyword">for</span> item <span class="keyword">in</span> sequence &#123;</div><div class="line">        insert(item)</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">switch</span> (s._variantStorage) &#123;</div><div class="line"><span class="keyword">case</span> .<span class="type">Native</span>(<span class="keyword">let</span> owner):</div><div class="line">    _variantStorage = .<span class="type">Native</span>(owner)</div><div class="line"><span class="keyword">case</span> .<span class="type">Cocoa</span>(<span class="keyword">let</span> owner):</div><div class="line">    _variantStorage = .<span class="type">Cocoa</span>(owner)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Don't:</span></span><br><span class="line"><span class="keyword">guard</span> <span class="keyword">let</span> s = sequence <span class="keyword">as</span>? <span class="type">Set</span>&lt;<span class="type">Element</span>&gt; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">for</span> item <span class="keyword">in</span> sequence &#123;</span><br><span class="line">        insert(item)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">switch</span> (s._variantStorage) &#123;</span><br><span class="line"><span class="keyword">case</span> .<span class="type">Native</span>(<span class="keyword">let</span> owner):</span><br><span class="line">    _variantStorage = .<span class="type">Native</span>(owner)</span><br><span class="line"><span class="keyword">case</span> .<span class="type">Cocoa</span>(<span class="keyword">let</span> owner):</span><br><span class="line">    _variantStorage = .<span class="type">Cocoa</span>(owner)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h2 id="不要：在-guard-的-else-语句中放入复杂代码"><a href="#不要：在-guard-的-else-语句中放入复杂代码" class="headerlink" title="不要：在 guard 的 else 语句中放入复杂代码"></a>不要：在 <code>guard</code> 的 <code>else</code> 语句中放入复杂代码</h2><p>这是上面这些原则的推论：</p>
 <p><code>guard</code> 的 <code>else</code> 语句中，除了一个简单的提前退出语句外，不应该有其他的代码逻辑。加入一些诊断日志的代码是可以的，但是其他的代码逻辑不应该有。当然也可以在 <code>else</code> 中加入一些对未完成工作的清理或者打开资源的释放，虽然大部分情况下，你应该使用 <code>defer</code> 来完成这些清理工作。</p>
 <p>总之，如果你在 <code>else</code> 块做了任何实际功能，除了那些离开当前方法的必要操作，你就误用了 <code>guard</code>。</p>
@@ -279,6 +280,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -327,7 +332,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -476,11 +481,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -492,11 +497,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -504,7 +505,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -516,11 +517,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -528,7 +533,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -722,7 +727,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

@@ -20,7 +20,8 @@
 <meta property="og:url" content="https://swift.gg/2016/07/12/an-example-of-scripting-with-swift-on-linux/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="在 Linux 上怎么用 Swift 来写脚本呢，本文就来举例实战下 Swift 在 Linux 上写个脚本。">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.395Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Linux 上的一个 Swift 脚本示例">
 <meta name="twitter:description" content="在 Linux 上怎么用 Swift 来写脚本呢，本文就来举例实战下 Swift 在 Linux 上写个脚本。">
@@ -88,7 +89,7 @@
         <a href="/2016/07/12/an-example-of-scripting-with-swift-on-linux/" target="_blank" title="Linux 上的一个 Swift 脚本示例" itemprop="url">Linux 上的一个 Swift 脚本示例</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-07-12T01:30:00.000Z" itemprop="datePublished">2016-07-12</time>
+      <time datetime="2016-07-12T09:30:00.000Z" itemprop="datePublished">2016-07-12</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -96,22 +97,22 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Joe，<a href="http://dev.iachieved.it/iachievedit/an-example-of-scripting-with-swift-on-linux/?utm_source=rss&amp;utm_medium=rss" target="_blank" rel="external">原文链接</a>，原文日期：2016/06/27<br>译者：<a href="undefined">ahfepj</a>；校对：<a href="http://www.saitjr.com" target="_blank" rel="external">saitjr</a>；定稿：<a href="https://github.com/Cee" target="_blank" rel="external">Cee</a></p>
+<p>作者：Joe，<a href="http://dev.iachieved.it/iachievedit/an-example-of-scripting-with-swift-on-linux/?utm_source=rss&amp;utm_medium=rss" target="_blank" rel="noopener">原文链接</a>，原文日期：2016/06/27<br>译者：<a href="undefined">ahfepj</a>；校对：<a href="http://www.saitjr.com" target="_blank" rel="noopener">saitjr</a>；定稿：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p>如果你在推特上关注了我们（<a href="https://twitter.com/iachievedit" target="_blank" rel="external">@iachievedit</a>）你就知道<a href="http://swift-arm.ddns.net/" target="_blank" rel="external">我们不仅做了很多 Swift 开源项目</a>，还有做了一些操作系统和架构。我们决定做这个项目没有特别的原因，但是看着各个版本的 git 仓库最终整合一个工具感觉真是太棒了。</p>
+<p>如果你在推特上关注了我们（<a href="https://twitter.com/iachievedit" target="_blank" rel="noopener">@iachievedit</a>）你就知道<a href="http://swift-arm.ddns.net/" target="_blank" rel="noopener">我们不仅做了很多 Swift 开源项目</a>，还有做了一些操作系统和架构。我们决定做这个项目没有特别的原因，但是看着各个版本的 git 仓库最终整合一个工具感觉真是太棒了。</p>
 <p>我们很高兴最终 Swift 能够取代 Linux 上的其他脚本语言（比如名字读起来像 Bython 和 Buby 的两门语言），对我们来说是时候写脚本了（用 Swift）。</p>
 <a id="more"></a>
 <p>这里有一些注意事项：</p>
 <ul>
 <li>我们使用了一个 <code>String</code> 的 <code>subscript</code> 扩展，由于某些原因它可能不会是核心语言的一部分。</li>
-<li>我们的版本里的 exec 在其他脚本语言里是反引号（<code>output = `ls` </code>），我们需要执行命令并读取输出。</li>
+<li>我们的版本里的 exec 在其他脚本语言里是反引号（<code>output = `ls`</code>），我们需要执行命令并读取输出。</li>
 <li>当然还可以做更多优化和精简。</li>
 </ul>
 <p>掌握了这些之后，下面就是 <code>swiftrevs.swift</code>：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> Glibc</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">extension</span> <span class="title">String</span> </span>&#123;</div><div class="line">  <span class="keyword">subscript</span> (r: <span class="type">CountableClosedRange</span>&lt;<span class="type">Int</span>&gt;) -&gt; <span class="type">String</span> &#123;</div><div class="line">    <span class="keyword">get</span> &#123;</div><div class="line">      <span class="keyword">let</span> startIndex = <span class="keyword">self</span>.characters.index(<span class="keyword">self</span>.characters.startIndex, offsetBy:r.lowerBound)</div><div class="line">      <span class="keyword">let</span> endIndex   = <span class="keyword">self</span>.characters.index(<span class="keyword">self</span>.characters.startIndex, offsetBy:r.upperBound)</div><div class="line">      <span class="keyword">return</span> <span class="keyword">self</span>[startIndex..&lt;endIndex]</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">exec</span><span class="params">(<span class="number">_</span> command:String)</span></span> -&gt; <span class="type">String</span> &#123;</div><div class="line">  <span class="keyword">let</span> <span class="type">BUFSIZE</span> = <span class="number">128</span></div><div class="line">  <span class="keyword">let</span> pipe = popen(command, <span class="string">"r"</span>)</div><div class="line">  <span class="keyword">var</span> buf  = [<span class="type">CChar</span>](repeating:<span class="type">CChar</span>(<span class="number">0</span>), <span class="built_in">count</span>:<span class="type">BUFSIZE</span>)</div><div class="line">  <span class="keyword">var</span> output:<span class="type">String</span> = <span class="string">""</span></div><div class="line">  <span class="keyword">while</span> fgets(&amp;buf, <span class="type">Int32</span>(<span class="type">BUFSIZE</span>), pipe) != <span class="literal">nil</span> &#123;</div><div class="line">    output = <span class="type">String</span>(cString:buf)</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">return</span> output</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">gitRevision</span><span class="params">()</span></span> -&gt; <span class="type">String</span> &#123;</div><div class="line">  <span class="keyword">return</span> exec(<span class="string">"/usr/bin/git rev-parse HEAD"</span>)[<span class="number">0</span>...<span class="number">9</span>]</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">gitFetchURL</span><span class="params">()</span></span> -&gt; <span class="type">String</span> &#123;</div><div class="line">  <span class="keyword">return</span> exec(<span class="string">"/usr/bin/git remote show origin -n|grep Fetch| echo -n `cut --characters=14-`"</span>)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">gitBranch</span><span class="params">()</span></span> -&gt; <span class="type">String</span> &#123;</div><div class="line">  <span class="keyword">return</span> exec(<span class="string">"/usr/bin/git branch | echo -n `cut --characters=2-`"</span>)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">let</span> dirs = [<span class="string">"swift"</span>, <span class="string">"llvm"</span>, <span class="string">"clang"</span>, <span class="string">"lldb"</span>, <span class="string">"compiler-rt"</span>, <span class="string">"cmark"</span>, <span class="string">"llbuild"</span>, <span class="string">"swiftpm"</span>, <span class="string">"swift-corelibs-xctest"</span>, <span class="string">"swift-corelibs-foundation"</span>, <span class="string">"swift-integration-tests"</span>, <span class="string">"swift-corelibs-libdispatch"</span>]</div><div class="line"></div><div class="line"><span class="keyword">for</span> dir <span class="keyword">in</span> dirs &#123;</div><div class="line">  <span class="keyword">let</span> cwd     = <span class="type">String</span>(cString:getcwd(<span class="literal">nil</span>, <span class="number">0</span>))</div><div class="line">  <span class="keyword">let</span> rc      = chdir(dir) <span class="comment">// pushd</span></div><div class="line">  <span class="keyword">guard</span> rc == <span class="number">0</span> <span class="keyword">else</span> &#123;</div><div class="line">    <span class="keyword">continue</span></div><div class="line">  &#125;</div><div class="line">  <span class="keyword">let</span> fetch  = gitFetchURL()</div><div class="line">  <span class="keyword">let</span> rev    = gitRevision()</div><div class="line">  <span class="keyword">let</span> branch = gitBranch()</div><div class="line">  <span class="built_in">print</span>(<span class="string">"<span class="subst">\(dir)</span>,<span class="subst">\(fetch)</span>,<span class="subst">\(branch)</span>,<span class="subst">\(rev)</span>"</span>)</div><div class="line">  chdir(cwd) <span class="comment">// popd</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Glibc</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">String</span> </span>&#123;</span><br><span class="line">  <span class="keyword">subscript</span> (r: <span class="type">CountableClosedRange</span>&lt;<span class="type">Int</span>&gt;) -&gt; <span class="type">String</span> &#123;</span><br><span class="line">    <span class="keyword">get</span> &#123;</span><br><span class="line">      <span class="keyword">let</span> startIndex = <span class="keyword">self</span>.characters.index(<span class="keyword">self</span>.characters.startIndex, offsetBy:r.lowerBound)</span><br><span class="line">      <span class="keyword">let</span> endIndex   = <span class="keyword">self</span>.characters.index(<span class="keyword">self</span>.characters.startIndex, offsetBy:r.upperBound)</span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">self</span>[startIndex..&lt;endIndex]</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">exec</span><span class="params">(<span class="number">_</span> command:String)</span></span> -&gt; <span class="type">String</span> &#123;</span><br><span class="line">  <span class="keyword">let</span> <span class="type">BUFSIZE</span> = <span class="number">128</span></span><br><span class="line">  <span class="keyword">let</span> pipe = popen(command, <span class="string">"r"</span>)</span><br><span class="line">  <span class="keyword">var</span> buf  = [<span class="type">CChar</span>](repeating:<span class="type">CChar</span>(<span class="number">0</span>), <span class="built_in">count</span>:<span class="type">BUFSIZE</span>)</span><br><span class="line">  <span class="keyword">var</span> output:<span class="type">String</span> = <span class="string">""</span></span><br><span class="line">  <span class="keyword">while</span> fgets(&amp;buf, <span class="type">Int32</span>(<span class="type">BUFSIZE</span>), pipe) != <span class="literal">nil</span> &#123;</span><br><span class="line">    output = <span class="type">String</span>(cString:buf)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> output</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">gitRevision</span><span class="params">()</span></span> -&gt; <span class="type">String</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> exec(<span class="string">"/usr/bin/git rev-parse HEAD"</span>)[<span class="number">0</span>...<span class="number">9</span>]</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">gitFetchURL</span><span class="params">()</span></span> -&gt; <span class="type">String</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> exec(<span class="string">"/usr/bin/git remote show origin -n|grep Fetch| echo -n `cut --characters=14-`"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">gitBranch</span><span class="params">()</span></span> -&gt; <span class="type">String</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> exec(<span class="string">"/usr/bin/git branch | echo -n `cut --characters=2-`"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> dirs = [<span class="string">"swift"</span>, <span class="string">"llvm"</span>, <span class="string">"clang"</span>, <span class="string">"lldb"</span>, <span class="string">"compiler-rt"</span>, <span class="string">"cmark"</span>, <span class="string">"llbuild"</span>, <span class="string">"swiftpm"</span>, <span class="string">"swift-corelibs-xctest"</span>, <span class="string">"swift-corelibs-foundation"</span>, <span class="string">"swift-integration-tests"</span>, <span class="string">"swift-corelibs-libdispatch"</span>]</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> dir <span class="keyword">in</span> dirs &#123;</span><br><span class="line">  <span class="keyword">let</span> cwd     = <span class="type">String</span>(cString:getcwd(<span class="literal">nil</span>, <span class="number">0</span>))</span><br><span class="line">  <span class="keyword">let</span> rc      = chdir(dir) <span class="comment">// pushd</span></span><br><span class="line">  <span class="keyword">guard</span> rc == <span class="number">0</span> <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">continue</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">let</span> fetch  = gitFetchURL()</span><br><span class="line">  <span class="keyword">let</span> rev    = gitRevision()</span><br><span class="line">  <span class="keyword">let</span> branch = gitBranch()</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"<span class="subst">\(dir)</span>,<span class="subst">\(fetch)</span>,<span class="subst">\(branch)</span>,<span class="subst">\(rev)</span>"</span>)</span><br><span class="line">  chdir(cwd) <span class="comment">// popd</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>我们按照如下方法来使用：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line"><span class="comment"># swift swiftrevs.swift</span></div><div class="line">swift,https://github.com/apple/swift.git,master,cf3fdff04</div><div class="line">llvm,https://github.com/apple/swift-llvm.git,stable,8d0086ac3</div><div class="line">clang,https://github.com/apple/swift-clang.git,stable,460d629e8</div><div class="line">lldb,https://github.com/apple/swift-lldb.git,master,da120cf91</div><div class="line">compiler-rt,https://github.com/apple/swift-compiler-rt.git,stable,9daa1b32c</div><div class="line">cmark,https://github.com/apple/swift-cmark.git,master,5af77f3c1</div><div class="line">llbuild,https://github.com/apple/swift-llbuild.git,master,7aadcf936</div><div class="line">swiftpm,https://github.com/apple/swift-package-manager.git,master,423c2a1c8</div><div class="line">swift-corelibs-xctest,https://github.com/apple/swift-corelibs-xctest.git,master,03905f564</div><div class="line">swift-corelibs-foundation,https://github.com/apple/swift-corelibs-foundation.git,master,4c15543f8</div><div class="line">swift-integration-tests,https://github.com/apple/swift-integration-tests.git,master,4eda8055a</div><div class="line">swift-corelibs-libdispatch,https://github.com/apple/swift-corelibs-libdispatch.git,master,e922531c2</div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># swift swiftrevs.swift</span></span><br><span class="line">swift,https://github.com/apple/swift.git,master,cf3fdff04</span><br><span class="line">llvm,https://github.com/apple/swift-llvm.git,stable,8d0086ac3</span><br><span class="line">clang,https://github.com/apple/swift-clang.git,stable,460d629e8</span><br><span class="line">lldb,https://github.com/apple/swift-lldb.git,master,da120cf91</span><br><span class="line">compiler-rt,https://github.com/apple/swift-compiler-rt.git,stable,9daa1b32c</span><br><span class="line">cmark,https://github.com/apple/swift-cmark.git,master,5af77f3c1</span><br><span class="line">llbuild,https://github.com/apple/swift-llbuild.git,master,7aadcf936</span><br><span class="line">swiftpm,https://github.com/apple/swift-package-manager.git,master,423c2a1c8</span><br><span class="line">swift-corelibs-xctest,https://github.com/apple/swift-corelibs-xctest.git,master,03905f564</span><br><span class="line">swift-corelibs-foundation,https://github.com/apple/swift-corelibs-foundation.git,master,4c15543f8</span><br><span class="line">swift-integration-tests,https://github.com/apple/swift-integration-tests.git,master,4eda8055a</span><br><span class="line">swift-corelibs-libdispatch,https://github.com/apple/swift-corelibs-libdispatch.git,master,e922531c2</span><br></pre></td></tr></table></figure>
 <p>当然，这都是在满足构建 Swift 的仓库目录下运行的，如果你有兴趣学习为 X86 或者 ARM 设备构建 Swift ，请查阅我们的 package-swift 仓库。其中不仅包含 <code>swiftrevs.swift</code> ，还有几个能无痛构建 Swift（和 REPL、Foundation、Swift 包管理器）的脚本。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
@@ -225,6 +226,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -273,7 +278,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -422,11 +427,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -438,11 +443,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -450,7 +451,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -462,11 +463,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -474,7 +479,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -668,7 +673,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

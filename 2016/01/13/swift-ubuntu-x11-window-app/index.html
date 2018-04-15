@@ -20,9 +20,10 @@
 <meta property="og:url" content="https://swift.gg/2016/01/13/swift-ubuntu-x11-window-app/index.html">
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Benedikt Terhechte，原文链接，原文日期：2015-12-08译者：小锅；校对：Prayer；定稿：CMB   现在 Swift 已经开源了，应该有很多感兴趣的用户已经在他们的 Linux 系统上安装把玩过了。然而，目前的 Foundation 框架还在紧锣密鼓地开发中，所以如果你想开发出比命令行更复杂一点的程序，就得链接已有的 Linux 库，如 GTK, Cairo 或">
+<meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://swift.gg/img/articles/swift-ubuntu-x11-window-app/screenshot.png1452647719.9257545">
 <meta property="og:image" content="https://swift.gg/img/articles/swift-ubuntu-x11-window-app/screenshot.png1452647719.9257545">
-<meta property="og:updated_time" content="2017-07-16T00:49:14.000Z">
+<meta property="og:updated_time" content="2018-04-15T10:34:46.379Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift包管理器：在Linux上创建和使用X11包">
 <meta name="twitter:description" content="作者：Benedikt Terhechte，原文链接，原文日期：2015-12-08译者：小锅；校对：Prayer；定稿：CMB   现在 Swift 已经开源了，应该有很多感兴趣的用户已经在他们的 Linux 系统上安装把玩过了。然而，目前的 Foundation 框架还在紧锣密鼓地开发中，所以如果你想开发出比命令行更复杂一点的程序，就得链接已有的 Linux 库，如 GTK, Cairo 或">
@@ -91,7 +92,7 @@
         <a href="/2016/01/13/swift-ubuntu-x11-window-app/" target="_blank" title="Swift包管理器：在Linux上创建和使用X11包" itemprop="url">Swift包管理器：在Linux上创建和使用X11包</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-01-12T16:00:00.000Z" itemprop="datePublished">2016-01-13</time>
+      <time datetime="2016-01-13T00:00:00.000Z" itemprop="datePublished">2016-01-13</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -99,7 +100,7 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Benedikt Terhechte，<a href="http://appventure.me/2015/12/08/swift-ubuntu-x11-window-app/" target="_blank" rel="external">原文链接</a>，原文日期：2015-12-08<br>译者：<a href="http://www.swiftyper.com" target="_blank" rel="external">小锅</a>；校对：<a href="http://www.futantan.com" target="_blank" rel="external">Prayer</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="external">CMB</a></p>
+<p>作者：Benedikt Terhechte，<a href="http://appventure.me/2015/12/08/swift-ubuntu-x11-window-app/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-12-08<br>译者：<a href="http://www.swiftyper.com" target="_blank" rel="noopener">小锅</a>；校对：<a href="http://www.futantan.com" target="_blank" rel="noopener">Prayer</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>现在 Swift 已经开源了，应该有很多感兴趣的用户已经在他们的 Linux 系统上安装把玩过了。然而，目前的 Foundation 框架还在紧锣密鼓地开发中，所以如果你想开发出比命令行更复杂一点的程序，就得链接已有的 Linux 库，如 GTK, Cairo 或者 libpng 以开发出图形界面的程序。</p>
@@ -108,40 +109,40 @@
 <p>在开发的过程中，我们也会使用到新的 Swift 包管理器来为 X11 类库创建一个简单并且可重用的包。</p>
 <p>下面是程序运行后的截图<sup>2</sup>：</p>
 <p><img src="/img/articles/swift-ubuntu-x11-window-app/screenshot.png1452647719.9257545" alt=""></p>
-<h2 id="Swift-包管理器"><a href="#Swift-包管理器" class="headerlink" title="Swift 包管理器"></a>Swift 包管理器</h2><p>在实际开始开发我们的 X11 应用之前，需要先<a href="https://github.com/apple/swift-package-manager" target="_blank" rel="external">定义一个 Swift 包</a>用来定义链接到 X11 类库。一旦完成这个步骤，之后我们就可以将这个包分发给其它开发者，或者在别的项目中进行重用。我们必须将定义一个包和使用一个包区分开来。让我们先从定义开始，然后再学习如何使用。</p>
-<h2 id="定义一个包"><a href="#定义一个包" class="headerlink" title="定义一个包"></a>定义一个包</h2><p>新建一个目录用来保存我们的包。由于我们需要链接到 C 语言的库，<a href="https://github.com/apple/swift-package-manager/blob/master/Documentation/SystemModules.md" target="_blank" rel="external">我遵循了 Swift 包管理器文档的指南，为包名加上一个 C 的前缀</a>，将包命名为 <code>CX11.swift</code></p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line">mkdir CX11.swift</div></pre></td></tr></table></figure>
-<p>对我们来说，我们不想写任何的 Swift 包装（wrapper）代码，而是要直接对已有的 C 语言 API 进行链接。要链接到 C 语言类库和头文件需要通过 <code>module.modulemap</code> 文件，这个文件里包含了帮助 Swift 编译器来进行正确的链接操作的必要指令信息。<a href="http://clang.llvm.org/docs/Modules.html" target="_blank" rel="external">可以在这里获取 modulemap 的语法文档</a>。创建一个 module map 文件，并且对其进行编辑（你可以自行选择编辑器，在这里我使用了 <code>nano</code>）：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line">touch CX11.swift/module.modulemap</div><div class="line">nano CX11.swift/module.modulemap</div></pre></td></tr></table></figure>
+<h2 id="Swift-包管理器"><a href="#Swift-包管理器" class="headerlink" title="Swift 包管理器"></a>Swift 包管理器</h2><p>在实际开始开发我们的 X11 应用之前，需要先<a href="https://github.com/apple/swift-package-manager" target="_blank" rel="noopener">定义一个 Swift 包</a>用来定义链接到 X11 类库。一旦完成这个步骤，之后我们就可以将这个包分发给其它开发者，或者在别的项目中进行重用。我们必须将定义一个包和使用一个包区分开来。让我们先从定义开始，然后再学习如何使用。</p>
+<h2 id="定义一个包"><a href="#定义一个包" class="headerlink" title="定义一个包"></a>定义一个包</h2><p>新建一个目录用来保存我们的包。由于我们需要链接到 C 语言的库，<a href="https://github.com/apple/swift-package-manager/blob/master/Documentation/SystemModules.md" target="_blank" rel="noopener">我遵循了 Swift 包管理器文档的指南，为包名加上一个 C 的前缀</a>，将包命名为 <code>CX11.swift</code></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">mkdir CX11.swift</span><br></pre></td></tr></table></figure>
+<p>对我们来说，我们不想写任何的 Swift 包装（wrapper）代码，而是要直接对已有的 C 语言 API 进行链接。要链接到 C 语言类库和头文件需要通过 <code>module.modulemap</code> 文件，这个文件里包含了帮助 Swift 编译器来进行正确的链接操作的必要指令信息。<a href="http://clang.llvm.org/docs/Modules.html" target="_blank" rel="noopener">可以在这里获取 modulemap 的语法文档</a>。创建一个 module map 文件，并且对其进行编辑（你可以自行选择编辑器，在这里我使用了 <code>nano</code>）：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">touch CX11.swift/module.modulemap</span><br><span class="line">nano CX11.swift/module.modulemap</span><br></pre></td></tr></table></figure>
 <p>X11 是一个包含了很多功能的大型类库。你可以在 <code>/usr/include/X11</code> 目录下查看到它的内容。在我们的示例中，我们不需要包含所有的头文件，相对地，我们只需要用到其中的两个: <code>Xlib.h</code> 和 <code>X.h</code>。对于其它的类库，你可能需要包含更多的头文件。在下面的内容在我会提到如何用一种简便方法来包含某个目录下的全部头文件。除了包含的头文件，我们还需要告诉 Swift 链接哪一个库。可以使用 <code>link</code> 关键字来完成。我们的 <code>modulemap</code> 文件看起来应该是这样的：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">module <span class="type">CX11</span> [system] &#123;</div><div class="line">  module <span class="type">Xlib</span> &#123;</div><div class="line">	  header <span class="string">"/usr/include/X11/Xlib.h"</span></div><div class="line">  &#125;</div><div class="line">  module <span class="type">X</span> &#123;</div><div class="line">	  header <span class="string">"/usr/include/X11/X.h"</span></div><div class="line">  &#125;</div><div class="line">  link <span class="string">"X11"</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">module <span class="type">CX11</span> [system] &#123;</span><br><span class="line">  module <span class="type">Xlib</span> &#123;</span><br><span class="line">	  header <span class="string">"/usr/include/X11/Xlib.h"</span></span><br><span class="line">  &#125;</span><br><span class="line">  module <span class="type">X</span> &#123;</span><br><span class="line">	  header <span class="string">"/usr/include/X11/X.h"</span></span><br><span class="line">  &#125;</span><br><span class="line">  link <span class="string">"X11"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>我们将所创建的模块(module)命名为 <code>CX11</code>，并且我们创建了两个子模块(submodules)。一个是 Xlib，另一个是 X。每一个子模块定义了它需要导入的头文件。最后我们使用 <code>link</code> 语句来链接到 libx11 类库。</p>
 <p>但是如果我们想链接到不止一个头文件呢？Module maps 允许我们定义一个 umbrella 头文件或指定一个 umbrella 目录。</p>
 <p><strong>Umbrella Header</strong> 这是一个头文件，里面包含了引用(通过 <code>#include</code>)其它头文件的指令。一个好的示例是  <code>&lt;Cocoa/Cocoa.h&gt;</code> 或 <code>&lt;Foundation/Foundation.h&gt;</code> 还有 <code>&lt;gtk/gtk.h&gt;</code>。使用 Umbrella 关键字来定义 Umbrella 头：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">umbrella header <span class="string">"/usr/include/gtk/gtk.h"</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">umbrella header <span class="string">"/usr/include/gtk/gtk.h"</span></span><br></pre></td></tr></table></figure>
 <p><strong>Umbrella Directory</strong> 有时候你有一个头文件目录但是并没有一个 umbrella header。在这种情况下，你可以告诉 Swift 直接到该目录下查找头文件：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">umbrella <span class="string">"/usr/include/X11/"</span></div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">umbrella <span class="string">"/usr/include/X11/"</span></span><br></pre></td></tr></table></figure>
 <p>除了 modulemap 文件，我们还需要一个 <strong>Package.swift</strong> 文件，否则我们的构建将会失败。但是这个文件可以是空的：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line">touch CX11.swift/Package.swift</div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">touch CX11.swift/Package.swift</span><br></pre></td></tr></table></figure>
 <p>Swift 包管理器使用了 Git 和 Git Tags 来对包进行管理。所以我们还需要为我们的包创建一个 Git 仓库，添加所有的文件，然后打上一个版本标签。这是相当容易的：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line"><span class="built_in">cd</span> CX11.swift</div><div class="line">git init</div><div class="line">git add .</div><div class="line">git commit -m <span class="string">"Initial Import"</span></div><div class="line">git tag 1.0.0</div><div class="line"><span class="built_in">cd</span> ..</div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">cd</span> CX11.swift</span><br><span class="line">git init</span><br><span class="line">git add .</span><br><span class="line">git commit -m <span class="string">"Initial Import"</span></span><br><span class="line">git tag 1.0.0</span><br><span class="line"><span class="built_in">cd</span> ..</span><br></pre></td></tr></table></figure>
 <p>上述命令首先切换到目录中，创建一个 Git 仓库，添加所有的文件到仓库中，提交，最后为这个提交添加一个版本标记(<code>1.0.0</code>)。</p>
 <p>就是这些，我们的包已经定义完成了，那我们应该如何来使用呢？</p>
 <h2 id="包的使用"><a href="#包的使用" class="headerlink" title="包的使用"></a>包的使用</h2><p>要使用一个包，我们要先定义一个 <code>Package.swift</code> 文件，这个文件可以告诉 Swift 需要导入哪些包到我们的项目中。但是首先得为我们的项目创建一个目录。</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line">mkdir swift-x11</div><div class="line">touch swift-x11/Package.swift</div><div class="line">touch swift-x11/main.swift</div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">mkdir swift-x11</span><br><span class="line">touch swift-x11/Package.swift</span><br><span class="line">touch swift-x11/main.swift</span><br></pre></td></tr></table></figure>
 <p>需要注意的是（针对这个特定的示例程序）需要将 <code>swift-x</code> 目录与 <code>CX11.swift</code> 放到同一个目录：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line">ls -l</div><div class="line">CX11.swift</div><div class="line">swift-x11</div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ls -l</span><br><span class="line">CX11.swift</span><br><span class="line">swift-x11</span><br></pre></td></tr></table></figure>
 <p>在真正着手开始写 Swift 代码与 X11 进行交互之前，我们需要告诉 <code>swift-x11</code> 项目如何导入 <code>CX11</code> 包。在 <code>swift-x11/Package.swift</code>中输入这些代码，我会在下面具体解释这些代码的意思：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> PackageDescription</div><div class="line"></div><div class="line"><span class="keyword">let</span> package = <span class="type">Package</span>(</div><div class="line">  dependencies: [</div><div class="line">    .<span class="type">Package</span>(url: <span class="string">"../CX11.swift"</span>, majorVersion: <span class="number">1</span>)</div><div class="line">  ]</div><div class="line">)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> PackageDescription</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> package = <span class="type">Package</span>(</span><br><span class="line">  dependencies: [</span><br><span class="line">    .<span class="type">Package</span>(url: <span class="string">"../CX11.swift"</span>, majorVersion: <span class="number">1</span>)</span><br><span class="line">  ]</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
 <p>这些代码的意思是告诉 Swift 要到 <code>../CX11.swift</code> 目录中查找包。</p>
-<p><code>url</code>(正如它的名字所代表的)不需要是一个本地的url，<a href="https://github.com/terhechte/CX11.swift" target="_blank" rel="external">我已经将我的 CX11.swift 上传到了 GitHub</a>，你也可以在 url 中直接使用 GitHub 的链接：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line">import PackageDescription</div><div class="line"></div><div class="line"><span class="built_in">let</span> package = Package(</div><div class="line">  dependencies: [</div><div class="line">    .Package(url: <span class="string">"https://github.com/terhechte/CX11.swift.git"</span>, majorVersion: 1)</div><div class="line">  ]</div><div class="line">)</div></pre></td></tr></table></figure>
+<p><code>url</code>(正如它的名字所代表的)不需要是一个本地的url，<a href="https://github.com/terhechte/CX11.swift" target="_blank" rel="noopener">我已经将我的 CX11.swift 上传到了 GitHub</a>，你也可以在 url 中直接使用 GitHub 的链接：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">import PackageDescription</span><br><span class="line"></span><br><span class="line"><span class="built_in">let</span> package = Package(</span><br><span class="line">  dependencies: [</span><br><span class="line">    .Package(url: <span class="string">"https://github.com/terhechte/CX11.swift.git"</span>, majorVersion: 1)</span><br><span class="line">  ]</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
 <h2 id="使用X11"><a href="#使用X11" class="headerlink" title="使用X11"></a>使用X11</h2><p>现在我们已经定义好了 X11 包，并且包管理器也配置完毕，现在就开始动手用 Swift 写第一个 X11 程序吧。</p>
 <p>这里有一个问题我没办法解决，那就是定义在 X11 头文件中的宏并没有导入到 Swift 当中。<code>Xlib.h</code> 文件当中定义了很多类似下面这样的宏：</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">define</span> RootWindow(dpy, src) (ScreenOfDisplay(dpy, src)-&gt;root)</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> ScreenOfDisplay(dpy, scr)(&amp;((_XPrivDisplay)dpy)-&gt;screens[scr])</span></div></pre></td></tr></table></figure>
-<p>因为这些宏都没有被导入，所以我决定将宏所定义的完整代码都写出来。以下所有的代码都是写在 <code>main.swift</code> 文件当中的。<a href="https://github.com/terhechte/swift-x11-example" target="_blank" rel="external">你也可以在 GitHub 上找到最终完成版</a>。请注意，这是一个简单并且内存不安全的示例程序。这仅仅是为了展示如果在 Linux 下使用 C 语言类库。同时，我的 X11 知识也十分有限。我在 Linux 下使用 X11 编程已经是 10 年前的事情了，我已经忘了大半，因此下面的代码解释中可能存在错误。如果你发现了错误，<a href="https://github.com/terhechte/appventure-blog/tree/master/resources/posts/2015-12-08-swift-ubuntu-x11-window-app.org" target="_blank" rel="external">尽管在这个仓库中向我提交一个PR :)</a></p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> RootWindow(dpy, src) (ScreenOfDisplay(dpy, src)-&gt;root)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ScreenOfDisplay(dpy, scr)(&amp;((_XPrivDisplay)dpy)-&gt;screens[scr])</span></span><br></pre></td></tr></table></figure>
+<p>因为这些宏都没有被导入，所以我决定将宏所定义的完整代码都写出来。以下所有的代码都是写在 <code>main.swift</code> 文件当中的。<a href="https://github.com/terhechte/swift-x11-example" target="_blank" rel="noopener">你也可以在 GitHub 上找到最终完成版</a>。请注意，这是一个简单并且内存不安全的示例程序。这仅仅是为了展示如果在 Linux 下使用 C 语言类库。同时，我的 X11 知识也十分有限。我在 Linux 下使用 X11 编程已经是 10 年前的事情了，我已经忘了大半，因此下面的代码解释中可能存在错误。如果你发现了错误，<a href="https://github.com/terhechte/appventure-blog/tree/master/resources/posts/2015-12-08-swift-ubuntu-x11-window-app.org" target="_blank" rel="noopener">尽管在这个仓库中向我提交一个PR :)</a></p>
 <p>我们先从导入前面定义的 <code>CX11</code> 类库开始：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="keyword">import</span> CX11.Xlib</div><div class="line"><span class="keyword">import</span> CX11.X</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> CX11.Xlib</span><br><span class="line"><span class="keyword">import</span> CX11.X</span><br></pre></td></tr></table></figure>
 <h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>在这之后，我们需要定义一些变量。</p>
 <ul>
 <li>我们需要一个 X11 显示(大致来讲就是与 X11 服务器的连接)，这个变量命名为 <code>d</code>。</li>
@@ -151,33 +152,33 @@
 <li>我们需要一个位置用来储存当前的 X11 屏幕(一个 X11 显示可以拥有多个屏幕)，这个变量命名为 <code>s</code>。</li>
 <li>最后，我们需要一个指针指向 X11 的根窗口，这个根窗口保存了其它的窗口，这个变量命名为 <code>rootWindow</code>。</li>
 </ul>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// X11 Display</span></div><div class="line"><span class="keyword">var</span> d: _XPrivDisplay</div><div class="line"></div><div class="line"><span class="comment">// 我们将要创建的 window</span></div><div class="line"><span class="keyword">var</span> w: <span class="type">Window</span></div><div class="line"></div><div class="line"><span class="comment">// X11 产生的事件</span></div><div class="line"><span class="keyword">var</span> e = <span class="type">UnsafeMutablePointer</span>&lt;_XEvent&gt;.alloc(<span class="number">1</span>)</div><div class="line"></div><div class="line"><span class="comment">// 要显示的文本内容</span></div><div class="line"><span class="keyword">var</span> msg = <span class="string">"Hello Swift World"</span></div><div class="line"></div><div class="line"><span class="comment">// 指向当前 X11 Screen 的指针</span></div><div class="line"><span class="keyword">var</span> s: <span class="type">UnsafeMutablePointer</span>&lt;<span class="type">Screen</span>&gt;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// X11 Display</span></span><br><span class="line"><span class="keyword">var</span> d: _XPrivDisplay</span><br><span class="line"></span><br><span class="line"><span class="comment">// 我们将要创建的 window</span></span><br><span class="line"><span class="keyword">var</span> w: <span class="type">Window</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// X11 产生的事件</span></span><br><span class="line"><span class="keyword">var</span> e = <span class="type">UnsafeMutablePointer</span>&lt;_XEvent&gt;.alloc(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 要显示的文本内容</span></span><br><span class="line"><span class="keyword">var</span> msg = <span class="string">"Hello Swift World"</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 指向当前 X11 Screen 的指针</span></span><br><span class="line"><span class="keyword">var</span> s: <span class="type">UnsafeMutablePointer</span>&lt;<span class="type">Screen</span>&gt;</span><br></pre></td></tr></table></figure>
 <p>变量定义好之后，我们需要打开到 X11 服务器的连接。但是，由于用户有可能在没有安装 X11 服务器(比如，控制台模式)的机器上运行这个应用程序，所以我们需要判断这个连接是否成功：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">d = <span class="type">XOpenDisplay</span>(<span class="literal">nil</span>)</div><div class="line"><span class="keyword">if</span> d == <span class="literal">nil</span> &#123;</div><div class="line">	<span class="built_in">fatalError</span>(<span class="string">"cannot open display"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">d = <span class="type">XOpenDisplay</span>(<span class="literal">nil</span>)</span><br><span class="line"><span class="keyword">if</span> d == <span class="literal">nil</span> &#123;</span><br><span class="line">	<span class="built_in">fatalError</span>(<span class="string">"cannot open display"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>在成功打开连接之后，我们要获取当前的默认显示屏以及当前的根窗口。由于 <code>RootWindow</code> 宏不可用<sup>4</sup>，所以我们直接获取 <code>C 结构体</code> 的内存区域。然而，因为当前的屏幕 <code>s</code> 是一个 <code>UnsafeMutablePointer</code>，我们需要增加一个 <code>memory</code> 属性来获得 <code>root</code> 实例。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// Get the default screen</span></div><div class="line">s = <span class="type">XDefaultScreenOfDisplay</span>(d)</div><div class="line"></div><div class="line"><span class="comment">// And the current root window on that screen</span></div><div class="line"><span class="keyword">let</span> rootWindow = s.memory.root</div></pre></td></tr></table></figure>
-<h2 id="创建一个窗口"><a href="#创建一个窗口" class="headerlink" title="创建一个窗口"></a>创建一个窗口</h2><p>现在我们有了创建窗口以及将其显示在屏幕中的所有东西。我们将<a href="http://linux.die.net/man/3/xcreatesimplewindow" target="_blank" rel="external">使用 <code>XCreateSimpleWindow</code> 函数来完成</a>。这个函数接受如下的参数：</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><div class="line">XCreateSimpleWindow(Display *display, Window parent, <span class="keyword">int</span> x, <span class="keyword">int</span> y, </div><div class="line">  <span class="keyword">unsigned</span> <span class="keyword">int</span> width, <span class="keyword">unsigned</span> <span class="keyword">int</span> height, <span class="keyword">unsigned</span> <span class="keyword">int</span> border_width, </div><div class="line">  <span class="keyword">unsigned</span> <span class="keyword">long</span> border, <span class="keyword">unsigned</span> <span class="keyword">long</span> background);</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Get the default screen</span></span><br><span class="line">s = <span class="type">XDefaultScreenOfDisplay</span>(d)</span><br><span class="line"></span><br><span class="line"><span class="comment">// And the current root window on that screen</span></span><br><span class="line"><span class="keyword">let</span> rootWindow = s.memory.root</span><br></pre></td></tr></table></figure>
+<h2 id="创建一个窗口"><a href="#创建一个窗口" class="headerlink" title="创建一个窗口"></a>创建一个窗口</h2><p>现在我们有了创建窗口以及将其显示在屏幕中的所有东西。我们将<a href="http://linux.die.net/man/3/xcreatesimplewindow" target="_blank" rel="noopener">使用 <code>XCreateSimpleWindow</code> 函数来完成</a>。这个函数接受如下的参数：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">XCreateSimpleWindow(Display *display, Window parent, <span class="keyword">int</span> x, <span class="keyword">int</span> y, </span><br><span class="line">  <span class="keyword">unsigned</span> <span class="keyword">int</span> width, <span class="keyword">unsigned</span> <span class="keyword">int</span> height, <span class="keyword">unsigned</span> <span class="keyword">int</span> border_width, </span><br><span class="line">  <span class="keyword">unsigned</span> <span class="keyword">long</span> border, <span class="keyword">unsigned</span> <span class="keyword">long</span> background);</span><br></pre></td></tr></table></figure>
 <p><code>border</code> 和 <code>background</code> 是颜色(color)值。为了避免手动创建颜色，我们简单地传入当前屏幕定义好的默认黑色和白色引用。这里需要再次用到 <code>.memory</code> 属性。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line"><span class="comment">// Create our window</span></div><div class="line">w = <span class="type">XCreateSimpleWindow</span>(d, rootWindow, <span class="number">10</span>, <span class="number">10</span>, <span class="number">200</span>, <span class="number">100</span>, <span class="number">1</span>, </div><div class="line">  s.memory.black_pixel, s.memory.white_pixel)</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Create our window</span></span><br><span class="line">w = <span class="type">XCreateSimpleWindow</span>(d, rootWindow, <span class="number">10</span>, <span class="number">10</span>, <span class="number">200</span>, <span class="number">100</span>, <span class="number">1</span>, </span><br><span class="line">  s.memory.black_pixel, s.memory.white_pixel)</span><br></pre></td></tr></table></figure>
 <p>这段代码会在 <code>rootWindow</code> 的 10/10 位位置创建一个宽度 200 和高度 100 的新窗口。边框会是黑色，而背景将会是白色。</p>
-<h2 id="输入事件"><a href="#输入事件" class="headerlink" title="输入事件"></a>输入事件</h2><p>当然，我们还需要接受从 Xserver 上传来的输入事件。在这个例子中，我们需要知道窗口何时被显示，此时我们可以在上面进行绘制，我们还需要知道用户按下特定键退出程序的事件。第一个是 <code>Expose</code> 事件，第二个是 <code>KeyPress</code> 事件。<a href="http://tronche.com/gui/x/xlib/event-handling/XSelectInput.html" target="_blank" rel="external">接受事件需要通过 <code>XselectInput</code> 函数来注册事件掩码来完成</a>：</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><div class="line">XSelectInput(d, w, ExposureMask | KeyPressMask)</div></pre></td></tr></table></figure>
-<p>窗口创建完成之后，我们就可以显示它了。<a href="http://tronche.com/gui/x/xlib/window/XMapWindow.html" target="_blank" rel="external">这是通过 <code>XMapWindow</code> 函数来实现的</a>：</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><div class="line">XMapWindow(d, w)</div></pre></td></tr></table></figure>
+<h2 id="输入事件"><a href="#输入事件" class="headerlink" title="输入事件"></a>输入事件</h2><p>当然，我们还需要接受从 Xserver 上传来的输入事件。在这个例子中，我们需要知道窗口何时被显示，此时我们可以在上面进行绘制，我们还需要知道用户按下特定键退出程序的事件。第一个是 <code>Expose</code> 事件，第二个是 <code>KeyPress</code> 事件。<a href="http://tronche.com/gui/x/xlib/event-handling/XSelectInput.html" target="_blank" rel="noopener">接受事件需要通过 <code>XselectInput</code> 函数来注册事件掩码来完成</a>：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">XSelectInput(d, w, ExposureMask | KeyPressMask)</span><br></pre></td></tr></table></figure>
+<p>窗口创建完成之后，我们就可以显示它了。<a href="http://tronche.com/gui/x/xlib/window/XMapWindow.html" target="_blank" rel="noopener">这是通过 <code>XMapWindow</code> 函数来实现的</a>：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">XMapWindow(d, w)</span><br></pre></td></tr></table></figure>
 <h2 id="事件循环（Event-Loop）"><a href="#事件循环（Event-Loop）" class="headerlink" title="事件循环（Event Loop）"></a>事件循环（Event Loop）</h2><p>最后，我们需要在窗口的显示期间启动事件循环。在这里，我用一个 <code>while</code> 循环来不断地使用 <code>XNextEvent</code> 函数以获取新的 X11 事件。接着，我们对事件进行判断，以确定其是否为 <code>Expose</code> 以及 <code>KeyPress</code> 事件<sup>5</sup>。我们通过 <code>swift</code> 语句来进行判断：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><div class="line">loop: <span class="keyword">while</span> <span class="literal">true</span> &#123;</div><div class="line"></div><div class="line">  <span class="comment">// Wait for the next event</span></div><div class="line">  <span class="type">XNextEvent</span>(d, e)</div><div class="line"></div><div class="line">  <span class="keyword">switch</span> e.memory.type &#123;</div><div class="line">    <span class="comment">// The window has to be drawn</span></div><div class="line">    <span class="keyword">case</span> <span class="type">Expose</span>:</div><div class="line">    <span class="comment">// draw a small black rectangle</span></div><div class="line">    <span class="type">XFillRectangle</span>(d, w, s.memory.default_gc, <span class="number">20</span>, <span class="number">20</span>, <span class="number">10</span>, <span class="number">10</span>) </div><div class="line">    <span class="comment">// draw the text</span></div><div class="line">    <span class="type">XDrawString</span>(d, w, s.memory.default_gc, <span class="number">10</span>, <span class="number">70</span>, msg, <span class="type">Int32</span>(msg.characters.<span class="built_in">count</span>)) </div><div class="line"></div><div class="line">    <span class="comment">// The user did press a key</span></div><div class="line">    <span class="keyword">case</span> <span class="type">KeyPress</span>:</div><div class="line">    <span class="keyword">break</span> loop</div><div class="line"></div><div class="line">    <span class="comment">// We never signed up for this event</span></div><div class="line">    <span class="keyword">default</span>: <span class="built_in">fatalError</span>(<span class="string">"Unknown Event"</span>)</div><div class="line"></div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">loop: <span class="keyword">while</span> <span class="literal">true</span> &#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Wait for the next event</span></span><br><span class="line">  <span class="type">XNextEvent</span>(d, e)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">switch</span> e.memory.type &#123;</span><br><span class="line">    <span class="comment">// The window has to be drawn</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">Expose</span>:</span><br><span class="line">    <span class="comment">// draw a small black rectangle</span></span><br><span class="line">    <span class="type">XFillRectangle</span>(d, w, s.memory.default_gc, <span class="number">20</span>, <span class="number">20</span>, <span class="number">10</span>, <span class="number">10</span>) </span><br><span class="line">    <span class="comment">// draw the text</span></span><br><span class="line">    <span class="type">XDrawString</span>(d, w, s.memory.default_gc, <span class="number">10</span>, <span class="number">70</span>, msg, <span class="type">Int32</span>(msg.characters.<span class="built_in">count</span>)) </span><br><span class="line"></span><br><span class="line">    <span class="comment">// The user did press a key</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">KeyPress</span>:</span><br><span class="line">    <span class="keyword">break</span> loop</span><br><span class="line"></span><br><span class="line">    <span class="comment">// We never signed up for this event</span></span><br><span class="line">    <span class="keyword">default</span>: <span class="built_in">fatalError</span>(<span class="string">"Unknown Event"</span>)</span><br><span class="line"></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这里的 <code>e</code> 事件结构体还是一个 <code>UnsafeMutablePointer</code>，所以我们还是需要通过 <code>memory</code> 属性来获得真实的结构体。<code>Expose</code> 事件表明现在窗口已经可见，所以我们需要对进行重绘。这里的绘制十分简单：使用 <code>XFillRectangle</code> 来绘制一个小的黑块，以及 <code>XDrawString</code> 来将已初始化的 <code>msg</code> 文本绘制到窗口的 10, 70 位置。我不是很清楚 X11 是接受 unicode 还是 ascii 编码，所以 <code>Int32(msg.characters.count)</code> 可能是错的，但是在这个例子当中它可以正常运行。</p>
 <p>另一个事件，<code>KeyPress</code> 一旦在用户按下一个键的时候跳出外层的 <code>while</code> 循环并退出程序。</p>
 <h2 id="运行"><a href="#运行" class="headerlink" title="运行"></a>运行</h2><p>要运行这个程序，只需要 check out 仓库(最好在Linux上进行)并且在目录中运行如下命令：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line">swift build</div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">swift build</span><br></pre></td></tr></table></figure>
 <p>这个命令会 clone <code>CX11.swift</code> 包，并且在 <code>.build/debug</code> 目录中构建出二进制文件。</p>
 <p>通过如下的命令来运行：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line">.build/debug/swift-x11-example</div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">.build/debug/swift-x11-example</span><br></pre></td></tr></table></figure>
 <p>这将会执行二进制文件，一个小小的 X11 窗口将会出现在你的桌面上：</p>
 <p><img src="/img/articles/swift-ubuntu-x11-window-app/screenshot.png1452647719.9257545" alt=""></p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这是一个相当的简单的示例，展示了如何在 Linux 下使用 Swift 写一个 X11 应用程序。当然，这些知识同样适用地链接到其它类库的不同类型的应用程序。这个教程同时也通过使用一个简单的 <code>X11</code> 包阐述了 Swift 包管理器是如何工作的。</p>
-<p><a href="https://github.com/terhechte/swift-x11-example" target="_blank" rel="external">完整的 X11 应用程序代码可以在这里找到。</a><br><a href="https://github.com/terhechte/CX11.swift" target="_blank" rel="external">完成的 X11 包代码可以在这里找到。</a></p>
+<p><a href="https://github.com/terhechte/swift-x11-example" target="_blank" rel="noopener">完整的 X11 应用程序代码可以在这里找到。</a><br><a href="https://github.com/terhechte/CX11.swift" target="_blank" rel="noopener">完成的 X11 包代码可以在这里找到。</a></p>
 <ol>
 <li>我一开始使用的是 GTK3, 但是没办法让它运行起来</li>
 <li>十分壮观，不是么 :)</li>
@@ -297,6 +298,10 @@
 		  
 		
 		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
 		  
 		
@@ -345,7 +350,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>30</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>31</sup></a></li>
 		  
 		
 		  
@@ -494,11 +499,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -510,11 +515,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -522,7 +523,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -534,11 +535,15 @@
 			
 		
 			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/SwiftyDB/" title="SwiftyDB">SwiftyDB<sup>1</sup></a></li>
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
 			
 		
 			
@@ -546,7 +551,7 @@
 			
 		
 			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -740,7 +745,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		
