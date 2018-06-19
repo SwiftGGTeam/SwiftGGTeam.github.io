@@ -1,0 +1,1000 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>重新实现可选类型的隐式解包 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="重新实现隐式解包的原因，会碰到问题。">
+<meta name="keywords" content="Swift">
+<meta property="og:type" content="article">
+<meta property="og:title" content="重新实现可选类型的隐式解包">
+<meta property="og:url" content="https://swift.gg/2018/06/19/swift-org-blog-iuo/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="重新实现隐式解包的原因，会碰到问题。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://user-images.githubusercontent.com/13807250/40166397-082f067e-59f1-11e8-931a-3d3d0cb892eb.png">
+<meta property="og:image" content="https://user-images.githubusercontent.com/13807250/40166527-52d1029a-59f1-11e8-94f2-44d9dc1660ce.png">
+<meta property="og:image" content="https://user-images.githubusercontent.com/13807250/40213466-2dd070ba-5a88-11e8-888a-0ca5066f4d36.png">
+<meta property="og:image" content="https://user-images.githubusercontent.com/13807250/40213471-336db9ba-5a88-11e8-9b8e-11287e1bfccd.png">
+<meta property="og:updated_time" content="2018-06-19T02:50:42.378Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="重新实现可选类型的隐式解包">
+<meta name="twitter:description" content="重新实现隐式解包的原因，会碰到问题。">
+<meta name="twitter:image" content="https://user-images.githubusercontent.com/13807250/40166397-082f067e-59f1-11e8-931a-3d3d0cb892eb.png">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2018/06/19/swift-org-blog-iuo/" target="_blank" title="重新实现可选类型的隐式解包" itemprop="url">重新实现可选类型的隐式解包</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2018-06-19T00:00:00.000Z" itemprop="datePublished">2018-06-19</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Mark Lacey，<a href="https://swift.org/blog/iuo/" target="_blank" rel="noopener">原文链接</a>，原文日期：2018-04-26<br>译者：<a href="undefined">灰s</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>，<a href="undefined"> mmoaay</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>今年早些时候，Swift 编译器实现了一种新的可选类型隐式解包 (IUOs)，在最近的 Swift <a href="https://swift.org/download/#snapshots" target="_blank" rel="noopener">测试版本</a> 中开放使用。它实现了 <a href="https://github.com/apple/swift-evolution/blob/master/proposals/0054-abolish-iuo.md" target="_blank" rel="noopener"> SE-0054 - Abolish ImplicitlyUnwrappedOptional Type</a>。对于 Swift 来说，这是一次重大的改变，消除了类型检测中的一些矛盾，并且阐明了处理这些值的规则，使语义保持一致且易于推理。更多信息可以阅读这条提案的 <a href="https://github.com/apple/swift-evolution/blob/master/proposals/0054-abolish-iuo.md#motivation" target="_blank" rel="noopener">动机</a>。</p>
+<p>主要变化是，当引用一个被声明为隐式解包可选的基础类型 <code>T</code> 时，在诊断信息中会打印 <code>T?</code>，而不是之前的 <code>T!</code>。你可能会遇到源代码兼容性问题，需要修改代码之后才能编译成功。</p>
+<a id="more"></a>
+<h2 id="隐式解包是声明的一部分"><a href="#隐式解包是声明的一部分" class="headerlink" title="隐式解包是声明的一部分"></a>隐式解包是声明的一部分</h2><p><em>可选类型的隐式解包</em> 在编译时会根据需要自动解包。要声明一个可选类型的隐式解包，需要将类型后面的 <code>?</code> 改成 <code>!</code>。  </p>
+<p>在很多人的认知中，隐式解包的可选类型与常规可选类型并不属于同一个类别。在 Swift 3 中，它们也确实不一样：像 <code>var a: Int?</code>  这样的声明，会创建一个拥有 <code>Optional&lt;Int&gt;</code> 类型的 <code>a</code>；像 <code>var b: String!</code>  这样的声明，会创建一个拥有 <code>ImplicitlyUnwrappedOptional&lt;String&gt;</code> 类型的 <code>b</code> 。  </p>
+<p>在 IUOs 的新模型中，你需要将 <code>!</code> 视为 <code>?</code> 的同义词，它只是在声明中添加一个标志让编译器知道被声明的值可以进行隐式解包。  </p>
+<p>换句话说，对于 <code>String!</code> 的理解你可以认为是 “这个值拥有 <code>Optional&lt;String&gt;</code> 类型并且携带了信息说在需要的时候它可以被隐式的解包。”  </p>
+<p>这种思维模型与新的实现相匹配。现在，任何地方你申明了 <code>T!</code> ，编译器都会将它看做 <code>T?</code> 类型，然后在申明的内部表示中添加一个标签使得类型检测器知道当需要的时候可以对它进行隐式解包。  </p>
+<p>这一变化最明显的结果就是对于申明为 <code>T!</code> 的变量，你将看到关于 <code>T?</code> 的诊断而不是 <code>T!</code>。 在诊断中看到 <code>T?</code> 而不是 <code>T!</code> 可能需要一点时间去适应它，但是拥抱这一新的思维模型将会一直帮助你。</p>
+<p><strong>为了便于理解，译者自己做了配图，展示新旧 Swift 的区别：</strong>  </p>
+<p><img src="https://user-images.githubusercontent.com/13807250/40166397-082f067e-59f1-11e8-931a-3d3d0cb892eb.png" alt="old"><br><img src="https://user-images.githubusercontent.com/13807250/40166527-52d1029a-59f1-11e8-94f2-44d9dc1660ce.png" alt="new"></p>
+<h2 id="源代码兼容性"><a href="#源代码兼容性" class="headerlink" title="源代码兼容性"></a>源代码兼容性</h2><h3 id="强制转换为-T"><a href="#强制转换为-T" class="headerlink" title="强制转换为 T!"></a>强制转换为 <code>T!</code></h3><p>按照 SE-0054 提案，<code>as T!</code> 这样的强制转换已经不再被允许。</p>
+<p>在 Swift 4.1 中，这种形式的强制转换会显示一个弃用警告。多数情况下，使用 <code>as T?</code> 来替代 <code>as T!</code> 或者直接移除该强制转换即可编译成功。</p>
+<p>如果这两种方法都不管用，新的实现中也有对应的特殊处理。具体来说，如果遇到 <code>x as T!</code>，编辑器首先会尝试 <code>x as T?</code>。如果失败，编辑器会用 <code>(x as T?)!</code> 来进行强制解包。</p>
+<p>但是，这种形式的强制转换仍然不推荐使用，在将来的 Swift 版本中有可能会移除这种特殊处理。</p>
+<h3 id="在类型中使用"><a href="#在类型中使用" class="headerlink" title="在类型中使用 !"></a>在类型中使用 <code>!</code></h3><p>强制转换为 <code>T!</code> 作为一个特例存在于一个更普遍的问题中：使用 <code>!</code> 作为类型的一部分。  </p>
+<p>可以在下面三个地方使用 <code>!</code> 作为类型中的一部分：</p>
+<pre><code>1. 属性声明
+2. 方法的参数类型声明
+3. 方法的返回值类型声明
+</code></pre><p>在其它地方使用 <code>!</code> 将被标记成一个错误。Swift 4.1 之前的版本就已经实现了这个检测，但是遗漏了一些情况：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> fn: (<span class="type">Int</span>!) -&gt; <span class="type">Int</span>! = ...   <span class="comment">// error: not a function declaration!</span></span><br></pre></td></tr></table></figure>
+<p>这里 Swift 4.1 显示了弃用警告，但是仍然默认了隐式解包的行为。在近期测试版本的新实现中，编译器会将 <code>!</code> 视为 <code>?</code>，同时在诊断信息中告诉你发生了什么，以及这种用法会被废弃。  </p>
+<p><strong>译者配图：</strong>  </p>
+<p><img src="https://user-images.githubusercontent.com/13807250/40213466-2dd070ba-5a88-11e8-888a-0ca5066f4d36.png" alt="old-2"><br><img src="https://user-images.githubusercontent.com/13807250/40213471-336db9ba-5a88-11e8-9b8e-11287e1bfccd.png" alt="new-2"></p>
+<h3 id="隐式解包可选类型的-map-方法"><a href="#隐式解包可选类型的-map-方法" class="headerlink" title="隐式解包可选类型的 map 方法"></a>隐式解包可选类型的 map 方法</h3><p>以前的代码是这样的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">C</span> </span>&#123;&#125;</span><br><span class="line"><span class="keyword">let</span> values: [<span class="type">Any</span>]! = [<span class="type">C</span>()]</span><br><span class="line"><span class="keyword">let</span> transformed = values.<span class="built_in">map</span> &#123; $<span class="number">0</span> <span class="keyword">as</span>! <span class="type">C</span> &#125;</span><br></pre></td></tr></table></figure>
+<p>上面的代码会对 <code>values</code> 强制解包，然后对数组调用 <code>map(_:)</code> 方法。即使你在 <code>ImplicitlyUnwrappedOptional</code> 的扩展中定义了 <code>map(_:)</code> 方法也无法覆盖默认方法，因为它并不会像你想的那样，在 <code>ImplicitlyUnwrappedOptional</code> 中执行方法查找。  </p>
+<p>在新的实现中，因为 <code>!</code> 和 <code>?</code> 是同义词，编译器会尝试使用 <code>Optional&lt;T&gt;</code> 中的 <code>map(_:)</code> 方法：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> transformed = values.<span class="built_in">map</span> &#123; $<span class="number">0</span> <span class="keyword">as</span>! <span class="type">C</span> &#125; <span class="comment">// calls Optional.map; $0 has type [Any]</span></span><br></pre></td></tr></table></figure>
+<p>并且显示： <code>warning: cast from &#39;[Any]&#39; to unrelated type &#39;C&#39; always fails</code>。  </p>
+<p>这样从语义上就通过了类型检测，我们不需要对 <code>values</code> 进行强制解包。  </p>
+<p>你可以使用可选链制造一个可选的数组来解决这个问题：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> transformed = values?.<span class="built_in">map</span> &#123; $<span class="number">0</span> <span class="keyword">as</span>! <span class="type">C</span> &#125; <span class="comment">// transformed 的类型是 Optional&lt;[C]&gt;</span></span><br></pre></td></tr></table></figure>
+<p>或者对 <code>values</code> 进行强制解包来得到一个数组：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> transformed = values!.<span class="built_in">map</span> &#123; $<span class="number">0</span> <span class="keyword">as</span>! <span class="type">C</span> &#125; <span class="comment">// transformed has type [C]</span></span><br></pre></td></tr></table></figure>
+<p>注意，大部分情况下你不需要修改代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> values: [<span class="type">Int</span>]! = [<span class="number">1</span>]</span><br><span class="line"><span class="keyword">let</span> transformed = values.<span class="built_in">map</span> &#123; $<span class="number">0</span> + <span class="number">1</span> &#125;</span><br></pre></td></tr></table></figure>
+<p>它将继续按照老版本的方式工作，因为在这里将表达式看作 <code>Optional</code> 执行 <code>map(_:)</code> 方法无法进行类型检测。取而代之，我们会对 <code>values</code> 进行强制解包，并对返回的数组执行 <code>map(_:)</code> 方法。</p>
+<h3 id="无法推断类型"><a href="#无法推断类型" class="headerlink" title="无法推断类型"></a>无法推断类型</h3><p>因为隐式解包可选不再是一个类型，所以不能被推断成一种类型或者类型的任何部分。</p>
+<p>在下面的例子中，尽管右边的赋值包含一个被声明为隐式解包的值，左边类型推断仅表示这个值（或者返回值）是一个可选类型。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> x: <span class="type">Int</span>!</span><br><span class="line"><span class="keyword">let</span> y = x   <span class="comment">// y has type Int?</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">forcedResult</span><span class="params">()</span></span> -&gt; <span class="type">Int</span>! &#123; ... &#125;</span><br><span class="line"><span class="keyword">let</span> getValue = forcedResult    <span class="comment">// getValue 的类型是 () -&gt; Int?</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">id</span>&lt;T&gt;<span class="params">(<span class="number">_</span> value: T)</span></span> -&gt; <span class="type">T</span> &#123; <span class="keyword">return</span> value &#125;</span><br><span class="line"><span class="keyword">let</span> z = id(x)   <span class="comment">// z 的类型是 Int?</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">apply</span>&lt;T&gt;<span class="params">(<span class="number">_</span> fn: <span class="params">()</span></span></span> -&gt; <span class="type">T</span>) -&gt; <span class="type">T</span> &#123; <span class="keyword">return</span> fn() &#125;</span><br><span class="line"><span class="keyword">let</span> w: <span class="type">Int</span> = apply(forcedResult)    <span class="comment">// 报错，因为 apply() 返回的是 Int?</span></span><br></pre></td></tr></table></figure>
+<p>还有一些特殊的实例会遇到这个问题，比如 <code>AnyObject</code> 的查找操作，<code>try?</code> 和 <code>switch</code>。</p>
+<h4 id="AnyObject-的查找操作"><a href="#AnyObject-的查找操作" class="headerlink" title="AnyObject 的查找操作"></a>AnyObject 的查找操作</h4><p><code>AnyObject</code> 的查找结果会被当作一个隐式解包的可选类型。如果你查找一个本身就被声明成隐式解包的属性，那么表达式现在就有两层隐式解包 ( <code>property</code> 被声明为 <code>UILabel!</code>)：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getLabel</span><span class="params">(object: AnyObject)</span></span> -&gt; <span class="type">UILabel</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> object.property <span class="comment">// forces both optionals, resulting in a UILabel</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>if let</code> 和 <code>guard let</code> 仅能解包一层可选属性。  </p>
+<p>在下面的例子中，之前的 Swift 版本在经过 <code>if let</code> 进行一层解包之后，推测出 <code>label</code> 的属性为 <code>UILabel!</code>。在测试版本中 Swift 将推测出 <code>UILabel?</code> ：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// label is inferred to be UILabel?</span></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> label = object.property &#123; </span><br><span class="line">   <span class="comment">// Error due to passing a UILabel? where a UILabel is expected</span></span><br><span class="line">  functionTakingLabel(label)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们可以使用一个明确的类型来修复这个问题：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Implicitly unwrap object.property due to explicit type.</span></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> label: <span class="type">UILabel</span> = object.property &#123;</span><br><span class="line">  functionTakingLabel(label) <span class="comment">// okay</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="try"><a href="#try" class="headerlink" title="try?"></a><code>try?</code></h4><p>类似的，<code>try?</code> 会添加一层可选性，所以当对一个返回值为隐式可选类型的方法使用 <code>try?</code> 时，你可能会发现现在需要更改代码来显式对两层可选性进行解包。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">test</span><span class="params">()</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Int</span>! &#123; ... &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> x = <span class="keyword">try</span>? test() &#123;</span><br><span class="line">  <span class="keyword">let</span> y: <span class="type">Int</span> = x    <span class="comment">// error: x is an Int?</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> x: <span class="type">Int</span> = <span class="keyword">try</span>? test() &#123; <span class="comment">// explicitly typed as Int</span></span><br><span class="line">  <span class="keyword">let</span> y: <span class="type">Int</span> = x    <span class="comment">// okay, x is an Int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> x = <span class="keyword">try</span>? test(), <span class="keyword">let</span> y = x &#123; <span class="comment">// okay, x is Int?, y is Int</span></span><br><span class="line"> ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="switch"><a href="#switch" class="headerlink" title="switch"></a><code>switch</code></h4><p>Swift 4.1 可以编译下面这样的代码，因为它将 <code>output</code> 作为隐式解包对待：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">switchExample</span><span class="params">(input: String!)</span></span> -&gt; <span class="type">String</span> &#123;</span><br><span class="line">  <span class="keyword">switch</span> input &#123;</span><br><span class="line">  <span class="keyword">case</span> <span class="string">"okay"</span>:</span><br><span class="line">    <span class="keyword">return</span> <span class="string">"fine"</span></span><br><span class="line">  <span class="keyword">case</span> <span class="keyword">let</span> output:</span><br><span class="line">    <span class="keyword">return</span> output  <span class="comment">// 隐式解包可选值，返回 String</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>请注意，如果用下面这种方法实现这个例子，无法编译成功：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">switchExample</span><span class="params">(input: String!)</span></span> -&gt; <span class="type">String</span> &#123;</span><br><span class="line">  <span class="keyword">let</span> output = input  <span class="comment">// output is inferred to be String?</span></span><br><span class="line">  <span class="keyword">switch</span> input &#123;</span><br><span class="line">  <span class="keyword">case</span> <span class="string">"okay"</span>:</span><br><span class="line">    <span class="keyword">return</span> <span class="string">"fine"</span></span><br><span class="line">  <span class="keyword">default</span>:</span><br><span class="line">    <span class="keyword">return</span> output  <span class="comment">// error: value of optional type 'String?' not unwrapped;</span></span><br><span class="line">                   <span class="comment">// did you mean to use '!' or '?'?</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在新的实现中，第一个例子中的 <code>output</code> 将被推断成没有隐式解包的 <code>String?</code> 类型。  </p>
+<p>下面是一种修复方法，对值进行强制解包：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">case</span> <span class="keyword">let</span> output:</span><br><span class="line">   <span class="keyword">return</span> output!</span><br></pre></td></tr></table></figure>
+<p>另一种修复方法是对 non-nil 和 nil 进行显式的模式匹配：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">switchExample</span><span class="params">(input: String!)</span></span> -&gt; <span class="type">String</span> &#123;</span><br><span class="line">  <span class="keyword">switch</span> input &#123;</span><br><span class="line">  <span class="keyword">case</span> <span class="string">"okay"</span>:</span><br><span class="line">    <span class="keyword">return</span> <span class="string">"fine"</span></span><br><span class="line">  <span class="keyword">case</span> <span class="keyword">let</span> output?: <span class="comment">// non-nil case</span></span><br><span class="line">    <span class="keyword">return</span> output   <span class="comment">// okay; output is a String</span></span><br><span class="line">  <span class="keyword">case</span> <span class="literal">nil</span>:</span><br><span class="line">    <span class="keyword">return</span> <span class="string">"&lt;empty&gt;"</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="使用可选类型和隐式解包可选类型重载输入输出参数"><a href="#使用可选类型和隐式解包可选类型重载输入输出参数" class="headerlink" title="使用可选类型和隐式解包可选类型重载输入输出参数"></a>使用可选类型和隐式解包可选类型重载输入输出参数</h3><p>如果在 Swift 4.1 中尝试去重载一个函数并且 in-out 参数是隐式解包可选类型，会显示一个弃用警告</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">someKindOfOptional</span><span class="params">(<span class="number">_</span>: <span class="keyword">inout</span> Int?)</span></span> &#123; ... &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Warning in Swift 4.1.  Error in new implementation.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">someKindOfOptional</span><span class="params">(<span class="number">_</span>: <span class="keyword">inout</span> Int!)</span></span> &#123; ... &#125;</span><br></pre></td></tr></table></figure>
+<p>Swift 4.1 中，如果 in-out 参数是可选的，那可以直接传入一个隐式解包可选类型的值，反之亦然。这样就可以删除上面的第二个重载（假设两个函数实现完全一致）：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">someKindOfOptional</span><span class="params">(<span class="number">_</span>: <span class="keyword">inout</span> Int?)</span></span> &#123; ... &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> i: <span class="type">Int</span>! = <span class="number">1</span></span><br><span class="line">someKindOfOptional(&amp;i)   <span class="comment">// 完全没问题，i 的类型是 Optional&lt;Int&gt;</span></span><br></pre></td></tr></table></figure>
+<p>在之后的新版本中，由于 <code>Int!</code> 与 <code>Int?</code> 是同义词，重载的可选性不再有意义。因此，和上面例子中类似的重载都会报错，并且第二个重载（声明为 <code>Int!</code>）必须被删除。</p>
+<h3 id="ImplicitlyUnwrappedOptional-扩展"><a href="#ImplicitlyUnwrappedOptional-扩展" class="headerlink" title="ImplicitlyUnwrappedOptional 扩展"></a>ImplicitlyUnwrappedOptional 扩展</h3><p>现在 <code>ImplicitlyUnwrappedOptional&lt;T&gt;</code> 只是 <code>Optional&lt;T&gt;</code> 的别名，而且不能直接使用，所以尝试给它创建 <code>extension</code> 会编译失败：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 1:11: error: 'ImplicitlyUnwrappedOptional' has been renamed to 'Optional'</span></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">ImplicitlyUnwrappedOptional</span> </span>&#123;</span><br></pre></td></tr></table></figure>
+<h3 id="nil-桥接"><a href="#nil-桥接" class="headerlink" title="nil 桥接"></a>nil 桥接</h3><p>对 <code>nil</code> 类型的值进行桥接时不会报运行时错误，而是把 <code>nil</code> 桥接为 <code>NSNull</code> 。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">C</span>: <span class="title">NSObject</span> </span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> iuoElement: <span class="type">C</span>! = <span class="literal">nil</span></span><br><span class="line"><span class="keyword">let</span> array: [<span class="type">Any</span>] = [iuoElement <span class="keyword">as</span> <span class="type">Any</span>]</span><br><span class="line"><span class="keyword">let</span> ns = array <span class="keyword">as</span> <span class="type">NSArray</span></span><br><span class="line"><span class="keyword">let</span> element = ns[<span class="number">0</span>] <span class="comment">// Swift 4.1: Fatal error: Attempt to bridge</span></span><br><span class="line">                    <span class="comment">// an implicitly unwrapped optional containing nil</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> value = element <span class="keyword">as</span>? <span class="type">NSNull</span>, value == <span class="type">NSNull</span>() &#123;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"pass"</span>)     <span class="comment">// 新版本中会执行到这里</span></span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"fail"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>隐式解包的可选类型已经被重新实现，它们不再是 <code>Optional&lt;T&gt;</code> 的特殊形式。因此，类型检测的一致性将会更好，编译器的特殊情况也会更少。删除这些特殊情况会减少处理声明时的错误数量。  </p>
+<p>导入的 Object-C API 可能会返回隐式解包的值。你可能会发现在声明 <code>@IBOutlet</code> 属性（或者任何初始化之前不会使用的值）时使用隐式解包会更加方便。不过总体来说，隐式解包能不用最好别用，改用 <code>if let</code> 和 <code>guard let</code> 来显式解包。如果确定有值，就用 <code>!</code> 来显式强制解包。</p>
+<h3 id="反馈"><a href="#反馈" class="headerlink" title="反馈"></a>反馈</h3><p>如果你对这篇文章有疑问或者想法，可以在 Swift 论坛中参与<a href="https://forums.swift.org/t/swift-org-blog-reimplementation-of-implicitly-unwrapped-optionals/12175" target="_blank" rel="noopener">相关讨论</a>。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/swift-org/">swift.org</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift/">Swift</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2018/06/19/swift-org-blog-iuo/" data-title="重新实现可选类型的隐式解包 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2018/06/11/friday-qa-2015-05-29-concurrent-memory-deallocation-in-the-objective-c-runtime/"  title="Objective-C Runtime 中内存释放的并发问题">
+ <strong>下一篇</strong><br/> 
+ <span>Objective-C Runtime 中内存释放的并发问题
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2018/06/19/swift-org-blog-iuo/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#隐式解包是声明的一部分"><span class="toc-number">1.</span> <span class="toc-text">隐式解包是声明的一部分</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#源代码兼容性"><span class="toc-number">2.</span> <span class="toc-text">源代码兼容性</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#强制转换为-T"><span class="toc-number">2.1.</span> <span class="toc-text">强制转换为 T!</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#在类型中使用"><span class="toc-number">2.2.</span> <span class="toc-text">在类型中使用 !</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#隐式解包可选类型的-map-方法"><span class="toc-number">2.3.</span> <span class="toc-text">隐式解包可选类型的 map 方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#无法推断类型"><span class="toc-number">2.4.</span> <span class="toc-text">无法推断类型</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#AnyObject-的查找操作"><span class="toc-number">2.4.1.</span> <span class="toc-text">AnyObject 的查找操作</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#try"><span class="toc-number">2.4.2.</span> <span class="toc-text">try?</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#switch"><span class="toc-number">2.4.3.</span> <span class="toc-text">switch</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#使用可选类型和隐式解包可选类型重载输入输出参数"><span class="toc-number">2.5.</span> <span class="toc-text">使用可选类型和隐式解包可选类型重载输入输出参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ImplicitlyUnwrappedOptional-扩展"><span class="toc-number">2.6.</span> <span class="toc-text">ImplicitlyUnwrappedOptional 扩展</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#nil-桥接"><span class="toc-number">2.7.</span> <span class="toc-text">nil 桥接</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#结论"><span class="toc-number">2.8.</span> <span class="toc-text">结论</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#反馈"><span class="toc-number">2.9.</span> <span class="toc-text">反馈</span></a></li></ol></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>40</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>19</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>33</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>168</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>76</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>73</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftGG 专属 Reveal 优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://h5.youzan.com/v2/showcase/promocode/fetch?alias=6pya475">领取立减 30 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
