@@ -86,6 +86,88 @@
   <header class="article-info clearfix">
     <h1 itemprop="name">
       
+        <a href="/2018/06/25/forcing-compiler-errors-in-swift/" target="_blank" title="Swift中的强制编译时报错" itemprop="url">Swift中的强制编译时报错</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2018-06-25T00:00:00.000Z" itemprop="datePublished">2018-06-25</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+    <div class="article-content">
+        
+        <blockquote>
+<p>作者：Erica Sadun，<a href="https://ericasadun.com/2018/04/18/forcing-compiler-errors-in-swift/" target="_blank" rel="noopener">原文链接</a>，原文日期：2018-04-18<br>译者：<a href="http://wuqiuhao.github.io" target="_blank" rel="noopener">Hale</a>；校对：<a href="undefined">梁杰</a>，<a href="http://blog.yousanflics.com.cn" target="_blank" rel="noopener">Yousanflics</a>；定稿：<a href="http://blog.yousanflics.com.cn" target="_blank" rel="noopener">Yousanflics</a>，<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<p>得益于<a href="https://github.com/apple/swift-evolution/blob/master/proposals/0196-diagnostic-directives.md" target="_blank" rel="noopener">SE-0196</a>，Swift 4.2 将引进 <code>#warning()</code> 和 <code>#error()</code> 两个编译指令。这两个指令允许你在编译期间合并诊断消息和抛出错误。下面这个例子来自已被确定接受的提议并且已经被实施。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">#warning(<span class="string">"this is incomplete"</span>)</span><br><span class="line"></span><br><span class="line">#<span class="keyword">if</span> <span class="type">MY_BUILD_CONFIG</span> &amp;&amp; <span class="type">MY_OTHER_BUILD_CONFIG</span></span><br><span class="line">  #error(<span class="string">"MY_BUILD_CONFIG and MY_OTHER_BUILD_CONFIG cannot both be set"</span>)</span><br><span class="line">#endif</span><br></pre></td></tr></table></figure>
+<p><code>#error</code>指令的例子使用条件编译标志（用-D选项设置）来检察编译是否产生了配置冲突。</p>
+<p>我(原文作者)已经写了很多关于我不喜欢在Swift中使用蛇形命名法（THINGS_LIKE_THIS）的文章。但不可避免的，开发者们都喜欢使用蛇形命名法则来定义条件编译标志。无论是 <code>MY_BUILD_CONFIG</code>、<code>MY_OTHER_BUILD_CONFIG</code> 还是 <code>DEBUG</code>。虽然这是行业标准，但感觉这和Swift的美学存在冲突。</p>
+<p>我也写过关于如何不显示使用 <code>DEBUG</code> 标志来<a href="https://ericasadun.com/2018/04/15/writing-swift-adventures-in-compiler-mods/" target="_blank" rel="noopener">检测调试条件的提议</a>。这边我附上了提议的链接，你们可以点击查看更多该提议的相关内容。</p>
+<p>言归正传，Swift新近提出的 <code>#error</code> 和 <code>#warning</code> 指令，在当前的实践基础上有了很大进步。它们通常依赖于运行时的反馈而非编译时。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">#<span class="keyword">if</span> !<span class="type">DEBUG</span></span><br><span class="line"><span class="built_in">fatalError</span>(<span class="string">"This code is incomplete. Please fix before release."</span>)</span><br><span class="line">#endif</span><br></pre></td></tr></table></figure>
+<p>这个代码块中的缩进样式是 Swift 默认的，主要是为了避免条件编译块中出现轻微的<a href="https://en.wikipedia.org/wiki/Pyramid_of_doom_(programming" target="_blank" rel="noopener">Pyramid of doom</a>)(金字塔厄运)。但如果把里面的代码缩进，在这个条件块的周围代码还是纵向增长的，主观上感觉有点丑。为了避免这种情况，一些编码人员采用内联方式，用最少的条件块和更简洁的方法强制编译时（而不是运行时）报错。</p>
+<p>以下是我从 John Estropia 那发现的一个例子（他借鉴于他的同事）。他使用条件编译指令来设置 <code>TODO</code> 或 <code>FIXME</code> 等类型别名，然后在需要的地方使用它们。在 debug 环境时，编译能够通过而在 release 环境下编译就会报错：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">#<span class="keyword">if</span> <span class="type">DEBUG</span> </span><br><span class="line"><span class="keyword">internal</span> <span class="keyword">typealias</span> <span class="type">TODO</span>&lt;<span class="type">T</span>&gt; = <span class="type">T</span></span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"Remove this later"</span>) <span class="keyword">as</span> <span class="type">TODO</span></span><br></pre></td></tr></table></figure>
+<p>这个主意很棒。<code>TODO</code> 类型别名将支持 debug 过程中在想要注释的行末尾使用 <code>as TODO</code> ，在 release 编译环境下就会抛出异常。这确保了所有用 <code>TODO</code> 标注的点能够实现编译时反馈。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">error: <span class="type">ManyWays</span>.playground:<span class="number">5</span>:<span class="number">31</span>: error: use of undeclared type '<span class="type">TODO'</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"Remove this later"</span>) <span class="keyword">as</span> <span class="type">TODO</span></span><br></pre></td></tr></table></figure>
+<p>虽然不是很美观，但这很有效。它包含了关于代码调用的位置信息和你要发送的信息。如果我正在使用这个方法，我可能会创建一个 <code>todo</code> 方法，而不是直接使用上面的方法。在下面的例子中，我使用驼峰式命名使调用看起来更具有指令性，而不像标准的全局函数。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">#<span class="keyword">if</span> <span class="type">DEBUG</span></span><br><span class="line"><span class="keyword">internal</span> <span class="class"><span class="keyword">enum</span> <span class="title">IssueLevel</span> </span>&#123;</span><br><span class="line">    <span class="keyword">case</span></span><br><span class="line">    mildImportance,</span><br><span class="line">    moderateImportance,</span><br><span class="line">    highImportance,</span><br><span class="line">    criticalImportance</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">internal</span> <span class="function"><span class="keyword">func</span> <span class="title">ToDo</span><span class="params">(<span class="number">_</span> level: IssueLevel, <span class="number">_</span> string: String)</span></span> &#123;&#125;</span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line"><span class="comment">// 提供编译错误、描述信息和优先级</span></span><br><span class="line"><span class="type">ToDo</span>(.highImportance, <span class="string">"Remove this later"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// error: ManyWays.playground:13:1: error: use of unresolved identifier 'ToDo'</span></span><br><span class="line"><span class="comment">// ToDo(.highImportance, "Remove this later")</span></span><br></pre></td></tr></table></figure>
+<p>这种方式最大的好处就是从 debug 环境到 release 环境，只需通过 <code>#if</code> 进行判断。这种做法很诱人，只要确保全局都在需要标注的地方使用，然后在切换到 release 之前解决或移除所有的标注即可。</p>
+<p>目前，Swift 不支持用 <code>#message</code> 指令来执行类似的任务。很多开发者将警告视为错误，他们无法在两者之间进行细微的区分。如果 <code>#warning</code> 被发布了，你就可以使用 <code>#warning</code> 实现类似“fix me”的反馈了。进一步改良的话，<code>#messageOrDie</code> （或者其他叫法，命名真的很难）可以在 debug build 时发送警告消息，在 release build 时报出错误，通过 <code>断言</code> 来判断申明是否发生。</p>
+<p>Dave DeLong 为结构性项目语义提供了另一种方法。他介绍了一个 <code>Fatal</code> 类型为开发中一些比较常见的结果判断例如 <code>noImplemented</code>、<code>unreachable</code> 和 <code>mustOverride</code> 等提供<a href="https://forums.swift.org/t/introducing-namespacing-for-common-swift-error-scenarios/10773" target="_blank" rel="noopener">运行时线索</a>,它没有用“you need to remember to implement this”这样的提示，而是以运行时奔溃的形式，通过上报完整的位置和方法信息来解释。另一个检索被命名为 <code>silenceXcode()</code> 允许你添加你认为永远不会实现的一些方法，如果你使用了它也会报错。</p>
+<p>Swift 仍有很大的空间来扩展这方面的支持。我不介意看到这两种方式都被添加到未来 Swift 的实现中。一种用于编译时（像 <code>#messageOrDie</code> ）另一种用于运行时（像 <code>Fatal</code> 命名空间的静态检索方法）</p>
+<p>你们怎么看待这些？在 Swift 中还有哪些部分是元编程开发过程中（像宏）让你感到困惑的？我很想知道还有哪些已经确定发布的特性能够更好地支持开发。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+
+        
+
+        <p class="article-more-link">
+          
+       </p>
+    </div>
+    <footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/iAchieved-it/">iAchieved.it</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift/">Swift</a>
+  </div>
+
+</div>
+
+
+
+
+<div class="comments-count">
+	
+</div>
+
+</footer>
+
+
+    </article>
+
+
+
+
+
+
+   
+    
+    <article class="post-expand post" itemprop="articleBody"> 
+        
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
         <a href="/2018/06/19/swift-org-blog-iuo/" target="_blank" title="重新实现可选类型的隐式解包" itemprop="url">重新实现可选类型的隐式解包</a>
     </h1>
     <p class="article-time">
@@ -710,88 +792,6 @@
   <div class="article-tags">
   
   <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        
-  <header class="article-info clearfix">
-    <h1 itemprop="name">
-      
-        <a href="/2018/05/05/forcing-compiler-errors-in-swift/" target="_blank" title="Swift中的强制编译时报错" itemprop="url">Swift中的强制编译时报错</a>
-    </h1>
-    <p class="article-time">
-      <time datetime="2018-05-05T00:00:00.000Z" itemprop="datePublished">2018-05-05</time>
-      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
-    </p>
-  </header>
-
-    <div class="article-content">
-        
-        <blockquote>
-<p>作者：Erica Sadun，<a href="https://ericasadun.com/2018/04/18/forcing-compiler-errors-in-swift/" target="_blank" rel="noopener">原文链接</a>，原文日期：2018-04-18<br>译者：<a href="http://wuqiuhao.github.io" target="_blank" rel="noopener">Hale</a>；校对：<a href="undefined">梁杰</a>，<a href="http://blog.yousanflics.com.cn" target="_blank" rel="noopener">Yousanflics</a>；定稿：<a href="http://blog.yousanflics.com.cn" target="_blank" rel="noopener">Yousanflics</a>，<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
-</blockquote>
-<p>得益于<a href="https://github.com/apple/swift-evolution/blob/master/proposals/0196-diagnostic-directives.md" target="_blank" rel="noopener">SE-0196</a>，Swift 4.2 将引进 <code>#warning()</code> 和 <code>#error()</code> 两个编译指令。这两个指令允许你在编译期间合并诊断消息和抛出错误。下面这个例子来自已被确定接受的提议并且已经被实施。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">#warning(<span class="string">"this is incomplete"</span>)</span><br><span class="line"></span><br><span class="line">#<span class="keyword">if</span> <span class="type">MY_BUILD_CONFIG</span> &amp;&amp; <span class="type">MY_OTHER_BUILD_CONFIG</span></span><br><span class="line">  #error(<span class="string">"MY_BUILD_CONFIG and MY_OTHER_BUILD_CONFIG cannot both be set"</span>)</span><br><span class="line">#endif</span><br></pre></td></tr></table></figure>
-<p><code>#error</code>指令的例子使用条件编译标志（用-D选项设置）来检察编译是否产生了配置冲突。</p>
-<p>我(原文作者)已经写了很多关于我不喜欢在Swift中使用蛇形命名法（THINGS_LIKE_THIS）的文章。但不可避免的，开发者们都喜欢使用蛇形命名法则来定义条件编译标志。无论是 <code>MY_BUILD_CONFIG</code>、<code>MY_OTHER_BUILD_CONFIG</code> 还是 <code>DEBUG</code>。虽然这是行业标准，但感觉这和Swift的美学存在冲突。</p>
-<p>我也写过关于如何不显示使用 <code>DEBUG</code> 标志来<a href="https://ericasadun.com/2018/04/15/writing-swift-adventures-in-compiler-mods/" target="_blank" rel="noopener">检测调试条件的提议</a>。这边我附上了提议的链接，你们可以点击查看更多该提议的相关内容。</p>
-<p>言归正传，Swift新近提出的 <code>#error</code> 和 <code>#warning</code> 指令，在当前的实践基础上有了很大进步。它们通常依赖于运行时的反馈而非编译时。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">#<span class="keyword">if</span> !<span class="type">DEBUG</span></span><br><span class="line"><span class="built_in">fatalError</span>(<span class="string">"This code is incomplete. Please fix before release."</span>)</span><br><span class="line">#endif</span><br></pre></td></tr></table></figure>
-<p>这个代码块中的缩进样式是 Swift 默认的，主要是为了避免条件编译块中出现轻微的<a href="https://en.wikipedia.org/wiki/Pyramid_of_doom_(programming" target="_blank" rel="noopener">Pyramid of doom</a>)(金字塔厄运)。但如果把里面的代码缩进，在这个条件块的周围代码还是纵向增长的，主观上感觉有点丑。为了避免这种情况，一些编码人员采用内联方式，用最少的条件块和更简洁的方法强制编译时（而不是运行时）报错。</p>
-<p>以下是我从 John Estropia 那发现的一个例子（他借鉴于他的同事）。他使用条件编译指令来设置 <code>TODO</code> 或 <code>FIXME</code> 等类型别名，然后在需要的地方使用它们。在 debug 环境时，编译能够通过而在 release 环境下编译就会报错：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">#<span class="keyword">if</span> <span class="type">DEBUG</span> </span><br><span class="line"><span class="keyword">internal</span> <span class="keyword">typealias</span> <span class="type">TODO</span>&lt;<span class="type">T</span>&gt; = <span class="type">T</span></span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"Remove this later"</span>) <span class="keyword">as</span> <span class="type">TODO</span></span><br></pre></td></tr></table></figure>
-<p>这个主意很棒。<code>TODO</code> 类型别名将支持 debug 过程中在想要注释的行末尾使用 <code>as TODO</code> ，在 release 编译环境下就会抛出异常。这确保了所有用 <code>TODO</code> 标注的点能够实现编译时反馈。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">error: <span class="type">ManyWays</span>.playground:<span class="number">5</span>:<span class="number">31</span>: error: use of undeclared type '<span class="type">TODO'</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"Remove this later"</span>) <span class="keyword">as</span> <span class="type">TODO</span></span><br></pre></td></tr></table></figure>
-<p>虽然不是很美观，但这很有效。它包含了关于代码调用的位置信息和你要发送的信息。如果我正在使用这个方法，我可能会创建一个 <code>todo</code> 方法，而不是直接使用上面的方法。在下面的例子中，我使用驼峰式命名使调用看起来更具有指令性，而不像标准的全局函数。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">#<span class="keyword">if</span> <span class="type">DEBUG</span></span><br><span class="line"><span class="keyword">internal</span> <span class="class"><span class="keyword">enum</span> <span class="title">IssueLevel</span> </span>&#123;</span><br><span class="line">    <span class="keyword">case</span></span><br><span class="line">    mildImportance,</span><br><span class="line">    moderateImportance,</span><br><span class="line">    highImportance,</span><br><span class="line">    criticalImportance</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">internal</span> <span class="function"><span class="keyword">func</span> <span class="title">ToDo</span><span class="params">(<span class="number">_</span> level: IssueLevel, <span class="number">_</span> string: String)</span></span> &#123;&#125;</span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line"><span class="comment">// 提供编译错误、描述信息和优先级</span></span><br><span class="line"><span class="type">ToDo</span>(.highImportance, <span class="string">"Remove this later"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// error: ManyWays.playground:13:1: error: use of unresolved identifier 'ToDo'</span></span><br><span class="line"><span class="comment">// ToDo(.highImportance, "Remove this later")</span></span><br></pre></td></tr></table></figure>
-<p>这种方式最大的好处就是从 debug 环境到 release 环境，只需通过 <code>#if</code> 进行判断。这种做法很诱人，只要确保全局都在需要标注的地方使用，然后在切换到 release 之前解决或移除所有的标注即可。</p>
-<p>目前，Swift 不支持用 <code>#message</code> 指令来执行类似的任务。很多开发者将警告视为错误，他们无法在两者之间进行细微的区分。如果 <code>#warning</code> 被发布了，你就可以使用 <code>#warning</code> 实现类似“fix me”的反馈了。进一步改良的话，<code>#messageOrDie</code> （或者其他叫法，命名真的很难）可以在 debug build 时发送警告消息，在 release build 时报出错误，通过 <code>断言</code> 来判断申明是否发生。</p>
-<p>Dave DeLong 为结构性项目语义提供了另一种方法。他介绍了一个 <code>Fatal</code> 类型为开发中一些比较常见的结果判断例如 <code>noImplemented</code>、<code>unreachable</code> 和 <code>mustOverride</code> 等提供<a href="https://forums.swift.org/t/introducing-namespacing-for-common-swift-error-scenarios/10773" target="_blank" rel="noopener">运行时线索</a>,它没有用“you need to remember to implement this”这样的提示，而是以运行时奔溃的形式，通过上报完整的位置和方法信息来解释。另一个检索被命名为 <code>silenceXcode()</code> 允许你添加你认为永远不会实现的一些方法，如果你使用了它也会报错。</p>
-<p>Swift 仍有很大的空间来扩展这方面的支持。我不介意看到这两种方式都被添加到未来 Swift 的实现中。一种用于编译时（像 <code>#messageOrDie</code> ）另一种用于运行时（像 <code>Fatal</code> 命名空间的静态检索方法）</p>
-<p>你们怎么看待这些？在 Swift 中还有哪些部分是元编程开发过程中（像宏）让你感到困惑的？我很想知道还有哪些已经确定发布的特性能够更好地支持开发。</p>
-<blockquote>
-<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
-</blockquote>
-
-        
-
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/iAchieved-it/">iAchieved.it</a>
-</div>
-
-
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/Swift/">Swift</a>
   </div>
 
 </div>
