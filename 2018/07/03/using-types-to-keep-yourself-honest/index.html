@@ -1,0 +1,1006 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>使用类型来让你自己更可靠 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：MATTHIJS HOLLEMANS，原文链接，原文日期：2016-03-25译者：TonyHan；校对：Yousanflics；定稿：CMB   这篇文章展示了如何利用 Swift 的类型系统来使你的程序更具表现力和健壮性。 在最近一周左右的时间里，我一直在倒腾 Swift 的机器学习算法。我们可以通过使用矩阵来简洁有效地实现这些算法。 如果你忘记了线性代数，那只需将矩阵看作数字表格。">
+<meta name="keywords" content="Swift">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用类型来让你自己更可靠">
+<meta property="og:url" content="https://swift.gg/2018/07/03/using-types-to-keep-yourself-honest/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：MATTHIJS HOLLEMANS，原文链接，原文日期：2016-03-25译者：TonyHan；校对：Yousanflics；定稿：CMB   这篇文章展示了如何利用 Swift 的类型系统来使你的程序更具表现力和健壮性。 在最近一周左右的时间里，我一直在倒腾 Swift 的机器学习算法。我们可以通过使用矩阵来简洁有效地实现这些算法。 如果你忘记了线性代数，那只需将矩阵看作数字表格。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://machinethink.net/images/using-types-to-keep-yourself-honest/Matrix.png">
+<meta property="og:image" content="http://machinethink.net/images/using-types-to-keep-yourself-honest/MatrixMultiplication.png">
+<meta property="og:updated_time" content="2018-07-03T01:41:27.651Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用类型来让你自己更可靠">
+<meta name="twitter:description" content="作者：MATTHIJS HOLLEMANS，原文链接，原文日期：2016-03-25译者：TonyHan；校对：Yousanflics；定稿：CMB   这篇文章展示了如何利用 Swift 的类型系统来使你的程序更具表现力和健壮性。 在最近一周左右的时间里，我一直在倒腾 Swift 的机器学习算法。我们可以通过使用矩阵来简洁有效地实现这些算法。 如果你忘记了线性代数，那只需将矩阵看作数字表格。">
+<meta name="twitter:image" content="http://machinethink.net/images/using-types-to-keep-yourself-honest/Matrix.png">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2018/07/03/using-types-to-keep-yourself-honest/" target="_blank" title="使用类型来让你自己更可靠" itemprop="url">使用类型来让你自己更可靠</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2018-07-03T00:00:00.000Z" itemprop="datePublished">2018-07-03</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：MATTHIJS HOLLEMANS，<a href="http://machinethink.net/blog/using-types-to-keep-yourself-honest/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-03-25<br>译者：<a href="undefined">TonyHan</a>；校对：<a href="http://blog.yousanflics.com.cn" target="_blank" rel="noopener">Yousanflics</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>这篇文章展示了如何利用 Swift 的类型系统来使你的程序更具表现力和健壮性。</p>
+<p>在最近一周左右的时间里，我一直在倒腾 Swift 的机器学习算法。我们可以通过使用矩阵来简洁有效地实现这些算法。</p>
+<p>如果你忘记了线性代数，那只需将矩阵看作数字表格。</p>
+<p>当提到 “M 是一个 4 乘 3 的矩阵”，意思是指 M 是一个 4 行 3 列的数字表格。关于矩阵你就需要了解这些（译者注:即可将其看作是表格），就可以理解本文后面的讲解。</p>
+<a id="more"></a>
+<p>下面是一个 4×3 矩阵的例子：</p>
+<p><img src="http://machinethink.net/images/using-types-to-keep-yourself-honest/Matrix.png" alt="Matrix"></p>
+<p>下面写代码创建一个 <code>矩阵结构体</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Matrix</span> </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> rows: <span class="type">Int</span></span><br><span class="line">  <span class="keyword">let</span> columns: <span class="type">Int</span></span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>经常需要对矩阵的操作是将它们相乘，因此我创建了一个函数：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">multiply</span><span class="params">(m1: Matrix, <span class="number">_</span> m2: Matrix)</span></span> -&gt; <span class="type">Matrix</span> &#123;</span><br><span class="line">  <span class="comment">// bunch of math...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这一切可能看起来很简单，但是还有些让我很烦的东西。</p>
+<p>即便 m1 和 m2 都是 Matrix 对象，但是实际上它们可能具有不同数量的行和列。这可能是一个问题。</p>
+<p>例如，使用矩阵乘法，两个矩阵的大小必须以特定方式匹配。</p>
+<p><img src="http://machinethink.net/images/using-types-to-keep-yourself-honest/MatrixMultiplication.png" alt="MatrixMultiplication"></p>
+<p>第一个矩阵中的列数必须与第二个矩阵中的行数相同。如果第一个矩阵的大小为 <code>U × V</code>，则第二个矩阵的大小必须为 <code>V × W</code>。这就是数学上规定的。</p>
+<p>结果是大小为 <code>U × W</code> 的新矩阵。如果矩阵的大小不匹配这种特定的方式，我们就不能将它们相乘。</p>
+<p>例如，以下将工作正常：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="type">A</span> = <span class="type">Matrix</span>(rows: <span class="number">4</span>, columns: <span class="number">3</span>)</span><br><span class="line"><span class="keyword">let</span> <span class="type">B</span> = <span class="type">Matrix</span>(rows: <span class="number">3</span>, columns: <span class="number">2</span>)</span><br><span class="line"><span class="keyword">let</span> <span class="type">C</span> = multiply(<span class="type">A</span>, <span class="type">B</span>)                <span class="comment">// gives a 4×2 matrix</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注意：在数学中，矩阵通常用大写表示，我在这里遵循变量名称的惯例。</p>
+</blockquote>
+<p>由于 <code>A.columns == B.rows</code>，因此可以将 <code>A</code> 与 <code>B</code> 进行乘法。相反地，以下就不是有效的操作：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="type">D</span> = multiply(<span class="type">B</span>, <span class="type">A</span>)</span><br></pre></td></tr></table></figure>
+<p>矩阵 <code>B</code> 中的列数与矩阵 <code>A</code> 中的行数不匹配。也就是 <code>B.columns！= A.rows</code>。从数学定义来说，矩阵B和A相乘没有任何意义。</p>
+<p>目前，捕捉这些错误的唯一方法是在运行时触发断言：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">multiply</span><span class="params">(m1: Matrix, <span class="number">_</span> m2: Matrix)</span></span> -&gt; <span class="type">Matrix</span> &#123;</span><br><span class="line">  <span class="comment">// do the matrices have the correct sizes?</span></span><br><span class="line">  <span class="built_in">precondition</span>(m1.columns == m2.rows)</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// bunch of math...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样做当然可以，但我并不喜欢。Swift 静态类型的重点在于编译器可以在编译期间发现尽可能多的编程错误。如果我们可以使编译器也捕获这种错误，这就会很棒。</p>
+<p>事实证明是可以的！在本文中，我将探讨如何使用 Swift 的类型系统来避免这样的错误。</p>
+<h2 id="不太好的实现"><a href="#不太好的实现" class="headerlink" title="不太好的实现"></a>不太好的实现</h2><p>解决这个问题的比较原始的方法是为不同大小的矩阵创建不同的结构体：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="type">A</span> = <span class="type">Matrix_4x3</span>()</span><br><span class="line"><span class="keyword">let</span> <span class="type">B</span> = <span class="type">Matrix_3x2</span>()</span><br></pre></td></tr></table></figure>
+<p>但是，还需要一个将这些特定类型作为参数的 <code>multiply()</code> 方法：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">multiply</span><span class="params">(m1: Matrix_4x3, <span class="number">_</span> m2: Matrix_3x2)</span></span> -&gt; <span class="type">Matrix_4x2</span></span><br></pre></td></tr></table></figure>
+<p>这似乎有点傻，导致了很多重复的代码。</p>
+<p>更糟糕的是，编译时可能并不知道矩阵的大小。在机器学习问题中，我们经常需要从文件中加载数据集，但并不会提前知道有多少行。</p>
+<p>所以这不是一个可行的解决方案。然而，为不同大小的矩阵声明不同类型的思路还是有希望的…</p>
+<h2 id="通用的解决方案"><a href="#通用的解决方案" class="headerlink" title="通用的解决方案"></a>通用的解决方案</h2><p>我们希望将矩阵的维度以某种方式并入 Matrix 的类型，而不需要任何矩阵代码，如 <code>multiply()</code> 知道其具体大小。</p>
+<p>定义以下 Matrix：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Matrix</span>&lt;<span class="title">R</span>,<span class="title">C</span>&gt; </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> rows: <span class="type">Int</span></span><br><span class="line">  <span class="keyword">let</span> columns: <span class="type">Int</span></span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>它现在有两个通用参数 <code>R</code> 和 <code>C</code>，其中 <code>R</code> 表示行数，<code>C</code> 表示列数。</p>
+<p>我们可以这样定义 <code>multiply()</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">multiply</span>&lt;U,V,W&gt;<span class="params">(m1: Matrix&lt;U,V&gt;, <span class="number">_</span> m2: Matrix&lt;V,W&gt;)</span></span> -&gt; <span class="type">Matrix</span>&lt;<span class="type">U</span>,<span class="type">W</span>&gt; &#123;</span><br><span class="line">  <span class="comment">// bunch of math...</span></span><br><span class="line">  <span class="keyword">return</span> <span class="type">Matrix</span>(rows: m1.rows, columns: m2.columns)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>请注意获取矩阵乘法规则的方法：大小为 <code>U × V</code> 的矩阵乘以大小为 <code>V × W</code> 的矩阵，得到 <code>U × W</code> 大小的新矩阵。</p>
+<p>下面是如何使用新的 <code>Matrix</code> 的例子：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">NumExamples</span> </span>&#123;&#125;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">NumFeatures</span> </span>&#123;&#125;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">OneDimensional</span> </span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> <span class="type">A</span> = <span class="type">Matrix</span>&lt;<span class="type">NumExamples</span>, <span class="type">NumFeatures</span>&gt;(rows: <span class="number">20</span>, columns: <span class="number">10</span>)</span><br><span class="line"><span class="keyword">let</span> <span class="type">B</span> = <span class="type">Matrix</span>&lt;<span class="type">NumFeatures</span>, <span class="type">OneDimensional</span>&gt;(rows: <span class="number">10</span>, columns: <span class="number">1</span>)</span><br></pre></td></tr></table></figure>
+<p>我们创建了三种新的类型 - 名为 <code>NumExamples</code> ，<code>NumFeatures</code> 和 <code>OneDimensional</code> —— 来表示矩阵的可能维数。注意我如何给出这些类型的描述性名称，从而更容易展现出它们的用途。</p>
+<p><code>NumExamples</code> 和 <code>NumFeatures</code> 的名称来自机器学习，因为我将在其中使用这些矩阵。<code>NumExamples</code> 是数据集中的对象数目，<code>NumFeatures</code> 是每个示例的属性数。(当然，如果你要使用这些矩阵来做别的事情，你可以使用不同的名字。）</p>
+<p><code>OneDimensional</code> 意指矩阵 <code>B</code> 只有一列。在线性代数中，我们称之为列向量而不是矩阵。为了使我们的代码更清晰，如果我们可以这样写：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typealias</span> <span class="type">ColumnVector</span>&lt;<span class="type">Rows</span>&gt; = <span class="type">Matrix</span>&lt;<span class="type">Rows</span>, <span class="type">OneDimensional</span>&gt;</span><br><span class="line"><span class="keyword">typealias</span> <span class="type">RowVector</span>&lt;<span class="type">Columns</span>&gt; = <span class="type">Matrix</span>&lt;<span class="type">OneDimensional</span>, <span class="type">Columns</span>&gt;</span><br></pre></td></tr></table></figure>
+<p>类型别名会将 <code>ColumnVector</code> 和 <code>RowVector</code> 标记成 <code>Matrix</code> 的特殊情况。但不幸的是，Swift 2.2 中不支持这种语法。即将发布(<strong>原文日期=2016/03/25</strong>)的 <a href="https://github.com/apple/swift-evolution/blob/master/proposals/0048-generic-typealias.md" target="_blank" rel="noopener">Swift 3.0</a> 中可能会支持。</p>
+<p>不管怎样让我们回到本例中。当你写下代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="type">C</span> = multiply(<span class="type">A</span>, <span class="type">B</span>)</span><br></pre></td></tr></table></figure>
+<p>它便会按照预期给出了一个新的 20×1矩阵。然而，与之前不同的是，无效的乘法尝试会导致编译器错误：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="type">D</span> = multiply(<span class="type">B</span>, <span class="type">A</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// error: cannot convert value of type 'Matrix&lt;NumFeatures, OneDimensional&gt;'</span></span><br><span class="line"><span class="comment">// to expected argument type 'Matrix&lt;_, _&gt;'</span></span><br></pre></td></tr></table></figure>
+<p>错误消息有点模糊，但是使用 Swift 的类型系统来捕获这种错误是极好的。而不是在运行时崩溃应用程序，现在不可能将两个不具有正确维度的矩阵相乘。现在已经实现禁止将两个不具有正确维度的矩阵相乘，避免了在运行时崩溃。</p>
+<p>果真如此么？我们仍然可以骗过编译器：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="type">A</span> = <span class="type">Matrix</span>&lt;<span class="type">NumExamples</span>, <span class="type">NumFeatures</span>&gt;(rows: <span class="number">20</span>, columns: <span class="number">10</span>)</span><br><span class="line"><span class="keyword">let</span> <span class="type">B</span> = <span class="type">Matrix</span>&lt;<span class="type">NumFeatures</span>, <span class="type">OneDimensional</span>&gt;(rows: <span class="number">500</span>, columns: <span class="number">1</span>)</span><br></pre></td></tr></table></figure>
+<p>通过将 <code>B</code> 的行数改为 500，我们仍然处于与之前相同的情况。现在 <code>multiply(A, B)</code> 不再有效。</p>
+<p>只有这些额外的类型是不够的…我们需要确保类型 <code>NumFeatures</code> 无论它在哪里使用，总会以某种方式引用相同的数字。</p>
+<h2 id="使用协议弥补"><a href="#使用协议弥补" class="headerlink" title="使用协议弥补"></a>使用协议弥补</h2><p>我们可以像这样做：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">NumExamples</span> </span>&#123; <span class="keyword">let</span> size = <span class="number">20</span> &#125;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">NumFeatures</span> </span>&#123; <span class="keyword">let</span> size = <span class="number">10</span> &#125;</span><br></pre></td></tr></table></figure>
+<p>但是运行时这些维度的大小便被固定了。请记住，我们希望能够在运行时设置矩阵大小，例如通过从文件读取数据集——而且我们可能不知道该文件中有多少数据。对矩阵大小进行硬编码不是一种好办法。</p>
+<p>相反，让我们定义一个新协议：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">Dimension</span> </span>&#123;</span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">var</span> size: <span class="type">Int</span> &#123; <span class="keyword">get</span> <span class="keyword">set</span> &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>于是 <code>Matrix</code> 变成了：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Matrix</span>&lt;<span class="title">R</span>: <span class="title">Dimension</span>, <span class="title">C</span>: <span class="title">Dimension</span>&gt; </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> rows: <span class="type">Int</span></span><br><span class="line">  <span class="keyword">let</span> columns: <span class="type">Int</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">init</span>() &#123;</span><br><span class="line">    <span class="keyword">self</span>.rows = <span class="type">R</span>.size</span><br><span class="line">    <span class="keyword">self</span>.columns = <span class="type">C</span>.size</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意，<code>init(rows:columns:)</code> 方法已经被去掉。矩阵的大小直接由泛型 <code>R</code> 和 <code>C</code> 决定。</p>
+<p>最后一步是使我们的维度类型符合新协议：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">NumExamples</span>: <span class="title">Dimension</span> </span>&#123; <span class="keyword">static</span> <span class="keyword">var</span> size = <span class="number">20</span> &#125;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">NumFeatures</span>: <span class="title">Dimension</span> </span>&#123; <span class="keyword">static</span> <span class="keyword">var</span> size = <span class="number">10</span> &#125;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">OneDimensional</span>: <span class="title">Dimension</span> </span>&#123; <span class="keyword">static</span> <span class="keyword">var</span> size = <span class="number">1</span> &#125;</span><br></pre></td></tr></table></figure>
+<p>然后可以如下实现 <code>multiply()</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">multiply</span>&lt;U: Dimension, V: Dimension, W: Dimension&gt;</span></span><br><span class="line"><span class="function">             <span class="params">(m1: Matrix&lt;U,V&gt;, <span class="number">_</span> m2: Matrix&lt;V,W&gt;)</span></span> -&gt; <span class="type">Matrix</span>&lt;<span class="type">U</span>,<span class="type">W</span>&gt; &#123;</span><br><span class="line">  <span class="comment">// bunch of math...</span></span><br><span class="line">  <span class="keyword">return</span> <span class="type">Matrix</span>&lt;<span class="type">U</span>,<span class="type">W</span>&gt;()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在，矩阵 m1 和 m2 不可能不匹配。编译器根本不会接受这种情况。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="type">A</span> = <span class="type">Matrix</span>&lt;<span class="type">NumExamples</span>, <span class="type">NumFeatures</span>&gt;()</span><br><span class="line"><span class="keyword">let</span> <span class="type">B</span> = <span class="type">Matrix</span>&lt;<span class="type">NumFeatures</span>, <span class="type">OneDimensional</span>&gt;()</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> <span class="type">C</span> = multiply(<span class="type">A</span>, <span class="type">B</span>)   <span class="comment">// yay!</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> <span class="type">D</span> = multiply(<span class="type">B</span>, <span class="type">A</span>)   <span class="comment">// compiler error</span></span><br></pre></td></tr></table></figure>
+<p>这样就不会出现无意的错误。当然，你仍然可以通过这样做来欺骗系统：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="type">A</span> = <span class="type">Matrix</span>&lt;<span class="type">NumExamples</span>, <span class="type">NumFeatures</span>&gt;()</span><br><span class="line"><span class="type">NumFeatures</span>.size = <span class="number">500</span></span><br><span class="line"><span class="keyword">let</span> <span class="type">B</span> = <span class="type">Matrix</span>&lt;<span class="type">NumFeatures</span>, <span class="type">OneDimensional</span>&gt;()</span><br></pre></td></tr></table></figure>
+<p>即便 Swift 的类型系统也无法阻止出于恶意的行为。（也许在 <code>multiply()</code> 中保留 <code>precondition()</code> 是明智的。）</p>
+<p>顺便说一句，你实际上需要有改变 <code>NumFeatures.size</code> 的能力。但你使用时应该多加小心。正如直到我们运行该程序才能知道它特定大小，它也没有理由会一直保持不变。例如，你可能需要使用相同的流程来处理不同大小的多个数据集。</p>
+<p>当然，你可以使用矩阵来做更多事情，而不仅仅是乘以它们。以下是这些维度类型用处的另一个示例：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">processData</span>&lt;M: Dimension, N: Dimension&gt;</span></span><br><span class="line"><span class="function">                <span class="params">(X: Matrix&lt;M, N&gt;, <span class="number">_</span> y: Matrix&lt;M, OneDimensional&gt;)</span></span> </span><br><span class="line">                -&gt; <span class="type">Matrix</span>&lt;<span class="type">OneDimensional</span>, <span class="type">N</span>&gt; &#123;</span><br><span class="line">  <span class="comment">// do impressive stuff...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> <span class="type">X</span> = <span class="type">Matrix</span>&lt;<span class="type">NumExamples</span>, <span class="type">NumFeatures</span>&gt;()</span><br><span class="line"><span class="keyword">let</span> y = <span class="type">Matrix</span>&lt;<span class="type">NumExamples</span>, <span class="type">OneDimensional</span>&gt;()</span><br><span class="line">processData(<span class="type">X</span>, y)</span><br></pre></td></tr></table></figure>
+<p>该函数采用矩阵 <code>X</code> 和列向量 <code>y</code> ，并对它们进行一些处理。例如，可能会训练学习系统。这里的约束是 <code>X</code> 和 <code>y</code> 必须具有相同的行数。多亏了我们的维度类型，编译器可以强制执行该约束。</p>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>我们使用类型来更好地告诉编译器我们的程序正在做什么。这有助于编译器捕获错误。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/machinethink/">machinethink</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift/">Swift</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2018/07/03/using-types-to-keep-yourself-honest/" data-title="使用类型来让你自己更可靠 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2018/06/25/forcing-compiler-errors-in-swift/"  title="Swift中的强制编译时报错">
+ <strong>下一篇</strong><br/> 
+ <span>Swift中的强制编译时报错
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2018/07/03/using-types-to-keep-yourself-honest/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#不太好的实现"><span class="toc-number">1.</span> <span class="toc-text">不太好的实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#通用的解决方案"><span class="toc-number">2.</span> <span class="toc-text">通用的解决方案</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用协议弥补"><span class="toc-number">3.</span> <span class="toc-text">使用协议弥补</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结论"><span class="toc-number">4.</span> <span class="toc-text">结论</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>40</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>19</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>33</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>23</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>168</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>128</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>76</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>75</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftGG 专属 Reveal 优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://h5.youzan.com/v2/showcase/promocode/fetch?alias=6pya475">领取立减 30 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
