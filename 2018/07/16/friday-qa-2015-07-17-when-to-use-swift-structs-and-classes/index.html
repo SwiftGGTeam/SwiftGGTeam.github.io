@@ -21,7 +21,7 @@
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Mike Ash，原文链接，原文日期：2015-07-17译者：muhlenXi；校对：Firecrest，numbbbbb，Cee；定稿：CMB   在 Swift 的世界中，有一个热议很久的主题，何时使用 class 和何时使用 struct ，今天，我想发表一下我自己的观点。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2018-07-16T02:34:44.930Z">
+<meta property="og:updated_time" content="2018-07-16T03:06:08.680Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="何时用 struct？何时用 class？">
 <meta name="twitter:description" content="作者：Mike Ash，原文链接，原文日期：2015-07-17译者：muhlenXi；校对：Firecrest，numbbbbb，Cee；定稿：CMB   在 Swift 的世界中，有一个热议很久的主题，何时使用 class 和何时使用 struct ，今天，我想发表一下我自己的观点。">
@@ -137,7 +137,23 @@
 <p>这是理解值类型和引用类型的重要部分。就语言语义方面，区别是很重要的。当修改数据时，如果你的数据是不可变的，那么值类型/引用类型之间的区别就消失了，或者至少变成纯粹的性能问题而不是语义问题。</p>
 <p>Objective-C 中也有类似的东西，就是标记指针（tagged pointers）。标记指针把对象直接存储在指针值中，因此它实际上是值类型，拷贝指针相当于拷贝对象。Objective-C 的库只会把不可变类型存储到标记指针中，所以使用的时候感受不到区别。有些 NSNumber 是引用类型，有些是值类型，但是使用上没有区别。</p>
 <h2 id="做出选择"><a href="#做出选择" class="headerlink" title="做出选择"></a>做出选择</h2><p>既然我们已经知道值类型是如何工作的，那么你自己的数据类型该用什么呢？</p>
-<p>这两者之间的根本区别在于，当你使用 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">因此，决定使用哪一个的基本问题是：是否需要拷贝？是否需要经常拷贝？</span><br><span class="line"></span><br><span class="line">首先来看一些毫无争议的例子。Integer 显然是可拷贝的，它应该是值类型。网络套接字（Network sockets）明显是不可拷贝的，它应该是引用类型。再比如使用 (x, y) 实数对表示的坐标（Points）是可拷贝的，它应该是值类型。代表磁盘的控制器是明显不可拷贝的，它应该是引用类型。</span><br><span class="line"></span><br><span class="line">有些类型理论上*可以*拷贝，但是这种拷贝可能不是你想要的。这种情况下，它们应该是引用类型。举个例子，屏幕上的按钮在代码层面可以拷贝，但是拷贝的按钮和原始按钮并不一样。点击拷贝的按钮并不会触发原始按钮，拷贝的按钮在屏幕上的位置也和原始按钮不一样。如果你需要把按钮当成参数传递，或者将它赋值给一个新变量，那你需要的是原始按钮的引用，只有明确声明的时候才进行拷贝。因此，按钮应该是引用类型。</span><br><span class="line"></span><br><span class="line">视图和窗口控制器也类似。它们可以支持拷贝，但一般来说这不是你期望的行为，它们应该是引用类型。</span><br><span class="line"></span><br><span class="line">接着谈谈模型（model）类型。假设你有一个 User 类型，用来表示系统中的用户，然后用 Crime 类型来表示 User 的操作。这两个类型看起来都可以拷贝，可以设置成值类型。但是，如果你的程序需要更新 User 的 Crime 并且能把改动同步到其他代码，那最好用一个用户控制器（User Controller）来管理 User，显然这个用户控制器应该是引用类型。</span><br><span class="line"></span><br><span class="line">集合是个有趣的例子。集合包括数组、字典、字符串等类型。它们是可拷贝的吗？显然是。是否需要经常拷贝？这就不好说了</span><br><span class="line"></span><br><span class="line">大部分语言的回答是“No”，它们的集合是引用类型。比如 Objective-C、Java、Python、JavaScript 以及一些我能想到的语言。（一个例外是 C++ 的 STL 集合，但是 C++ 是语言中的疯子，它做的每件事都很奇怪。）</span><br><span class="line"></span><br><span class="line">Swift 是可拷贝的。这意味着 `Array` 、 `Dictionary` 和 `String` 是结构体而不是类。可以将他们的拷贝作为参数来使用。如果拷贝付出的代价很小，这么做就完全合理。Swift 为了实现这个功能花了很大功夫。。</span><br><span class="line"></span><br><span class="line">## 嵌套类型</span><br><span class="line"></span><br><span class="line">嵌套值类型和引用类型有四种方式。哪怕只用到了其中一种，你的生活都会变得更加有趣。</span><br><span class="line"></span><br><span class="line">1. 包含其他引用类型的引用类型，这没什么特别的。如果持有内部或外部值的引用，就可以修改这个值。改动会同步到所有持有者。</span><br><span class="line">2. 包含其他值类型的值类型，这样做的结果是一个更庞大的值类型。当内部值是外部值的一部分时，如果你将外部值存储到某个新地方，整个值类型都会被拷贝，包括内部值。如果你将内部值储存到新地方，那就只拷贝内部值。</span><br><span class="line">3. 包含值类型的引用类型，被引用的值会变大。外部值的引用可以操作整个对象，包括内部值。修改内部值时，外部值引用的持有者都会同步改动。如果你将内部值储存到新地方，它会被拷贝。</span><br><span class="line">4. 包含引用类型的值类型，这就有点复杂了。你可能会遇到意料之外的行为。这有利有弊，取决于你的使用方式。如果你将一个引用类型放到值类型中，然后拷贝这个值类型到一个新地方，拷贝中的内部对象的引用值是相同的，它们都指向相同的地方。下面是一个示例：</span><br><span class="line"></span><br><span class="line">```swift</span><br><span class="line">        class Inner &#123;</span><br><span class="line">            var value = 42</span><br><span class="line">        &#125;</span><br><span class="line">    </span><br><span class="line">        struct Outer &#123;</span><br><span class="line">            var value = 42</span><br><span class="line">            var inner = Inner()</span><br><span class="line">        &#125;</span><br><span class="line">    </span><br><span class="line">        var outer = Outer()</span><br><span class="line">        var outer2 = outer</span><br><span class="line">        outer.value = 43</span><br><span class="line">        outer.inner.value = 43</span><br><span class="line">        print(&quot;outer2.value=\(outer2.value)     outer2.inner.value=\(outer2.inner.value)&quot;)</span><br></pre></td></tr></table></figure></p>
+<p>这两者之间的根本区别在于，当你使用 <code>=</code> 时会发生什么。值类型会得到该对象的副本，引用类型仅仅得到该对象的引用。</p>
+<p>因此，决定使用哪一个的基本问题是：是否需要拷贝？是否需要经常拷贝？</p>
+<p>首先来看一些毫无争议的例子。Integer 显然是可拷贝的，它应该是值类型。网络套接字（Network sockets）明显是不可拷贝的，它应该是引用类型。再比如使用 (x, y) 实数对表示的坐标（Points）是可拷贝的，它应该是值类型。代表磁盘的控制器是明显不可拷贝的，它应该是引用类型。</p>
+<p>有些类型理论上<em>可以</em>拷贝，但是这种拷贝可能不是你想要的。这种情况下，它们应该是引用类型。举个例子，屏幕上的按钮在代码层面可以拷贝，但是拷贝的按钮和原始按钮并不一样。点击拷贝的按钮并不会触发原始按钮，拷贝的按钮在屏幕上的位置也和原始按钮不一样。如果你需要把按钮当成参数传递，或者将它赋值给一个新变量，那你需要的是原始按钮的引用，只有明确声明的时候才进行拷贝。因此，按钮应该是引用类型。</p>
+<p>视图和窗口控制器也类似。它们可以支持拷贝，但一般来说这不是你期望的行为，它们应该是引用类型。</p>
+<p>接着谈谈模型（model）类型。假设你有一个 User 类型，用来表示系统中的用户，然后用 Crime 类型来表示 User 的操作。这两个类型看起来都可以拷贝，可以设置成值类型。但是，如果你的程序需要更新 User 的 Crime 并且能把改动同步到其他代码，那最好用一个用户控制器（User Controller）来管理 User，显然这个用户控制器应该是引用类型。</p>
+<p>集合是个有趣的例子。集合包括数组、字典、字符串等类型。它们是可拷贝的吗？显然是。是否需要经常拷贝？这就不好说了</p>
+<p>大部分语言的回答是“No”，它们的集合是引用类型。比如 Objective-C、Java、Python、JavaScript 以及一些我能想到的语言。（一个例外是 C++ 的 STL 集合，但是 C++ 是语言中的疯子，它做的每件事都很奇怪。）</p>
+<p>Swift 是可拷贝的。这意味着 <code>Array</code> 、 <code>Dictionary</code> 和 <code>String</code> 是结构体而不是类。可以将他们的拷贝作为参数来使用。如果拷贝付出的代价很小，这么做就完全合理。Swift 为了实现这个功能花了很大功夫。。</p>
+<h2 id="嵌套类型"><a href="#嵌套类型" class="headerlink" title="嵌套类型"></a>嵌套类型</h2><p>嵌套值类型和引用类型有四种方式。哪怕只用到了其中一种，你的生活都会变得更加有趣。</p>
+<ol>
+<li>包含其他引用类型的引用类型，这没什么特别的。如果持有内部或外部值的引用，就可以修改这个值。改动会同步到所有持有者。</li>
+<li>包含其他值类型的值类型，这样做的结果是一个更庞大的值类型。当内部值是外部值的一部分时，如果你将外部值存储到某个新地方，整个值类型都会被拷贝，包括内部值。如果你将内部值储存到新地方，那就只拷贝内部值。</li>
+<li>包含值类型的引用类型，被引用的值会变大。外部值的引用可以操作整个对象，包括内部值。修改内部值时，外部值引用的持有者都会同步改动。如果你将内部值储存到新地方，它会被拷贝。</li>
+<li>包含引用类型的值类型，这就有点复杂了。你可能会遇到意料之外的行为。这有利有弊，取决于你的使用方式。如果你将一个引用类型放到值类型中，然后拷贝这个值类型到一个新地方，拷贝中的内部对象的引用值是相同的，它们都指向相同的地方。下面是一个示例：</li>
+</ol>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Inner</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> value = <span class="number">42</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Outer</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> value = <span class="number">42</span></span><br><span class="line">    <span class="keyword">var</span> inner = <span class="type">Inner</span>()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> outer = <span class="type">Outer</span>()</span><br><span class="line"><span class="keyword">var</span> outer2 = outer</span><br><span class="line">outer.value = <span class="number">43</span></span><br><span class="line">outer.inner.value = <span class="number">43</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"outer2.value=<span class="subst">\(outer2.value)</span> outer2.inner.value=<span class="subst">\(outer2.inner.value)</span>"</span>)</span><br></pre></td></tr></table></figure>
 <p>打印如下：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">outer2.value=<span class="number">42</span> outer2.inner.value=<span class="number">43</span></span><br></pre></td></tr></table></figure>
 <p><code>outer2</code> 是 <code>outer</code> 的拷贝，它仅仅拷贝了 <code>inner</code> 的引用，因此两个结构体的 <code>inner</code> 共享一个存储空间。因此更新 <code>outer.inner.value</code> 的值会影响 <code>outer2.inner.value</code> 的值。神奇！</p>
@@ -238,7 +254,7 @@
   <div id="toc" class="toc-aside">
   <strong class="toc-title">文章目录</strong>
  
- <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#值类型-VS-引用类型"><span class="toc-number">1.</span> <span class="toc-text">值类型 VS 引用类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用值类型的经验"><span class="toc-number">2.</span> <span class="toc-text">使用值类型的经验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#做出选择"><span class="toc-number">3.</span> <span class="toc-text">做出选择</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结论"><span class="toc-number">4.</span> <span class="toc-text">结论</span></a></li></ol>
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#值类型-VS-引用类型"><span class="toc-number">1.</span> <span class="toc-text">值类型 VS 引用类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用值类型的经验"><span class="toc-number">2.</span> <span class="toc-text">使用值类型的经验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#做出选择"><span class="toc-number">3.</span> <span class="toc-text">做出选择</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#嵌套类型"><span class="toc-number">4.</span> <span class="toc-text">嵌套类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结论"><span class="toc-number">5.</span> <span class="toc-text">结论</span></a></li></ol>
  
   </div>
 
@@ -505,11 +521,11 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
 			
 		
 			
