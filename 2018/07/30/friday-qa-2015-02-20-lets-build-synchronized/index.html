@@ -1,0 +1,967 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>构建一个 @synchronized | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Mike Ash，原文链接，原文日期：2015-02-20译者：Sunnyyoung；校对：智多芯；定稿：numbbbbb，CMB   上一篇文章讲了线程安全，今天这篇最新一期的 Let’s Build 我会探讨一下如何实现 Objective-C 中的 @synchronized。本文基于 Swift 实现，Objective-C 版本大体上也差不多。">
+<meta name="keywords" content="iOS 开发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="构建一个 @synchronized">
+<meta property="og:url" content="https://swift.gg/2018/07/30/friday-qa-2015-02-20-lets-build-synchronized/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Mike Ash，原文链接，原文日期：2015-02-20译者：Sunnyyoung；校对：智多芯；定稿：numbbbbb，CMB   上一篇文章讲了线程安全，今天这篇最新一期的 Let’s Build 我会探讨一下如何实现 Objective-C 中的 @synchronized。本文基于 Swift 实现，Objective-C 版本大体上也差不多。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-07-30T07:12:16.890Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="构建一个 @synchronized">
+<meta name="twitter:description" content="作者：Mike Ash，原文链接，原文日期：2015-02-20译者：Sunnyyoung；校对：智多芯；定稿：numbbbbb，CMB   上一篇文章讲了线程安全，今天这篇最新一期的 Let’s Build 我会探讨一下如何实现 Objective-C 中的 @synchronized。本文基于 Swift 实现，Objective-C 版本大体上也差不多。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2018/07/30/friday-qa-2015-02-20-lets-build-synchronized/" target="_blank" title="构建一个 @synchronized" itemprop="url">构建一个 @synchronized</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2018-07-30T00:00:00.000Z" itemprop="datePublished">2018-07-30</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Mike Ash，<a href="https://www.mikeash.com/pyblog/friday-qa-2015-02-20-lets-build-synchronized.html" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-02-20<br>译者：<a href="undefined">Sunnyyoung</a>；校对：<a href="http://hulizhen.me" target="_blank" rel="noopener">智多芯</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>，<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>上一篇文章讲了线程安全，今天这篇最新一期的 Let’s Build 我会探讨一下如何实现 Objective-C 中的 <code>@synchronized</code>。本文基于 Swift 实现，Objective-C 版本大体上也差不多。</p>
+<a id="more"></a>
+<h2 id="回顾"><a href="#回顾" class="headerlink" title="回顾"></a>回顾</h2><p><code>@synchronized</code> 在 Objective-C 中是一种控制结构。它接受一个对象指针作为参数，后面跟着一段代码块。对象指针充当锁，在任何时候 <code>@synchronized</code> 代码块中只允许有一个线程使用该对象指针。</p>
+<p>这是一种使用锁进行多线程编程的简单方法。举个例子，你可以使用 <code>NSLock</code> 来保护对 NSMutableArray 的操作：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="built_in">NSMutableArray</span> *array;</span><br><span class="line"><span class="built_in">NSLock</span> *arrayLock;</span><br><span class="line"></span><br><span class="line">[arrayLock lock];</span><br><span class="line">[array addObject: obj];</span><br><span class="line">[arrayLock unlock];</span><br></pre></td></tr></table></figure>
+<p>也可以使用 <code>@synchronized</code> 来将数组本身加锁：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="keyword">@synchronized</span>(array) &#123;</span><br><span class="line">    [array addObject: obj];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我个人更喜欢显式的锁，这样做既可以使事情更清楚，<code>@synchronized</code> 的性能没那么好，原因如下图所示。但它（<code>@synchronized</code>）使用很方便，不管怎样，实现起来都很有意思。</p>
+<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>Swift 版本的 <code>@synchronized</code> 是一个函数。它接受一个对象和一个闭包，并使用持有的锁调用闭包：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">synchronized</span><span class="params">(obj: AnyObject, f: Void -&gt; Void)</span></span> &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>问题是，如何将任意对象变成锁？</p>
+<p>在一个理想的世界里（从实现这个函数的角度来看），每个对象都会为锁留出一些额外空间。在这个额外的小空间里 <code>synchronized</code> 可以使用适当的 <code>lock</code> 和 <code>unlock</code> 方法。然而实际上并没有这种额外空间。这可能是件好事，因为这会增大对象占用的内存空间，但是大多数对象永远都不会用到这个特性。</p>
+<p>另一种方法是用一张表来记录对象到锁的映射。<code>synchronized</code> 可以查找表中的锁，然后执行 <code>lock</code> 和 <code>unlock</code> 操作。这种方法的问题是表本身需要保证线程安全，它要么需要自己的锁，要么需要某种特殊的无锁数据结构。为表单独设置一个锁要容易得多。</p>
+<p>为了防止锁不断累积常驻，表需要跟踪锁的使用情况，并在不再需要锁的时候销毁或者复用。</p>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>要实现将对象映射到锁的表，<code>NSMapTable</code> 非常合适。它可以把原始对象的地址设置成键（key），并且可以保存对键（key）和值（value）的弱引用，从而允许系统自动回收未被使用的锁。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> locksTable = <span class="type">NSMapTable</span>.weakToWeakObjectsMapTable()</span><br></pre></td></tr></table></figure>
+<p>表中存储的对象是 <code>NSRecursiveLock</code> 实例。因为它是一个类，所以可以直接用在 <code>NSMapTable</code> 中，这点 <code>pthread_mutex_t</code> 就做不到。<code>@synchronized</code> 支持递归语义，我们的实现一样支持。</p>
+<p>表本身也需要一个锁。自旋锁（spinlock）在这种情况下很适合使用，因为对表的访问是短暂的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> locksTableLock = <span class="type">OS_SPINLOCK_INIT</span></span><br></pre></td></tr></table></figure>
+<p>有了这个表，我们就可以实现以下方法：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">synchronized</span><span class="params">(obj: AnyObject, f: Void -&gt; Void)</span></span> &#123;</span><br></pre></td></tr></table></figure>
+<p>它所做的第一件事就是在 <code>locksTable</code> 中找出与 <code>obj</code> 对应的锁，执行操作之前必须持有 <code>locksTableLock</code> 锁：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="type">OSSpinLockLock</span>(&amp;locksTableLock)</span><br><span class="line"><span class="keyword">var</span> lock = locksTable.objectForKey(obj) <span class="keyword">as</span>! <span class="type">NSRecursiveLock</span>?</span><br></pre></td></tr></table></figure>
+<p>如果表中没有找到对应锁，则创建一个新锁并保存到表中：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> lock == <span class="literal">nil</span> &#123;</span><br><span class="line">    lock = <span class="type">NSRecursiveLock</span>()</span><br><span class="line">    locksTable.setObject(lock!, forKey: obj)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>有了锁之后主表锁就可以释放了。为了避免死锁这必须要在调用 <code>f</code> 之前完成：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="type">OSSpinLockUnlock</span>(&amp;locksTableLock)</span><br></pre></td></tr></table></figure>
+<p>现在我们可以调用 <code>f</code> 了，在调用前后分别进行加锁和解锁操作：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">    lock!.lock()</span><br><span class="line">    f()</span><br><span class="line">    lock!.unlock()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="对比苹果的方案"><a href="#对比苹果的方案" class="headerlink" title="对比苹果的方案"></a>对比苹果的方案</h2><p>苹果实现 <code>@synchronized</code> 的方案可以在 Objective-C runtime 源码中找到:</p>
+<p><a href="http://www.opensource.apple.com/source/objc4/objc4-646/runtime/objc-sync.mm" target="_blank" rel="noopener">http://www.opensource.apple.com/source/objc4/objc4-646/runtime/objc-sync.mm</a></p>
+<p>它的主要目标是性能，因此不像上面那个玩具般的例子那么简单。对比它们之间有什么异同是一件非常有趣的事。</p>
+<p>基本概念是相同的。存在一个全局表，它将对象指针映射到锁，然后该锁在 <code>@synchronized</code> 代码块前后进行加锁解锁操作。</p>
+<p>对于底层的锁对象，Apple 使用配置为递归锁的 <code>pthread_mutex_t</code>。<code>NSRecursiveLock</code> 内部很可能也使用了 <code>pthread_mutex_t</code>，直接使用就省去了中间环节，并避免了运行时对 Foundation 的依赖。</p>
+<p>表本身的实现是一个链表而不是一个哈希表。常见的情况是在任何给定的时间里只存在少数几个锁，所以链表的性能表现很不错，可能比哈希表性能更好。每个线程缓存了最近在当前线程查找的锁，从而进一步提高性能。</p>
+<p>苹果的实现并不是只有一个全局表，而是在一个数组里保存了 16 个表。对象根据地址映射到不同的表，这减少了不同对象 <code>@synchronized</code> 操作导致的不必要的资源竞争，因为它们很可能使用的是两个不同的全局表。</p>
+<p>苹果的实现没有使用弱指针引用（这会大量增加额外开销），而是为每个锁保留一个内部的引用计数。当引用计数达到零时，该锁可以给新对象重新使用。未使用的锁不会被销毁，但复用意味着在任何时间锁的总数都不能超过激活锁的数量，也就是说锁的数量不随着新对象的创建无限制增长。</p>
+<p>苹果的实现方案非常巧妙，性能也不错。但与使用单独的显式锁相比，它仍然会带来一些不可避免的额外开销。尤其是：</p>
+<ol>
+<li>如果不相关的对象刚好被分配到同一个全局表中，那么它们仍然可能存在资源竞争。</li>
+<li>通常情况下在线程缓存中查找一个不存在的锁时，必须获取并释放一个自旋锁。</li>
+<li>必须做更多的工作来查找全局表中对象的锁。</li>
+<li>即使不需要，每个加锁/解锁周期都会产生递归语义方面的开销。</li>
+</ol>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p><code>@synchronized</code> 是一个有趣的语言结构，实现起来并不简单。它的作用是实现线程安全，但它的实现本身也需要同步操作来保证线程安全。我们使用全局锁来保护对锁表的访问，苹果的实现中则使用不同的技巧来提高性能。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Mike-Ash/">Mike Ash</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/iOS-开发/">iOS 开发</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2018/07/30/friday-qa-2015-02-20-lets-build-synchronized/" data-title="构建一个 @synchronized | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2018/07/26/notificationcenter-removeobserver/"  title="Block 形式的通知中心观察者是否需要手动注销">
+ <strong>下一篇</strong><br/> 
+ <span>Block 形式的通知中心观察者是否需要手动注销
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2018/07/30/friday-qa-2015-02-20-lets-build-synchronized/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#回顾"><span class="toc-number">1.</span> <span class="toc-text">回顾</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#原理"><span class="toc-number">2.</span> <span class="toc-text">原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实现"><span class="toc-number">3.</span> <span class="toc-text">实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#对比苹果的方案"><span class="toc-number">4.</span> <span class="toc-text">对比苹果的方案</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结论"><span class="toc-number">5.</span> <span class="toc-text">结论</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>40</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>20</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>35</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>23</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>168</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>129</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>80</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>76</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftGG 专属 Reveal 优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://h5.youzan.com/v2/showcase/promocode/fetch?alias=6pya475">领取立减 30 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
