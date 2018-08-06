@@ -21,7 +21,7 @@
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Mike Ash，原文链接，原文日期：2017-06-30译者：BigNerdCoding；校对：pmst，shanks；定稿：CMB   很高兴，我又回来了。在刚刚过去的 WWDC 期间，我在 CocoaConf Next Door 做个一个关于剖析 ARM64 上 objc_msgSend 运行流程的发言。现在我将整理后的内容重新发布到 Friday Q&amp;amp;A 上。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2018-08-06T02:14:14.655Z">
+<meta property="og:updated_time" content="2018-08-06T02:19:07.061Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="剖析 ARM 64 架构中的 objc_msgSend">
 <meta name="twitter:description" content="作者：Mike Ash，原文链接，原文日期：2017-06-30译者：BigNerdCoding；校对：pmst，shanks；定稿：CMB   很高兴，我又回来了。在刚刚过去的 WWDC 期间，我在 CocoaConf Next Door 做个一个关于剖析 ARM64 上 objc_msgSend 运行流程的发言。现在我将整理后的内容重新发布到 Friday Q&amp;amp;A 上。">
@@ -102,7 +102,7 @@
 <!--此处开始正文-->
 <p>很高兴，我又回来了。在刚刚过去的 WWDC 期间，我在 CocoaConf Next Door 做个一个关于剖析 ARM64 上 <code>objc_msgSend</code> 运行流程的发言。现在我将整理后的内容重新发布到 Friday Q&amp;A 上。</p>
 <a id="more"></a>
-<h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><p>每个 Objective-C 对象都会指向一个类，而每个类又包含一个方法列表。每个方法则由选择器（<code>selector</code>）、函数指针和一些元数据（<code>metadata</code>）构成。<code>objc_msgSend</code> 职责就是接收对象（<code>object</code>）和选择器（<code>selector</code>），根据选择器名称找到对应方法的函数指针并跳转执行该函数。</p>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>每个 Objective-C 对象都会指向一个类，而每个类又包含一个方法列表。每个方法则由选择器（<code>selector</code>）、函数指针和一些元数据（<code>metadata</code>）构成。<code>objc_msgSend</code> 职责就是接收对象（<code>object</code>）和选择器（<code>selector</code>），根据选择器名称找到对应方法的函数指针并跳转执行该函数。</p>
 <p>查找过程相对来说还是比较复杂的。若某个方法在当前类中未找到，就需要沿着继承链继续在父类中查找。如果在父类中也未查询到的话，则会触发 runtime 机制中的消息转发机制。任何对象在接收到第一条消息后都会触发类方法 <code>+initialize</code> 。</p>
 <p>因为每次方法调用都会触发上述流程，所以在常见场景下的查找速度必须非常快。显然这与复杂的操作过程之间存在一定冲突。</p>
 <p>为了解决这对矛盾提高查询速度，Objective-C 采用了方法缓存策略。每个类都会使用哈希表将其方法按照 Selector - IMPs（函数指针） 键值对关系缓存起来。这样在查询方法时，runtime 首先会直接去哈希表中查询。如果哈希表中不存在的话则转而执行原有复杂、缓慢的处理流程，并将最终结果缓存起来已备下次使用。</p>
@@ -117,7 +117,7 @@
 <li>跳转到 IMP 所指的函数实现</li>
 </ol>
 <p>下面开始分析其具体实现。</p>
-<h3 id="执行过程的指令"><a href="#执行过程的指令" class="headerlink" title="执行过程的指令"></a>执行过程的指令</h3><p><em>objc_msgSend</em> 在不同情形下执行路径不尽相同。对于向 <code>nil</code> 发送消息，标记指针（tagged pointers），哈希表冲突会相应特殊代码中进行处理。下面我将通过最常见也是最简单的情形来解释 <code>objc_msgSend</code>  的执行，即处理 non-nil、non-tagged 消息并且哈希表也能命中该方法。我会在该过程中标记出那些需要注意的处理路径<em>岔路口</em>，然后回过头来进行详细讲解。</p>
+<h2 id="执行过程的指令"><a href="#执行过程的指令" class="headerlink" title="执行过程的指令"></a>执行过程的指令</h2><p><em>objc_msgSend</em> 在不同情形下执行路径不尽相同。对于向 <code>nil</code> 发送消息，标记指针（tagged pointers），哈希表冲突会相应特殊代码中进行处理。下面我将通过最常见也是最简单的情形来解释 <code>objc_msgSend</code>  的执行，即处理 non-nil、non-tagged 消息并且哈希表也能命中该方法。我会在该过程中标记出那些需要注意的处理路径<em>岔路口</em>，然后回过头来进行详细讲解。</p>
 <p>我将列出单条或一组指令，然后在下面紧接相关解释内容。</p>
 <p>每条指令前面都会有一个地址偏移量，可以将其看作一个指示跳转位置的标记量。</p>
 <p>ARM64 架构中包含 31 个 64 位整型寄存器，对应符号表示为 x0 - x30 。每个寄存器的低 32 位也可以通过 w0 到 w30 进行访问，就像它也是一个单独的寄存器。其中 x0 到 x7 被用来保存函数调用时的前 8 个参数。这意味着 <code>objc_msgSend</code> 函数中的 <code>self</code> 参数保存在 x0 而 <code>_cmd</code> 保存在 x1 。</p>
@@ -175,7 +175,7 @@
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">0x0060 ldp    x9, x17, [x12, #-0x10]!</span><br><span class="line">0x0064 b      0x48</span><br></pre></td></tr></table></figure>
 <p>该段指令与之前功能一致，加载新 bucket 信息到 x9，x17 寄存器中。更新 x12 中的地址，并跳转到 0x48 处重复查找流程。</p>
 <p>objc_msgSend 的主要处理流程到此告一段落，剩下 Tagged Pointer 和 <code>nil</code> 两个特殊情形的处理。</p>
-<h3 id="标记指针的处理"><a href="#标记指针的处理" class="headerlink" title="标记指针的处理"></a>标记指针的处理</h3><p>我们回到第一组汇编指令的跳转处来讲解标记指针（<code>Tagged Pointer</code>）的处理。</p>
+<h2 id="标记指针的处理"><a href="#标记指针的处理" class="headerlink" title="标记指针的处理"></a>标记指针的处理</h2><p>我们回到第一组汇编指令的跳转处来讲解标记指针（<code>Tagged Pointer</code>）的处理。</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">0x006c b.eq    0xa4</span><br></pre></td></tr></table></figure>
 <p>当参数 <em>self</em> 不大于 0 时，该指令就会被触发。其中小于 0 对应标记指针，而等于零则对应 <code>nil</code> 。这两种情形有各自的处理流程，所以第一步就是要区分出到底是哪种情形。若为 <em>nil</em> 情形则跳转到 0xa4 处进行处理，否则继续执行。</p>
 <p>在继续讲解之前，先简单讨论下标记指针工作原理。 标记指针支持多个类。其中高 4 位（在 ARM64 上）指明了“对象”的类信息，本质上就是 Tagged Pointer 的 isa 。当然 4 个比特位不足以容纳一个类指针，实际上这些信息都被存在了一张特殊表中。我们可以以高 4 位的值为索引去表中查询真正的类信息。</p>
@@ -204,7 +204,7 @@
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">0x00a0 b      0x10</span><br></pre></td></tr></table></figure>
 <p>最后，我们同样跳回到 0x10 处。</p>
 <p>接下来，我们来看 <code>nil</code> 情形的处理过程。</p>
-<h3 id="nil-的处理"><a href="#nil-的处理" class="headerlink" title="nil 的处理"></a><code>nil</code> 的处理</h3><p>作为最后一个特殊情况，下面就是 <code>nil</code> 情形下被执行的所有指令。</p>
+<h2 id="nil-的处理"><a href="#nil-的处理" class="headerlink" title="nil 的处理"></a><code>nil</code> 的处理</h2><p>作为最后一个特殊情况，下面就是 <code>nil</code> 情形下被执行的所有指令。</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">0x00a4 mov    x1, #0x0</span><br><span class="line">0x00a8 movi   d0, #0000000000000000</span><br><span class="line">0x00ac movi   d1, #0000000000000000</span><br><span class="line">0x00b0 movi   d2, #0000000000000000</span><br><span class="line">0x00b4 movi   d3, #0000000000000000</span><br><span class="line">0x00b8 ret</span><br></pre></td></tr></table></figure>
 <p><code>nil</code> 情形的处理与其他情形完全不同，它不会进行类查询和方法派发，而仅仅返回 0 给调用者。</p>
 <p>该段指令最麻烦的事情是 <code>objc_msgSend</code> 不知道具体的返回值类型。是整型值、浮点值、亦或者是什么都不返回。</p>
@@ -212,9 +212,9 @@
 <p>在处理 <code>nil</code> 情形时，上诉指令会将 x1 以及 v0 - v3 中的值全部清空并设置为 0。其中 d0 - d3 分别对应向量寄存器 v0 - v3 的后半部分，通过将其设置为 0 清除了后半部分然后在通过 movi 清除所有的寄存器内容。清空返回值寄存器后，控制权将重新回到调用方。</p>
 <p>如果返回值为比较大的结构体，那么寄存器可能就变的不够用了。此时就需要调用者做出一些配合。调用者会在一开始为该结构体分配一块内存，然后将其地址提前写入到 x8 寄存器中。在设置返回值的时候，直接往该地址中写数据即可。<br>因为该内存大小对 <code>objc_msgSend</code> 是透明的，因此不能对其进行清空操作。取而代之的操作就是在调用 <code>objc_msgSend</code>  之前编译器会将其设置为 0 。</p>
 <p>以上就是 <code>nil</code> 情形的处理，<code>objc_msgSend</code> 流程到此也宣告结束。</p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>深入框架底层还是很有趣的，而 <code>objc_msgSend</code>  就像一件艺术品，值得细细玩味。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>深入框架底层还是很有趣的，而 <code>objc_msgSend</code>  就像一件艺术品，值得细细玩味。</p>
 <p>今天的内容到此结束，下次再会为大家带来一些更好的内容。Friday Q&amp;A 很多内容都是由读者驱动而来，所以欢迎大家在下面积极发言。</p>
-<h4 id="汇编指令校对者注"><a href="#汇编指令校对者注" class="headerlink" title="汇编指令校对者注"></a>汇编指令校对者注</h4><ol>
+<h3 id="汇编指令校对者注"><a href="#汇编指令校对者注" class="headerlink" title="汇编指令校对者注"></a>汇编指令校对者注</h3><ol>
 <li><code>#0x0</code>：“#”修饰的数字表示立即数，可简单理解为数值，而非地址：</li>
 <li><code>b</code> ：跳转指令，b.le 指比较结果小于等于的时候跳转至某内存地址；</li>
 <li><code>ldr</code> ：从内存中读取数据到寄存器；</li>
@@ -242,7 +242,7 @@
 
   <div class="article-tags">
   
-  <span></span> <a href="/tags/objc-msgSend/">objc_msgSend</a>
+  <span></span> <a href="/tags/iOS-开发/">iOS 开发</a>
   </div>
 
 </div>
@@ -304,7 +304,7 @@
   <div id="toc" class="toc-aside">
   <strong class="toc-title">文章目录</strong>
  
- <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#概述"><span class="toc-number">1.</span> <span class="toc-text">概述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#执行过程的指令"><span class="toc-number">2.</span> <span class="toc-text">执行过程的指令</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#标记指针的处理"><span class="toc-number">3.</span> <span class="toc-text">标记指针的处理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#nil-的处理"><span class="toc-number">4.</span> <span class="toc-text">nil 的处理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#总结"><span class="toc-number">5.</span> <span class="toc-text">总结</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#汇编指令校对者注"><span class="toc-number">5.1.</span> <span class="toc-text">汇编指令校对者注</span></a></li></ol></li></ol>
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#概述"><span class="toc-number">1.</span> <span class="toc-text">概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#执行过程的指令"><span class="toc-number">2.</span> <span class="toc-text">执行过程的指令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#标记指针的处理"><span class="toc-number">3.</span> <span class="toc-text">标记指针的处理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#nil-的处理"><span class="toc-number">4.</span> <span class="toc-text">nil 的处理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">5.</span> <span class="toc-text">总结</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#汇编指令校对者注"><span class="toc-number">5.1.</span> <span class="toc-text">汇编指令校对者注</span></a></li></ol></li></ol>
  
   </div>
 
@@ -523,7 +523,7 @@
 			
 		
 			
-				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>80</sup></a></li>
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>81</sup></a></li>
 			
 		
 			
@@ -583,15 +583,15 @@
 			
 		
 			
+				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>1</sup></a></li>
 			
 		
 			
 				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/推送通知/" title="推送通知">推送通知<sup>1</sup></a></li>
 			
 		
 		</ul>
