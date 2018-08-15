@@ -22,7 +22,7 @@
 <meta property="og:description" content="本文详细讲解了如何通过 Watch Connectivity 的 Application Context 方式进行 watch 和 配对 iPhone 之间共享数据。">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="http://www.codingexplorer.com/wp-content/uploads/2016/02/Watch-Connectivity-Application-Context.png">
-<meta property="og:updated_time" content="2018-08-15T03:27:26.277Z">
+<meta property="og:updated_time" content="2018-08-15T03:28:33.534Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="在 Swift 中使用 Watch Connectivity — Application Context">
 <meta name="twitter:description" content="本文详细讲解了如何通过 Watch Connectivity 的 Application Context 方式进行 watch 和 配对 iPhone 之间共享数据。">
@@ -146,7 +146,7 @@
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">session</span><span class="params">(<span class="number">_</span> session: WCSession, didReceiveApplicationContext applicationContext: [String : Any])</span></span> &#123;</span><br><span class="line">    <span class="type">DispatchQueue</span>.main.async() &#123;</span><br><span class="line">        <span class="keyword">self</span>.processApplicationContext()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>现在，你大概看到了 <code>didReceiveApplicationContext</code> 方法的入参带有它接收到的 <code>Application Context</code> 副本。它存储在上面提到的 <code>receivedApplicationContext</code> 属性中。所以我们并不需要它来调用辅助方法, 因此这个方法不需要传入任何行参。</p>
 <blockquote>
-<p>译者注：<br>其实对于辅助方法 <code>processApplicationContext</code> 来说，增加行参 context 反而更 <strong>函数式</strong>，也更 swift。 通过增加一个 context 的入参，可以让方法内部实现和外部依赖解耦，更加方便我们对它进行单元测试。</p>
+<p>译者注：<br>其实对于辅助方法 <code>processApplicationContext</code> 来说，增加行参 context 反而更 <strong>函数式</strong>，也更 <strong>Swift</strong>。 通过增加一个 context 的入参，可以让方法内部实现和外部依赖解耦，更加方便我们对它进行单元测试。</p>
 </blockquote>
 <p>那么，调用 <code>dispatch_async</code> 是为了做什么呢？好吧，这些代理回调不在主线程上。你永远不应该在除主线程以外的任何线程更新 iOS 或 watchOS 中的 UI。而我们的辅助方法除了从 <code>receivedApplicationContext</code> 中读取信息之外，主要目的是用来更新 UI 元素。因此，我们要通过 <code>dispatch_async</code> 方法返回主线程来调用该方法。调用 <code>dispatch_async</code> 需要 2 个参数，首先是派发队列（对于主线程，我们通过 <code>dispatch_get_main_queue</code> 方法获取），其次是一个闭包来告诉它需要做什么操作，这里我们只是告诉它去调用辅助方法。</p>
 <p>所以，为什么我们要在辅助方法里这样做，而不是直接在回调方法里面直接处理呢？好吧，当你实际接收到一个新的 <code>Application Context</code> 时，会回调 <code>didReceiveApplicationContext</code> 代理方法。当 <code>WCSession</code> 在关闭时接收到新的 <code>ApplicationContext</code> 会调用 activateSession 方法，在那不久之后也会回调到 <code>didReceiveApplicationContext</code> 方法。在这种情况下，我使用此 ApplicationContext 作为该信息的后备存储。我不确定这是不是一个好的主意，但是对于一个简单的 app 来说，这是合理的， 因为 <code>label</code> 的重点是显示 iPhone 上的 <code>UISwitch</code> 是开启还是关闭。</p>
