@@ -22,7 +22,7 @@
 <meta property="og:description" content="本文详细讲解了如何通过 Watch Connectivity 的 Application Context 方式进行 watch 和 配对 iPhone 之间共享数据。">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="http://www.codingexplorer.com/wp-content/uploads/2016/02/Watch-Connectivity-Application-Context.png">
-<meta property="og:updated_time" content="2018-08-15T03:13:29.068Z">
+<meta property="og:updated_time" content="2018-08-15T03:20:26.918Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="在 Swift 中使用 Watch Connectivity — Application Context">
 <meta name="twitter:description" content="本文详细讲解了如何通过 Watch Connectivity 的 Application Context 方式进行 watch 和 配对 iPhone 之间共享数据。">
@@ -103,7 +103,7 @@
 </blockquote>
 <!--此处开始正文-->
 <p><img src="http://www.codingexplorer.com/wp-content/uploads/2016/02/Watch-Connectivity-Application-Context.png" alt=""></p>
-<p>在 watchOS 1 时代，<code>WatchKit Extension</code> 位于已配对的 iOS 设备上，这使得宿主 APP 和 watch 之间的数据共享变得简单。类似偏好设置这种最简单的数据，只需要通过 App Groups 功能来存取 <code>NSUserDefaults</code>。目前在手机上留存的其他扩展程序和主 app 之间共享数据仍然应该使用这种方式，例如 <code>Today View Extension</code> ，但它已不再适用于 watchOS 的 app。<br>幸运的是，苹果为我们提供了新的 API 来做这件事。相比 App Groups，Watch Connectivity 拥有更强大的功能。它不仅提供了你的 Apple Watch 和与其配对 iPhone 之间连接状态的更多信息，还允许它们之间进行交互消息和 3 种方式的后台传输，这些方式分别是：</p>
+<p>在 watchOS 1 时代，<code>WatchKit Extension</code> 位于已配对的 iOS 设备上，这使得宿主 APP 和 watch 之间的数据共享变得简单。类似偏好设置这种最简单的数据，只需要通过 App Groups 功能来存取 <code>NSUserDefaults</code>。目前在手机上留存的其他扩展程序和主 app 之间共享数据仍然应该使用这种方式，例如 <code>Today View Extension</code>，但它已不再适用于 watchOS 的 app。<br>幸运的是，苹果为我们提供了新的 API 来做这件事。相比 App Groups，Watch Connectivity 拥有更强大的功能。它不仅提供了你的 Apple Watch 和与其配对 iPhone 之间连接状态的更多信息，还允许它们之间进行交互消息和 3 种方式的后台传输，这些方式分别是：</p>
 <ol>
 <li>Application Context</li>
 <li>User Info Transfer</li>
@@ -141,13 +141,13 @@
 <li>receivedApplicationContext - 此设备最近一次<strong>接收</strong>的 <code>Application Context</code>。</li>
 </ul>
 <p>现在，把它俩放到一起来看，至少接收到的看起来很明显。但在我第一次涉及这个时（不记得 WWDC 中 Watch Connectivity的介绍视频的全部内容？），我认为 applicationContext 是从最近的发送或接收来更新的，因为我认为它们是一致的 <code>context</code>。然而我大错特错，我花了一段时间才意识到它们是分开的。我当然能看出来原因，因为我们可能每次都会发送不一样的数据，就像从 Watch 的角度来看，applicationContext 就是 iPhone 端需要的 Watch 相关 <code>context</code>，而 receivedApplicationContext 则是 Watch 端需要的 iPhone 相关 <code>context</code>。无论哪种方式，请记住它们是不同的两个东西，并根据实际情况选择你所需要的那个。</p>
-<p>所以在这个方法中，我们首先尝试将 <code>receivedApplicationContext</code> 由 <code>[String: AnyObject]</code> 类型的字典转换为我们需要的 <code>[String: Bool]</code> 类型。如果转换成功，则再根据字典中布尔值的状态将 displayLabel 的 text 值设置为“Switch On”或“Switch Off”。</p>
+<p>所以在这个方法中，我们首先尝试将 <code>receivedApplicationContext</code> 由 <code>[String: AnyObject]</code> 类型的字典转换为我们需要的 <code>[String: Bool]</code> 类型。如果转换成功，则再根据字典中布尔值的状态将 displayLabel 的 text 值设置为 “Switch On” 或 “Switch Off”。</p>
 <p>当我们实际接收到一个新的  Application context 时，该 InterfaceController 将会收到我们 WCSession 对象的代理回调来通知我们这个信息，我们将在那里调用这个辅助方法。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">session</span><span class="params">(<span class="number">_</span> session: WCSession, didReceiveApplicationContext applicationContext: [String : Any])</span></span> &#123;</span><br><span class="line">    <span class="type">DispatchQueue</span>.main.async() &#123;</span><br><span class="line">        <span class="keyword">self</span>.processApplicationContext()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>现在，你大概看到了 <code>didReceiveApplicationContext</code> 方法的入参带有它接收到的 <code>Application Context</code> 副本。它存储在上面提到的 <code>receivedApplicationContext</code> 属性中。所以我们并不需要它来调用辅助方法, 因此这个方法不需要传入任何行参。</p>
-<hr>
-<p>译者注：<br>    其实对于辅助方法 <code>processApplicationContext</code> 来说，增加行参 context 反而更”函数式”，也更”swift”。 通过增加一个 context 的入参，可以让方法内部实现和外部依赖解耦，更加方便我们对它进行单元测试。</p>
-<hr>
+<blockquote>
+<p>译者注：<br>其实对于辅助方法 <code>processApplicationContext</code> 来说，增加行参 context 反而更 <strong>函数式</strong>，也更 swift。 通过增加一个 context 的入参，可以让方法内部实现和外部依赖解耦，更加方便我们对它进行单元测试。</p>
+</blockquote>
 <p>那么，调用 <code>dispatch_async</code> 是为了做什么呢？好吧，这些代理回调不在主线程上。你永远不应该在除主线程以外的任何线程更新 iOS 或 watchOS 中的 UI。而我们的辅助方法除了从 <code>receivedApplicationContext</code> 中读取信息之外，主要目的是用来更新 UI 元素。因此，我们要通过 <code>dispatch_async</code> 方法返回主线程来调用该方法。调用 <code>dispatch_async</code> 需要 2 个参数，首先是派发队列（对于主线程，我们通过 <code>dispatch_get_main_queue</code> 方法获取），其次是一个闭包来告诉它需要做什么操作，这里我们只是告诉它去调用辅助方法。</p>
 <p>所以，为什么我们要在辅助方法里这样做，而不是直接在回调方法里面直接处理呢？好吧，当你实际接收到一个新的 <code>Application Context</code> 时，会回调 <code>didReceiveApplicationContext</code> 代理方法。当 <code>WCSession</code> 在关闭时接收到新的 <code>ApplicationContext</code> 会调用 activateSession 方法，在那不久之后也会回调到 <code>didReceiveApplicationContext</code> 方法。在这种情况下，我使用此 ApplicationContext 作为该信息的后备存储。我不确定这是不是一个好的主意，但是对于一个简单的 app 来说，这是合理的， 因为 <code>label</code> 的重点是显示 iPhone 上的 <code>UISwitch</code> 是开启还是关闭。</p>
 <p>那么，当我们的 app 完成加载之后想使用最后一次接收到的值，但是 app 在关闭期间又没有收到新的 <code>context</code>，这种情况该怎么办？我们在视图生命周期的早期设置 label，所以现在 <code>awakeWithContext</code> 看起来应该是这样：</p>
