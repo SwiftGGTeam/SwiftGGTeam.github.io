@@ -1,0 +1,996 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>在序列的链式操作中注入副作用 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="Swift,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="本文介绍了如何在 Swift 的链式调用中通过使用创建的自定义函数来实现调试的目的">
+<meta name="keywords" content="Swift">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在序列的链式操作中注入副作用">
+<meta property="og:url" content="https://swift.gg/2018/09/13/chained-foreach/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="本文介绍了如何在 Swift 的链式调用中通过使用创建的自定义函数来实现调试的目的">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-09-13T06:34:00.013Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="在序列的链式操作中注入副作用">
+<meta name="twitter:description" content="本文介绍了如何在 Swift 的链式调用中通过使用创建的自定义函数来实现调试的目的">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2018/09/13/chained-foreach/" target="_blank" title="在序列的链式操作中注入副作用" itemprop="url">在序列的链式操作中注入副作用</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2018-09-13T00:00:00.000Z" itemprop="datePublished">2018-09-13</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Arthur Knopper，<a href="https://oleb.net/blog/2017/10/chained-foreach/" target="_blank" rel="noopener">原文链接</a>，原文日期：2017/10/30<br>译者：<a href="undefined">jojotov</a>；校对：<a href="http://forelax.space" target="_blank" rel="noopener">Forelax</a>，<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a>；定稿：<a href="http://forelax.space" target="_blank" rel="noopener">Forelax</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>几周前，一位读者指出了 <a href="https://oleb.net/advanced-swift/" target="_blank" rel="noopener"><em>Advanced Swift</em></a> 中的<a href="https://twitter.com/jasonalexzurita/status/915972380685516800" target="_blank" rel="noopener">一处错误</a>。我们当时这样描述 Swift 中的 <code>forEach</code> 方法：</p>
+<blockquote>
+<p><code>forEach</code> 作为一系列链式调用中的一部分时确实可以大放异彩。举个例子，试想一下你在一个语句中通过链式调用的方式调用了几次 <code>map</code> 和 <code>filter</code> 方法。在调试这段代码时，你希望能够打印出某几步操作中间的值。要达成这一目的，在你期望的位置插入一个 <code>forEach</code> 或许是最快速的解决方式。</p>
+</blockquote>
+<p>当我写下这段描述时，众多美妙的想法涌现在我脑中，因为这听起来是个非常实用的特性[^1]（你并不能通过 <code>for-in</code> 循环达到这种效果）。可事实却如此的残酷 —— 你不能在一系列链式调用中间插入 <code>forEach</code>！</p>
+<a id="more"></a>
+<h2 id="理想中的形式"><a href="#理想中的形式" class="headerlink" title="理想中的形式"></a>理想中的形式</h2><p>为了以代码的形式更好地阐述我的想法，先让我们设想有如下一系列的链式调用：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> numbers = <span class="number">1</span>...<span class="number">10</span></span><br><span class="line"><span class="keyword">let</span> sumOfSquaredEvenNumbers = numbers</span><br><span class="line">    .<span class="built_in">filter</span> &#123; $<span class="number">0</span> % <span class="number">2</span> == <span class="number">0</span>&#125;</span><br><span class="line">    .<span class="built_in">map</span> &#123; $<span class="number">0</span> * $<span class="number">0</span> &#125;</span><br><span class="line">    .<span class="built_in">reduce</span>(<span class="number">0</span>, +)</span><br><span class="line"><span class="comment">// → 220</span></span><br></pre></td></tr></table></figure>
+<p>现在假设我们希望确认一下每个链式操作是否达到了预期的效果 —— 例如 <code>filter</code> 和（或） <code>map</code> 操作后的返回值是否正确，最简洁的方式当然是在两个操作中间插入类似 <code>.forEach { print($0) }</code> 的调用。</p>
+<p>但为什么 <code>forEach</code> 并不支持类似这样的使用方式呢？原因在于，在一系列链式调用中间的任何操作，都必须返回一个遵循 <a href="https://developer.apple.com/documentation/swift/sequence" target="_blank" rel="noopener"><code>Sequence</code></a> 协议的对象，这样下一个链式操作才能正常执行。而 <code>forEach</code> 的返回值为 <code>()</code>，因此它只能在一系列链式操作的结尾处调用。</p>
+<h2 id="实现一个返回-Self-的-forEach"><a href="#实现一个返回-Self-的-forEach" class="headerlink" title="实现一个返回 Self 的 forEach"></a>实现一个返回 <code>Self</code> 的 <code>forEach</code></h2><p>值得庆幸的一点是，实现这个功能并不困难。我们所需要做的事情只是实现一个方法 —— 它能够遍历序列，并对每个元素执行一次传入的函数（就像 <code>forEach</code> 一样），最后返回自己（这样链式操作就能够无感知地继续进行）。换句话来说，这个方法的返回值类型应为 <code>Self</code>。为了避免在类型检查的时候这个方法与原生的 <code>forEach</code> 发生混淆，我把它命名为 <code>forEachPerform</code>。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Sequence</span> </span>&#123;</span><br><span class="line">    <span class="comment">/// Perform a side effect for each element in `self`.</span></span><br><span class="line">    @discardableResult</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">forEachPerform</span><span class="params">(<span class="number">_</span> body: <span class="params">(Element)</span></span></span> <span class="keyword">throws</span> -&gt; ())</span><br><span class="line">        <span class="keyword">rethrows</span> -&gt; <span class="type">Self</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">try</span> forEach(body)</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">self</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>与 <code>forEach</code> 不同，我们可以插入这个方法到一系列链式操作中：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> sumOfSquaredEvenNumbers = numbers</span><br><span class="line">    .<span class="built_in">filter</span> &#123; $<span class="number">0</span> % <span class="number">2</span> == <span class="number">0</span>&#125;</span><br><span class="line">    .forEachPerform &#123; <span class="built_in">print</span>($<span class="number">0</span>) &#125;</span><br><span class="line">    .<span class="built_in">map</span> &#123; $<span class="number">0</span> * $<span class="number">0</span> &#125;</span><br><span class="line">    .<span class="built_in">reduce</span>(<span class="number">0</span>, +)</span><br><span class="line"><span class="comment">/* Prints:</span></span><br><span class="line"><span class="comment">2</span></span><br><span class="line"><span class="comment">4</span></span><br><span class="line"><span class="comment">6</span></span><br><span class="line"><span class="comment">8</span></span><br><span class="line"><span class="comment">10</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+<p>除此之外，我还添加了另一个非常有用的方法。这个方法只会对整个序列调用传入参数中的函数一次，而不会遍历序列并对每一个元素都调用一次。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Sequence</span> </span>&#123;</span><br><span class="line">    <span class="comment">/// Perform a side effect.</span></span><br><span class="line">    @discardableResult</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">perform</span><span class="params">(<span class="number">_</span> body: <span class="params">(<span class="keyword">Self</span>)</span></span></span> <span class="keyword">throws</span> -&gt; ())</span><br><span class="line">        <span class="keyword">rethrows</span> -&gt; <span class="type">Self</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">try</span> body(<span class="keyword">self</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">self</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过这个方法可以完美地打印每一步链式操作的中间值：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> sumOfSquaredEvenNumbers = numbers</span><br><span class="line">    .<span class="built_in">filter</span> &#123; $<span class="number">0</span> % <span class="number">2</span> == <span class="number">0</span>&#125;</span><br><span class="line">    .perform &#123; <span class="built_in">print</span>(<span class="string">"After filter: <span class="subst">\($<span class="number">0</span>)</span>"</span>) &#125;</span><br><span class="line">    .<span class="built_in">map</span> &#123; $<span class="number">0</span> * $<span class="number">0</span> &#125;</span><br><span class="line">    .perform &#123; <span class="built_in">print</span>(<span class="string">"After map: <span class="subst">\($<span class="number">0</span>)</span>"</span>) &#125;</span><br><span class="line">    .<span class="built_in">reduce</span>(<span class="number">0</span>, +)</span><br><span class="line"><span class="comment">/* Prints:</span></span><br><span class="line"><span class="comment">After filter: [2, 4, 6, 8, 10]</span></span><br><span class="line"><span class="comment">After map: [4, 16, 36, 64, 100]</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+<h2 id="自毁序列"><a href="#自毁序列" class="headerlink" title="自毁序列"></a>自毁序列</h2><p>我们新添加的方法返回了一个未修改过的 <code>self</code>，因此把它插入一系列链式调用中是完全没有影响的。但我们需要注意， <code>Sequence</code> 协议目前的代码实现中并没有保证多次的迭代返回完全相同的序列。</p>
+<blockquote>
+<p>译者注:</p>
+<p>苹果官方 <code>Sequence</code> 的文档中有一段关与 <a href="https://developer.apple.com/documentation/swift/sequence#Repeated%20Access" target="_blank" rel="noopener">Repeated Access</a> 的描述：</p>
+<p>The <code>Sequence</code> protocol makes no requirement on conforming types regarding whether they will be destructively consumed by iteration. As a consequence, don’t assume that multiple <code>for</code>-<code>in</code> loops on a sequence will either resume iteration or restart from the beginning:</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">&gt; <span class="keyword">for</span> element <span class="keyword">in</span> sequence &#123;</span><br><span class="line">&gt;     <span class="keyword">if</span> ... some condition &#123; <span class="keyword">break</span> &#125;</span><br><span class="line">&gt; &#125;</span><br><span class="line">&gt; </span><br><span class="line">&gt; <span class="keyword">for</span> element <span class="keyword">in</span> sequence &#123;</span><br><span class="line">&gt;     <span class="comment">// No defined behavior</span></span><br><span class="line">&gt; &#125; </span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p>大多数遵循 <code>Sequence</code> 的类型会确保上面的这种情况不会发生（例如 <a href="https://developer.apple.com/documentation/swift/array" target="_blank" rel="noopener"><code>Array</code></a>），但假设你有一个可以用于接收来自网络 socket 的字节流的 <code>Sequence</code> 类型——调用 <code>forEachPerform</code> 或者 <code>perform</code> 会打乱其顺序，导致随后操作中的数据不能被正确处理。</p>
+<p>如果你的代码中存在上述问题，你可以选择让 <code>forEachPerform</code> 和 <code>perform</code> 方法返回一个 <code>Array&lt;Element&gt;</code> 类型（这样可以把可破坏的序列隐式转换为可重复的序列），或者可以把这些方法加到  <a href="https://developer.apple.com/documentation/swift/collection" target="_blank" rel="noopener"><code>Collection</code></a> 中（<code>Collection</code> 类型保证了迭代不会破坏顺序）。</p>
+<h2 id="让它变“懒”"><a href="#让它变“懒”" class="headerlink" title="让它变“懒”"></a>让它变“懒”</h2><p><code>forEachPerform</code> 有个不太容易发现的问题：如果我们把它放在 <strong><em>惰性队列 (lazy sequences)</em></strong> 的链式调用之间，惰性队列会失去其原本的惰性。</p>
+<p>惰性队列的设计初衷是为了把所有需要对下一个元素所做的工作都尽可能地延迟进行 —— 也就是说，当一个惰性序列的链式调用的最终返回值需要被获取时，那些被 ”延迟“ 的工作才会真正执行。由于 <code>forEachPerform</code> 的实现中遍历了序列的每个元素，我们让这个队列的任何惰性都被破坏了。</p>
+<p>为了保证序列的惰性，我们可以定义一个自己的惰性迭代器以及序列类型，分别命名为 <code>LazyForEachIterator</code> 和 <code>LazyForEachSequence</code>。它们的工作与标准库中类似的类型相差无几：它们会把传入的函数以及序列 <em>保存</em> 起来，而不是立即执行传入的函数。<em>直到</em> 某个操作访问到下个元素时，它们才会轮流尝试获取原本序列的下一个元素，并执行相应的操作。</p>
+<p>实现代码大概如此：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">LazyForEachIterator</span>&lt;<span class="title">Base</span>: <span class="title">IteratorProtocol</span>&gt;</span></span><br><span class="line"><span class="class">    : <span class="title">IteratorProtocol</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">next</span><span class="params">()</span></span> -&gt; <span class="type">Base</span>.<span class="type">Element</span>? &#123;</span><br><span class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> nextElement = base.next() <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">        &#125;</span><br><span class="line">        perform(nextElement)</span><br><span class="line">        <span class="keyword">return</span> nextElement</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">var</span> base: <span class="type">Base</span></span><br><span class="line">    <span class="keyword">let</span> perform: (<span class="type">Base</span>.<span class="type">Element</span>) -&gt; ()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">LazyForEachSequence</span>&lt;<span class="title">Base</span>: <span class="title">Sequence</span>&gt;</span></span><br><span class="line"><span class="class">    : <span class="title">LazySequenceProtocol</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">makeIterator</span><span class="params">()</span></span></span><br><span class="line">        -&gt; <span class="type">LazyForEachIterator</span>&lt;<span class="type">Base</span>.<span class="type">Iterator</span>&gt;</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">LazyForEachIterator</span>(</span><br><span class="line">            base: base.makeIterator(),</span><br><span class="line">            perform: perform)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">let</span> base: <span class="type">Base</span></span><br><span class="line">    <span class="keyword">let</span> perform: (<span class="type">Base</span>.<span class="type">Element</span>) -&gt; ()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>需要注意的是，这个序列遵循 <a href="https://developer.apple.com/documentation/swift/lazysequenceprotocol" target="_blank" rel="noopener"><code>LazySequenceProtocol</code></a> 协议。此协议继承于 <code>Sequence</code>。这个协议的职责是为一些即刻响应的操作（译者注：例如 <code>map</code> 和 <code>filter</code>）提供了惰性实现。</p>
+<blockquote>
+<p>译者注:</p>
+<p>关于“即刻响应的操作”（原文中为 <em>normally-eager operations</em>），<code>LazySequenceProtocol</code> 的<a href="https://developer.apple.com/documentation/swift/lazysequenceprotocol" target="_blank" rel="noopener">官方文档</a>中有这样一段解释：</p>
+<p>Sequence operations taking closure arguments, such as <code>map</code> and <code>filter</code>, are normally eager: they use the closure immediately and return a new array. </p>
+<p>同时，文档紧跟着解释了 <code>lazy</code> 是如何让这种 <em>normally-eager operations</em> 变成惰性操作的：</p>
+<p>Using the <code>lazy</code> property gives the standard library explicit permission to store the closure and the sequence in the result, and defer computation until it is needed.</p>
+</blockquote>
+<p>Swift 的类型推断机制其中一条规则是：在给定的约束的前提下，Swift 编译器会自动选择一个最明确且可工作的重载（译者注：可查看官方文档 <a href="https://docs.swift.org/swift-book/LanguageGuide/TheBasics.html#ID322" target="_blank" rel="noopener">Type Safety and Type Inference</a> ）。因此，当你对一个遵循了 <code>LazySequenceProtocol</code> 协议的值调用诸如 <code>map</code> 的方法时，编译器会倾向于 <code>map</code> 方法的惰性变体而非默认版本实现。</p>
+<p>为了在我们的方法中实现同样的效果，我们可以在 <code>LazySequenceProtocol</code> 的扩展中加入一个 <code>forEachPerform</code> 的变体，同时让它返回一个惰性序列：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">LazySequenceProtocol</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">forEachPerform</span><span class="params">(<span class="number">_</span> body: @escaping <span class="params">(Element)</span></span></span> -&gt; ())</span><br><span class="line">        -&gt; <span class="type">LazyForEachSequence</span>&lt;<span class="type">Self</span>&gt;</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">LazyForEachSequence</span>(base: <span class="keyword">self</span>,</span><br><span class="line">            perform: body)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个方法在以下几个方面上与与非惰性版本略有不同：</p>
+<ul>
+<li>因为我们需要把传入的闭包暂存起来，所以它必须是 <code>@escaping</code>，也就是逃逸闭包。</li>
+<li>由于其惰性性质，这个方法并不支持会抛出异常的方法。</li>
+<li>一般来说，一个惰性操作完成后必定会有后续的操作，因此其返回值并没有标记为 <code>descardable</code>。</li>
+</ul>
+<p>但这个方法最重要的特性是我们上面讨论过的：除了把原本的序列和传入的函数进行存储之外，它不会执行任何操作。</p>
+<p>当这一切准备完成后，<code>forEachPerform</code> 便可以成功维持一个序列的惰性性质（注意 <code>.lazy</code> 的调用）：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> largeNumbersSquared = numbers</span><br><span class="line">    .<span class="built_in">lazy</span></span><br><span class="line">    .<span class="built_in">filter</span> &#123; $<span class="number">0</span> &gt;= <span class="number">5</span> &#125;</span><br><span class="line">    .forEachPerform &#123; <span class="built_in">print</span>(<span class="string">"After filter: <span class="subst">\($<span class="number">0</span>)</span>"</span>) &#125;</span><br><span class="line">    .<span class="built_in">map</span> &#123; $<span class="number">0</span> * $<span class="number">0</span> &#125;</span><br><span class="line"><span class="comment">// Prints nothing</span></span><br></pre></td></tr></table></figure>
+<p><em>注意：其实这段代码在 Swift 4.0 中会编译失败：”ambiguous use of ‘forEachPerform’”。只有当我把 Sequence.forEachPerform 的返回类型由 Self 改为 [Element] 后这段代码才能正常运行。说实话我也不太明白这是为什么。不过你也可以通过修改 LazySequenceProtocol.forEachPerform 方法的命名暂时解决这个问题。</em></p>
+<p>这样一来，只有当我们访问到惰性序列的元素时，这些元素的副作用才会被打印出来：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Access the first two elements</span></span><br><span class="line"><span class="type">Array</span>(largeNumbersSquared.<span class="keyword">prefix</span>(<span class="number">2</span>))</span><br><span class="line"><span class="comment">/* Prints:</span></span><br><span class="line"><span class="comment">After filter: 5</span></span><br><span class="line"><span class="comment">After filter: 6</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="comment">// → [25, 36]</span></span><br></pre></td></tr></table></figure>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>我真的很喜欢这种往链式操作中注入副作用的功能，即便我几乎没有在调试之外的时候使用过。插句题外话，虽然基于 <code>print</code> 的调试方法一直在被争论是否已经 “过时” 了，但我还是一直在用。</p>
+<hr>
+<p>[^1]: RxSwift 中的有一个类似的操作符 <a href="https://github.com/ReactiveX/RxSwift/blob/master/RxSwift/Observables/Debug.swift" target="_blank" rel="noopener">debug</a> </p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Ole-Begemann/">Ole Begemann</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift/">Swift</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2018/09/13/chained-foreach/" data-title="在序列的链式操作中注入副作用 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2018/09/10/design-pattern-creational/"  title="Swift 中的设计模式 #1 工厂方法与单例方法">
+ <strong>下一篇</strong><br/> 
+ <span>Swift 中的设计模式 #1 工厂方法与单例方法
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2018/09/13/chained-foreach/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#理想中的形式"><span class="toc-number">1.</span> <span class="toc-text">理想中的形式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实现一个返回-Self-的-forEach"><span class="toc-number">2.</span> <span class="toc-text">实现一个返回 Self 的 forEach</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#自毁序列"><span class="toc-number">3.</span> <span class="toc-text">自毁序列</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#让它变“懒”"><span class="toc-number">4.</span> <span class="toc-text">让它变“懒”</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结论"><span class="toc-number">5.</span> <span class="toc-text">结论</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>42</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>20</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>36</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>23</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>169</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>81</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>80</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/GitHub/" title="GitHub">GitHub<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftGG 专属 Reveal 优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/XzKhGY">领取立减 143 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
