@@ -1,0 +1,1046 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>Tagged Pointer 字符串 | Tagged Pointer 字符串 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="tagged pointer, NSString, NSTaggedPointerString,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="Tagged pointer 是一项用于提高性能并减少内存使用的有趣技术，本文探讨了 NSString 中应用 tagged pointer 的实现原理。">
+<meta name="keywords" content="tagged pointer, NSString, NSTaggedPointerString">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Tagged Pointer 字符串">
+<meta property="og:url" content="https://swift.gg/2018/10/08/tagged-pointer-strings/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="Tagged pointer 是一项用于提高性能并减少内存使用的有趣技术，本文探讨了 NSString 中应用 tagged pointer 的实现原理。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-10-08T01:10:03.173Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Tagged Pointer 字符串">
+<meta name="twitter:description" content="Tagged pointer 是一项用于提高性能并减少内存使用的有趣技术，本文探讨了 NSString 中应用 tagged pointer 的实现原理。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2018/10/08/tagged-pointer-strings/" target="_blank" title="Tagged Pointer 字符串" itemprop="url">Tagged Pointer 字符串</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2018-10-08T00:00:00.000Z" itemprop="datePublished">2018-10-08</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Mike Ash，<a href="https://www.mikeash.com/pyblog/friday-qa-2015-07-31-tagged-pointer-strings.html" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-07-31<br>译者：<a href="https://dingtz.com/" target="_blank" rel="noopener">jojotov</a>；校对：<a href="http://forelax.space" target="_blank" rel="noopener">Forelax</a>，<a href="http://www.desgard.com/" target="_blank" rel="noopener">冬瓜</a>；定稿：<a href="http://forelax.space" target="_blank" rel="noopener">Forelax</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>Tagged pointer 是一项用于提高性能并减少内存使用的有趣技术。在 OS X 10.10 中，<code>NSString</code> 也开始使用了 tagged pointer 技术，今天我会在 Ken Ferry 的提议下，窥探其工作原理。</p>
+<a id="more"></a>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>对象存储在内存中的时候是内存对齐的，因此他们的地址总是单个指针大小的倍数，在实际中通常是 16 的倍数。对象的指针通常是以一个完整的 64 位整型的结构进行存储，不过由于内存对齐的，指针中一些位总会为零。</p>
+<p>Tagged pointer 技术受益于此，通过让这些位不再为 0，赋予了对象指针一些特殊意义。在苹果的 64 位 Objective-C 实现当中，对象指针的最低有效位设置为 1 的时候 (也就是说，它是一个奇数) ，此指针被认为是 tagged pointer。此时，最低有效位前面的 3 位不再被当作 isa 指针的地址，而是用于表示一个特殊的 tagged class 表的索引值。这个索引值可以用来查找 tagged pointer 所对应的类。剩余的 60 位则会被直接使用。</p>
+<p>来看一个对上述理论的简单应用：当我们创建一个 <code>NSNumber</code> 对象时，如果它适合于 tagged pointer 技术，那么这个对象将不再是一个真正的 <code>NSNumber</code> 对象——它的指针会自动转换为 tagged pointer 指针，并且最低位会被设置为 1；接下来的 3 位会设为 <code>NSNumber</code> 所对应的 tagged class 在一个全局表中的索引；而剩余的 60 位会用作保存其数值 —— 比如一个能用 60 位表示的整型值。</p>
+<p>对于外部而言，这样的一个指针与其他任何对象的指针看起来都是一样的。它能像其他对象一样响应消息，因为 <code>objc_msgSend</code> 知道它是一个 tagged pointer 类型的指针。假如你要向它发送 <code>integerValue</code> 的消息，OC 运行时会帮助我们从它存储数据的 60 位中拿出数据并返回。</p>
+<p>尽管为了对外统一，运行时做了很多额外工作，但最终你节省了一次内存的初始化，一次指针的间接访问，并且也不会有任何关于引用计数的操作 —— 因为没有内存需要被释放。对于一些经常使用的类来说，这能带来显著的性能提升。</p>
+<p><code>NSString</code> 看起来不太适用于 tagged pointer 技术，因为它的长度是可变的，而且可能会远远超出 tagged pointer 所能存储的范围。但话虽如此，一个 tagged pointer 的类是可以和普通的类共存的 —— 某些值使用 tagged pointer，另外一些值使用普通指针。例如，对于 <code>NSNumber</code> 来说，一个大于 2^60 - 1 的整型超出了 tagged pointer 所能存储的范围，那么它就需要存储为一个在内存中初始化的普通 <code>NSNumber</code> 对象。</p>
+<p><code>NSString</code> 亦是如此。假如某些字符串可以保存为 60 位以内的二进制数据，它会创建为 tagged pointer，而其他字符串会保存为普通的对象。据此我们可以假设，如果小的字符串经常被使用且达到一定的使用量时，它会获得可观的性能。在真实的代码中会有如此效果吗？显然苹果给出了肯定的答案 —— 如果没有实际效果，他们不会尝试去实现它。</p>
+<h2 id="可能的实现"><a href="#可能的实现" class="headerlink" title="可能的实现"></a>可能的实现</h2><p>在窥探苹果的实现之前，我们先花点时间思考一下可能的实现方案。基本准则很简单：把最低位设为 1，然后把后面的几位设为合适的 tagged class 索引，最后把剩下的位设为任意值。此时最大的问题是如何利用剩余的 60 位 —— 我们要尽可能最大化这 60 位的价值。</p>
+<p>Cocoa 框架中的字符串在某种概念上其实是一个 Unicode 码位的序列。Unicode 包含了 1,112,064 个有效码位，所以一个码位需要用 21 位来表示。也就是说，我们可以在 60 位的长度中放入两个 Unicode 码位，这样还剩下 18 位没有使用。我们可以利用这 18 位中其中几位来表示字符串的长度。因此，这样的一个 tagged pointer  字符串可能会包含零个、一个或者两个 Unicode 码位。但问题是，最多只能包含两个码位好像并不太实用。</p>
+<p>实际上，<code>NSString</code> API 使用了 UTF-16 实现，并非原始的 Unicode 码位。UTF-16 把 Unicode 表示为一个包含多个 16 位数值的序列。在基本多语言平面（Basic Multilingual Plane，BMP）中的字符，也就是那些最常用的字符，会使用一个 16 位的值表示。同时，那些超过 65,535 的码位会使用两个 16 位 (也就是 32 位) 的值来表示。因此，我们可以在 60 位的长度中放入三个 16 位的值，剩余的 12 位同样用于表示长度。也就是说，我们可以放入 0 至 3 个 UTF-16 编码的字符 —— 严格来说是最多三个 BMP 中的字符，或者最多一个 BMP 之上平面的字符加一个 BMP 平面之下的字符。不过最多三个字符，我们还是会很受限。</p>
+<p>在应用中的大多数字符串都是 ASCII。即使这个应用本地化为一种非 ASCII 的语言，字符串也不只是单纯地在 UI 层用作展示 —— 字符串会用于 URL 的组成、文件扩展名、对象的键、属性列表的值等等。UTF-8 是一种兼容 ASCII 的编码，它会把每个 ASCII 字符编码为单个字节，并且对其他 Unicode 码位使用最多四个字节进行编码。这样，我们能在 60 位中放入最多 7 个字节，剩下 4 位表示长度。因此，根据不同的字符格式，我们的 tagged pointer 字符串可以包含最多 7 个 ASCII 字符，或者更少量的非 ASCII 字符。</p>
+<p>如果我们针对 ASCII 优化一下，或许我们能完全抛弃对所有 Unicode 都支持的想法 —— 那些非 ASCII 的字符都使用真正的字符串对象来保存。ASCII 是一种 7 位的编码方式。因此，假设我们只给每个字符分配 7 位的空间呢？那么我们能在可利用的 60 位空间中保存最多 8 个 ASCII 字符，剩余 4 位表示长度。现在，我们的方案听上去开始具有一定的可行性了 —— 在应用中应该有不少字符串是纯正的 ASCII 并且仅包含 8 个或更少的字符。</p>
+<p>让我们的思维放飞一点，完整的 ASCII 范围中包含了许多并不常用的东西。比如其中有一大堆控制字符和非常用符号。而字母和数字才是我们最常用的。我们能把它压缩成只有 6 位吗？</p>
+<p>6 位可以表示 64 个可能的值。ASCII 字母表中有 26 个英文字母。如果把大写字母也算上的话一共有 52 个字母。再加上 0-9 的数字，一共有 62 个。现在还有两个空余的位置，我们可以把它们留给空格和句号。这样应该会有很多的字符串只包含上述的字符。如果一个字符只需要 6 位，那么我们可以在 60 位空间中保存最多 10 个字符！不过别高兴太早，我们现在没有多余的位置来表示长度了！因此，我们可以选择这 60 位保存 9 个字符和 1 个长度，或者我们去掉上面的 64 个值之一 (我投票给空格)，然后用一个 6 位的 <code>0</code> 表示少于 10 个字符的字符串的结束位。(译者注：去掉 64 个字符集合中的一个，然后加入一个结束符，当遇到结束符的时候就表示字符串结束，长度为结束符的位置，否则长度刚好为 10。)</p>
+<p>如果只使用 5 位呢？这好像有点天方夜谭。但实际上，应该有很大一部分的字符串只包含小写字母。5 位可以表示 32 个可能的值。如果我们把整个小写字母表考虑进来，那么还剩下 6 个位置，可以分配给一些常用的大写字母、符号和数字。如果你觉得这些除小写字母外的情况更为常见，你甚至可以去掉一些不常用的小写字母，比如字母 <code>q</code>。每个字符只使用 5 位的话，那么我们可以存放 11 个字符并且还能有存放长度的空间，或者我们保存 12 个字符，并采用结束符的方案表示长度。</p>
+<p>让我们的思维再飞远一点。每个字符只使用 5 位似乎已经是在字母表长度固定的前提下的最优解了。不过你可以使用一些变长的编码，例如 Huffman 编码。这样的话，对于一个常见的字母 <code>e</code>，可以使用比字母 <code>q</code> 更少的位表示。也就是说，假设你的字符串全都是 <code>e</code>，那字符串的每个字符最少可以只用 1 位表示。但这样的代价是你的代码会变得更加复杂，且性能或许较差。</p>
+<p>苹果到底是采用哪种方案的呢？我们现在来一探究竟。</p>
+<h2 id="Tagged-Pointer-字符串实践"><a href="#Tagged-Pointer-字符串实践" class="headerlink" title="Tagged Pointer 字符串实践"></a>Tagged Pointer 字符串实践</h2><p>下面的代码创建了一个 tagged pointer 字符串并打印了它的指针：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="built_in">NSString</span> *a = <span class="string">@"a"</span>;</span><br><span class="line"><span class="built_in">NSString</span> *b = [[a mutableCopy] <span class="keyword">copy</span>];</span><br><span class="line"><span class="built_in">NSLog</span>(<span class="string">@"%p %p %@"</span>, a, b, object_getClass(b));</span><br></pre></td></tr></table></figure>
+<p>这里 <code>mutableCopy</code> 和 <code>copy</code> 的操作可能会让人费解，但它却是必须的。其中有两个原因：首先，尽管一个像 <code>@&quot;a&quot;</code> 这样的字符串可以被存储为 tagged pointer 字符串，但如果是常量字符串的话，那么它永远不会存储为 tagged pointer 字符串。常量字符串必须保证能够兼容不同的操作系统版本，但 tagged pointer 字符串的内部细节却不保证能兼容。如果只是苹果的运行时代码所生成的 tagged pointer，它不会有任何问题。但如果像常量字符串一样，编译器把它们嵌入在二进制文件中时，就可能会发生崩溃的问题。因此，我们需要对常量字符串进行 <code>copy</code> 操作来拿到一个 tagged pointer。</p>
+<p>必须进行 <code>mutableCopy</code> 操作的原因是，<code>NSString</code> 对我们来说十分的 “聪明” ，它能知道一个对不可变字符串的 <code>copy</code> 其实是一个毫无意义的操作，并返回原来的字符串作为 <code>copy</code> 操作后的值。因为常量字符串是不可变的，所以 <code>[a copy]</code> 的返回值其实与 <code>a</code> 是一样的。不过，<code>mutableCopy</code> 会强制进行真正的拷贝操作（深拷贝），然后对这样一个深拷贝后的结果再进行一次不可变拷贝操作后，足以让系统返回给我们一个 tagger pointer 字符串。</p>
+<blockquote>
+<p>译者注：<code>[a mutableCopy]</code> 会在运行时创建一个可变字符串（深拷贝），因此避免了上面原因一中关于常量字符串的情况。但由于 <code>mutableCopy</code> 后的对象是一个可变对象，不可能为 tagged pointer，因此需要再对此可变副本进行一次 <code>copy</code> 操作。这次 <code>copy</code> 会在运行时返回一个新的不可变副本（深拷贝），避免了上面原因二中对常量字符串拷贝返回原值的情况（浅拷贝），进而保证了最后返回的对象是经过运行时创建出来的（tagged pointer 对象只会在运行时创建）。</p>
+</blockquote>
+<p>注意，你一定不可以在自己的代码中依赖这些细节！<code>NSString</code> 的代码返回一个 tagged pointer 给你的情况并不是一成不变的，如果你编写的代码不知怎么地依赖于此，那它最终可能会导致崩溃。幸好，正常且合理的代码不会有任何问题 —— 让你可以幸福地忽略所有 tagged 相关的东西。</p>
+<p>上面的代码在我的电脑上打印如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">0x10ba41038 0x6115 NSTaggedPointerString</span><br></pre></td></tr></table></figure>
+<p>首先，你可以看到原始的指针 —— 一个用来表示对象指针的整数。第二个值为 <code>copy</code> 后的指针，它非常清晰地表示出 tagged pointer 的特性：首先，它是一个奇数，也就是说它不会是一个有效的对象指针（内存对齐的关系）。同时，它是一个很小的数。在 64 位 Mac 系统的地址空间中，一开始的 4GB 是没有任何映射且不能建立映射的空页。因此，这个属于空页的地址也很好地证明了它不可能是一个对象指针。</p>
+<p>我们可以从 <code>0x6115</code> 这个值推断出什么呢？首先我们可以知道最低的 4 位是 tagged pointer 机制本身的一部分。最低的十六进制数字 <code>5</code> 在二进制中为 <code>0101</code>。最低位的 <code>1</code> 表明了它是一个 tagged pointer。剩下的 3 位表明了它的 tagged class —— 在这个例子中是 <code>010</code>，表明了 tagged pointer 字符串类的索引值为 <code>2</code>。不过这些信息并不能提供给我们什么有用的东西。</p>
+<p>而上面例子中十六进制地址的 <code>61</code> 则很值得我们探讨一番。在十六进制中，<code>61</code> 刚好为字母 a 的 ASCII 编码。还记得这个指针所指向的值吗 —— 正好就是字母 a！看起来这里直接使用了 ASCII 编码的值，真是个方便而又合适的选择！</p>
+<p>接下来打印出的类名明显地表明了它的类是什么，并且也提供了一个非常不错的切入点，来让我们深入其真实源码一探此特性的本质实现。我们很快会进入这一阶段，不过在此之前先做点额外的检查。</p>
+<p>这里通过一个循环构造出 <code>abcdef...</code> 的字符串，同时把属于 tagged pointer 的字符串指针一个接一个地打印出来。</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="built_in">NSMutableString</span> *<span class="keyword">mutable</span> = [<span class="built_in">NSMutableString</span> string];</span><br><span class="line"><span class="built_in">NSString</span> *immutable;</span><br><span class="line"><span class="keyword">char</span> c = <span class="string">'a'</span>;</span><br><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">    [<span class="keyword">mutable</span> appendFormat: <span class="string">@"%c"</span>, c++];</span><br><span class="line">    immutable = [<span class="keyword">mutable</span> <span class="keyword">copy</span>];</span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@"0x%016lx %@ %@"</span>, immutable, immutable, object_getClass(immutable));</span><br><span class="line">&#125; <span class="keyword">while</span>(((uintptr_t)immutable &amp; <span class="number">1</span>) == <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
+<p>第一次迭代的打印结果为：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">0x0000000000006115 a NSTaggedPointerString</span><br></pre></td></tr></table></figure>
+<p>这验证了上文的所写的。需要注意的是，现在我们把包含空位 0 的指针完整地打印出来，可以让每次迭代的打印结果对比更加清晰。</p>
+<p>现在对比一下第二次迭代的打印结果：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">0x0000000000626125 ab NSTaggedPointerString</span><br></pre></td></tr></table></figure>
+<p>可以看到最低 4 位没有发生任何变化，这也在我们意料之中。这个十六进制的数字 <code>5</code> 会一直保持不变，总是表明它是一个 <code>NSTaggedPointerString</code> 类型的 tagged pointer。</p>
+<p>而原来的 <code>61</code> 也保持原来的位置，不过现在它前面出现了 <code>62</code>。显而易见，<code>62</code> 是字母 b 的 ASCII 编码，因此我们可以知道当前的编码方式是使用 ASCII 的 8 位编码。而在最低位之前的 4 位由 <code>1</code> 变成了 <code>2</code>，由此我们可以想到它或许表示了字符串的长度。接下来的迭代确认了这个猜想：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">0x0000000063626135 abc NSTaggedPointerString</span><br><span class="line">0x0000006463626145 abcd NSTaggedPointerString</span><br><span class="line">0x0000656463626155 abcde NSTaggedPointerString</span><br><span class="line">0x0066656463626165 abcdef NSTaggedPointerString</span><br><span class="line">0x6766656463626175 abcdefg NSTaggedPointerString</span><br></pre></td></tr></table></figure>
+<p>按理来说，由于 tagged pointer 的空位已经填满了，迭代应该也到此为止。可事实的确如此吗？并不是！</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">0x0022038a01169585 abcdefgh NSTaggedPointerString</span><br><span class="line">0x0880e28045a54195 abcdefghi NSTaggedPointerString</span><br><span class="line">0x00007fd275800030 abcdefghij __NSCFString</span><br></pre></td></tr></table></figure>
+<p>循环中的代码继续执行下去，直到两次迭代后才终止。表示长度的区间继续保持增长，但指针剩余的部分却显得杂乱无章。到底是发生了什么呢？让我们深入其实现代码来一探究竟。</p>
+<h2 id="刨根问底"><a href="#刨根问底" class="headerlink" title="刨根问底"></a>刨根问底</h2><p><code>NSTaggedPointer</code> 类存在于 CoreFoundation 库中。似乎把它放在 Foundation 中会更加合理一点，但实际上现在苹果许多核心的 Objective-C 类都被移到了 CoreFoundation 当中，因为苹果慢慢地放弃了把  CoreFoundation 变成一个独立实体的想法。</p>
+<p>先来看看 <code>-[NSTaggedPointerString length]</code> 的实现：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">push       rbp</span><br><span class="line">mov        rbp, rsp</span><br><span class="line">shr        rdi, 0x4</span><br><span class="line">and        rdi, 0xf</span><br><span class="line">mov        rax, rdi</span><br><span class="line">pop        rbp</span><br><span class="line">ret</span><br></pre></td></tr></table></figure>
+<p>Hopper 工具为我们提供了这个简易的反编译版本：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">long</span> -[<span class="built_in">NSTaggedPointerString</span> length](<span class="keyword">void</span> * <span class="keyword">self</span>, <span class="keyword">void</span> * _cmd) &#123;</span><br><span class="line">    rax = <span class="keyword">self</span> &gt;&gt; <span class="number">0x4</span> &amp; <span class="number">0xf</span>;</span><br><span class="line">    <span class="keyword">return</span> rax;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>简单来说，提取出 4 至 7 位的值并返回它们便可以得到字符串的长度。这证实了我们上文中所观察到的 —— 在最低位的十六进制 <code>5</code> 前面的 4 位表示了字符串的长度。 </p>
+<p><code>NSString</code> 子类中另一个原始方法是 <code>characterAtIndex:</code>。由于其汇编代码太长，我会直接跳过并给出 Hopper 反编译出的可读性较高的版本：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="keyword">unsigned</span> <span class="keyword">short</span> -[<span class="built_in">NSTaggedPointerString</span> characterAtIndex:](<span class="keyword">void</span> * <span class="keyword">self</span>, <span class="keyword">void</span> * _cmd, <span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">long</span> arg2) &#123;</span><br><span class="line">     rsi = _cmd;</span><br><span class="line">     rdi = <span class="keyword">self</span>;</span><br><span class="line">     r13 = arg2</span><br><span class="line">     r8 = ___stack_chk_guard;</span><br><span class="line">     var_30 = *r8;</span><br><span class="line">     r12 = rdi &gt;&gt; <span class="number">0x4</span> &amp; <span class="number">0xf</span>;</span><br><span class="line">     <span class="keyword">if</span> (r12 &gt;= <span class="number">0x8</span>) &#123;</span><br><span class="line">             rbx = rdi &gt;&gt; <span class="number">0x8</span>;</span><br><span class="line">             rcx = <span class="string">"eilotrm.apdnsIc ufkMShjTRxgC4013bDNvwyUL2O856P-B79AFKEWV_zGJ/HYX"</span>;</span><br><span class="line">             rdx = r12;</span><br><span class="line">             <span class="keyword">if</span> (r12 &lt; <span class="number">0xa</span>) &#123;</span><br><span class="line">                     <span class="keyword">do</span> &#123;</span><br><span class="line">                             *(int8_t *)(rbp + rdx + <span class="number">0xffffffffffffffbf</span>) = *(int8_t *)((rbx &amp; <span class="number">0x3f</span>) + rcx);</span><br><span class="line">                             rdx = rdx - <span class="number">0x1</span>;</span><br><span class="line">                             rbx = rbx &gt;&gt; <span class="number">0x6</span>;</span><br><span class="line">                     &#125; <span class="keyword">while</span> (rdx != <span class="number">0x0</span>);</span><br><span class="line">             &#125;</span><br><span class="line">             <span class="keyword">else</span> &#123;</span><br><span class="line">                     <span class="keyword">do</span> &#123;</span><br><span class="line">                             *(int8_t *)(rbp + rdx + <span class="number">0xffffffffffffffbf</span>) = *(int8_t *)((rbx &amp; <span class="number">0x1f</span>) + rcx);</span><br><span class="line">                             rdx = rdx - <span class="number">0x1</span>;</span><br><span class="line">                             rbx = rbx &gt;&gt; <span class="number">0x5</span>;</span><br><span class="line">                     &#125; <span class="keyword">while</span> (rdx != <span class="number">0x0</span>);</span><br><span class="line">             &#125;</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">if</span> (r12 &lt;= r13) &#123;</span><br><span class="line">             rbx = r8;</span><br><span class="line">             ___CFExceptionProem(rdi, rsi);</span><br><span class="line">             [<span class="built_in">NSException</span> raise:<span class="string">@"NSRangeException"</span> format:<span class="string">@"%@: Index %lu out of bounds; string length %lu"</span>];</span><br><span class="line">             r8 = rbx;</span><br><span class="line">     &#125;</span><br><span class="line">     rax = *(int8_t *)(rbp + r13 + <span class="number">0xffffffffffffffc0</span>) &amp; <span class="number">0xff</span>;</span><br><span class="line">     <span class="keyword">if</span> (*r8 != var_30) &#123;</span><br><span class="line">             rax = __stack_chk_fail();</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">return</span> rax;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>我们稍微整理一下：前三行中，Hopper 让我们知道了寄存器分别存放了哪些参数。我们马上着手把 <code>rsi</code> 替换成 <code>_cmd</code>，然后把 <code>rdi</code> 替换成 <code>self</code>。<code>arg2</code> 实际上是 <code>index</code> 参数，因此我们把所有 <code>r13</code> 的调用替换成 <code>index</code>。接下来，由于 <code>__stack_chk</code> 其实是一个用来加强防御性的东西，且它与函数的实际作用没有多大关联，我们可以暂时忽略掉它。现在整理过后的代码看起来大概是这个样子的：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="keyword">unsigned</span> <span class="keyword">short</span> -[<span class="built_in">NSTaggedPointerString</span> characterAtIndex:](<span class="keyword">void</span> * <span class="keyword">self</span>, <span class="keyword">void</span> * _cmd, <span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">long</span> index) &#123;</span><br><span class="line">    r12 = <span class="keyword">self</span> &gt;&gt; <span class="number">0x4</span> &amp; <span class="number">0xf</span>;</span><br><span class="line">    <span class="keyword">if</span> (r12 &gt;= <span class="number">0x8</span>) &#123;</span><br><span class="line">            rbx = <span class="keyword">self</span> &gt;&gt; <span class="number">0x8</span>;</span><br><span class="line">            rcx = <span class="string">"eilotrm.apdnsIc ufkMShjTRxgC4013bDNvwyUL2O856P-B79AFKEWV_zGJ/HYX"</span>;</span><br><span class="line">            rdx = r12;</span><br><span class="line">            <span class="keyword">if</span> (r12 &lt; <span class="number">0xa</span>) &#123;</span><br><span class="line">                    <span class="keyword">do</span> &#123;</span><br><span class="line">                            *(int8_t *)(rbp + rdx + <span class="number">0xffffffffffffffbf</span>) = *(int8_t *)((rbx &amp; <span class="number">0x3f</span>) + rcx);</span><br><span class="line">                            rdx = rdx - <span class="number">0x1</span>;</span><br><span class="line">                            rbx = rbx &gt;&gt; <span class="number">0x6</span>;</span><br><span class="line">                    &#125; <span class="keyword">while</span> (rdx != <span class="number">0x0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="keyword">do</span> &#123;</span><br><span class="line">                            *(int8_t *)(rbp + rdx + <span class="number">0xffffffffffffffbf</span>) = *(int8_t *)((rbx &amp; <span class="number">0x1f</span>) + rcx);</span><br><span class="line">                            rdx = rdx - <span class="number">0x1</span>;</span><br><span class="line">                            rbx = rbx &gt;&gt; <span class="number">0x5</span>;</span><br><span class="line">                    &#125; <span class="keyword">while</span> (rdx != <span class="number">0x0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (r12 &lt;= index) &#123;</span><br><span class="line">            rbx = r8;</span><br><span class="line">            ___CFExceptionProem(<span class="keyword">self</span>, _cmd);</span><br><span class="line">            [<span class="built_in">NSException</span> raise:<span class="string">@"NSRangeException"</span> format:<span class="string">@"%@: Index %lu out of bounds; string length %lu"</span>];</span><br><span class="line">            r8 = rbx;</span><br><span class="line">    &#125;</span><br><span class="line">    rax = *(int8_t *)(rbp + index + <span class="number">0xffffffffffffffc0</span>) &amp; <span class="number">0xff</span>;</span><br><span class="line">    <span class="keyword">return</span> rax;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意第一个 <code>if</code> 语句之前的这行代码：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">r12 = <span class="keyword">self</span> &gt;&gt; <span class="number">0x4</span> &amp; <span class="number">0xf</span></span><br></pre></td></tr></table></figure>
+<p>我们可以发现，这正是我们前面所看到的 <code>-length</code> 实现代码。既然如此，那我们就把 <code>r12</code> 全部替换成 <code>length</code>：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="keyword">unsigned</span> <span class="keyword">short</span> -[<span class="built_in">NSTaggedPointerString</span> characterAtIndex:](<span class="keyword">void</span> * <span class="keyword">self</span>, <span class="keyword">void</span> * _cmd, <span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">long</span> index) &#123;</span><br><span class="line">    length = <span class="keyword">self</span> &gt;&gt; <span class="number">0x4</span> &amp; <span class="number">0xf</span>;</span><br><span class="line">    <span class="keyword">if</span> (length &gt;= <span class="number">0x8</span>) &#123;</span><br><span class="line">            rbx = <span class="keyword">self</span> &gt;&gt; <span class="number">0x8</span>;</span><br><span class="line">            rcx = <span class="string">"eilotrm.apdnsIc ufkMShjTRxgC4013bDNvwyUL2O856P-B79AFKEWV_zGJ/HYX"</span>;</span><br><span class="line">            rdx = length;</span><br><span class="line">            <span class="keyword">if</span> (length &lt; <span class="number">0xa</span>) &#123;</span><br><span class="line">                    <span class="keyword">do</span> &#123;</span><br><span class="line">                            *(int8_t *)(rbp + rdx + <span class="number">0xffffffffffffffbf</span>) = *(int8_t *)((rbx &amp; <span class="number">0x3f</span>) + rcx);</span><br><span class="line">                            rdx = rdx - <span class="number">0x1</span>;</span><br><span class="line">                            rbx = rbx &gt;&gt; <span class="number">0x6</span>;</span><br><span class="line">                    &#125; <span class="keyword">while</span> (rdx != <span class="number">0x0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="keyword">do</span> &#123;</span><br><span class="line">                            *(int8_t *)(rbp + rdx + <span class="number">0xffffffffffffffbf</span>) = *(int8_t *)((rbx &amp; <span class="number">0x1f</span>) + rcx);</span><br><span class="line">                            rdx = rdx - <span class="number">0x1</span>;</span><br><span class="line">                            rbx = rbx &gt;&gt; <span class="number">0x5</span>;</span><br><span class="line">                    &#125; <span class="keyword">while</span> (rdx != <span class="number">0x0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (length &lt;= index) &#123;</span><br><span class="line">            rbx = r8;</span><br><span class="line">            ___CFExceptionProem(<span class="keyword">self</span>, _cmd);</span><br><span class="line">            [<span class="built_in">NSException</span> raise:<span class="string">@"NSRangeException"</span> format:<span class="string">@"%@: Index %lu out of bounds; string length %lu"</span>];</span><br><span class="line">            r8 = rbx;</span><br><span class="line">    &#125;</span><br><span class="line">    rax = *(int8_t *)(rbp + index + <span class="number">0xffffffffffffffc0</span>) &amp; <span class="number">0xff</span>;</span><br><span class="line">    <span class="keyword">return</span> rax;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在来看 <code>if</code> 语句内部的代码，第一行把 <code>self</code> 右移了 8 位。这 8 位是保存了 tagged pointer 的指示符以及字符串长度。而右移操作后得到的值，我们可以推测它就是其真正的数据。因此我们把 <code>rbx</code> 替换为 <code>stringData</code> 来让代码更加清晰可读一点。下一行把一个类似查找表的东西赋值给 <code>rcx</code>，因此我们也把 <code>rcx</code> 替换成 <code>table</code>。最后，<code>rdx</code> 拿到了值的长度的一份拷贝。看起来它后面会作为光标来使用，因此我们再把 <code>rdx</code> 替换为 <code>cursor</code>。现在我们的代码是这样的：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="keyword">unsigned</span> <span class="keyword">short</span> -[<span class="built_in">NSTaggedPointerString</span> characterAtIndex:](<span class="keyword">void</span> * <span class="keyword">self</span>, <span class="keyword">void</span> * _cmd, <span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">long</span> index) &#123;</span><br><span class="line">    length = <span class="keyword">self</span> &gt;&gt; <span class="number">0x4</span> &amp; <span class="number">0xf</span>;</span><br><span class="line">    <span class="keyword">if</span> (length &gt;= <span class="number">0x8</span>) &#123;</span><br><span class="line">            stringData = <span class="keyword">self</span> &gt;&gt; <span class="number">0x8</span>;</span><br><span class="line">            table = <span class="string">"eilotrm.apdnsIc ufkMShjTRxgC4013bDNvwyUL2O856P-B79AFKEWV_zGJ/HYX"</span>;</span><br><span class="line">            cursor = length;</span><br><span class="line">            <span class="keyword">if</span> (length &lt; <span class="number">0xa</span>) &#123;</span><br><span class="line">                    <span class="keyword">do</span> &#123;</span><br><span class="line">                            *(int8_t *)(rbp + cursor + <span class="number">0xffffffffffffffbf</span>) = *(int8_t *)((stringData &amp; <span class="number">0x3f</span>) + table);</span><br><span class="line">                            cursor = cursor - <span class="number">0x1</span>;</span><br><span class="line">                            stringData = stringData &gt;&gt; <span class="number">0x6</span>;</span><br><span class="line">                    &#125; <span class="keyword">while</span> (cursor != <span class="number">0x0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="keyword">do</span> &#123;</span><br><span class="line">                            *(int8_t *)(rbp + cursor + <span class="number">0xffffffffffffffbf</span>) = *(int8_t *)((stringData &amp; <span class="number">0x1f</span>) + table);</span><br><span class="line">                            cursor = cursor - <span class="number">0x1</span>;</span><br><span class="line">                            stringData = stringData &gt;&gt; <span class="number">0x5</span>;</span><br><span class="line">                    &#125; <span class="keyword">while</span> (cursor != <span class="number">0x0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (length &lt;= index) &#123;</span><br><span class="line">            rbx = r8;</span><br><span class="line">            ___CFExceptionProem(<span class="keyword">self</span>, _cmd);</span><br><span class="line">            [<span class="built_in">NSException</span> raise:<span class="string">@"NSRangeException"</span> format:<span class="string">@"%@: Index %lu out of bounds; string length %lu"</span>];</span><br><span class="line">            r8 = rbx;</span><br><span class="line">    &#125;</span><br><span class="line">    rax = *(int8_t *)(rbp + index + <span class="number">0xffffffffffffffc0</span>) &amp; <span class="number">0xff</span>;</span><br><span class="line">    <span class="keyword">return</span> rax;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在，代码基本上已经完全符号化了，不过还有一个寄存器名称仍然存在：<code>rbp</code>。它实际上是帧指针。因此，编译器其实做了一些很 tricky 的事情 —— 直接通过帧指针进行了索引操作。二进制补码中有一条原理： “所有东西最终都是无符号整型” ，因此为了让变量减去 65，我们可以将其与 <code>0xffffffffffffffbf</code> 常量相加。接下来，它又减去了 64（倒数第二行代码）。这两个值大概都是分配在栈上的局部变量。仔细看的话，你会发现这段代码非常奇怪 —— 有一条路径是只进行了读操作而没有进行任何的写操作。这到底是怎么回事呢？</p>
+<p>原因其实是 Hopper 忘记了对另一个 if 条件判断的 <code>else</code> 分支进行反编译。相对应的汇编代码看起来是这样的：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">mov        rax, rdi</span><br><span class="line">shr        rax, 0x8</span><br><span class="line">mov        qword [ss:rbp+var_40], rax</span><br></pre></td></tr></table></figure>
+<p><code>var_40</code> 便是在 Hopper 反编译版本中的偏移量 <code>64</code>（<code>40</code> 刚好是 <code>64</code> 的十六进制表示）。我们暂且把这个位置的指针称为 <code>buffer</code>。这样一来，上面代码中遗漏分支的 C 语言代码看起来是这样的：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">*(<span class="keyword">uint64_t</span> *)buffer = self &gt;&gt; <span class="number">8</span></span><br></pre></td></tr></table></figure>
+<p>现在把这段代码插入原本的代码中，并替换掉其他位置的 <code>rbp</code> 为 <code>buffer</code>。最后，为了能提醒自己，我们在函数开始的位置再补上一行 <code>buffer</code> 的声明语句：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="keyword">unsigned</span> <span class="keyword">short</span> -[<span class="built_in">NSTaggedPointerString</span> characterAtIndex:](<span class="keyword">void</span> * <span class="keyword">self</span>, <span class="keyword">void</span> * _cmd, <span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">long</span> index) &#123;</span><br><span class="line">    int8_t buffer[<span class="number">11</span>];</span><br><span class="line">    length = <span class="keyword">self</span> &gt;&gt; <span class="number">0x4</span> &amp; <span class="number">0xf</span>;</span><br><span class="line">    <span class="keyword">if</span> (length &gt;= <span class="number">0x8</span>) &#123;</span><br><span class="line">            stringData = <span class="keyword">self</span> &gt;&gt; <span class="number">0x8</span>;</span><br><span class="line">            table = <span class="string">"eilotrm.apdnsIc ufkMShjTRxgC4013bDNvwyUL2O856P-B79AFKEWV_zGJ/HYX"</span>;</span><br><span class="line">            cursor = length;</span><br><span class="line">            <span class="keyword">if</span> (length &lt; <span class="number">0xa</span>) &#123;</span><br><span class="line">                    <span class="keyword">do</span> &#123;</span><br><span class="line">                            *(int8_t *)(buffer + cursor - <span class="number">1</span>) = *(int8_t *)((stringData &amp; <span class="number">0x3f</span>) + table);</span><br><span class="line">                            cursor = cursor - <span class="number">0x1</span>;</span><br><span class="line">                            stringData = stringData &gt;&gt; <span class="number">0x6</span>;</span><br><span class="line">                    &#125; <span class="keyword">while</span> (cursor != <span class="number">0x0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="keyword">do</span> &#123;</span><br><span class="line">                            *(int8_t *)(buffer + cursor - <span class="number">1</span>) = *(int8_t *)((stringData &amp; <span class="number">0x1f</span>) + table);</span><br><span class="line">                            cursor = cursor - <span class="number">0x1</span>;</span><br><span class="line">                            stringData = stringData &gt;&gt; <span class="number">0x5</span>;</span><br><span class="line">                    &#125; <span class="keyword">while</span> (cursor != <span class="number">0x0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        *(uint64_t *)buffer = <span class="keyword">self</span> &gt;&gt; <span class="number">8</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (length &lt;= index) &#123;</span><br><span class="line">            rbx = r8;</span><br><span class="line">            ___CFExceptionProem(<span class="keyword">self</span>, _cmd);</span><br><span class="line">            [<span class="built_in">NSException</span> raise:<span class="string">@"NSRangeException"</span> format:<span class="string">@"%@: Index %lu out of bounds; string length %lu"</span>];</span><br><span class="line">            r8 = rbx;</span><br><span class="line">    &#125;</span><br><span class="line">    rax = *(int8_t *)(buffer + index) &amp; <span class="number">0xff</span>;</span><br><span class="line">    <span class="keyword">return</span> rax;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在代码看起来好了很多。不过那些疯狂的指针操作语句实在是太难看懂了，而它们仅仅是一些数组的索引操作。我们来简化一下：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="keyword">unsigned</span> <span class="keyword">short</span> -[<span class="built_in">NSTaggedPointerString</span> characterAtIndex:](<span class="keyword">void</span> * <span class="keyword">self</span>, <span class="keyword">void</span> * _cmd, <span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">long</span> index) &#123;</span><br><span class="line">     int8_t buffer[<span class="number">11</span>];</span><br><span class="line">     length = <span class="keyword">self</span> &gt;&gt; <span class="number">0x4</span> &amp; <span class="number">0xf</span>;</span><br><span class="line">     <span class="keyword">if</span> (length &gt;= <span class="number">0x8</span>) &#123;</span><br><span class="line">             stringData = <span class="keyword">self</span> &gt;&gt; <span class="number">0x8</span>;</span><br><span class="line">             table = <span class="string">"eilotrm.apdnsIc ufkMShjTRxgC4013bDNvwyUL2O856P-B79AFKEWV_zGJ/HYX"</span>;</span><br><span class="line">             cursor = length;</span><br><span class="line">             <span class="keyword">if</span> (length &lt; <span class="number">0xa</span>) &#123;</span><br><span class="line">                     <span class="keyword">do</span> &#123;</span><br><span class="line">                             buffer[cursor - <span class="number">1</span>] = table[stringData &amp; <span class="number">0x3f</span>];</span><br><span class="line">                             cursor = cursor - <span class="number">0x1</span>;</span><br><span class="line">                             stringData = stringData &gt;&gt; <span class="number">0x6</span>;</span><br><span class="line">                     &#125; <span class="keyword">while</span> (cursor != <span class="number">0x0</span>);</span><br><span class="line">             &#125;</span><br><span class="line">             <span class="keyword">else</span> &#123;</span><br><span class="line">                     <span class="keyword">do</span> &#123;</span><br><span class="line">                             buffer[cursor - <span class="number">1</span>] = table[stringData &amp; <span class="number">0x1f</span>];</span><br><span class="line">                             cursor = cursor - <span class="number">0x1</span>;</span><br><span class="line">                             stringData = stringData &gt;&gt; <span class="number">0x5</span>;</span><br><span class="line">                     &#125; <span class="keyword">while</span> (cursor != <span class="number">0x0</span>);</span><br><span class="line">             &#125;</span><br><span class="line">     &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">         *(uint64_t *)buffer = <span class="keyword">self</span> &gt;&gt; <span class="number">8</span>;</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">if</span> (length &lt;= index) &#123;</span><br><span class="line">             rbx = r8;</span><br><span class="line">             ___CFExceptionProem(<span class="keyword">self</span>, _cmd);</span><br><span class="line">             [<span class="built_in">NSException</span> raise:<span class="string">@"NSRangeException"</span> format:<span class="string">@"%@: Index %lu out of bounds; string length %lu"</span>];</span><br><span class="line">             r8 = rbx;</span><br><span class="line">     &#125;</span><br><span class="line">     rax = buffer[index];</span><br><span class="line">     <span class="keyword">return</span> rax;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>现在，我们能看出些端倪了。</p>
+<p>首先可以看到基于长度的不同，会有三种不同的情况。长度小于 8 的情况下，会执行到刚刚我们补充的遗漏分支 —— 单纯地把 <code>self</code> 的值按位移动后赋给 <code>buffer</code>。这是简单 ASCII 的情况。在此情况下，<code>index</code> 只作为 <code>self</code> 的索引值来取出给定字节，并随后返回给调用方。由于 ASCII 字符的值在指定范围内可以匹配 Unicode 码位。因此不需要额外的操作便可以返回正确结果。我们在上文曾猜测这种情况下（长度小于 8）会直接存放 ASCII 码，这也验证了我们的猜想。</p>
+<p>那么在长度大于或等于 8 的情况下会怎么样呢？如果字符串长度等于 8 或大于 8 且小于 10，那么会执行一段循环代码：首先取出 <code>stringData</code> 的最低 6 位，然后作为 <code>table</code> 的索引并取出相应的值，再拷贝到 <code>buffer</code> 中。接下来，会把 <code>stringData</code> 右移 6 位然后重复上面的操作直到遍历完整个字符串。这段代码其实是一种 6 位编码方式 —— 通过原始 6 位数据在 <code>table</code> 中的索引进行编码。<code>buffer</code> 中会构建出一个临时的字符串，然后最后的索引操作（上面函数中倒数第二行）会取出其需要的字符。</p>
+<p>当如果长度大于 10 呢？可以看到其代码和长度在 8 到 10 的情况下基本一致，除了现在一次只处理 5 位而不是 6 位数据。这是一种更加紧凑的编码方式，可以让 tagged pointer 字符串最多能够保存 11 个字符，不过它使用的字母表仅包含 32 个值（仅使用了 <code>table</code> 的前半部分）。</p>
+<p>因此，我们可以得到 tagged pointer 字符串的结构大致为：</p>
+<ol>
+<li>长度在 0 到 7 范围内时，直接保存原始的 8 位字符。</li>
+<li>长度为 8 或者 9时， 保存 6 位编码后的字符，编码使用的字母表为 <code>&quot;eilotrm.apdnsIc ufkMShjTRxgC4013bDNvwyUL2O856P-B79AFKEWV_zGJ/HYX&quot;</code>。 </li>
+<li>长度大于 10 时，保存 5 位编码后的字符，编码使用的字母表为 <code>&quot;eilotrm.apdnsIc ufkMShjTRxgC4013&quot;</code>。 </li>
+</ol>
+<p>现在我们来对比一下前面生成的数据：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">0x0000000000006115 a NSTaggedPointerString</span><br><span class="line">0x0000000000626125 ab NSTaggedPointerString</span><br><span class="line">0x0000000063626135 abc NSTaggedPointerString</span><br><span class="line">0x0000006463626145 abcd NSTaggedPointerString</span><br><span class="line">0x0000656463626155 abcde NSTaggedPointerString</span><br><span class="line">0x0066656463626165 abcdef NSTaggedPointerString</span><br><span class="line">0x6766656463626175 abcdefg NSTaggedPointerString</span><br><span class="line">0x0022038a01169585 abcdefgh NSTaggedPointerString</span><br><span class="line">0x0880e28045a54195 abcdefghi NSTaggedPointerString</span><br><span class="line">0x00007fbad9512010 abcdefghij __NSCFString</span><br></pre></td></tr></table></figure>
+<p><code>0x0022038a01169585</code> 的二进制表达式去掉了字符串后面的 8 位，并把剩余的位分成了 6 位为单位的块：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">001000 100000 001110 001010 000000 010001 011010 010101</span><br></pre></td></tr></table></figure>
+<p>以这些数值作为 <code>table</code> 的索引，我们的确可以拼出 <code>&quot;abcdefgh&quot;</code>。同样的，<code>0x0880e28045a54195</code> 的二进制表达式也有类似的规则：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">001000 100000 001110 001010 000000 010001 011010 010101 000001</span><br></pre></td></tr></table></figure>
+<p>可以看到它与上面的字符串基本一致，只是在最后多出了字符 <code>i</code>。</p>
+<p>但是后面的字符串却不符合我们的预测。在这之后，按理来说本应会切换为 5 位编码方式进行存储，且在两个字符串之后才会终止。但事实却是，在长度等于 10 的时候 tagged pointer 字符串就已经停止了工作，并转为创建真正的字符串对象，为什么会这样？</p>
+<p>原因是 5 位编码方式中使用的字母表过于受限，因此没有包含字母 <code>b</code>！相对于 5 位编码方式使用的字母表中 32 个 “神圣” 的字符而言，<code>b</code> 这个字母的普遍程度肯定还不够，以至于未能取得其中的一席之地。既然如此，我们换成从 <code>c</code> 开始的字符串再尝试一次，打印结果如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">0x0000000000006315 c NSTaggedPointerString</span><br><span class="line">0x0000000000646325 cd NSTaggedPointerString</span><br><span class="line">0x0000000065646335 cde NSTaggedPointerString</span><br><span class="line">0x0000006665646345 cdef NSTaggedPointerString</span><br><span class="line">0x0000676665646355 cdefg NSTaggedPointerString</span><br><span class="line">0x0068676665646365 cdefgh NSTaggedPointerString</span><br><span class="line">0x6968676665646375 cdefghi NSTaggedPointerString</span><br><span class="line">0x0038a01169505685 cdefghij NSTaggedPointerString</span><br><span class="line">0x0e28045a54159295 cdefghijk NSTaggedPointerString</span><br><span class="line">0x01ca047550da42a5 cdefghijkl NSTaggedPointerString</span><br><span class="line">0x39408eaa1b4846b5 cdefghijklm NSTaggedPointerString</span><br><span class="line">0x00007fbd6a511760 cdefghijklmn __NSCFString</span><br></pre></td></tr></table></figure>
+<p>现在，我们获得了一直到长度为 11 的所有 tagged pointer 字符串。最后两个 tagged pointer 字符串的二进制表示如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">01110 01010 00000 10001 11010 10101 00001 10110 10010 00010</span><br><span class="line">01110 01010 00000 10001 11010 10101 00001 10110 10010 00010 00110</span><br></pre></td></tr></table></figure>
+<p>正是我们预期的 5 位编码。</p>
+<h2 id="构造-Tagged-Pointer-字符串"><a href="#构造-Tagged-Pointer-字符串" class="headerlink" title="构造 Tagged Pointer 字符串"></a>构造 Tagged Pointer 字符串</h2><p>既然我们现在知道了 tagged pointer 字符串是如何编码的，那么我就不再深入地探究其构造方法的实现了。构造的代码在一个名为 <code>__CFStringCreateImmutableFunnel3</code> 的私有函数内。这个巨大的函数包含了所有可能的情况。你可以在 <a href="https://opensource.apple.com" target="_blank" rel="noopener">opensource.apple.com</a> 中提供的 CoreFoundation 开源版本中找到此函数，不过别高兴太早：开源版本并没有包含关于 tagged pointer 字符串的代码实现。</p>
+<p>构造 tagged pointer 字符串的代码实际上是我们上面看到的代码的相反版本。如果 tagged pointer 字符串能够容下原始字符串的长度和内容，那么就会开始一点一点地构造 —— 包含 ASCII 字符、6 位或者 5 位编码的字符。其中会有一个相反的查找表。上文代码中看到的字符常量的查找表是一个名为 <code>sixBitToCharLookup</code> 的全局变量，在 <code>Funnel3</code> 函数中有一个与之相对应的 <code>sixBitToCharLookup</code> 变量。</p>
+<h2 id="奇怪的查找表"><a href="#奇怪的查找表" class="headerlink" title="奇怪的查找表"></a>奇怪的查找表</h2><p>完整的 6 位编码查找表如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">eilotrm.apdnsIc ufkMShjTRxgC4013bDNvwyUL2O856P-B79AFKEWV_zGJ/HYX</span><br></pre></td></tr></table></figure>
+<p>可能大家都会很自然地问一个问题：为什么它的顺序如此奇怪？</p>
+<p>因为这个表同时提供给 6 位编码和 5 位编码使用，这就是为什么它和普通的英语字母表有同样的顺序。那些使用频率非常高的字符位于表的前半段，而那些使用频率没那么高的字符串就会放在后半段。这在最大程度上保证了稍长的字符串能够使用 5 位编码。</p>
+<p>虽然如此，假如我们把查找表对半分，每一半中的顺序仿佛显得无关紧要。对半分后的表按理来说可以按照英语字母表的顺序进行排序，但事实却并非如此。</p>
+<p>查找表开头位置的几个字母似乎是按照其在英语中出现的频率排序的。英语中最常见的字母是 E，其实是 T，接下来依次为 A、O、I、N 和 S。E 确实位于表的开头，且剩下的几个字母也的确都位于靠近开头的位置。看起来这张查找表的确是按照使用频率进行排序的。至于其为什么体现出和英语的差异性，大概是因为在 Cocoa 应用中的短字符串并不是随机选自英文散文，而是一些较为特别的语言。</p>
+<p>我猜测苹果原本打算使用一种更为巧妙的变长编码方式，或许会基于一种 <a href="https://en.wikipedia.org/wiki/Huffman_coding" target="_blank" rel="noopener">Huffman 编码</a>。但最后发现其实现难度太大，或者性价比并没有想象中高，甚至是因为时间不允许的原因。因此他们决定退而求其次，使用一种更容易实现的版本，也就是我们上文中所看到的编码方式 —— 针对不同长度的字符串使用不同的定长编码方式（每个字符 8 位、6 位或 5 位）。这个奇怪的查找表也许是基于被遗弃的变长编码方式而构建的，同时也便于日后决定再次启用变长编码方式。虽然这些纯属猜测，但至少我感觉事实便是如此。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Tagged pointer 是一种非常酷的技术。虽然应用到字符串上面并不常见，但很清楚的是，苹果肯定从中受益良多，不然也不会对它倾注如此多精力和想法。能够看到这两种技术融合在一起的效果，以及它们如何对有限的存储空间物尽其用，实在是有趣至极。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Mike-Ash/">Mike Ash</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/iOS-开发/">iOS 开发</a><a href="/tags/Objective-C/">Objective-C</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2018/10/08/tagged-pointer-strings/" data-title="Tagged Pointer 字符串 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2018/10/04/expanding-swifts-reach/"  title="拓展 Swift 应用领域">
+ <strong>下一篇</strong><br/> 
+ <span>拓展 Swift 应用领域
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2018/10/08/tagged-pointer-strings/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#概述"><span class="toc-number">1.</span> <span class="toc-text">概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#可能的实现"><span class="toc-number">2.</span> <span class="toc-text">可能的实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tagged-Pointer-字符串实践"><span class="toc-number">3.</span> <span class="toc-text">Tagged Pointer 字符串实践</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#刨根问底"><span class="toc-number">4.</span> <span class="toc-text">刨根问底</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#构造-Tagged-Pointer-字符串"><span class="toc-number">5.</span> <span class="toc-text">构造 Tagged Pointer 字符串</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#奇怪的查找表"><span class="toc-number">6.</span> <span class="toc-text">奇怪的查找表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">7.</span> <span class="toc-text">总结</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>43</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>20</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>36</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>23</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>169</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>84</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>82</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源/" title="Swift 开源">Swift 开源<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftGG 专属 Reveal 优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/XzKhGY">领取立减 143 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
