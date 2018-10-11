@@ -21,7 +21,7 @@
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="详细说明 Swift 类型擦除">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2018-10-11T14:15:29.857Z">
+<meta property="og:updated_time" content="2018-10-11T14:22:58.560Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift 类型擦除">
 <meta name="twitter:description" content="详细说明 Swift 类型擦除">
@@ -104,9 +104,9 @@
 <a id="more"></a>
 <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>有时你想对外部调用者隐藏某个类的具体类型，或是一些实现细节。在一些情况下，这样做能防止静态类型在项目中滥用，或者保证了类型间的交互。类型擦除就是移除某个类的具体类型使其变得更通用的过程。</p>
 <p>协议或抽象父类可作为类型擦除简单的实现方式之一。例如 <code>NSString</code> 就是一个例子，每次创建一个 <code>NSString</code> 实例时，这个对象并不是一个普通的 <code>NSString</code> 对象，它通常是某个具体的子类的实例，这个子类一般是私有的，同时这些细节通常是被隐藏起来的。你可以使用子类提供的功能而不用知道它具体的类型，你也没必要将你的代码与它们的具体类型联系起来。</p>
-<p>在处理 Swift 泛型以及关联类型协议的时候，可能需要使用一些高级的内容。Swift 不允许把协议当做具体的类型来使用。例如，如果你想编写一个方法，它的参数是一个包含了 <code>Int</code> 的序列，那么下面这种做法是不正确的：</p>
+<p>在处理 Swift 泛型以及关联类型协议的时候，可能需要使用一些高级的内容。Swift 不允许把协议当做具体的类型来使用。例如， 如果你想编写一个方法，他的参数是一个包含了<code>Int</code> 的序列，那么下面这种做法是不正确的:</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">(seq: Sequence&lt;Int&gt;)</span></span> &#123; ...</span><br></pre></td></tr></table></figure>
-<p>你不能这样使用协议类型，这样会在编译时报错。但你可以使用泛型来替代协议，解决这个问题：</p>
+<p>你不能这样使用协议类型，这样会在编译时报错。但你可以使用泛型来替代协议, 解决这个问题: </p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span>&lt;S: Sequence&gt;<span class="params">(seq: S)</span></span> <span class="keyword">where</span> <span class="type">S</span>.<span class="type">Element</span> == <span class="type">Int</span> &#123; ...</span><br></pre></td></tr></table></figure>
 <p>有时候这样写完全可以，但有些地方还存在一些比较麻烦的情况，通常你不可能只在一个地方添加泛型: 一个泛型函数对其他泛型要求更多… 更糟糕的是，你不能将泛型作为返回值或者属性。这就跟我们想的有点不一样了。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">g</span>&lt;S: Sequence&gt;<span class="params">()</span></span> -&gt; <span class="type">S</span> <span class="keyword">where</span> <span class="type">S</span>.<span class="type">Element</span> == <span class="type">Int</span> &#123; ...</span><br></pre></td></tr></table></figure>
@@ -134,7 +134,7 @@
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> seq: <span class="type">Seq</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">init</span>(<span class="number">_</span> seq: <span class="type">Seq</span>) &#123;</span><br><span class="line">    <span class="keyword">self</span>.seq = seq</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>从序列中获取迭代器，然后将迭代器包装成 <code>IteratorImpl</code> 对象返回，这样就实现了 <code>makeIterator</code> 的功能。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">makeIterator</span><span class="params">()</span></span> -&gt; <span class="type">IteratorImpl</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">IteratorImpl</span>(seq.makeIterator())</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>我们需要一种方法来实际创建这些东西：对 <code>MAnySequence</code> 添加一个静态方法，该方法创建一个 <code>MAnySequenceImpl</code> 实例，并将其作为 <code>MAnySequence</code> 类型返回给调用者。</p>
+<p>我们需要一种方法来实际创建这些东西: 对 <code>MAnySequence</code> 添加一个静态方法，该方法创建一个 <code>MAnySequenceImpl</code> 实例，并将其作为 <code>MAnySequence</code> 类型返回给调用者。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">MAnySequence</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">make</span>&lt;Seq: Sequence&gt;<span class="params">(<span class="number">_</span> seq: Seq)</span></span> -&gt; <span class="type">MAnySequence</span>&lt;<span class="type">Element</span>&gt; <span class="keyword">where</span> <span class="type">Seq</span>.<span class="type">Element</span> == <span class="type">Element</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">MAnySequenceImpl</span>&lt;<span class="type">Seq</span>&gt;(seq)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>在实际开发中，我们可能会做一些额外的操作来让 <code>MAnySequence</code> 提供一个初始化方法。</p>
 <p>我们来试试 <code>MAnySequence</code>：</p>
@@ -145,13 +145,13 @@
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">MAnySequence</span>&lt;<span class="title">Element</span>&gt;: <span class="title">Sequence</span> </span>&#123;</span><br></pre></td></tr></table></figure>
 <p>跟之前一样，<code>MAnySequence</code> 也需要一个可返回的迭代器（Iterator）。迭代器同样被设计为结构体，并持有一个参数为空并返回 <code>Element?</code> 的存储型属性，实际上这个属性是一个函数，被用于 <code>IteratorProtocol</code> 协议的 <code>next</code> 方法中。接下来 <code>Iterator</code> 遵循 <code>IteratorProtocol</code> 协议，并在 <code>next</code> 方法中调用函数:</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Iterator</span>: <span class="title">IteratorProtocol</span> </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> _next: () -&gt; <span class="type">Element</span>?</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">next</span><span class="params">()</span></span> -&gt; <span class="type">Element</span>? &#123;</span><br><span class="line">        <span class="keyword">return</span> _next()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><code>MAnySequence</code> 与 <code>Iterator</code> 很相似：持有一个参数为空返回 <code>Iterator</code> 类型的存储型属性。遵循 <code>Sequence</code> 协议并在 <code>makeIterator</code> 方法中调用这个属性。</p>
+<p><code>MAnySequence</code> 与 <code>Iterator</code> 很相似: 持有一个参数为空返回 <code>Iterator</code> 类型的存储型属性。遵循 <code>Sequence</code> 协议并在 <code>makeIterator</code> 方法中调用这个属性。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> _makeIterator: () -&gt; <span class="type">Iterator</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">makeIterator</span><span class="params">()</span></span> -&gt; <span class="type">Iterator</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> _makeIterator()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><code>MAnySequence</code> 的构造函数正是魔法起作用的地方，它接收任意序列作为参数: </p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">init</span>&lt;<span class="type">Seq</span>: <span class="type">Sequence</span>&gt;(<span class="number">_</span> seq: <span class="type">Seq</span>) <span class="keyword">where</span> <span class="type">Seq</span>.<span class="type">Element</span> == <span class="type">Element</span> &#123;</span><br></pre></td></tr></table></figure>
 <p>接下来需要在构造函数中包装此序列的功能:</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">_makeIterator = &#123;</span><br></pre></td></tr></table></figure>
-<p>如何生成迭代器？请求 <code>Seq</code> 序列生成：</p>
+<p>如何生成迭代器？请求 <code>Seq</code> 序列生成:</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> iterator = seq.makeIterator()</span><br></pre></td></tr></table></figure>
 <p>接下来我们利用自定义的迭代结构体包装序列生成的迭代器，包装后的 <code>_next</code> 属性将会在迭代器协议的 <code>next()</code> 方法中被调用:</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">            <span class="keyword">return</span> <span class="type">Iterator</span>(_next: &#123; iterator.next() &#125;)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -554,11 +554,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>2</sup></a></li>
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
