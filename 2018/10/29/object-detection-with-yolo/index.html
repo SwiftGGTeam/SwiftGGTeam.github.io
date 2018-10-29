@@ -1,0 +1,1087 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>使用 YOLO 进行实时目标检测 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="计算机视觉，目标检测，YOLO，机器学习,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="本文详细介绍了使用 YOLO 进行实时目标检测的原理，以及在 iOS 上的应用。">
+<meta name="keywords" content="计算机视觉，目标检测，YOLO，机器学习">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用 YOLO 进行实时目标检测">
+<meta property="og:url" content="https://swift.gg/2018/10/29/object-detection-with-yolo/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="本文详细介绍了使用 YOLO 进行实时目标检测的原理，以及在 iOS 上的应用。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://machinethink.net/images/yolo/ClassificationVsDetection.png">
+<meta property="og:image" content="http://machinethink.net/images/yolo/Grid.png">
+<meta property="og:image" content="http://machinethink.net/images/yolo/Boxes.png">
+<meta property="og:image" content="http://machinethink.net/images/yolo/Scores.png">
+<meta property="og:image" content="http://machinethink.net/images/yolo/Prediction.png">
+<meta property="og:image" content="http://machinethink.net/images/yolo/CatOrDog.png">
+<meta property="og:image" content="http://machinethink.net/images/yolo/BatchNorm.png">
+<meta property="og:image" content="http://machinethink.net/images/yolo/App.png">
+<meta property="og:updated_time" content="2018-10-29T07:39:05.290Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用 YOLO 进行实时目标检测">
+<meta name="twitter:description" content="本文详细介绍了使用 YOLO 进行实时目标检测的原理，以及在 iOS 上的应用。">
+<meta name="twitter:image" content="http://machinethink.net/images/yolo/ClassificationVsDetection.png">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2018/10/29/object-detection-with-yolo/" target="_blank" title="使用 YOLO 进行实时目标检测" itemprop="url">使用 YOLO 进行实时目标检测</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2018-10-29T00:00:00.000Z" itemprop="datePublished">2018-10-29</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Matthijs Hollemans，<a href="http://machinethink.net/blog/object-detection-with-yolo/" target="_blank" rel="noopener">原文链接</a>，原文日期：2018/03/28<br>译者：<a href="https://github.com/YangGao1991" target="_blank" rel="noopener">阳仔</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>，<a href="http://linusling.com" target="_blank" rel="noopener">小铁匠Linus</a>；定稿：<a href="http://forelax.space" target="_blank" rel="noopener">Forelax</a></p>
+</blockquote>
+ <!--此处开始正文-->
+<p>目标检测是计算机视觉中的经典问题之一：</p>
+<p>识别一幅图像中有哪些目标，以及它们在图像中的位置。</p>
+<p>检测是一个比分类更复杂的问题，因为分类也可以识别目标，但不能准确判断目标在图像中的位置——并且分类不能适用于包含多个目标的图像。</p>
+<p><img src="http://machinethink.net/images/yolo/ClassificationVsDetection.png" alt=""></p>
+<p><a href="https://pjreddie.com/darknet/yolo/" target="_blank" rel="noopener">YOLO</a> 是一个实时有效的目标检测神经网络。</p>
+<p>在这篇文章中，我将阐述如何使用 Metal Performance Shaders 来将“简化版” YOLOv2 运行在 iOS 设备上。</p>
+<a id="more"></a>
+<p>在继续阅读之前，请先 <a href="https://www.youtube.com/watch?v=VOC3huqHrss" target="_blank" rel="noopener">观看这个令人惊叹的 YOLOv2 介绍视频</a>。</p>
+<h3 id="YOLO-的工作原理"><a href="#YOLO-的工作原理" class="headerlink" title="YOLO 的工作原理"></a>YOLO 的工作原理</h3><p>你可以使用 <a href="http://machinethink.net/blog/convolutional-neural-networks-on-the-iphone-with-vggnet/" target="_blank" rel="noopener">VGGNet</a> 或 <a href="https://github.com/hollance/Forge/tree/master/Examples/Inception" target="_blank" rel="noopener">Inception</a> 这样的分类器，通过一个小的滑动窗口对图像进行遍历，从而形成一个目标检测器。每一步遍历运行一次分类器，来对当前窗口中的目标进行分类。使用这样的滑动窗口，会对一幅图像输出成百上千的检测结果，但你只需要保留分类器最确定的那些结果。</p>
+<p>这种方法是可行的，但很显然会很慢，因为需要运行很多遍分类器。一种效率稍微高一点的方法是，首先判断图像的哪一部分包含了有效的信息——也就是候选区域 (region proposals)——然后仅仅在这些区域中运行分类器。这种方法比滑动窗口的方法能减少分类器的运行次数，但仍然很多。</p>
+<p>YOLO 采用了一种完全不同的方法。它并不是将传统的分类器改造成检测器。YOLO 实际上只对图像进行一次操作（也就是它名字的由来：You Only Look Once），但是是以一种聪明的方式。</p>
+<p>YOLO 将图像分成 13×13 的网格单元：</p>
+<p><img src="http://machinethink.net/images/yolo/Grid.png" alt=""></p>
+<p>每一个网格单元负责预测 5 个检测框。一个检测框是包含一个目标的矩形区域。</p>
+<p>YOLO 同时会给出一个置信度，描述了某个检测框确实包含了某目标的确定程度。这个值和检测框中是什么目标毫无关系，只和检测框的形状大小匹配程度有关。</p>
+<p>预测出的检测框看起来和下图类似（置信度越高，框越粗）：</p>
+<p><img src="http://machinethink.net/images/yolo/Boxes.png" alt=""></p>
+<p>对每个检测框，对应的网格单元还给出了一个分类的预测。这和分类器的工作相似：它给出一个全部可能的类别的概率分布。我们使用的这个版本的 YOLO 是用 <a href="http://host.robots.ox.ac.uk/pascal/VOC/" target="_blank" rel="noopener">PASCAL VOC dataset</a> 训练的，可以检测 20 种不同的类别，比如：</p>
+<ul>
+<li>自行车</li>
+<li>船</li>
+<li>汽车</li>
+<li>猫</li>
+<li>狗</li>
+<li>人</li>
+<li>等等</li>
+</ul>
+<p>检测框的置信度和分类预测最终被整合成一个最终得分，来告诉我们该检测框内包含一个特定类型的目标的概率。例如，左边这个又大又粗的黄色框告诉我们，85% 的概率这里面包含一只狗：</p>
+<p><img src="http://machinethink.net/images/yolo/Scores.png" alt=""></p>
+<p>因为整幅图像包含 13×13 = 169 个网格单元，且每个网格单元预测 5 个检测框，我们最后总计能得到 845 个检测框。实际上，这其中大多数的检测框的置信度都很低，所以，我们只需要保留最终得分大于等于 30% 的检测框就行了（你也可以根据需要的检测准确度改变这个阈值）。</p>
+<p>最终的检测结果：</p>
+<p><img src="http://machinethink.net/images/yolo/Prediction.png" alt=""></p>
+<p>从 845 个检测框中，我们只保留了这三个，因为它们给出的结果最好。尽管我们有 845 个检测框，但它们都是同时得到的——神经网络只需要运行一次。这也是 YOLO 强大而快速的原因。</p>
+<p>（以上图片来自 <a href="https://pjreddie.com/" target="_blank" rel="noopener">pjreddie.com</a>）</p>
+<h3 id="神经网络"><a href="#神经网络" class="headerlink" title="神经网络"></a>神经网络</h3><p>YOLO 的结构只是一个简单的卷积神经网络：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Layer         kernel  stride  output shape</span><br><span class="line">---------------------------------------------</span><br><span class="line">Input                          (416, 416, 3)</span><br><span class="line">Convolution    3×3      1      (416, 416, 16)</span><br><span class="line">MaxPooling     2×2      2      (208, 208, 16)</span><br><span class="line">Convolution    3×3      1      (208, 208, 32)</span><br><span class="line">MaxPooling     2×2      2      (104, 104, 32)</span><br><span class="line">Convolution    3×3      1      (104, 104, 64)</span><br><span class="line">MaxPooling     2×2      2      (52, 52, 64)</span><br><span class="line">Convolution    3×3      1      (52, 52, 128)</span><br><span class="line">MaxPooling     2×2      2      (26, 26, 128)</span><br><span class="line">Convolution    3×3      1      (26, 26, 256)</span><br><span class="line">MaxPooling     2×2      2      (13, 13, 256)</span><br><span class="line">Convolution    3×3      1      (13, 13, 512)</span><br><span class="line">MaxPooling     2×2      1      (13, 13, 512)</span><br><span class="line">Convolution    3×3      1      (13, 13, 1024)</span><br><span class="line">Convolution    3×3      1      (13, 13, 1024)</span><br><span class="line">Convolution    1×1      1      (13, 13, 125)</span><br><span class="line">---------------------------------------------</span><br></pre></td></tr></table></figure>
+<p>该神经网络具有典型的结构：一个 3×3 卷积核的卷积层，采样窗口 2×2 的池化层。没有花哨的东西。YOLO 中没有全连接层。</p>
+<blockquote>
+<p>注意：我们使用的“简化版” YOLO 只有 9 个卷积层和 6 个池化层。完全版 YOLOv2 模型分层数是这个的三倍，并且会更复杂一些，但仍然是一个常规的卷积神经网络。</p>
+</blockquote>
+<p>最后一个卷积层的卷积核为 1×1，是为了将参数降维至 13×13×125。其中的 13×13 看起来很熟悉：这就是图像被划分成的网格单元的数量。</p>
+<p>因此，每个网格单元有 125 个通道。这 125 个通道包含了检测框的数据，以及分类预测的数据。为什么是 125 呢？因为每个网格单元预测 5 个检测框的结果，每个检测框由 25 个数据元素来描述：</p>
+<ul>
+<li>检测框矩形的 x，y，宽，高</li>
+<li>置信度</li>
+<li>在 20 个分类上的概率分布</li>
+</ul>
+<p>YOLO 的使用很简单：输入一幅图像（大小为 416×416 像素），它运行一次卷积网络，输出一个 13×13×125 的张量，描述网格单元以及检测框。你需要做的只是计算每个检测框的最终得分，并抛弃低于 30% 的那些。</p>
+<blockquote>
+<p>小提示：要了解更多有关 YOLO 的工作原理，以及 YOLO 是如何训练的，请 <a href="https://www.youtube.com/watch?v=NM6lrxy0bxs" target="_blank" rel="noopener">观看对它的发明者之一的访谈</a>。这个视频介绍的是 YOLOv1，由于是老版本，结构稍有不同，但主体思想是相同的。很值得观看！</p>
+</blockquote>
+<h3 id="转换成-Metal"><a href="#转换成-Metal" class="headerlink" title="转换成 Metal"></a>转换成 Metal</h3><p>上文描述的是简化版的 YOLO，也是我们将在 iOS 应用中使用的版本。完全版 YOLOv2 的神经网络有三倍的分层数，因为太大，所以在当前的 iPhone 设备上不能快速运行。简化版的 YOLO 使用更少的分层数，因此运行会更快，但准确度也稍差。</p>
+<p><img src="http://machinethink.net/images/yolo/CatOrDog.png" alt=""></p>
+<p>YOLO 使用 Darknet 编写，这是 YOLO 作者自己编写的深度学习框架。能下载到的都是 Darknet 格式。尽管 <a href="https://github.com/pjreddie/darknet" target="_blank" rel="noopener">Darknet 是开源的</a>，我也不想花很多时间去弄清它的工作原理。</p>
+<p>幸运的是，<a href="https://github.com/allanzelener/YAD2K/" target="_blank" rel="noopener">有人</a> 已经做了这件事，将 Darknet 模型转换成了我所使用的深度学习工具 Keras。我所要做的，就是运行这个“YAD2K”脚本，将 Darknet 转换成 Keras 格式，然后用我自己写的脚本将 Keras 转换成 Metal。</p>
+<p>但是，有一点小麻烦。YOLO 在它的卷积层后，使用了一种叫做”批标准化“的规整化方法。</p>
+<p>“批标准化”的思想是，当数据是干净的时候，神经网络能够达到最好的工作效果。理想情况下，一个层级的输入数据的平均值为 0，且方差较小。每个做过机器学习的人都应比较熟悉这一思想，因为我们经常使用一种称为“特征缩放”或“白化”的技术来处理我们的输入数据，以达到这一目的。</p>
+<p>批标准化对层间数据做了类似特征缩放的处理。这种处理能防止数据在神经网络中传递时退化，从而有效提升神经网络的性能。</p>
+<p>为了让你直观感受到批标准化的作用，以下是第一个卷积层分别在应用和未应用批标准化的情况下的输出直方图：</p>
+<p><img src="http://machinethink.net/images/yolo/BatchNorm.png" alt=""></p>
+<p>批标准化在训练一个深度网络时很重要，但事实上，我们在进行推断的时候可以不需要这一处理。不需要进行批标准化的计算，有助于使我们的应用运行更快。在任何时候，Metal 都没有一个 <code>MPSCNNBatchNormalization</code> 层。</p>
+<p>批标准化通常发生在卷积层之后，激活函数（YOLO 中的 ReLU 函数）之前。卷积操作和批标准化操作都是对数据进行线性变换，所以我们可以将批标准化层的参数和卷积权重相结合。这称为将批标准化层“折叠”到卷积层。</p>
+<p>长话短说，使用一些数学方法，我们可以省略批标准化层，但需要改变前序卷积层的权重。</p>
+<p>快速阐述一下卷积层的计算过程：设 <code>x</code> 是输入图像中的像素，<code>w</code> 是卷积层权重，那么，经过卷积层计算，输出的每个像素的值为：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">out[j] = x[i]*w[0] + x[i+1]*w[1] + x[i+2]*w[2] + ... + x[i+k]*w[k] + b</span><br></pre></td></tr></table></figure>
+<p>即输入像素矩阵和卷积核权重的点积，再加上偏差项 <code>b</code>。</p>
+<p>以下是对卷积层输出进行批标准化处理的计算过程：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">        gamma * (out[j] - mean)</span><br><span class="line">bn[j] = ---------------------- + beta</span><br><span class="line">            sqrt(variance)</span><br></pre></td></tr></table></figure>
+<p>批标准化首先对每个像素的输出值减去平均值 <code>mean</code>，再除以标准差，乘以一个缩放系数 <code>gamma</code>，再加上一个偏移值 <code>beta</code>。这四个参数 —— <code>mean</code>，<code>variance</code>，<code>gamma</code>，<code>beta</code> —— 是在网络训练过程中，批标准化层学习得到的。</p>
+<p>为了省略批标准化，我们可以将这两个公式进行稍微的整合，来为卷积层计算新的权重和偏差项：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">           gamma * w</span><br><span class="line">w_new = --------------</span><br><span class="line">        sqrt(variance)</span><br><span class="line"></span><br><span class="line">        gamma*(b - mean)</span><br><span class="line">b_new = ---------------- + beta</span><br><span class="line">         sqrt(variance)</span><br></pre></td></tr></table></figure>
+<p>利用这些新的权重和偏差项对输入 <code>x</code> 进行卷积操作，能够得到与原来卷积层加上批标准化处理后同样的结果。</p>
+<p>现在，我们可以去掉批标准化层，只使用卷积层，但参数是经过调节的权重和偏差项 <code>w_new</code> 和 <code>b_new</code>。我们对网络中所有的卷积层都重复这一过程。</p>
+<blockquote>
+<p>注意：事实上，YOLO 中的卷积层没有使用偏差项，因此上述公式中 b 为 0。但请注意，经过整合批标准化的参数后，卷积层就有了偏差项。</p>
+</blockquote>
+<p>一旦我们将所有的批标准化层整合到了它们的前序卷积层，我们就可以将权重转换到 Metal 了。简单地将该数组（Keras 中存储的顺序和 Metal 不同）进行转置，再将其写进 32 位浮点数的二进制文件。</p>
+<p>如果你对这些操作感到好奇，你可以查看转换脚本 <a href="https://github.com/hollance/Forge/blob/master/Examples/YOLO/yolo2metal.py" target="_blank" rel="noopener">yolo2metal.py</a> 来获得详细信息。为了验证整合批标准化的效果，脚本创建了一个不包含批标准化层，但使用了调节后的权重的模型，并将其与原始模型的预测结果进行比对。</p>
+<h3 id="iOS-应用"><a href="#iOS-应用" class="headerlink" title="iOS 应用"></a>iOS 应用</h3><p>我理所当然地使用 <a href="https://github.com/hollance/Forge" target="_blank" rel="noopener">Forge</a> 来编写我的 iOS 应用。😂你可以在 <a href="https://github.com/hollance/Forge/tree/master/Examples/YOLO" target="_blank" rel="noopener">YOLO</a> 文件夹中找到源代码。如果想尝试一下的话，可以下载或者 clone Forge，在 Xcode 8.3 以上版本中打开 <strong>Forge.xcworkspace</strong>，在 iPhone 6 以上设备上运行 <strong>YOLO</strong>。</p>
+<p>最简单的测试方法是将你的 iPhone 对准某个 <a href="https://www.youtube.com/watch?v=e_WBuBqS9h8" target="_blank" rel="noopener">YouTube 视频</a>：</p>
+<p><img src="http://machinethink.net/images/yolo/App.png" alt=""></p>
+<p><strong>YOLO.swift</strong> 中有一些有趣的代码。首先，这里创建了卷积网络：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">let leaky = MPSCNNNeuronReLU(device: device, a: 0.1)</span><br><span class="line"></span><br><span class="line">let input = Input()</span><br><span class="line"></span><br><span class="line">let output = input</span><br><span class="line">         --&gt; Resize(width: 416, height: 416)</span><br><span class="line">         --&gt; Convolution(kernel: (3, 3), channels: 16, padding: true, activation: leaky, name: &quot;conv1&quot;)</span><br><span class="line">         --&gt; MaxPooling(kernel: (2, 2), stride: (2, 2))</span><br><span class="line">         --&gt; Convolution(kernel: (3, 3), channels: 32, padding: true, activation: leaky, name: &quot;conv2&quot;)</span><br><span class="line">         --&gt; MaxPooling(kernel: (2, 2), stride: (2, 2))</span><br><span class="line">         --&gt; ...and so on...</span><br></pre></td></tr></table></figure>
+<p>摄像头的输入图像被调整为 416×416 像素大小，接着被输入到卷积层和池化层。这和其他卷积神经网络的操作是非常类似的。</p>
+<p>真正有意思的是对输出的操作。回想一下，我们的输出是一个 13×13×125 的张量：图像中每个网格单元有 125 个通道。这 125 个数字包含了检测框的数据，以及分类预测的数据。我们需要将这些数据通过某些方法进行整理。这些是通过 <code>fetchResult()</code> 实现的。</p>
+<blockquote>
+<p>注意：fetchResult() 函数在 CPU 中运行，而非 GPU。这种实现方式比较简单。有人说 GPU 的并行性会对嵌套循环的运行比较有利。也许我在将来会重新写一个 GPU 的版本。</p>
+</blockquote>
+<p>以下是 <code>fetchResult()</code> 的工作原理：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public func fetchResult(inflightIndex: Int) -&gt; NeuralNetworkResult&lt;Prediction&gt; &#123;</span><br><span class="line">  let featuresImage = model.outputImage(inflightIndex: inflightIndex)</span><br><span class="line">  let features = featuresImage.toFloatArray()</span><br></pre></td></tr></table></figure>
+<p>卷积网络的输出是一个 <code>MPSImage</code> 格式的数据。我们首先将其转换成一个 <code>Float</code> 的数组，即 <code>features</code>，以便处理。</p>
+<p><code>fetchResult()</code> 的主体部分是一个大的嵌套循环。它对所有的网格单元以及每个网格单元的 5 个预测结果进行遍历：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">for cy in 0..&lt;13 &#123;</span><br><span class="line">  for cx in 0..&lt;13 &#123;</span><br><span class="line">    for b in 0..&lt;5 &#123;</span><br><span class="line">       . . .</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在每个循环中我们对网格单元 <code>(cy, cx)</code> 计算出其检测框 <code>b</code>。</p>
+<p>首先，我们从 <code>features</code> 数组中读取出检测框的 x，y，宽，高，以及置信度：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">let channel = b*(numClasses + 5)</span><br><span class="line">let tx = features[offset(channel, cx, cy)]</span><br><span class="line">let ty = features[offset(channel + 1, cx, cy)]</span><br><span class="line">let tw = features[offset(channel + 2, cx, cy)]</span><br><span class="line">let th = features[offset(channel + 3, cx, cy)]</span><br><span class="line">let tc = features[offset(channel + 4, cx, cy)]</span><br></pre></td></tr></table></figure>
+<p><code>offset()</code> 函数的作用是帮助在数组中寻找读取数据的合适位置。Metal 将其数据以每 4 个通道为一组进行存储，这意味着这 125 个通道的数据并不是连续存储的，而是分散的。（请查阅代码以获得更详尽的解释）</p>
+<p>我们仍然需要对这 5 个数据 <code>tx</code>，<code>ty</code>，<code>tw</code>，<code>th</code>，<code>tc</code> 进行处理，因为它们的格式有一点奇怪。如果你好奇这些公式是从哪里来的，它们是在 <a href="https://arxiv.org/abs/1612.08242" target="_blank" rel="noopener">这篇文章</a> 中提出的（这是网络训练的副产物）。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">let x = (Float(cx) + Math.sigmoid(tx)) * 32</span><br><span class="line">let y = (Float(cy) + Math.sigmoid(ty)) * 32</span><br><span class="line"></span><br><span class="line">let w = exp(tw) * anchors[2*b    ] * 32</span><br><span class="line">let h = exp(th) * anchors[2*b + 1] * 32</span><br><span class="line"></span><br><span class="line">let confidence = Math.sigmoid(tc)</span><br></pre></td></tr></table></figure>
+<p>现在，<code>x</code> 和 <code>y</code> 代表在 416×416 大小的输入图像中，检测框的中心点的坐标。<code>w</code> 和 <code>h</code> 是检测框的宽和高。<code>tc</code> 是检测框的置信度，我们用 logistic sigmoid 函数将其转换成百分制的形式。</p>
+<p>我们现在有了检测框，并且我们知道 YOLO 有多确信其中包含了某个目标。下一步，让我们看一下分类预测的结果，看看 YOLO 认为检测框中的目标是什么物体：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">var classes = [Float](repeating: 0, count: numClasses)</span><br><span class="line">for c in 0..&lt;numClasses &#123;</span><br><span class="line">  classes[c] = features[offset(channel + 5 + c, cx, cy)]</span><br><span class="line">&#125;</span><br><span class="line">classes = Math.softmax(classes)</span><br><span class="line"></span><br><span class="line">let (detectedClass, bestClassScore) = classes.argmax()</span><br></pre></td></tr></table></figure>
+<p>回想一下，<code>features</code> 数组中的 20 个通道的数据包含了该检测框的分类检测结果。我们将这些读取到一个新的 <code>classes</code> 数组中。像分类器的一般做法一样，我们采用 softmax 函数来将数组转换成一个概率分布。然后，我们挑选分数最高的分类作为结果。</p>
+<p>现在，我们可以对检测框计算最终得分了 —— 例如，“我有 85% 的确信度相信这个检测框包含了一只狗”。一共会有 845 个检测框，而我们只想保留最终得分超过某一阈值的那些。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">let confidenceInClass = bestClassScore * confidence</span><br><span class="line">if confidenceInClass &gt; 0.3 &#123;</span><br><span class="line">  let rect = CGRect(x: CGFloat(x - w/2), y: CGFloat(y - h/2),</span><br><span class="line">                    width: CGFloat(w), height: CGFloat(h))</span><br><span class="line"></span><br><span class="line">  let prediction = Prediction(classIndex: detectedClass,</span><br><span class="line">                              score: confidenceInClass,</span><br><span class="line">                              rect: rect)</span><br><span class="line">  predictions.append(prediction)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对所有网格单元重复上述代码。当循环结束后，我们就有了一个 <code>predictions</code> 数组，一般来说，其中会包含 10 到 20 个预测结果。</p>
+<p>我们已经过滤掉了那些最终得分非常低的检测框，但剩下的检测框中，仍然可能会存在相互重叠特别严重的情况。因此，我们在 <code>fetchResult()</code> 中做的最后一件事就是用一种称为<em>非极大值抑制</em>的方法来减少这种重复的检测框。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">  var result = NeuralNetworkResult&lt;Prediction&gt;()</span><br><span class="line">  result.predictions = nonMaxSuppression(boxes: predictions,</span><br><span class="line">                                         limit: 10, threshold: 0.5)</span><br><span class="line">  return result</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>nonMaxSuppression()</code> 函数所使用的算法很简单：</p>
+<ol>
+<li>从最终得分最高的那个检测框开始。</li>
+<li>将其他与该检测框重叠率超过一定阈值（比如超过 50%）的检测框移除。</li>
+<li>返回第一步，重复直到遍历完所有的检测框。</li>
+</ol>
+<p>该算法移除了与更高得分的检测框有太多重叠的其他检测框，只保留了最好的那些。</p>
+<p>以上就是所有的过程了：一个常规的卷积网络，以及后续对结果的一些处理。</p>
+<h3 id="运行效果如何？"><a href="#运行效果如何？" class="headerlink" title="运行效果如何？"></a>运行效果如何？</h3><p><a href="https://pjreddie.com/darknet/yolo/" target="_blank" rel="noopener">YOLO 官方网站</a>宣称精简版 YOLO 最快每秒可处理 200 帧图像。但那是在性能优秀的笔记本上的运行结果，而不是在移动设备上。那么，它在 iPhone 上能够运行多快呢？</p>
+<p>在我的 iPhone 6s 上，它处理一幅图像大约需要 0.15 秒。那也只有 6 FPS，几乎不能称之为实时。如果你将手机对准一辆开过的汽车，你会看到一个检测框拖在汽车后面一些。尽管如此，它能够生效已经使我印象深刻了。😁</p>
+<blockquote>
+<p>注意：正如上文解释，检测框的处理是在 CPU 上进行，而不是 GPU。如果 YOLO 完全运行在 GPU 上，会变得更快吗？也许会，但 CPU 代码运行时间只有 0.03 秒，占 20% 的运行时间。将其中一部分工作交给 GPU 做当然是可行的，但考虑到卷积层的计算仍然占据了 80% 的时间，我不确定是否值得这样做。</p>
+</blockquote>
+<p>我认为导致变慢的主要原因在于输出通道为 512 和 1024 卷积层。经过实验，<code>MPSCNNConvolution</code> 在通道较多的小图片上的表现比在通道较少的大图片上会更差。</p>
+<p>另一件我比较感兴趣的事情是采用另一种不同的网络结构，例如 SqueezeNet，对其重新进行训练，以在最后一层进行检测框的预测。换句话说，采用 YOLO 的思想，并将其应用在一个更小更快的网络上。这样以精确度的损失换来速度上的提升是否值得呢？</p>
+<blockquote>
+<p>注意：顺便说一句，最近的 <a href="http://caffe2.ai/" target="_blank" rel="noopener">Caffe2</a> 框架也是通过 Metal 的支持，运行在 iOS 设备上。<a href="https://github.com/KleinYuan/Caffe2-iOS" target="_blank" rel="noopener">Caffe2-iOS project</a> 是一个针对 YOLO 的精简版本。看起来它运行得会比纯 Metal 版稍慢，大约 0.17 秒/帧。</p>
+</blockquote>
+<h3 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h3><p>想要了解更多 YOLO 相关的知识，可以查看 YOLO 作者的以下论文：</p>
+<ul>
+<li><a href="https://arxiv.org/abs/1506.02640" target="_blank" rel="noopener">You Only Look Once: Unified, Real-Time Object Detection</a> by Joseph Redmon, Santosh Divvala, Ross Girshick, Ali Farhadi (2015)</li>
+<li><a href="https://arxiv.org/abs/1612.08242" target="_blank" rel="noopener">YOLO9000: Better, Faster, Stronger</a> by Joseph Redmon and Ali Farhadi (2016)</li>
+</ul>
+<p>我的实现一部分基于 TensorFlow Android demo <a href="https://github.com/tensorflow/tensorflow/tree/master/tensorflow/examples/android" target="_blank" rel="noopener">TF Detect</a>，Allan Zelener 的 <a href="https://github.com/allanzelener/YAD2K/" target="_blank" rel="noopener">YAD2K</a>，以及 <a href="https://github.com/pjreddie/darknet" target="_blank" rel="noopener">Darknet 源代码</a>。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/machinethink/">machinethink</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/机器学习/">机器学习</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2018/10/29/object-detection-with-yolo/" data-title="使用 YOLO 进行实时目标检测 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2018/10/25/macos-dynamic-desktop/"  title="macOS Dynamic Desktop">
+ <strong>下一篇</strong><br/> 
+ <span>macOS Dynamic Desktop
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2018/10/29/object-detection-with-yolo/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#YOLO-的工作原理"><span class="toc-number">1.</span> <span class="toc-text">YOLO 的工作原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#神经网络"><span class="toc-number">2.</span> <span class="toc-text">神经网络</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#转换成-Metal"><span class="toc-number">3.</span> <span class="toc-text">转换成 Metal</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#iOS-应用"><span class="toc-number">4.</span> <span class="toc-text">iOS 应用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#运行效果如何？"><span class="toc-number">5.</span> <span class="toc-text">运行效果如何？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#后记"><span class="toc-number">6.</span> <span class="toc-text">后记</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>43</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>36</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>169</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>88</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>83</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/机器学习/" title="机器学习">机器学习<sup>2</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftGG 专属 Reveal 优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/XzKhGY">领取立减 143 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
