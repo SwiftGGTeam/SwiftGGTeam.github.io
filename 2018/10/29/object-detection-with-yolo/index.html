@@ -29,7 +29,7 @@
 <meta property="og:image" content="http://machinethink.net/images/yolo/CatOrDog.png">
 <meta property="og:image" content="http://machinethink.net/images/yolo/BatchNorm.png">
 <meta property="og:image" content="http://machinethink.net/images/yolo/App.png">
-<meta property="og:updated_time" content="2018-10-29T07:39:05.290Z">
+<meta property="og:updated_time" content="2018-10-29T07:48:16.927Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="使用 YOLO 进行实时目标检测">
 <meta name="twitter:description" content="本文详细介绍了使用 YOLO 进行实时目标检测的原理，以及在 iOS 上的应用。">
@@ -117,7 +117,7 @@
 <p>在这篇文章中，我将阐述如何使用 Metal Performance Shaders 来将“简化版” YOLOv2 运行在 iOS 设备上。</p>
 <a id="more"></a>
 <p>在继续阅读之前，请先 <a href="https://www.youtube.com/watch?v=VOC3huqHrss" target="_blank" rel="noopener">观看这个令人惊叹的 YOLOv2 介绍视频</a>。</p>
-<h3 id="YOLO-的工作原理"><a href="#YOLO-的工作原理" class="headerlink" title="YOLO 的工作原理"></a>YOLO 的工作原理</h3><p>你可以使用 <a href="http://machinethink.net/blog/convolutional-neural-networks-on-the-iphone-with-vggnet/" target="_blank" rel="noopener">VGGNet</a> 或 <a href="https://github.com/hollance/Forge/tree/master/Examples/Inception" target="_blank" rel="noopener">Inception</a> 这样的分类器，通过一个小的滑动窗口对图像进行遍历，从而形成一个目标检测器。每一步遍历运行一次分类器，来对当前窗口中的目标进行分类。使用这样的滑动窗口，会对一幅图像输出成百上千的检测结果，但你只需要保留分类器最确定的那些结果。</p>
+<h2 id="YOLO-的工作原理"><a href="#YOLO-的工作原理" class="headerlink" title="YOLO 的工作原理"></a>YOLO 的工作原理</h2><p>你可以使用 <a href="http://machinethink.net/blog/convolutional-neural-networks-on-the-iphone-with-vggnet/" target="_blank" rel="noopener">VGGNet</a> 或 <a href="https://github.com/hollance/Forge/tree/master/Examples/Inception" target="_blank" rel="noopener">Inception</a> 这样的分类器，通过一个小的滑动窗口对图像进行遍历，从而形成一个目标检测器。每一步遍历运行一次分类器，来对当前窗口中的目标进行分类。使用这样的滑动窗口，会对一幅图像输出成百上千的检测结果，但你只需要保留分类器最确定的那些结果。</p>
 <p>这种方法是可行的，但很显然会很慢，因为需要运行很多遍分类器。一种效率稍微高一点的方法是，首先判断图像的哪一部分包含了有效的信息——也就是候选区域 (region proposals)——然后仅仅在这些区域中运行分类器。这种方法比滑动窗口的方法能减少分类器的运行次数，但仍然很多。</p>
 <p>YOLO 采用了一种完全不同的方法。它并不是将传统的分类器改造成检测器。YOLO 实际上只对图像进行一次操作（也就是它名字的由来：You Only Look Once），但是是以一种聪明的方式。</p>
 <p>YOLO 将图像分成 13×13 的网格单元：</p>
@@ -143,7 +143,7 @@
 <p><img src="http://machinethink.net/images/yolo/Prediction.png" alt=""></p>
 <p>从 845 个检测框中，我们只保留了这三个，因为它们给出的结果最好。尽管我们有 845 个检测框，但它们都是同时得到的——神经网络只需要运行一次。这也是 YOLO 强大而快速的原因。</p>
 <p>（以上图片来自 <a href="https://pjreddie.com/" target="_blank" rel="noopener">pjreddie.com</a>）</p>
-<h3 id="神经网络"><a href="#神经网络" class="headerlink" title="神经网络"></a>神经网络</h3><p>YOLO 的结构只是一个简单的卷积神经网络：</p>
+<h2 id="神经网络"><a href="#神经网络" class="headerlink" title="神经网络"></a>神经网络</h2><p>YOLO 的结构只是一个简单的卷积神经网络：</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Layer         kernel  stride  output shape</span><br><span class="line">---------------------------------------------</span><br><span class="line">Input                          (416, 416, 3)</span><br><span class="line">Convolution    3×3      1      (416, 416, 16)</span><br><span class="line">MaxPooling     2×2      2      (208, 208, 16)</span><br><span class="line">Convolution    3×3      1      (208, 208, 32)</span><br><span class="line">MaxPooling     2×2      2      (104, 104, 32)</span><br><span class="line">Convolution    3×3      1      (104, 104, 64)</span><br><span class="line">MaxPooling     2×2      2      (52, 52, 64)</span><br><span class="line">Convolution    3×3      1      (52, 52, 128)</span><br><span class="line">MaxPooling     2×2      2      (26, 26, 128)</span><br><span class="line">Convolution    3×3      1      (26, 26, 256)</span><br><span class="line">MaxPooling     2×2      2      (13, 13, 256)</span><br><span class="line">Convolution    3×3      1      (13, 13, 512)</span><br><span class="line">MaxPooling     2×2      1      (13, 13, 512)</span><br><span class="line">Convolution    3×3      1      (13, 13, 1024)</span><br><span class="line">Convolution    3×3      1      (13, 13, 1024)</span><br><span class="line">Convolution    1×1      1      (13, 13, 125)</span><br><span class="line">---------------------------------------------</span><br></pre></td></tr></table></figure>
 <p>该神经网络具有典型的结构：一个 3×3 卷积核的卷积层，采样窗口 2×2 的池化层。没有花哨的东西。YOLO 中没有全连接层。</p>
 <blockquote>
@@ -160,7 +160,7 @@
 <blockquote>
 <p>小提示：要了解更多有关 YOLO 的工作原理，以及 YOLO 是如何训练的，请 <a href="https://www.youtube.com/watch?v=NM6lrxy0bxs" target="_blank" rel="noopener">观看对它的发明者之一的访谈</a>。这个视频介绍的是 YOLOv1，由于是老版本，结构稍有不同，但主体思想是相同的。很值得观看！</p>
 </blockquote>
-<h3 id="转换成-Metal"><a href="#转换成-Metal" class="headerlink" title="转换成 Metal"></a>转换成 Metal</h3><p>上文描述的是简化版的 YOLO，也是我们将在 iOS 应用中使用的版本。完全版 YOLOv2 的神经网络有三倍的分层数，因为太大，所以在当前的 iPhone 设备上不能快速运行。简化版的 YOLO 使用更少的分层数，因此运行会更快，但准确度也稍差。</p>
+<h2 id="转换成-Metal"><a href="#转换成-Metal" class="headerlink" title="转换成 Metal"></a>转换成 Metal</h2><p>上文描述的是简化版的 YOLO，也是我们将在 iOS 应用中使用的版本。完全版 YOLOv2 的神经网络有三倍的分层数，因为太大，所以在当前的 iPhone 设备上不能快速运行。简化版的 YOLO 使用更少的分层数，因此运行会更快，但准确度也稍差。</p>
 <p><img src="http://machinethink.net/images/yolo/CatOrDog.png" alt=""></p>
 <p>YOLO 使用 Darknet 编写，这是 YOLO 作者自己编写的深度学习框架。能下载到的都是 Darknet 格式。尽管 <a href="https://github.com/pjreddie/darknet" target="_blank" rel="noopener">Darknet 是开源的</a>，我也不想花很多时间去弄清它的工作原理。</p>
 <p>幸运的是，<a href="https://github.com/allanzelener/YAD2K/" target="_blank" rel="noopener">有人</a> 已经做了这件事，将 Darknet 模型转换成了我所使用的深度学习工具 Keras。我所要做的，就是运行这个“YAD2K”脚本，将 Darknet 转换成 Keras 格式，然后用我自己写的脚本将 Keras 转换成 Metal。</p>
@@ -187,7 +187,7 @@
 </blockquote>
 <p>一旦我们将所有的批标准化层整合到了它们的前序卷积层，我们就可以将权重转换到 Metal 了。简单地将该数组（Keras 中存储的顺序和 Metal 不同）进行转置，再将其写进 32 位浮点数的二进制文件。</p>
 <p>如果你对这些操作感到好奇，你可以查看转换脚本 <a href="https://github.com/hollance/Forge/blob/master/Examples/YOLO/yolo2metal.py" target="_blank" rel="noopener">yolo2metal.py</a> 来获得详细信息。为了验证整合批标准化的效果，脚本创建了一个不包含批标准化层，但使用了调节后的权重的模型，并将其与原始模型的预测结果进行比对。</p>
-<h3 id="iOS-应用"><a href="#iOS-应用" class="headerlink" title="iOS 应用"></a>iOS 应用</h3><p>我理所当然地使用 <a href="https://github.com/hollance/Forge" target="_blank" rel="noopener">Forge</a> 来编写我的 iOS 应用。😂你可以在 <a href="https://github.com/hollance/Forge/tree/master/Examples/YOLO" target="_blank" rel="noopener">YOLO</a> 文件夹中找到源代码。如果想尝试一下的话，可以下载或者 clone Forge，在 Xcode 8.3 以上版本中打开 <strong>Forge.xcworkspace</strong>，在 iPhone 6 以上设备上运行 <strong>YOLO</strong>。</p>
+<h2 id="iOS-应用"><a href="#iOS-应用" class="headerlink" title="iOS 应用"></a>iOS 应用</h2><p>我理所当然地使用 <a href="https://github.com/hollance/Forge" target="_blank" rel="noopener">Forge</a> 来编写我的 iOS 应用。😂你可以在 <a href="https://github.com/hollance/Forge/tree/master/Examples/YOLO" target="_blank" rel="noopener">YOLO</a> 文件夹中找到源代码。如果想尝试一下的话，可以下载或者 clone Forge，在 Xcode 8.3 以上版本中打开 <strong>Forge.xcworkspace</strong>，在 iPhone 6 以上设备上运行 <strong>YOLO</strong>。</p>
 <p>最简单的测试方法是将你的 iPhone 对准某个 <a href="https://www.youtube.com/watch?v=e_WBuBqS9h8" target="_blank" rel="noopener">YouTube 视频</a>：</p>
 <p><img src="http://machinethink.net/images/yolo/App.png" alt=""></p>
 <p><strong>YOLO.swift</strong> 中有一些有趣的代码。首先，这里创建了卷积网络：</p>
@@ -225,7 +225,7 @@
 </ol>
 <p>该算法移除了与更高得分的检测框有太多重叠的其他检测框，只保留了最好的那些。</p>
 <p>以上就是所有的过程了：一个常规的卷积网络，以及后续对结果的一些处理。</p>
-<h3 id="运行效果如何？"><a href="#运行效果如何？" class="headerlink" title="运行效果如何？"></a>运行效果如何？</h3><p><a href="https://pjreddie.com/darknet/yolo/" target="_blank" rel="noopener">YOLO 官方网站</a>宣称精简版 YOLO 最快每秒可处理 200 帧图像。但那是在性能优秀的笔记本上的运行结果，而不是在移动设备上。那么，它在 iPhone 上能够运行多快呢？</p>
+<h2 id="运行效果如何？"><a href="#运行效果如何？" class="headerlink" title="运行效果如何？"></a>运行效果如何？</h2><p><a href="https://pjreddie.com/darknet/yolo/" target="_blank" rel="noopener">YOLO 官方网站</a> 宣称精简版 YOLO 最快每秒可处理 200 帧图像。但那是在性能优秀的笔记本上的运行结果，而不是在移动设备上。那么，它在 iPhone 上能够运行多快呢？</p>
 <p>在我的 iPhone 6s 上，它处理一幅图像大约需要 0.15 秒。那也只有 6 FPS，几乎不能称之为实时。如果你将手机对准一辆开过的汽车，你会看到一个检测框拖在汽车后面一些。尽管如此，它能够生效已经使我印象深刻了。😁</p>
 <blockquote>
 <p>注意：正如上文解释，检测框的处理是在 CPU 上进行，而不是 GPU。如果 YOLO 完全运行在 GPU 上，会变得更快吗？也许会，但 CPU 代码运行时间只有 0.03 秒，占 20% 的运行时间。将其中一部分工作交给 GPU 做当然是可行的，但考虑到卷积层的计算仍然占据了 80% 的时间，我不确定是否值得这样做。</p>
@@ -235,7 +235,7 @@
 <blockquote>
 <p>注意：顺便说一句，最近的 <a href="http://caffe2.ai/" target="_blank" rel="noopener">Caffe2</a> 框架也是通过 Metal 的支持，运行在 iOS 设备上。<a href="https://github.com/KleinYuan/Caffe2-iOS" target="_blank" rel="noopener">Caffe2-iOS project</a> 是一个针对 YOLO 的精简版本。看起来它运行得会比纯 Metal 版稍慢，大约 0.17 秒/帧。</p>
 </blockquote>
-<h3 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h3><p>想要了解更多 YOLO 相关的知识，可以查看 YOLO 作者的以下论文：</p>
+<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>想要了解更多 YOLO 相关的知识，可以查看 YOLO 作者的以下论文：</p>
 <ul>
 <li><a href="https://arxiv.org/abs/1506.02640" target="_blank" rel="noopener">You Only Look Once: Unified, Real-Time Object Detection</a> by Joseph Redmon, Santosh Divvala, Ross Girshick, Ali Farhadi (2015)</li>
 <li><a href="https://arxiv.org/abs/1612.08242" target="_blank" rel="noopener">YOLO9000: Better, Faster, Stronger</a> by Joseph Redmon and Ali Farhadi (2016)</li>
@@ -319,7 +319,7 @@
   <div id="toc" class="toc-aside">
   <strong class="toc-title">文章目录</strong>
  
- <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#YOLO-的工作原理"><span class="toc-number">1.</span> <span class="toc-text">YOLO 的工作原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#神经网络"><span class="toc-number">2.</span> <span class="toc-text">神经网络</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#转换成-Metal"><span class="toc-number">3.</span> <span class="toc-text">转换成 Metal</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#iOS-应用"><span class="toc-number">4.</span> <span class="toc-text">iOS 应用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#运行效果如何？"><span class="toc-number">5.</span> <span class="toc-text">运行效果如何？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#后记"><span class="toc-number">6.</span> <span class="toc-text">后记</span></a></li></ol>
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#YOLO-的工作原理"><span class="toc-number">1.</span> <span class="toc-text">YOLO 的工作原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#神经网络"><span class="toc-number">2.</span> <span class="toc-text">神经网络</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#转换成-Metal"><span class="toc-number">3.</span> <span class="toc-text">转换成 Metal</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#iOS-应用"><span class="toc-number">4.</span> <span class="toc-text">iOS 应用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#运行效果如何？"><span class="toc-number">5.</span> <span class="toc-text">运行效果如何？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#后记"><span class="toc-number">6.</span> <span class="toc-text">后记</span></a></li></ol>
  
   </div>
 
@@ -393,11 +393,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>2</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>2</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -489,11 +489,11 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
 		  
 		
 		  
@@ -590,15 +590,11 @@
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -606,11 +602,11 @@
 			
 		
 			
-				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/教程/" title="教程">教程<sup>3</sup></a></li>
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
 			
 		
 			
@@ -618,15 +614,19 @@
 			
 		
 			
+				<li><a href="/tags/教程/" title="教程">教程<sup>3</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>2</sup></a></li>
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>2</sup></a></li>
 			
 		
 			
