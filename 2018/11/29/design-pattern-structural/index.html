@@ -1,0 +1,1013 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>Swift 中的设计模式 #3 外观模式与适配器模式 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Andrew Jaffee，原文链接，原文日期：2018-09-04译者：郑一一；校对：BigNerdCoding，pmst，Forelax；定稿：Forelax   本文是我的设计模式系列教程的第三篇。在第一篇文章中，我介绍了 创建型模式中的工厂模式和单例模式。在第二篇文章中，又讨论了一下 行为型模式中的观察者模式和备忘录模式。">
+<meta name="keywords" content="Design Patterns">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Swift 中的设计模式 #3 外观模式与适配器模式">
+<meta property="og:url" content="https://swift.gg/2018/11/29/design-pattern-structural/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Andrew Jaffee，原文链接，原文日期：2018-09-04译者：郑一一；校对：BigNerdCoding，pmst，Forelax；定稿：Forelax   本文是我的设计模式系列教程的第三篇。在第一篇文章中，我介绍了 创建型模式中的工厂模式和单例模式。在第二篇文章中，又讨论了一下 行为型模式中的观察者模式和备忘录模式。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-11-29T07:24:55.582Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Swift 中的设计模式 #3 外观模式与适配器模式">
+<meta name="twitter:description" content="作者：Andrew Jaffee，原文链接，原文日期：2018-09-04译者：郑一一；校对：BigNerdCoding，pmst，Forelax；定稿：Forelax   本文是我的设计模式系列教程的第三篇。在第一篇文章中，我介绍了 创建型模式中的工厂模式和单例模式。在第二篇文章中，又讨论了一下 行为型模式中的观察者模式和备忘录模式。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2018/11/29/design-pattern-structural/" target="_blank" title="Swift 中的设计模式 #3 外观模式与适配器模式" itemprop="url">Swift 中的设计模式 #3 外观模式与适配器模式</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2018-11-29T07:24:55.582Z" itemprop="datePublished">2018-11-29</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Andrew Jaffee，<a href="https://www.appcoda.com/design-pattern-structural/" target="_blank" rel="noopener">原文链接</a>，原文日期：2018-09-04<br>译者：<a href="https://www.jianshu.com/u/076cc5e18bb8" target="_blank" rel="noopener">郑一一</a>；校对：<a href="https://bignerdcoding.com/" target="_blank" rel="noopener">BigNerdCoding</a>，<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="noopener">pmst</a>，<a href="http://forelax.space" target="_blank" rel="noopener">Forelax</a>；定稿：<a href="http://forelax.space" target="_blank" rel="noopener">Forelax</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>本文是我的设计模式系列教程的第三篇。在第一篇文章中，我介绍了 <a href="https://swift.gg/2018/09/10/design-pattern-creational/"><strong>创建型模式</strong>中的<em>工厂模式</em>和<em>单例模式</em></a>。在第二篇文章中，又讨论了一下 <a href="https://swift.gg/2018/11/26/design-pattern-behavorial/"><strong>行为型模式</strong>中的<em>观察者模式</em>和<em>备忘录模式</em></a>。</p>
+<a id="more"></a>
+<p>在本文中，我会就结构型模式中的<strong>外观模式</strong>和<strong>适配器模式</strong>分别举一个例子。首先，我建议你先去阅读前面提到的两篇文章，这会有助于你更熟悉软件设计模式的一些概念。除了简短地介绍一下设计模式的组成，我不会再重复介绍所有关于设计模式的概念了。如果需要了解，都可以在前面写的 <a href="https://swift.gg/2018/09/10/design-pattern-creational/"><strong>第一篇</strong></a>、 <a href="https://swift.gg/2018/11/26/design-pattern-behavorial/"><strong>第二篇</strong></a> 中找到。</p>
+<p>接下来的几节，我们先来简单回顾一下设计模式的通用概念。“Gang of Four” (“GoF”) Erich Gamma，Richard Helm，Ralph Johonson，和 John Vlissides 在他们“<a href="https://smile.amazon.com/Design-Patterns-Object-Oriented-Addison-Wesley-Professional-ebook/dp/B000SEIBB8/" target="_blank" rel="noopener"><strong>设计模式：面向对象软件设计复用的基本原理</strong></a>”的重要著作里整理了 23 种经典的设计模式。今天我们重点关注的是两种结构型设计模式：<strong>外观模式</strong>和<strong>适配器模式</strong>。</p>
+<h2 id="值语义的面向协议编程"><a href="#值语义的面向协议编程" class="headerlink" title="值语义的面向协议编程"></a>值语义的面向协议编程</h2><p>你可能会发现世面上非常多设计模式教程的示例代码，仍然是基于面向对象编程原则（OOP）、引用语义和 <a href="http://iosbrain.com/blog/2018/06/07/swift-4-memory-management-via-arc-for-reference-types-classes/" target="_blank" rel="noopener"><strong>引用类型</strong></a>（classes）编写的。所以，我决定编写一套基于 <a href="https://www.appcoda.com/pop-vs-oop/" target="_blank" rel="noopener"><strong>面向协议编程原则</strong></a>（POP）、值语义和 <a href="https://developer.apple.com/videos/play/wwdc2015/414/" target="_blank" rel="noopener"><strong>值类型</strong></a>（structs）的设计模式系列教程。如果你已经看过了我之前写的两篇文章，我希望你还能够熟悉一下 OOP 和 POP，引用语义和值语义这些概念。如果你还不是特别熟悉，我强烈建议赶紧去了解一下这些主题。本文所举的例子是全部基于 POP 和值语义的。</p>
+<h2 id="设计模式"><a href="#设计模式" class="headerlink" title="设计模式"></a>设计模式</h2><p>设计模式是开发者用于管理软件复杂性极其重要的工具。作为常见的模板技术，它很好地对软件中类似的、重复出现的、容易识别的问题进行了概念化抽象。我们可以将它视作最佳实践，从而应用到日常中会遇到的那些编程场景中。举一个具体的例子，回想一下你在平常写代码过程中有多少次会使用或写了遵守 <a href="https://www.appcoda.com/design-pattern-behavorial/" target="_blank" rel="noopener"><strong>观察者设计模式</strong></a> 的代码吧。</p>
+<p>在观察者模式中，被观察者（一般来说是一个关键资源）会给所有依赖于自己的观察者，广播通知其内部状态的变化。观察者必须告知被观察者自己想接收通知，换句话说，观察者必须订阅通知。用户授权的 iOS 弹窗推送通知，就是一个典型的观察者模式的例子。</p>
+<h3 id="设计模式的分类"><a href="#设计模式的分类" class="headerlink" title="设计模式的分类"></a>设计模式的分类</h3><p>GoF 将 23 种设计模式归纳为三种类型，分别是“<a href="https://www.appcoda.com/design-pattern-creational/" target="_blank" rel="noopener"><strong>创建型</strong></a>”、“<a href="https://www.appcoda.com/design-pattern-behavorial/" target="_blank" rel="noopener"><strong>行为型</strong></a>”、“结构型”。本文会介绍两种<strong>结构型</strong>设计模式。先看一下结构这个词的定义：</p>
+<blockquote>
+<p>“以一种确定方式构建的事物以及实体中各部分元素之间不同关系的汇总。”<br>- <a href="https://www.merriam-webster.com/dictionary/structure" target="_blank" rel="noopener">https://www.merriam-webster.com/dictionary/structure</a></p>
+</blockquote>
+<p>结构型设计模式的主要作用是明确一段代码的功能，并说明如何使用。大部分的结构型设计模式可以通过编写易读接口，来实现对一段代码的简化使用。因为一段代码势必要与其它代码联系，如果要为代码段编写出良好的接口，必须明确清晰地定义代码之间的各种关系。</p>
+<h2 id="外观设计模式"><a href="#外观设计模式" class="headerlink" title="外观设计模式"></a><em>外观</em>设计模式</h2><blockquote>
+<p>“外观可以定义为特殊结构化的建筑物表面或者错误的、表面上的、人为的外形或效果”。<br>- <a href="https://www.merriam-webster.com/dictionary/facade" target="_blank" rel="noopener">https://www.merriam-webster.com/dictionary/facade</a></p>
+</blockquote>
+<p>大部分情况下，可以使用外观模式，为一组复杂接口创建一个简单接口。或许你已经写过“封装”代码。“封装”的意思就是对一段复杂代码的简化使用。</p>
+<h3 id="外观设计模式的示例-app"><a href="#外观设计模式的示例-app" class="headerlink" title="外观设计模式的示例 app"></a><em>外观</em>设计模式的示例 app</h3><p>外观设计模式示例的 playground 文件，可以在 <a href="https://github.com/appcoda/swift-design-patterns/tree/master/Facade" target="_blank" rel="noopener"><strong>GitHub</strong></a> 找到。在这个例子里展示了，如何通过外观设计模式，来为沙盒文件系统创建一个简单的接口，供所有的 iOS app 使用。iOS 文件系统是一个庞大的操作系统子系统，功能包括创建、读取、删除、移动、重命名、拷贝文件和目录。允许获取和设置文件和目录的元数据，比如列出在指定目录下的所有文件。允许查看文件和目录的状态，比如某个指定文件是否可写。提供苹果推荐、预定义的目录名。实际上其包含的功能远远不止上面提到的这些。</p>
+<p>由于 iOS 文件系统是一个拥有如此多特性和功能的宏大主题，因此也是一个非常好的例子，用来讲解如何通过外观设计模式来简化代码的使用。外观接口会废弃掉无关功能和杂乱代码的部分。另一方面，外观接口只会定义在某个具体 app 需要使用到的功能。或者在我的例子中，我将功能缩减到只有经常使用的那部分。这样做的好处是保证代码在不同 app 中都是可复用、可扩展，可维护的。</p>
+<p>基于面向协议编程和值语义，我将 iOS 文件系统的主要特性进行了划分，从而将其变成可复用、可扩展的单元：协议和协议扩展。</p>
+<p>我<a href="http://iosbrain.com/blog/2018/04/22/ios-file-management-with-filemanager-in-protocol-oriented-swift-4/" target="_blank" rel="noopener"><strong>将四个协议组合成一个结构体，这个结构体代表了可以在所有 iOS 应用中使用的沙盒 iOS 目录</strong></a>（还可以看 <a href="http://iosbrain.com/blog/2018/05/29/the-ios-file-system-in-depth/" target="_blank" rel="noopener"><strong>这篇文章</strong></a>）。因为未来你肯定会更多接触到更多面向协议编程和值语义相关的主题，要注意术语 <strong>composed</strong> 和 <strong>composition</strong> 在这里属于同义词。</p>
+<p>除此之外，为了让你更专注于理解外观设计模式的使用，在后面的代码中，我省略了 Swift 错误处理和通用错误检查的代码。</p>
+<h3 id="外观设计模式的示例代码"><a href="#外观设计模式的示例代码" class="headerlink" title="外观设计模式的示例代码"></a>外观设计模式的示例代码</h3><p>接下来就看看我的代码吧。先确保已经下载了我在 <a href="https://github.com/appcoda/swift-design-patterns/tree/master/Facade" target="_blank" rel="noopener"><strong>GitHub</strong></a> 上的 playground 文件。下面是苹果官方推荐的用于文件系统操作的预定义目录。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">AppDirectories</span> : <span class="title">String</span> </span>&#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="type">Documents</span> = <span class="string">"Documents"</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">Inbox</span> = <span class="string">"Inbox"</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">Library</span> = <span class="string">"Library"</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">Temp</span> = <span class="string">"tmp"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过将文件操作限定在上述目录中，避免了复杂性，并遵循了人机界面指南的原则。</p>
+<p>在探究文件操作的核心代码之前，先来看看使用外观设计模式所设计出来的接口吧。我创建了 <code>iOSAppFileSystemDirectory</code> 结构体，作为文件系统常用功能的简单可读接口。这个接口适用于 <code>AppDirectories</code> 枚举下的所有目录。事实上，我原本还可以加入诸如 <a href="https://developer.apple.com/documentation/foundation/filemanager/1414652-createsymboliclink" target="_blank" rel="noopener"><strong>符号化链接的创建</strong></a>，或者使用 <code>FileHandle</code> 类实现对文件的精细控制。但是在实际情况中，我几乎不太使用到这些功能，更重要的一点是，我想要保持代码的简洁性。</p>
+<p>我创建了由四个协议组成的外观。（我知道你看到下面的代码中只遵循了三个协议，这其实是因为其中有一个协议继承自另一个协议）：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">iOSAppFileSystemDirectory</span> : <span class="title">AppFileManipulation</span>, <span class="title">AppFileStatusChecking</span>, <span class="title">AppFileSystemMetaData</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> workingDirectory: <span class="type">AppDirectories</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span>(using directory: <span class="type">AppDirectories</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.workingDirectory = directory</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">writeFile</span><span class="params">(containing text: String, withName name: String)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> writeFile(containing: text, to: workingDirectory, withName: name)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">readFile</span><span class="params">(withName name: String)</span></span> -&gt; <span class="type">String</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> readFile(at: workingDirectory, withName: name)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">deleteFile</span><span class="params">(withName name: String)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> deleteFile(at: workingDirectory, withName: name)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">showAttributes</span><span class="params">(forFile named: String)</span></span> -&gt; <span class="type">Void</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> fullPath = buildFullPath(forFileName: named, inDirectory: workingDirectory)</span><br><span class="line">        <span class="keyword">let</span> fileAttributes = attributes(ofFile: fullPath)</span><br><span class="line">        <span class="keyword">for</span> attribute <span class="keyword">in</span> fileAttributes &#123;</span><br><span class="line">            <span class="built_in">print</span>(attribute)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">list</span><span class="params">()</span></span> &#123;</span><br><span class="line">        list(directory: getURL(<span class="keyword">for</span>: workingDirectory))</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125; <span class="comment">// 完成结构体 iOSAppFileSystemDirectory 的定义</span></span><br></pre></td></tr></table></figure>
+<p>下面是一些用于测试 <code>iOSAppFileSystemDirectory</code> 结构体的代码： </p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> iOSDocumentsDirectory = iOSAppFileSystemDirectory(using: .<span class="type">Documents</span>)</span><br><span class="line"></span><br><span class="line">iOSDocumentsDirectory.writeFile(containing: <span class="string">"New file created."</span>, withName: <span class="string">"myFile3.txt"</span>)</span><br><span class="line">iOSDocumentsDirectory.list()</span><br><span class="line">iOSDocumentsDirectory.readFile(withName: <span class="string">"myFile3.txt"</span>)</span><br><span class="line">iOSDocumentsDirectory.showAttributes(forFile: <span class="string">"myFile3.txt"</span>)</span><br><span class="line">iOSDocumentsDirectory.deleteFile(withName: <span class="string">"myFile3.txt"</span>)</span><br></pre></td></tr></table></figure>
+<p>接下来的代码是在运行了 playground 文件中代码之后的控制台输出：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">----------------------------</span><br><span class="line">LISTING: /var/folders/5_/kd8__nv1139__dq_3nfvsmhh0000gp/T/com.apple.dt.Xcode.pg/containers/com.apple.dt.playground.stub.iOS_Simulator.Swift-Facade-Design-Pattern-1C4BD3E3-E23C-4991-A344-775D5585D1D7/Documents</span><br><span class="line"></span><br><span class="line">File: &quot;myFile3.txt&quot;</span><br><span class="line">File: &quot;Shared Playground Data&quot;</span><br><span class="line"></span><br><span class="line">----------------------------</span><br><span class="line"></span><br><span class="line">File created with contents: New file created.</span><br><span class="line"></span><br><span class="line">(key: __C.FileAttributeKey(_rawValue: NSFileType), value: NSFileTypeRegular)</span><br><span class="line">(key: __C.FileAttributeKey(_rawValue: NSFilePosixPermissions), value: 420)</span><br><span class="line">(key: __C.FileAttributeKey(_rawValue: NSFileSystemNumber), value: 16777223)</span><br><span class="line">(key: __C.FileAttributeKey(_rawValue: NSFileExtendedAttributes), value: &#123;</span><br><span class="line">    &quot;com.apple.quarantine&quot; = &lt;30303836 3b356238 36656364 373b5377 69667420 46616361 64652044 65736967 6e205061 74746572 6e3b&gt;;</span><br><span class="line">&#125;)</span><br><span class="line">(key: __C.FileAttributeKey(_rawValue: NSFileReferenceCount), value: 1)</span><br><span class="line">(key: __C.FileAttributeKey(_rawValue: NSFileSystemFileNumber), value: 24946094)</span><br><span class="line">(key: __C.FileAttributeKey(_rawValue: NSFileGroupOwnerAccountID), value: 20)</span><br><span class="line">(key: __C.FileAttributeKey(_rawValue: NSFileModificationDate), value: 2018-08-29 18:58:31 +0000)</span><br><span class="line">(key: __C.FileAttributeKey(_rawValue: NSFileCreationDate), value: 2018-08-29 18:58:31 +0000)</span><br><span class="line">(key: __C.FileAttributeKey(_rawValue: NSFileSize), value: 17)</span><br><span class="line">(key: __C.FileAttributeKey(_rawValue: NSFileExtensionHidden), value: 0)</span><br><span class="line">(key: __C.FileAttributeKey(_rawValue: NSFileOwnerAccountID), value: 502)</span><br><span class="line"></span><br><span class="line">File deleted.</span><br></pre></td></tr></table></figure>
+<p>我们来简单讨论下 <code>iOSAppFileSystemDirectory</code> 结构体所遵循的几个协议。<code>AppDirectoryNames</code> 协议和扩展定义和实现了以 <code>URL</code> 类型获取 <code>AppDirectories</code> 枚举中目录完整路径的方法。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">AppDirectoryNames</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">documentsDirectoryURL</span><span class="params">()</span></span> -&gt; <span class="type">URL</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">inboxDirectoryURL</span><span class="params">()</span></span> -&gt; <span class="type">URL</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">libraryDirectoryURL</span><span class="params">()</span></span> -&gt; <span class="type">URL</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">tempDirectoryURL</span><span class="params">()</span></span> -&gt; <span class="type">URL</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">getURL</span><span class="params">(<span class="keyword">for</span> directory: AppDirectories)</span></span> -&gt; <span class="type">URL</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">buildFullPath</span><span class="params">(forFileName name: String, inDirectory directory: AppDirectories)</span></span> -&gt; <span class="type">URL</span></span><br><span class="line"></span><br><span class="line">&#125; <span class="comment">// end protocol AppDirectoryNames</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">AppDirectoryNames</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">documentsDirectoryURL</span><span class="params">()</span></span> -&gt; <span class="type">URL</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">FileManager</span>.<span class="keyword">default</span>.urls(<span class="keyword">for</span>: .documentDirectory, <span class="keyword">in</span>: .userDomainMask).first!</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">inboxDirectoryURL</span><span class="params">()</span></span> -&gt; <span class="type">URL</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">FileManager</span>.<span class="keyword">default</span>.urls(<span class="keyword">for</span>: .documentDirectory, <span class="keyword">in</span>: .userDomainMask)[<span class="number">0</span>].appendingPathComponent(<span class="type">AppDirectories</span>.<span class="type">Inbox</span>.rawValue) <span class="comment">// "Inbox")</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">libraryDirectoryURL</span><span class="params">()</span></span> -&gt; <span class="type">URL</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">FileManager</span>.<span class="keyword">default</span>.urls(<span class="keyword">for</span>: <span class="type">FileManager</span>.<span class="type">SearchPathDirectory</span>.libraryDirectory, <span class="keyword">in</span>: .userDomainMask).first!</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">tempDirectoryURL</span><span class="params">()</span></span> -&gt; <span class="type">URL</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">FileManager</span>.<span class="keyword">default</span>.temporaryDirectory</span><br><span class="line">        <span class="comment">//urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(AppDirectories.Temp.rawValue) //"tmp")</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">getURL</span><span class="params">(<span class="keyword">for</span> directory: AppDirectories)</span></span> -&gt; <span class="type">URL</span> &#123;</span><br><span class="line">        <span class="keyword">switch</span> directory &#123;</span><br><span class="line">        <span class="keyword">case</span> .<span class="type">Documents</span>:</span><br><span class="line">            <span class="keyword">return</span> documentsDirectoryURL()</span><br><span class="line">        <span class="keyword">case</span> .<span class="type">Inbox</span>:</span><br><span class="line">            <span class="keyword">return</span> inboxDirectoryURL()</span><br><span class="line">        <span class="keyword">case</span> .<span class="type">Library</span>:</span><br><span class="line">            <span class="keyword">return</span> libraryDirectoryURL()</span><br><span class="line">        <span class="keyword">case</span> .<span class="type">Temp</span>:</span><br><span class="line">            <span class="keyword">return</span> tempDirectoryURL()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">buildFullPath</span><span class="params">(forFileName name: String, inDirectory directory: AppDirectories)</span></span> -&gt; <span class="type">URL</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> getURL(<span class="keyword">for</span>: directory).appendingPathComponent(name)</span><br><span class="line">    &#125;</span><br><span class="line">&#125; <span class="comment">// end extension AppDirectoryNames</span></span><br></pre></td></tr></table></figure>
+<p><code>AppFileStatusChecking</code> 协议和扩展封装了获取文件状态数据的方法。这些文件同样存储于 <code>AppDirectories</code> 枚举定义下的目录。通过“状态”，可以确定某个文件是否存在，是否可读等。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">AppFileStatusChecking</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">isWritable</span><span class="params">(file at: URL)</span></span> -&gt; <span class="type">Bool</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">isReadable</span><span class="params">(file at: URL)</span></span> -&gt; <span class="type">Bool</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">exists</span><span class="params">(file at: URL)</span></span> -&gt; <span class="type">Bool</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">AppFileStatusChecking</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">isWritable</span><span class="params">(file at: URL)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> <span class="type">FileManager</span>.<span class="keyword">default</span>.isWritableFile(atPath: at.path) &#123;</span><br><span class="line">            <span class="built_in">print</span>(at.path)</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="built_in">print</span>(at.path)</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">isReadable</span><span class="params">(file at: URL)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> <span class="type">FileManager</span>.<span class="keyword">default</span>.isReadableFile(atPath: at.path) &#123;</span><br><span class="line">            <span class="built_in">print</span>(at.path)</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="built_in">print</span>(at.path)</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">exists</span><span class="params">(file at: URL)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> <span class="type">FileManager</span>.<span class="keyword">default</span>.fileExists(atPath: at.path) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125; <span class="comment">// end extension AppFileStatusChecking</span></span><br></pre></td></tr></table></figure>
+<p><code>AppFileSystemMetaData</code> 协议和扩展实现了列出目录内容和获取扩展文件的功能。 其目录也是定义在 <code>AppDirectories</code> 枚举下。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">AppFileSystemMetaData</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">list</span><span class="params">(directory at: URL)</span></span> -&gt; <span class="type">Bool</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">attributes</span><span class="params">(ofFile atFullPath: URL)</span></span> -&gt; [<span class="type">FileAttributeKey</span> : <span class="type">Any</span>]</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">AppFileSystemMetaData</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">list</span><span class="params">(directory at: URL)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> listing = <span class="keyword">try</span>! <span class="type">FileManager</span>.<span class="keyword">default</span>.contentsOfDirectory(atPath: at.path)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> listing.<span class="built_in">count</span> &gt; <span class="number">0</span> &#123;</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">"\n----------------------------"</span>)</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">"LISTING: <span class="subst">\(at.path)</span>"</span>)</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">""</span>)</span><br><span class="line">            <span class="keyword">for</span> file <span class="keyword">in</span> listing &#123;</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">"File: <span class="subst">\(file.debugDescription)</span>"</span>)</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">""</span>)</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">"----------------------------\n"</span>)</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">attributes</span><span class="params">(ofFile atFullPath: URL)</span></span> -&gt; [<span class="type">FileAttributeKey</span> : <span class="type">Any</span>] &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">try</span>! <span class="type">FileManager</span>.<span class="keyword">default</span>.attributesOfItem(atPath: atFullPath.path)</span><br><span class="line">    &#125;</span><br><span class="line">&#125; <span class="comment">//  end extension AppFileSystemMetaData</span></span><br></pre></td></tr></table></figure>
+<p>最后是 <code>AppFileManipulation</code> 协议和扩展，封装了 <code>AppDirectories</code> 枚举目录下的所有文件操作方法，包括了读、写、删除、重命名、移动、拷贝修改文件扩展名等。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">AppFileManipulation</span> : <span class="title">AppDirectoryNames</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">writeFile</span><span class="params">(containing: String, to path: AppDirectories, withName name: String)</span></span> -&gt; <span class="type">Bool</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">readFile</span><span class="params">(at path: AppDirectories, withName name: String)</span></span> -&gt; <span class="type">String</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">deleteFile</span><span class="params">(at path: AppDirectories, withName name: String)</span></span> -&gt; <span class="type">Bool</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">renameFile</span><span class="params">(at path: AppDirectories, with oldName: String, to newName: String)</span></span> -&gt; <span class="type">Bool</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">moveFile</span><span class="params">(withName name: String, inDirectory: AppDirectories, toDirectory directory: AppDirectories)</span></span> -&gt; <span class="type">Bool</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">copyFile</span><span class="params">(withName name: String, inDirectory: AppDirectories, toDirectory directory: AppDirectories)</span></span> -&gt; <span class="type">Bool</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">changeFileExtension</span><span class="params">(withName name: String, inDirectory: AppDirectories, toNewExtension newExtension: String)</span></span> -&gt; <span class="type">Bool</span></span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">AppFileManipulation</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">writeFile</span><span class="params">(containing: String, to path: AppDirectories, withName name: String)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> filePath = getURL(<span class="keyword">for</span>: path).path + <span class="string">"/"</span> + name</span><br><span class="line">        <span class="keyword">let</span> rawData: <span class="type">Data</span>? = containing.data(using: .utf8)</span><br><span class="line">        <span class="keyword">return</span> <span class="type">FileManager</span>.<span class="keyword">default</span>.createFile(atPath: filePath, contents: rawData, attributes: <span class="literal">nil</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">readFile</span><span class="params">(at path: AppDirectories, withName name: String)</span></span> -&gt; <span class="type">String</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> filePath = getURL(<span class="keyword">for</span>: path).path + <span class="string">"/"</span> + name</span><br><span class="line">        <span class="keyword">let</span> fileContents = <span class="type">FileManager</span>.<span class="keyword">default</span>.contents(atPath: filePath)</span><br><span class="line">        <span class="keyword">let</span> fileContentsAsString = <span class="type">String</span>(bytes: fileContents!, encoding: .utf8)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">"File created with contents: <span class="subst">\(fileContentsAsString!)</span>\n"</span>)</span><br><span class="line">        <span class="keyword">return</span> fileContentsAsString!</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">deleteFile</span><span class="params">(at path: AppDirectories, withName name: String)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> filePath = buildFullPath(forFileName: name, inDirectory: path)</span><br><span class="line">        <span class="keyword">try</span>! <span class="type">FileManager</span>.<span class="keyword">default</span>.removeItem(at: filePath)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">"\nFile deleted.\n"</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">renameFile</span><span class="params">(at path: AppDirectories, with oldName: String, to newName: String)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> oldPath = getURL(<span class="keyword">for</span>: path).appendingPathComponent(oldName)</span><br><span class="line">        <span class="keyword">let</span> newPath = getURL(<span class="keyword">for</span>: path).appendingPathComponent(newName)</span><br><span class="line">        <span class="keyword">try</span>! <span class="type">FileManager</span>.<span class="keyword">default</span>.moveItem(at: oldPath, to: newPath)</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// highlights the limitations of using return values</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">moveFile</span><span class="params">(withName name: String, inDirectory: AppDirectories, toDirectory directory: AppDirectories)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> originURL = buildFullPath(forFileName: name, inDirectory: inDirectory)</span><br><span class="line">        <span class="keyword">let</span> destinationURL = buildFullPath(forFileName: name, inDirectory: directory)</span><br><span class="line">        <span class="comment">// warning: constant 'success' inferred to have type '()', which may be unexpected</span></span><br><span class="line">        <span class="comment">// *let success =*</span></span><br><span class="line">        <span class="keyword">try</span>! <span class="type">FileManager</span>.<span class="keyword">default</span>.moveItem(at: originURL, to: destinationURL)</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">copyFile</span><span class="params">(withName name: String, inDirectory: AppDirectories, toDirectory directory: AppDirectories)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> originURL = buildFullPath(forFileName: name, inDirectory: inDirectory)</span><br><span class="line">        <span class="keyword">let</span> destinationURL = buildFullPath(forFileName: name, inDirectory: directory)</span><br><span class="line">        <span class="keyword">try</span>! <span class="type">FileManager</span>.<span class="keyword">default</span>.copyItem(at: originURL, to: destinationURL)</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">changeFileExtension</span><span class="params">(withName name: String, inDirectory: AppDirectories, toNewExtension newExtension: String)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">var</span> newFileName = <span class="type">NSString</span>(string:name)</span><br><span class="line">        newFileName = newFileName.deletingPathExtension <span class="keyword">as</span> <span class="type">NSString</span></span><br><span class="line">        newFileName = (newFileName.appendingPathExtension(newExtension) <span class="keyword">as</span> <span class="type">NSString</span>?)!</span><br><span class="line">        <span class="keyword">let</span> finalFileName:<span class="type">String</span> =  <span class="type">String</span>(newFileName)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">let</span> originURL = buildFullPath(forFileName: name, inDirectory: inDirectory)</span><br><span class="line">        <span class="keyword">let</span> destinationURL = buildFullPath(forFileName: finalFileName, inDirectory: inDirectory)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">try</span>! <span class="type">FileManager</span>.<span class="keyword">default</span>.moveItem(at: originURL, to: destinationURL)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125; <span class="comment">// end extension AppFileManipulation</span></span><br></pre></td></tr></table></figure>
+<h2 id="适配器设计模式"><a href="#适配器设计模式" class="headerlink" title="适配器设计模式"></a><em>适配器</em>设计模式</h2><blockquote>
+<p>“适配”的含义是“通过修改让一个事物更适合（用于新用途）。”<br>- <a href="https://www.merriam-webster.com/dictionary/adapts" target="_blank" rel="noopener">https://www.merriam-webster.com/dictionary/adapts</a></p>
+</blockquote>
+<blockquote>
+<p>“适配器”的含义是“用于适配不在初始使用意图范围内设备的一种附加装置。”<br>- <a href="https://www.merriam-webster.com/dictionary/adapter" target="_blank" rel="noopener">https://www.merriam-webster.com/dictionary/adapter</a></p>
+</blockquote>
+<p>适配器设计模式的作用是在不修改已有代码库 “A” 的前提下，仍旧可以使用与代码库 “A” 不兼容的代码库 “B”，并保证 “A” 可以正常工作。我们可以创建适配器来保证 “A” 和 “B” 可以一起工作。其中一定要牢记的原则是代码库 “A” 是不能被修改的。（这是因为修改会破坏原有代码或者我们根本就没有这段源代码）</p>
+<h3 id="适配器设计模式示例-app"><a href="#适配器设计模式示例-app" class="headerlink" title="适配器设计模式示例 app"></a><em>适配器</em>设计模式示例 app</h3><p>适配器的 playground 文件，可以在 <a href="https://github.com/appcoda/swift-design-patterns/tree/master/Adapter" target="_blank" rel="noopener"><strong>GitHub</strong></a> 上找到。在这部分代码中，我们基于 iOS 文件系统进行适配器模式的讨论，并基于 iOS 文件系统设计了一个适配器模式的例子。之前一章，我们已经实现了将 iOS 文件系统中所有目录和文件的路径表示为 <code>URL</code> 实例。想象一下下面的场景，在原有工程中已经存在了大量关于 iOS 文件系统的代码，但是所有目录和文件的路径都表示成了字符串形式。那我们就必须要让基于 URL 和基于 String 的代码可以协同工作。</p>
+<h4 id="适配器设计模式的示例代码"><a href="#适配器设计模式的示例代码" class="headerlink" title="适配器设计模式的示例代码"></a><em>适配器</em>设计模式的示例代码</h4><p>接下来就看看代码吧。先确保已经下载了在 <a href="https://github.com/appcoda/swift-design-patterns/tree/master/Adapter" target="_blank" rel="noopener"><strong>GitHub</strong></a> 上的 playground 文件。为了在接下来的分析中更加专注于适配器模式的讨论，下面会使用简化版本的 <code>AppDirectories</code> 枚举和 <code>AppDirectoryNames</code> 协议和扩展。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">AppDirectories</span> : <span class="title">String</span> </span>&#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="type">Documents</span> = <span class="string">"Documents"</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">Temp</span> = <span class="string">"tmp"</span></span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">AppDirectoryNames</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">documentsDirectoryURL</span><span class="params">()</span></span> -&gt; <span class="type">URL</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">tempDirectoryURL</span><span class="params">()</span></span> -&gt; <span class="type">URL</span></span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">AppDirectoryNames</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">documentsDirectoryURL</span><span class="params">()</span></span> -&gt; <span class="type">URL</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">FileManager</span>.<span class="keyword">default</span>.urls(<span class="keyword">for</span>: .documentDirectory, <span class="keyword">in</span>: .userDomainMask).first!</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">tempDirectoryURL</span><span class="params">()</span></span> -&gt; <span class="type">URL</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">FileManager</span>.<span class="keyword">default</span>.temporaryDirectory</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>一种方法是创建一个“专用”适配器。这个适配器会返回字符串路径，这些路径全部归属于在 <code>AppDirectories</code> 下的目录和文件。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 专用适配器</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">iOSFile</span> : <span class="title">AppDirectoryNames</span> </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> fileName: <span class="type">URL</span></span><br><span class="line">    <span class="keyword">var</span> fullPathInDocuments: <span class="type">String</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> documentsDirectoryURL().appendingPathComponent(fileName.absoluteString).path</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">var</span> fullPathInTemporary: <span class="type">String</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> tempDirectoryURL().appendingPathComponent(fileName.absoluteString).path</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">var</span> documentsStringPath: <span class="type">String</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> documentsDirectoryURL().path</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">var</span> temporaryStringPath: <span class="type">String</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> tempDirectoryURL().path</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">init</span>(fileName: <span class="type">String</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.fileName = <span class="type">URL</span>(string: fileName)!</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>下一部分是用于测试 <code>iOSFile</code> “专用”适配器的代码，请注意代码中的注释。 </p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> iOSfile = iOSFile(fileName: <span class="string">"myFile.txt"</span>)</span><br><span class="line">iOSfile.fullPathInDocuments</span><br><span class="line">iOSfile.documentsStringPath</span><br><span class="line"> </span><br><span class="line">iOSfile.fullPathInTemporary</span><br><span class="line">iOSfile.temporaryStringPath</span><br><span class="line"> </span><br><span class="line"><span class="comment">// 通过 `AppDirectoryNames` 协议，仍然能够访问到 URL</span></span><br><span class="line">iOSfile.documentsDirectoryURL()</span><br><span class="line">iOSfile.tempDirectoryURL()</span><br></pre></td></tr></table></figure>
+<p>最后是 playground 文件中每一行代码对应的右侧输出，这些输出代表了运行时每一行代码的值。参照上一段代码，我们可以进行逐行对照。 </p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">iOSFile</span><br><span class="line">&quot;/var/folders/5_/kd8__nv1139__dq_3nfvsmhh0000gp/T/com.apple.dt.Xcode.pg/containers/com.apple.dt.playground.stub.iOS_Simulator.Swift-Adapter-Design-Pattern-0A71F81A-9388-41F5-ACBE-52A1A61A9B99/Documents/myFile.txt&quot;</span><br><span class="line">&quot;/var/folders/5_/kd8__nv1139__dq_3nfvsmhh0000gp/T/com.apple.dt.Xcode.pg/containers/com.apple.dt.playground.stub.iOS_Simulator.Swift-Adapter-Design-Pattern-0A71F81A-9388-41F5-ACBE-52A1A61A9B99/Documents&quot;</span><br><span class="line"> </span><br><span class="line">&quot;/Users/softwaretesting/Library/Developer/XCPGDevices/52E1A81A-98AF-42DE-ADCF-E69AC8FA2791/data/Containers/Data/Application/F08EFF4F-8C4F-4BB7-B220-980E16344F18/tmp/myFile.txt&quot;</span><br><span class="line">&quot;/Users/softwaretesting/Library/Developer/XCPGDevices/52E1A81A-98AF-42DE-ADCF-E69AC8FA2791/data/Containers/Data/Application/F08EFF4F-8C4F-4BB7-B220-980E16344F18/tmp&quot;</span><br><span class="line"> </span><br><span class="line">file:///var/folders/5_/kd8__nv1139__dq_3nfvsmhh0000gp/T/com.apple.dt.Xcode.pg/containers/com.apple.dt.playground.stub.iOS_Simulator.Swift-Adapter-Design-Pattern-0A71F81A-9388-41F5-ACBE-52A1A61A9B99/Documents/</span><br><span class="line">file:///Users/softwaretesting/Library/Developer/XCPGDevices/52E1A81A-98AF-42DE-ADCF-E69AC8FA2791/data/Containers/Data/Application/F08EFF4F-8C4F-4BB7-B220-980E16344F18/tmp/</span><br></pre></td></tr></table></figure>
+<p>另外，我还倾向为字符串类型的路径设计一个适配器协议。这样就可以很方便地使用<code>字符串</code>路径来替代 <code>URL</code> 路径。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Protocol-oriented approach</span></span><br><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">AppDirectoryAndFileStringPathNamesAdpater</span> : <span class="title">AppDirectoryNames</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">var</span> fileName: <span class="type">String</span> &#123; <span class="keyword">get</span> &#125;</span><br><span class="line">    <span class="keyword">var</span> workingDirectory: <span class="type">AppDirectories</span> &#123; <span class="keyword">get</span> &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">documentsDirectoryStringPath</span><span class="params">()</span></span> -&gt; <span class="type">String</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">tempDirectoryStringPath</span><span class="params">()</span></span> -&gt; <span class="type">String</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">fullPath</span><span class="params">()</span></span> -&gt; <span class="type">String</span></span><br><span class="line">    </span><br><span class="line">&#125; <span class="comment">// end protocol AppDirectoryAndFileStringPathAdpaterNames</span></span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">AppDirectoryAndFileStringPathNamesAdpater</span> </span>&#123;</span><br><span class="line">   </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">documentsDirectoryStringPath</span><span class="params">()</span></span> -&gt; <span class="type">String</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> documentsDirectoryURL().path</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">tempDirectoryStringPath</span><span class="params">()</span></span> -&gt; <span class="type">String</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> tempDirectoryURL().path</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">fullPath</span><span class="params">()</span></span> -&gt; <span class="type">String</span> &#123;</span><br><span class="line">        <span class="keyword">switch</span> workingDirectory &#123;</span><br><span class="line">        <span class="keyword">case</span> .<span class="type">Documents</span>:</span><br><span class="line">            <span class="keyword">return</span> documentsDirectoryStringPath() + <span class="string">"/"</span> + fileName</span><br><span class="line">        <span class="keyword">case</span> .<span class="type">Temp</span>:</span><br><span class="line">            <span class="keyword">return</span> tempDirectoryStringPath() + <span class="string">"/"</span> + fileName</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">&#125; <span class="comment">// end extension AppDirectoryAndFileStringPathNamesAdpater</span></span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">AppDirectoryAndFileStringPathNames</span> : <span class="title">AppDirectoryAndFileStringPathNamesAdpater</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> fileName: <span class="type">String</span></span><br><span class="line">    <span class="keyword">let</span> workingDirectory: <span class="type">AppDirectories</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>(fileName: <span class="type">String</span>, workingDirectory: <span class="type">AppDirectories</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.fileName = fileName</span><br><span class="line">        <span class="keyword">self</span>.workingDirectory = workingDirectory</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">&#125; <span class="comment">// end struct AppDirectoryAndFileStringPathNames</span></span><br></pre></td></tr></table></figure>
+<p>接下来是用于测试 <code>AppDirectoryAndFileStringPathNames</code> 结构体的代码。这个结构体遵守了 <code>AppDirectoryAndFileStringPathNamesAdpater</code> 适配器协议。协议继承自 <code>AppDirectoryNames</code> 协议。注意在代码中的两段注释。 </p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> appFileDocumentsDirectoryPaths = <span class="type">AppDirectoryAndFileStringPathNames</span>(fileName: <span class="string">"myFile.txt"</span>, workingDirectory: .<span class="type">Documents</span>)</span><br><span class="line">appFileDocumentsDirectoryPaths.fullPath()</span><br><span class="line">appFileDocumentsDirectoryPaths.documentsDirectoryStringPath()</span><br><span class="line"> </span><br><span class="line"><span class="comment">// 通过 `AppDirectoryNames` 协议仍然可以访问 URL</span></span><br><span class="line">appFileDocumentsDirectoryPaths.documentsDirectoryURL()</span><br><span class="line"> </span><br><span class="line"><span class="keyword">let</span> appFileTemporaryDirectoryPaths = <span class="type">AppDirectoryAndFileStringPathNames</span>(fileName: <span class="string">"tempFile.txt"</span>, workingDirectory: .<span class="type">Temp</span>)</span><br><span class="line">appFileTemporaryDirectoryPaths.fullPath()</span><br><span class="line">appFileTemporaryDirectoryPaths.tempDirectoryStringPath()</span><br><span class="line"> </span><br><span class="line"><span class="comment">// 通过 `AppDirectoryNames` 协议仍然可以访问 URL</span></span><br><span class="line">appFileTemporaryDirectoryPaths.tempDirectoryURL()</span><br></pre></td></tr></table></figure>
+<p>最后是在 playground 文件中右侧的输出。每一行代表了运行时的代码值，下面的输出同样和上一段代码是逐行对应的。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">AppDirectoryAndFileStringPathNames</span><br><span class="line">&quot;/var/folders/5_/kd8__nv1139__dq_3nfvsmhh0000gp/T/com.apple.dt.Xcode.pg/containers/com.apple.dt.playground.stub.iOS_Simulator.Swift-Adapter-Design-Pattern-A3DE7CC8-D60F-4448-869F-2A19556C62B2/Documents/myFile.txt&quot;</span><br><span class="line">&quot;/var/folders/5_/kd8__nv1139__dq_3nfvsmhh0000gp/T/com.apple.dt.Xcode.pg/containers/com.apple.dt.playground.stub.iOS_Simulator.Swift-Adapter-Design-Pattern-A3DE7CC8-D60F-4448-869F-2A19556C62B2/Documents&quot;</span><br><span class="line"> </span><br><span class="line">file:///var/folders/5_/kd8__nv1139__dq_3nfvsmhh0000gp/T/com.apple.dt.Xcode.pg/containers/com.apple.dt.playground.stub.iOS_Simulator.Swift-Adapter-Design-Pattern-A3DE7CC8-D60F-4448-869F-2A19556C62B2/Documents/</span><br><span class="line"> </span><br><span class="line">AppDirectoryAndFileStringPathNames</span><br><span class="line">&quot;/Users/softwaretesting/Library/Developer/XCPGDevices/52E1A81A-98AF-42DE-ADCF-E69AC8FA2791/data/Containers/Data/Application/CF3D4156-E773-4BC4-B117-E7BDEFA3F34C/tmp/tempFile.txt&quot;</span><br><span class="line">&quot;/Users/softwaretesting/Library/Developer/XCPGDevices/52E1A81A-98AF-42DE-ADCF-E69AC8FA2791/data/Containers/Data/Application/CF3D4156-E773-4BC4-B117-E7BDEFA3F34C/tmp&quot;</span><br><span class="line"> </span><br><span class="line">file:///Users/softwaretesting/Library/Developer/XCPGDevices/52E1A81A-98AF-42DE-ADCF-E69AC8FA2791/data/Containers/Data/Application/CF3D4156-E773-4BC4-B117-E7BDEFA3F34C/tmp/</span><br></pre></td></tr></table></figure>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>设计模式不仅有利于代码复用，还能保证代码是不变、易读、松耦合的，从而提高了可维护性和拓展性。当重复出现并且能加以抽象的功能在你的 app 中出现的时候，我希望你能应用一下设计模式，并 <a href="http://iosbrain.com/blog/2018/01/13/building-swift-4-frameworks-and-including-them-in-your-apps-xcode-9/" target="_blank" rel="noopener"><strong>封装进框架</strong></a> 中。这样子你只需要写一次代码，就可以一直复用啦。</p>
+<p>再次感谢大家来 AppCoda 给我捧场。享受工作，坚持学习，下次再见吧！</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Swift/">Swift</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Design-Patterns/">Design Patterns</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2018/11/29/design-pattern-structural/" data-title="Swift 中的设计模式 #3 外观模式与适配器模式 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2018/11/26/design-pattern-behavorial/"  title="Swift 中的设计模式 #2 观察者模式与备忘录模式">
+ <strong>下一篇</strong><br/> 
+ <span>Swift 中的设计模式 #2 观察者模式与备忘录模式
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2018/11/29/design-pattern-structural/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#值语义的面向协议编程"><span class="toc-number">1.</span> <span class="toc-text">值语义的面向协议编程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#设计模式"><span class="toc-number">2.</span> <span class="toc-text">设计模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#设计模式的分类"><span class="toc-number">2.1.</span> <span class="toc-text">设计模式的分类</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#外观设计模式"><span class="toc-number">3.</span> <span class="toc-text">外观设计模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#外观设计模式的示例-app"><span class="toc-number">3.1.</span> <span class="toc-text">外观设计模式的示例 app</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#外观设计模式的示例代码"><span class="toc-number">3.2.</span> <span class="toc-text">外观设计模式的示例代码</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#适配器设计模式"><span class="toc-number">4.</span> <span class="toc-text">适配器设计模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#适配器设计模式示例-app"><span class="toc-number">4.1.</span> <span class="toc-text">适配器设计模式示例 app</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#适配器设计模式的示例代码"><span class="toc-number">4.1.1.</span> <span class="toc-text">适配器设计模式的示例代码</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结论"><span class="toc-number">5.</span> <span class="toc-text">结论</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>43</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>36</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>169</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>90</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>83</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/机器学习/" title="机器学习">机器学习<sup>2</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftGG 专属 Reveal 优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/XzKhGY">领取立减 143 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
