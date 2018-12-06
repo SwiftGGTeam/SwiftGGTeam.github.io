@@ -21,7 +21,7 @@
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="简述Swift标准库中Array的实现逻辑">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2018-12-06T06:21:37.620Z">
+<meta property="og:updated_time" content="2018-12-06T06:31:24.913Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="让我们构建一个Swift.Array">
 <meta name="twitter:description" content="简述Swift标准库中Array的实现逻辑">
@@ -102,13 +102,13 @@
 <!--此处开始正文-->
 <p>Swift 1.2 现已经作为 Xcode 6.3 的一部分而发布，在新的 API 中有一个允许我们使用值类型建立高效的数据结构，比如 Swift 标准库中的 <code>Array</code> 类型。今天，我们将重新现实 <code>Array</code> 的核心功能。</p>
 <a id="more"></a>
-<h2 id="值类型和引用类型"><a href="#值类型和引用类型" class="headerlink" title="值类型和引用类型"></a>值类型和引用类型</h2><p>在我们开始之前，快速的复习一下值类型和引用类型。在 Objective-C 以及大部分其他面向对象的语言中，我们所使用对象的指针或者引用都属于 <strong>引用类型</strong>。你可以把一个对象的引用赋值给一个变量：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">MyClass *a = ...;</span><br></pre></td></tr></table></figure>
+<h2 id="值类型和引用类型"><a href="#值类型和引用类型" class="headerlink" title="值类型和引用类型"></a>值类型和引用类型</h2><p>在我们开始之前，快速的复习一下值类型和引用类型。在 objc 以及大部分其他面向对象的语言中，我们所使用对象的指针或者引用都属于 <strong>引用类型</strong>。你可以把一个对象的引用赋值给一个变量：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">MyClass *a = ...;</span><br></pre></td></tr></table></figure>
 <p>现在你可以将这个变量的值复制给另一个变量：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">MyClass *b = a;</span><br></pre></td></tr></table></figure>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">MyClass *b = a;</span><br></pre></td></tr></table></figure>
 <p>现在 a 和 b 都指向同一个对象。如果这个对象是可变的，那么对其中一个变量的改变同样会发生在另一个变量上。</p>
 <p><strong>值类型</strong> 就是类似 Objective-C 中 <code>int</code> 这样的存在。使用值类型，变量包含的是真实的值，并不是值的引用。当你用 = 给另一个变量赋值，是将值的拷贝副本赋值给了另一个变量。比如：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">int a = 42;</span><br><span class="line">int b = a;</span><br><span class="line">b++;</span><br></pre></td></tr></table></figure>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="keyword">int</span> a = <span class="number">42</span>;</span><br><span class="line"><span class="keyword">int</span> b = a;</span><br><span class="line">b++;</span><br></pre></td></tr></table></figure>
 <p>现在，b 的值是 43，但是 a 依然是 42。  </p>
 <p>在 Swift 中，<code>class</code> 属于引用类型，<code>struct</code> 属于值类型。<br>如果你使用 = 将一个 <code>class</code> 实例的引用赋值给另一个变量，你将得到这个实例的一个新引用。对这个实例的修改对每一个引用可见。<br>如果你使用 = 将一个 <code>struct</code> 实例的引用赋值给另一个变量，你将得到这个实例的一个副本，与原始数据相互独立。  </p>
 <p>与大多数语言不同，Swift 标准库中的数组和字典都是值类型。比如：</p>
