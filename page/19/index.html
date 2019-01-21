@@ -86,905 +86,6 @@
   <header class="article-info clearfix">
     <h1 itemprop="name">
       
-        <a href="/2016/02/17/nsuserdefaults-static/" target="_blank" title="静态类型的 NSUserDefaults" itemprop="url">静态类型的 NSUserDefaults</a>
-    </h1>
-    <p class="article-time">
-      <time datetime="2016-02-17T09:00:00.000Z" itemprop="datePublished">2016-02-17</time>
-      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
-    </p>
-  </header>
-
-    <div class="article-content">
-        
-        <blockquote>
-<p>作者：Radek Pietruszewski，<a href="http://radex.io/swift/nsuserdefaults/static/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-08-31<br>译者：<a href="http://chengway.in/" target="_blank" rel="noopener">walkingway</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a>；定稿：<a href="http://www.swiftyper.com" target="_blank" rel="noopener">小锅</a></p>
-</blockquote>
-<!--此处开始正文-->
-<p>一年前，在 Swift 推出不久后，我观察到许多 iOS 开发者仍然以 Objective-C 的开发习惯来写 Swift。而在我眼中，Swift 是一门全新的语言，有别于 Objective-C 的语法、设计哲学乃至发展潜力，因此我们更应探索出一条属于 Swift 独有风格的发展道路。我在之前的文章 <a href="http://radex.io/swift/methods" target="_blank" rel="noopener">Swifty methods</a> 中已经探讨过在 Swift 中如何清晰、明确地对方法进行命名，随后我开始连载 <em>Swifty API</em> 系列文章，同时将这一想法付诸实践，探索如何设计更加简单易用的接口 API。</p>
-        
-
-        <p class="article-more-link">
-          
-            <a href="/2016/02/17/nsuserdefaults-static/#more" target="_blank">阅读全文</a>
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/radex-io/">radex.io</a>
-</div>
-
-
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        
-  <header class="article-info clearfix">
-    <h1 itemprop="name">
-      
-        <a href="/2016/02/16/async-errors/" target="_blank" title="如何处理 Swift 中的异步错误" itemprop="url">如何处理 Swift 中的异步错误</a>
-    </h1>
-    <p class="article-time">
-      <time datetime="2016-02-16T00:00:00.000Z" itemprop="datePublished">2016-02-16</time>
-      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
-    </p>
-  </header>
-
-    <div class="article-content">
-        
-        <blockquote>
-<p>作者：Olivier Halligon，<a href="http://alisoftware.github.io/swift/async/error/2016/02/06/async-errors/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-02-06<br>译者：<a href="http://www.jianshu.com/users/97c49dfd1f9f/latest_articles" target="_blank" rel="noopener">ray16897188</a>；校对：<a href="http://www.swiftyper.com" target="_blank" rel="noopener">小锅</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a></p>
-</blockquote>
-<!--此处开始正文-->
-<p>在之前的一篇文章中，我介绍了如何在<a href="http://alisoftware.github.io/2015/12/17/let-it-throw/" target="_blank" rel="noopener">Swift中使用<code>throw</code>做错误处理</a>。但是如果你处理的是异步流程，<code>throw</code> 就无法胜任，该怎么办？</p>
-<h3 id="throw-和异步有啥问题？"><a href="#throw-和异步有啥问题？" class="headerlink" title="throw 和异步有啥问题？"></a><code>throw</code> 和异步有啥问题？</h3><p>回顾下，我们可以像下面这样，在一个可能失败的函数中使用 <code>throw</code> 关键字：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 定义错误类型和一个可抛出的函数</span></span><br><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">ComputationError</span>: <span class="title">ErrorType</span> </span>&#123; <span class="keyword">case</span> <span class="type">DivisionByZero</span> &#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">inverse</span><span class="params">(x: Float)</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Float</span> &#123;</span><br><span class="line">  <span class="keyword">guard</span> x != <span class="number">0</span> <span class="keyword">else</span> &#123; <span class="keyword">throw</span> <span class="type">ComputationError</span>.<span class="type">DivisionByZero</span> &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">1.0</span>/x</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 调用它</span></span><br><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">  <span class="keyword">let</span> y = <span class="keyword">try</span> inverse(<span class="number">5.0</span>)</span><br><span class="line">&#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"Woops: <span class="subst">\(error)</span>"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>但如果函数是异步的，需要等待一段时间才会返回结果，比如带着 completion block 的函数，这个时候怎么办？</p>
-        
-
-        <p class="article-more-link">
-          
-            <a href="/2016/02/16/async-errors/#more" target="_blank">阅读全文</a>
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/Crunchy-Development/">Crunchy Development</a>
-</div>
-
-
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        
-  <header class="article-info clearfix">
-    <h1 itemprop="name">
-      
-        <a href="/2016/02/15/how-to-become-a-developer-1/" target="_blank" title="如何成为一名入门级 iOS 开发者" itemprop="url">如何成为一名入门级 iOS 开发者</a>
-    </h1>
-    <p class="article-time">
-      <time datetime="2016-02-15T00:00:00.000Z" itemprop="datePublished">2016-02-15</time>
-      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
-    </p>
-  </header>
-
-    <div class="article-content">
-        
-        <blockquote>
-<p>作者：Weston Hanners，<a href="http://www.alloc-init.com/2016/01/how-to-become-a-developer-1/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-01-26<br>译者：<a href="http://www.jianshu.com/users/97c49dfd1f9f/latest_articles" target="_blank" rel="noopener">ray16897188</a>；校对：<a href="https://github.com/initiOSJava" target="_blank" rel="noopener">&amp;nbsp</a>；定稿：<a href="http://www.swiftyper.com" target="_blank" rel="noopener">小锅</a></p>
-</blockquote>
-<!--此处开始正文-->
-<p>最近我一直在帮我的几个朋友开始学习 iOS 开发，然后被问到一个开始学习需要的清单。听起来很适合为此写一篇博客。闲话少说，我给你列出来要成为一名入门级的 iOS 开发者必须掌握的知识清单（不分先后顺序）。</p>
-        
-
-        <p class="article-more-link">
-          
-            <a href="/2016/02/15/how-to-become-a-developer-1/#more" target="_blank">阅读全文</a>
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/alloc-init/">alloc-init</a>
-</div>
-
-
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/Swift-入门/">Swift 入门</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        
-  <header class="article-info clearfix">
-    <h1 itemprop="name">
-      
-        <a href="/2016/02/14/swift-guard-radix/" target="_blank" title="使用 guard 的正确姿势" itemprop="url">使用 guard 的正确姿势</a>
-    </h1>
-    <p class="article-time">
-      <time datetime="2016-02-14T10:00:00.000Z" itemprop="datePublished">2016-02-14</time>
-      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
-    </p>
-  </header>
-
-    <div class="article-content">
-        
-        <blockquote>
-<p>作者：Radek Pietruszewski，<a href="http://radex.io/swift/guard/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-12-14<br>译者：<a href="http://www.futantan.com" target="_blank" rel="noopener">Prayer</a>；校对：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="noopener">Channe</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a></p>
-</blockquote>
-<!--此处开始正文-->
-<p><code>guard</code> 是 Swift 2 中我最喜爱的特性之一。虽然完全不使用 <code>guard</code> 也没有什么影响，它只是给我们提供了更微妙的句法表达，但是如果能够正确使用 <code>guard</code> 语句，无疑是一件令人愉快的事。它可以让我们的方法表意更加明确，更易于阅读，它能够表达『提前退出』的意图，同时提高了程序的健壮性。</p>
-<p>因此，学习和理解如何正确使用 <code>guard</code> 表达式非常重要。<code>guard</code> 有它适用的场景，但是这并不意味着要将所有的 <code>if..else</code> 和 <code>if let</code> 语句都替换成 <code>guard</code> 语句。虽然 <code>guard</code> 语句很棒，但是很容易被滥用，并不是所有的代码结构中都适合使用 <code>guard</code> 语句。</p>
-<p>下面是 <code>guard</code> 语句的使用原则。</p>
-        
-
-        <p class="article-more-link">
-          
-            <a href="/2016/02/14/swift-guard-radix/#more" target="_blank">阅读全文</a>
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/radex-io/">radex.io</a>
-</div>
-
-
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        
-  <header class="article-info clearfix">
-    <h1 itemprop="name">
-      
-        <a href="/2016/02/06/when-to-use-mutating-functions-in-swift-structs/" target="_blank" title="在 Swift 结构体中使用 Mutating 函数的最佳时机" itemprop="url">在 Swift 结构体中使用 Mutating 函数的最佳时机</a>
-    </h1>
-    <p class="article-time">
-      <time datetime="2016-02-06T09:00:00.000Z" itemprop="datePublished">2016-02-06</time>
-      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
-    </p>
-  </header>
-
-    <div class="article-content">
-        
-        <blockquote>
-<p>作者：NatashaTheRobot，<a href="https://www.natashatherobot.com/when-to-use-mutating-functions-in-swift-structs/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-1-13<br>译者：<a href="http://chengway.in/" target="_blank" rel="noopener">walkingway</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a></p>
-</blockquote>
-<!--此处开始正文-->
-<p>我认为关于 Swift 最棒的一个特性就是：在这门语言构建的工程中可以使用大量的不可变对象。这种特性使我们的代码更加清晰，也更加安全（如果你还对此存疑，强烈推荐观看这篇<a href="https://realm.io/news/andy-matuschak-controlling-complexity/" target="_blank" rel="noopener">演讲</a>）。</p>
-<p>但当我们真正需要去改变数据时，又该怎么处理呢？</p>
-        
-
-        <p class="article-more-link">
-          
-            <a href="/2016/02/06/when-to-use-mutating-functions-in-swift-structs/#more" target="_blank">阅读全文</a>
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/Natasha-The-Robot/">Natasha The Robot</a>
-</div>
-
-
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        
-  <header class="article-info clearfix">
-    <h1 itemprop="name">
-      
-        <a href="/2016/02/05/sorting-and-sharing-playground-pages/" target="_blank" title="playground 页面排序和共享" itemprop="url">playground 页面排序和共享</a>
-    </h1>
-    <p class="article-time">
-      <time datetime="2016-02-05T00:00:00.000Z" itemprop="datePublished">2016-02-05</time>
-      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
-    </p>
-  </header>
-
-    <div class="article-content">
-        
-        <blockquote>
-<p>作者：Erica Sadun，<a href="http://ericasadun.com/2016/01/04/sorting-and-sharing-playground-pages/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-01-04<br>译者：<a href="undefined">littledogboy</a>；校对：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a></p>
-</blockquote>
-<!--此处开始正文-->
-<blockquote>
-<p>另一篇关于 Playground 的文章：<a href="http://www.swiftyper.com/playground-advance-usage/" target="_blank" rel="noopener">如何优雅地使用 Playground</a></p>
-</blockquote>
-<h2 id="排序-Playground-页面"><a href="#排序-Playground-页面" class="headerlink" title="排序 Playground 页面"></a>排序 Playground 页面</h2><p>如果在同一个文件中有多个 playground 页面（我就是这样），那么你会发现如果按照字母排序，查找起来会很方便。使用 Edit &gt; Sort &gt; ByName 来整理你的文件结构。</p>
-        
-
-        <p class="article-more-link">
-          
-            <a href="/2016/02/05/sorting-and-sharing-playground-pages/#more" target="_blank">阅读全文</a>
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/Erica-Sadun/">Erica Sadun</a>
-</div>
-
-
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/Swift-入门/">Swift 入门</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        
-  <header class="article-info clearfix">
-    <h1 itemprop="name">
-      
-        <a href="/2016/02/04/social-framework-introduction/" target="_blank" title="新手指南：使用 Social Framework 以及 UIActivityViewController" itemprop="url">新手指南：使用 Social Framework 以及 UIActivityViewController</a>
-    </h1>
-    <p class="article-time">
-      <time datetime="2016-02-04T00:00:00.000Z" itemprop="datePublished">2016-02-04</time>
-      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
-    </p>
-  </header>
-
-    <div class="article-content">
-        
-        <blockquote>
-<p>作者：GABRIEL THEODOROPOULOS，<a href="http://www.appcoda.com/social-framework-introduction/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-09-14<br>译者：<a href="https://github.com/initiOSJava" target="_blank" rel="noopener">&amp;nbsp</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a>；定稿：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="noopener">Channe</a></p>
-</blockquote>
-<!--此处开始正文-->
-<p>在你即将完成一个大型应用时，或者老板、用户找到你时，你才意识到这个应用还缺少一个重要功能：将内容发布到 Facebook 或 Twitter。面临死线，深呼一口气，你花费了无数的小时坐在电脑前去集成 Facebook 或 Twitter 的 SDK，但是最后发现要实现这个功能实在是太难了，或者几乎是不可能实现。这时，你该怎么办呢？可能是时候考虑找一些借口告诉老板或者客户并不准备递交这个 App 了。着急的满头大汗或者不知所措？或者，是否有一种能够简单快捷的方法能让你的应用在短时间内集成分享功能呢？</p>
-        
-
-        <p class="article-more-link">
-          
-            <a href="/2016/02/04/social-framework-introduction/#more" target="_blank">阅读全文</a>
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/AppCoda/">AppCoda</a>
-</div>
-
-
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/iOS-开发/">iOS 开发</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        
-  <header class="article-info clearfix">
-    <h1 itemprop="name">
-      
-        <a href="/2016/02/03/swift-qa-2016-02-03/" target="_blank" title="每周 Swift 社区问答 2016-02-03" itemprop="url">每周 Swift 社区问答 2016-02-03</a>
-    </h1>
-    <p class="article-time">
-      <time datetime="2016-02-03T14:00:00.000Z" itemprop="datePublished">2016-02-03</time>
-      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
-    </p>
-  </header>
-
-    <div class="article-content">
-        
-        <p>作者：<a href="http://codebuild.me" target="_blank" rel="noopener">shanks</a></p>
-<p>本周共整理了 5 个问题。主要涉及到的知识点有：defer关键字，emoji表情提取，便利构造器的继承，元组的存在感和如何重写didSet。</p>
-<p>本周整理问题如下：</p>
-<ul>
-<li><a href="#Q1">Is “defer” guaranteed to be called in Swift?</a></li>
-<li><a href="#Q2">How to extract emojis from a string?</a></li>
-<li><a href="#Q3">Subclassing a class that has convenience initializers.</a></li>
-<li><a href="#Q4">Tuple vs Struct in Swift</a></li>
-<li><a href="#Q5">Overriding didSet</a></li>
-</ul>
-        
-
-        <p class="article-more-link">
-          
-            <a href="/2016/02/03/swift-qa-2016-02-03/#more" target="_blank">阅读全文</a>
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/社区问答/">社区问答</a>
-</div>
-
-
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a><a href="/tags/iOS-开发/">iOS 开发</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        
-  <header class="article-info clearfix">
-    <h1 itemprop="name">
-      
-        <a href="/2016/02/03/linkedin-sign-in/" target="_blank" title="如何使用 OAuth 2.0 将 LinkedIn 集成入 iOS 应用" itemprop="url">如何使用 OAuth 2.0 将 LinkedIn 集成入 iOS 应用</a>
-    </h1>
-    <p class="article-time">
-      <time datetime="2016-02-03T09:00:00.000Z" itemprop="datePublished">2016-02-03</time>
-      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
-    </p>
-  </header>
-
-    <div class="article-content">
-        
-        <blockquote>
-<p>作者：Gabriel Theodoropoulos，<a href="http://www.appcoda.com/linkedin-sign-in/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-1-3<br>译者：<a href="http://linusling.com" target="_blank" rel="noopener">小铁匠Linus</a>；校对：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a>；定稿：<a href="http://www.swiftyper.com" target="_blank" rel="noopener">小锅</a></p>
-</blockquote>
-<!--此处开始正文-->
-<p>从很久以前开始，社交网络就成为了我们每天生活的一部分了。同时，社交网络也是我们程序员生活的一部分，绝大多数的应用都对进行了集成，用于接收和发送用户的信息。在大多数情况下，用户都被要求能在应用中绑定每个社交网络，并且授权该应用能代表用户发起<em>请求</em>。有很多这样的社交网络，比如 Facebook 和 Twitter 是使用比较频繁的。另外，iOS 也对 Facebook 和 Twitter 有内置的支持。但是，对于大多数其他的社交网络来说，开发者必须要配置一下才能成功地使得应用授权每个社交网络，并能代表用户发起请求。本教程中，我们将针对 <strong>LinkedIn</strong> 这样的一个社交网络演示如何使应用获得授权，并能与服务器传递受保护数据。</p>
-        
-
-        <p class="article-more-link">
-          
-            <a href="/2016/02/03/linkedin-sign-in/#more" target="_blank">阅读全文</a>
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/AppCoda/">AppCoda</a>
-</div>
-
-
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/iOS-开发/">iOS 开发</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        
-  <header class="article-info clearfix">
-    <h1 itemprop="name">
-      
-        <a href="/2016/02/02/being-swifty-with-collection-view-and-table-view-cells/" target="_blank" title="更加 Swift 化的 Collection View 和 Table View Cells" itemprop="url">更加 Swift 化的 Collection View 和 Table View Cells</a>
-    </h1>
-    <p class="article-time">
-      <time datetime="2016-02-02T09:00:00.000Z" itemprop="datePublished">2016-02-02</time>
-      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
-    </p>
-  </header>
-
-    <div class="article-content">
-        
-        <blockquote>
-<p>作者：Jameson Quave，<a href="http://jamesonquave.com/blog/being-swifty-with-collection-view-and-table-view-cells/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-12-28<br>译者：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a></p>
-</blockquote>
-<!--此处开始正文-->
-<p>这是一个常见的场景：你有一个 tableView 或者一个 collectionView，并且里面含有大量不同种类的内容。你想做到基于不同种类的内容而展示不一样的 <code>cell</code> ，而且这些 <code>cell</code> 都混合在同一个部件里（原谅我站在艺术的角度去设计），它看起来就如下图所示：</p>
-        
-
-        <p class="article-more-link">
-          
-            <a href="/2016/02/02/being-swifty-with-collection-view-and-table-view-cells/#more" target="_blank">阅读全文</a>
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/JamesonQuave-com/">JamesonQuave.com</a>
-</div>
-
-
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        
-  <header class="article-info clearfix">
-    <h1 itemprop="name">
-      
-        <a href="/2016/02/01/protocol-oriented-segue-identifiers-swift/" target="_blank" title="使用 Swift 的面向协议编程定义 Segue 标识" itemprop="url">使用 Swift 的面向协议编程定义 Segue 标识</a>
-    </h1>
-    <p class="article-time">
-      <time datetime="2016-02-01T09:00:00.000Z" itemprop="datePublished">2016-02-01</time>
-      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
-    </p>
-  </header>
-
-    <div class="article-content">
-        
-        <blockquote>
-<p>作者：Natasha，<a href="https://www.natashatherobot.com/protocol-oriented-segue-identifiers-swift/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-12-17<br>译者：<a href="http://www.swiftyper.com" target="_blank" rel="noopener">小锅</a>；校对：<a href="https://github.com/initiOSJava" target="_blank" rel="noopener">&amp;nbsp</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a></p>
-</blockquote>
-<!--此处开始正文-->
-<p>回溯到八月份，我观看了 <a href="https://developer.apple.com/videos/play/wwdc2015-411/" target="_blank" rel="noopener">Swift in Practice WWDC15</a> 这个超赞的视频。视频的第一部分让我印象十分深刻，因此我针对这部分写了一篇博客—— <a href="http://natashatherobot.com/non-optional-uiimage-named-swift/" target="_blank" rel="noopener">A Beautiful Solution to Non-Optional UIImage Named in Swift</a> ——然后我最终开始准备写关于这个视频的第二部分，甚至其它更多令人激动的部分（毕竟，假期是最好的写博客的时机）（译者注：大神就是这样啊，假期不是用来玩的，反而是写博客的大好时机）。</p>
-        
-
-        <p class="article-more-link">
-          
-            <a href="/2016/02/01/protocol-oriented-segue-identifiers-swift/#more" target="_blank">阅读全文</a>
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/Natasha-The-Robot/">Natasha The Robot</a>
-</div>
-
-
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        
-  <header class="article-info clearfix">
-    <h1 itemprop="name">
-      
-        <a href="/2016/01/29/open-source-swift-weekly-6/" target="_blank" title="Swift 一周简讯 #6" itemprop="url">Swift 一周简讯 #6</a>
-    </h1>
-    <p class="article-time">
-      <time datetime="2016-01-29T14:30:00.000Z" itemprop="datePublished">2016-01-29</time>
-      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
-    </p>
-  </header>
-
-    <div class="article-content">
-        
-        <blockquote>
-<p>作者：Jesse Squires，<a href="http://swiftweekly.github.io/issue-6/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016/1/21<br>译者：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="noopener">pmst</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a></p>
-</blockquote>
-<!--此处开始正文-->
-<p>自 Apple 宣布 Swift 开源已过去一个月，我仍然在坚持探索新事物，乐此不疲，见证着 Swift 的成长与蜕变。欢迎来到新一期的每周开源简讯 #6！</p>
-<h3 id="Commits-和-Pull-requests"><a href="#Commits-和-Pull-requests" class="headerlink" title="Commits 和 Pull requests"></a>Commits 和 Pull requests</h3><p><a href="https://github.com/antonblanchard" target="_blank" rel="noopener">Anton Blanchard</a> 关于增加 PowerPC64le Linux 支持的<a href="https://github.com/apple/swift/pull/979" target="_blank" rel="noopener">提案</a>已经被合并了。不得不说，这确实令人<a href="https://github.com/apple/swift/pull/979#issuecomment-171833623" target="_blank" rel="noopener">印象深刻</a>，当然也非常<a href="https://github.com/apple/swift/pull/979#issuecomment-171876376" target="_blank" rel="noopener">酷</a>。😎</p>
-<p>@Iplarson 提交了一个 <a href="https://github.com/apple/swift/pull/997" target="_blank" rel="noopener">pull request</a>，目的是为了支持代码覆盖分析。很高兴看到这一点。如果能在 pr 中自动显示分析报告就更好了。</p>
-        
-
-        <p class="article-more-link">
-          
-            <a href="/2016/01/29/open-source-swift-weekly-6/#more" target="_blank">阅读全文</a>
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/Open-Source-Swift/">Open Source Swift</a>
-</div>
-
-
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/Swift-开源信息/">Swift 开源信息</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        
-  <header class="article-info clearfix">
-    <h1 itemprop="name">
-      
-        <a href="/2016/01/29/open-source-swift-5/" target="_blank" title="Swift 一周简讯 #5" itemprop="url">Swift 一周简讯 #5</a>
-    </h1>
-    <p class="article-time">
-      <time datetime="2016-01-29T12:30:00.000Z" itemprop="datePublished">2016-01-29</time>
-      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
-    </p>
-  </header>
-
-    <div class="article-content">
-        
-        <blockquote>
-<p>作者：Jesse Squires，<a href="http://swiftweekly.github.io/issue-5/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016/1/14<br>译者：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="noopener">pmst</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a></p>
-</blockquote>
-<!--此处开始正文-->
-<p>正如你所看到，Swift 一周简讯有<a href="http://swiftweekly.github.io" target="_blank" rel="noopener">新家</a>啦！有一个专用的网站发布内容感觉棒极了，比我的<a href="http://www.jessesquires.com/new-weekly-brief/" target="_blank" rel="noopener">个人博客</a>强多了。当然新网站还有一些小瑕疵，如果你发现或者有什么好的建议提升网站质量，请在 GitHub 上提交 issue，提问<a href="https://github.com/SwiftWeekly/swiftweekly.github.io/issues/new" target="_blank" rel="noopener">入口</a>。</p>
-        
-
-        <p class="article-more-link">
-          
-            <a href="/2016/01/29/open-source-swift-5/#more" target="_blank">阅读全文</a>
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/Open-Source-Swift/">Open Source Swift</a>
-</div>
-
-
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/Swift-开源信息/">Swift 开源信息</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        
-  <header class="article-info clearfix">
-    <h1 itemprop="name">
-      
-        <a href="/2016/01/29/nsstringfromclass-in-swift/" target="_blank" title="优雅的 NSStringFromClass 替代方案" itemprop="url">优雅的 NSStringFromClass 替代方案</a>
-    </h1>
-    <p class="article-time">
-      <time datetime="2016-01-29T00:00:00.000Z" itemprop="datePublished">2016-01-29</time>
-      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
-    </p>
-  </header>
-
-    <div class="article-content">
-        
-        <blockquote>
-<p>作者：Natasha，<a href="https://www.natashatherobot.com/nsstringfromclass-in-swift/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-01-14<br>译者：<a href="http://www.saitjr.com" target="_blank" rel="noopener">saitjr</a>；校对：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a>；定稿：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a></p>
-</blockquote>
-<!--此处开始正文-->
-<p>使用 Swift 过程中，我意识到的第一个问题就是没有 <code>NSStringFromClass</code> 的替代方案。在自定义 <code>TableViewCell</code> 时，我喜欢用类名作为 cell 的 identifier，然后在重用队列中，通过 <code>NSStringFromClass</code> 来获得 identifier，从而避免拼写错误。</p>
-<p>然而，在 Swift 中，我不得不写一个丑陋的 extension 来达到这一目的。（<a href="http://stackoverflow.com/questions/24107658/get-a-user-readable-version-of-the-class-name-in-swift-in-objc-nsstringfromclas" target="_blank" rel="noopener">参考 StackOverflow 的回答</a>）</p>
-        
-
-        <p class="article-more-link">
-          
-            <a href="/2016/01/29/nsstringfromclass-in-swift/#more" target="_blank">阅读全文</a>
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/Natasha-The-Robot/">Natasha The Robot</a>
-</div>
-
-
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        
-  <header class="article-info clearfix">
-    <h1 itemprop="name">
-      
         <a href="/2016/01/28/swift-magic-public-getter-private-setter/" target="_blank" title="Swift 魔法：公开 Getter，隐藏 Setter" itemprop="url">Swift 魔法：公开 Getter，隐藏 Setter</a>
     </h1>
     <p class="article-time">
@@ -1380,6 +481,915 @@
 
 
 
+   
+    
+    <article class="post-expand post" itemprop="articleBody"> 
+        
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/01/21/watchos-2-hello-world-app-in-swift/" target="_blank" title="在 Swift 中编写 watchOS 2 Hello World 程序" itemprop="url">在 Swift 中编写 watchOS 2 Hello World 程序</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-01-21T09:00:00.000Z" itemprop="datePublished">2016-01-21</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+    <div class="article-content">
+        
+        <blockquote>
+<p>作者：Nick Hanan，<a href="http://www.codingexplorer.com/watchos-2-hello-world-app-in-swift/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-12-08<br>译者：<a href="http://mmoaay.photo/" target="_blank" rel="noopener">mmoaay</a>；校对：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>过去的几个月我一直保持着写博客的习惯，但是现在我得专心工作了。最近在做一些 watchOS 2 相关的更新工作，我觉得如果出个系列教程会对大家很有帮助。首先我们需要学会开发第一个 watchOS 2 应用，所以下面来开发一个 watchOS 2 风格的 “Hello World!”吧！</p>
+<p>在教程开始前，我准备介绍如何使用 Swift 在 iOS、watchOS、tvOS 和 OS X 上编程。此外，如果你想在本博客中学到其他知识，请给 Twitter <a href="https://twitter.com/CodingExplorer" target="_blank" rel="noopener">@CodingExplorer</a> 或者 <a href="http://www.codingexplorer.com/contact/" target="_blank" rel="noopener">Contact Page</a> 来提出建议。</p>
+        
+
+        <p class="article-more-link">
+          
+            <a href="/2016/01/21/watchos-2-hello-world-app-in-swift/#more" target="_blank">阅读全文</a>
+          
+       </p>
+    </div>
+    <footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Coding-Explorer-Blog/">Coding Explorer Blog</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-入门/">Swift 入门</a><a href="/tags/WatchOS-2/">WatchOS 2</a>
+  </div>
+
+</div>
+
+
+
+
+<div class="comments-count">
+	
+</div>
+
+</footer>
+
+
+    </article>
+
+
+
+
+
+
+   
+    
+    <article class="post-expand post" itemprop="articleBody"> 
+        
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/01/20/swift-qa-2016-01-20/" target="_blank" title="每周 Swift 社区问答 2016-01-20" itemprop="url">每周 Swift 社区问答 2016-01-20</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-01-20T00:00:00.000Z" itemprop="datePublished">2016-01-20</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+    <div class="article-content">
+        
+        <p>作者：<a href="http://codebuild.me" target="_blank" rel="noopener">shanks</a></p>
+<p>本周共整理了 5 个问题，程序员的问题也是千奇百怪。。大家可以看看本周整理的几个问题。。好好感受下吧</p>
+<p>本周整理问题如下：</p>
+<ul>
+<li><a href="#Q1">Can i have 2 types on parameter in swift?</a></li>
+<li><a href="#Q2">Swift: why aren’t all variables lazy by default?</a></li>
+<li><a href="#Q3">Sorting Dictionarys in Arrays</a></li>
+<li><a href="#Q4">Swift: Factory Pattern, Subclass methods are not visible</a></li>
+<li><a href="#Q5">In Swift, how do I prevent a function from being called on a subclass?</a></li>
+</ul>
+        
+
+        <p class="article-more-link">
+          
+            <a href="/2016/01/20/swift-qa-2016-01-20/#more" target="_blank">阅读全文</a>
+          
+       </p>
+    </div>
+    <footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/社区问答/">社区问答</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a><a href="/tags/iOS-开发/">iOS 开发</a>
+  </div>
+
+</div>
+
+
+
+
+<div class="comments-count">
+	
+</div>
+
+</footer>
+
+
+    </article>
+
+
+
+
+
+
+   
+    
+    <article class="post-expand post" itemprop="articleBody"> 
+        
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/01/20/sets-vs-dictionaries-smackdown-in-swiftlang/" target="_blank" title="Swift 中集合与字典的角逐" itemprop="url">Swift 中集合与字典的角逐</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-01-20T00:00:00.000Z" itemprop="datePublished">2016-01-20</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+    <div class="article-content">
+        
+        <blockquote>
+<p>作者：Erica Sadun，<a href="http://ericasadun.com/2015/10/19/sets-vs-dictionaries-smackdown-in-swiftlang/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-10-19<br>译者：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>传统的 <code>Cocoa</code> 在使用字典时有个不好的习惯。无论是用户信息还是字体选项亦或是视频流（AVFoundation）设置，<code>NSDictionary</code> 一直担任 <code>Cocoa</code> 传递数据的角色。字典是灵活的、易用的，但它也存在诸多潜在的危险。</p>
+<p>在这篇文章中，我将讨论另一种更加 Swift 化的方法。这并不是一个能够彻底解决问题的方法，但我认为它是一个在后 Swift 时代中能够更好展示 API 是如何工作的观念模式。</p>
+        
+
+        <p class="article-more-link">
+          
+            <a href="/2016/01/20/sets-vs-dictionaries-smackdown-in-swiftlang/#more" target="_blank">阅读全文</a>
+          
+       </p>
+    </div>
+    <footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Erica-Sadun/">Erica Sadun</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+
+<div class="comments-count">
+	
+</div>
+
+</footer>
+
+
+    </article>
+
+
+
+
+
+
+   
+    
+    <article class="post-expand post" itemprop="articleBody"> 
+        
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/01/19/ios-weak-delegates-swift/" target="_blank" title="iOS：如何用 Swift 实现弱代理" itemprop="url">iOS：如何用 Swift 实现弱代理</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-01-19T09:00:00.000Z" itemprop="datePublished">2016-01-19</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+    <div class="article-content">
+        
+        <blockquote>
+<p>作者：Natasha，<a href="https://www.natashatherobot.com/ios-weak-delegates-swift/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-12-23<br>译者：<a href="http://weibo.com/lfbWb" target="_blank" rel="noopener">lfb_CD</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>；定稿：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>有一个常见的场景：一个 ViewController 控制多个 View ，并且想在 ViewController 中代理 View 的一些逻辑。</p>
+<p>例如，你有一个 View，其中包含一个按钮（比如在表单中的「注册」），并且当用户点击这个注册按钮时，你希望代理其中的逻辑（比如注册验证和调用 API）。</p>
+<p>你的代码应该会是这样的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 代理点击的协议</span></span><br><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">ButtonDelegate</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">onButtonTap</span><span class="params">(sender: UIButton)</span></span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ViewWithTextAndButton</span>: <span class="title">UIView</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 保存代理，后面使用</span></span><br><span class="line">    <span class="keyword">var</span> delegate: <span class="type">ButtonDelegate</span>?</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">onButtonTap</span><span class="params">(sender: UIButton)</span></span> &#123;</span><br><span class="line">        <span class="comment">// 按钮被点击的时候调用代理</span></span><br><span class="line">        delegate?.onButtonTap(sender)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyViewController</span>: <span class="title">UIViewController</span>, <span class="title">ButtonDelegate</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> viewWithTextAndButton = <span class="type">ViewWithTextAndButton</span>(frame: <span class="type">CGRect</span>(x: <span class="number">0</span>, y: <span class="number">0</span>, width: <span class="number">100</span>, height: <span class="number">100</span>))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.viewDidLoad()</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 给代理赋值</span></span><br><span class="line">        viewWithTextAndButton.delegate = <span class="keyword">self</span></span><br><span class="line">        view.addSubview(viewWithTextAndButton)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// MARK: ButtonDelegate</span></span><br><span class="line">    <span class="comment">// 实现代理逻辑</span></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">onButtonTap</span><span class="params">(sender: UIButton)</span></span> &#123;</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">"This button was clicked in the subview!"</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+        
+
+        <p class="article-more-link">
+          
+            <a href="/2016/01/19/ios-weak-delegates-swift/#more" target="_blank">阅读全文</a>
+          
+       </p>
+    </div>
+    <footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Natasha-The-Robot/">Natasha The Robot</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-入门/">Swift 入门</a>
+  </div>
+
+</div>
+
+
+
+
+<div class="comments-count">
+	
+</div>
+
+</footer>
+
+
+    </article>
+
+
+
+
+
+
+   
+    
+    <article class="post-expand post" itemprop="articleBody"> 
+        
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/01/16/open-source-swift-weekly-4/" target="_blank" title="Swift 一周简讯 #4" itemprop="url">Swift 一周简讯 #4</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-01-16T10:00:00.000Z" itemprop="datePublished">2016-01-16</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+    <div class="article-content">
+        
+        <blockquote>
+<p>作者：Jesse Squires，<a href="http://www.jessesquires.com/open-source-swift-weekly-4/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-01-07<br>译者：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="noopener">pmst</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>假期一晃而过，Swift.org 又重新开始更新东西啦。倘若你也是 Apple GitHub 开源项目的跟随者之一，你可能已经注意到了。早前不知为何我错过了一些重要的东西，直到本周我才发现 <a href="https://github.com/apple/swift/blob/master/stdlib/internal/SwiftExperimental/SwiftExperimental.swift" target="_blank" rel="noopener"><code>SwiftExperimental.swift</code></a> 这货。目前，它为 <code>Set</code> 集合自定义了大量 unicode 操作（译者注：有 ∈ 、∉、⊂、⊄、⊆ 等等！）。这真是棒极了！我迫不及待想要在标准库中看到更多诸如此类的 API 接口。不管怎样，先来看看本周有哪些好玩的东西吧。</p>
+        
+
+        <p class="article-more-link">
+          
+            <a href="/2016/01/16/open-source-swift-weekly-4/#more" target="_blank">阅读全文</a>
+          
+       </p>
+    </div>
+    <footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Open-Source-Swift/">Open Source Swift</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-开源信息/">Swift 开源信息</a>
+  </div>
+
+</div>
+
+
+
+
+<div class="comments-count">
+	
+</div>
+
+</footer>
+
+
+    </article>
+
+
+
+
+
+
+   
+    
+    <article class="post-expand post" itemprop="articleBody"> 
+        
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/01/15/help-yourself-to-some-swift/" target="_blank" title="要不要来点 Swift" itemprop="url">要不要来点 Swift</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-01-15T00:00:00.000Z" itemprop="datePublished">2016-01-15</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+    <div class="article-content">
+        
+        <blockquote>
+<p>作者：Jacob Bandes-Storch，<a href="http://bandes-stor.ch/blog/2015/11/28/help-yourself-to-some-swift/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-11-28<br>译者：<a href="http://mmoaay.photo/" target="_blank" rel="noopener">mmoaay</a>；校对：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>做程序员有一点优势：如果工具不好用，你自己就可以对它进行优化。而 Swift 让这一点变得尤其简单，它包含的几个特性可以让你以一种自然的方式对这门语言进行扩展和自定义。</p>
+<p>在本文中，我将分享 Swift 给我编程体验带来提升的几个例子。我希望在读了本文之后，你可以认识到使用这门语言时你自己的痛点在哪，并付诸实践。（当然需要先思考！）</p>
+        
+
+        <p class="article-more-link">
+          
+            <a href="/2016/01/15/help-yourself-to-some-swift/#more" target="_blank">阅读全文</a>
+          
+       </p>
+    </div>
+    <footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Jacob-Bandes-Storch/">Jacob Bandes-Storch</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+
+<div class="comments-count">
+	
+</div>
+
+</footer>
+
+
+    </article>
+
+
+
+
+
+
+   
+    
+    <article class="post-expand post" itemprop="articleBody"> 
+        
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/01/14/another-take-on-guard/" target="_blank" title="关于 guard 的另一种观点" itemprop="url">关于 guard 的另一种观点</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-01-14T00:00:00.000Z" itemprop="datePublished">2016-01-14</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+    <div class="article-content">
+        
+        <blockquote>
+<p>作者：Erica Sadun，<a href="http://ericasadun.com/2016/01/01/another-take-on-guard/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-01-01<br>译者：<a href="http://chengway.in/" target="_blank" rel="noopener">walkingway</a>；校对：<a href="http://www.saitjr.com" target="_blank" rel="noopener">saitjr</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>今天，<a href="https://iosdevweekly.com" target="_blank" rel="noopener">iOS Dev 周刊</a> 贴出一篇 Alexei Kuznetsov 的关于『从你的代码中删除 <code>guard</code> 』的<a href="https://medium.com/swift-programming/why-swift-guard-should-be-avoided-484cfc2603c5" target="_blank" rel="noopener">文章</a>。Kuznetsov 指出支持他这篇文章的理论依据主要来自于 Robert C. Martin，这位世界顶级软件开发大师提出：<strong>代码必须精简</strong>。即关于函数存在两条规则，第一条：函数应该保持精简；第二条：没有最精简，只有更精简。Alexei Kuznetsov 表示应将 Martin 的理论应用在今后的 Swift 开发中。</p>
+<p>Kuznetsov 写到『使用 <code>guard</code> 语句能有效减少函数中的嵌套数量，但 <code>guard</code> 存在一些问题。使用 <code>guard</code> 语句会使我们在一个函数中做更多的事情，以及维护多个级别的抽象。如果我们坚持短小、功能单一的函数，就会发现根本不需要 <code>guard</code>』。</p>
+<p>我写这篇文章的目的是为了反驳 Kuznetsov 提出的观点，接下来我要说说我的看法。</p>
+        
+
+        <p class="article-more-link">
+          
+            <a href="/2016/01/14/another-take-on-guard/#more" target="_blank">阅读全文</a>
+          
+       </p>
+    </div>
+    <footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Erica-Sadun/">Erica Sadun</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+
+<div class="comments-count">
+	
+</div>
+
+</footer>
+
+
+    </article>
+
+
+
+
+
+
+   
+    
+    <article class="post-expand post" itemprop="articleBody"> 
+        
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/01/13/swift-qa-2016-01-13/" target="_blank" title="每周 Swift 社区问答 2016-01-13" itemprop="url">每周 Swift 社区问答 2016-01-13</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-01-13T20:00:00.000Z" itemprop="datePublished">2016-01-13</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+    <div class="article-content">
+        
+        <p>作者：<a href="http://codebuild.me" target="_blank" rel="noopener">shanks</a></p>
+<p>本周大事是第一届中国 Swift 开发者大会。笔者也请假去北京朝圣。由于大神超多，场面很火爆。可以看出随着 Swift 的开源，加入 Swift 大军的程序猿越来越多。大神们的讲座也很精彩。不虚此行。大家可以通过<a href="http://atswift.io/" target="_blank" rel="noopener">这里</a>查看大会的精彩内容。本周共整理了5个问题。</p>
+<p>本周整理问题如下：</p>
+<ul>
+<li><a href="#Q1">Can we expect that one day Swift Compiler will be written in Swift?</a></li>
+<li><a href="#Q2">Type <em>My Custom Class</em> has no subscript members</a></li>
+<li><a href="#Q3">Implicitly lazy static members in Swift</a></li>
+<li><a href="#Q4">How to use Generic type in Swift2</a></li>
+<li><a href="#Q5">Get nth character of a string in Swift programming language</a></li>
+</ul>
+        
+
+        <p class="article-more-link">
+          
+            <a href="/2016/01/13/swift-qa-2016-01-13/#more" target="_blank">阅读全文</a>
+          
+       </p>
+    </div>
+    <footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/社区问答/">社区问答</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a><a href="/tags/iOS-开发/">iOS 开发</a>
+  </div>
+
+</div>
+
+
+
+
+<div class="comments-count">
+	
+</div>
+
+</footer>
+
+
+    </article>
+
+
+
+
+
+
+   
+    
+    <article class="post-expand post" itemprop="articleBody"> 
+        
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/01/13/swift-ubuntu-x11-window-app/" target="_blank" title="Swift包管理器：在Linux上创建和使用X11包" itemprop="url">Swift包管理器：在Linux上创建和使用X11包</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-01-13T00:00:00.000Z" itemprop="datePublished">2016-01-13</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+    <div class="article-content">
+        
+        <blockquote>
+<p>作者：Benedikt Terhechte，<a href="http://appventure.me/2015/12/08/swift-ubuntu-x11-window-app/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-12-08<br>译者：<a href="http://www.swiftyper.com" target="_blank" rel="noopener">小锅</a>；校对：<a href="http://www.futantan.com" target="_blank" rel="noopener">Prayer</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>现在 Swift 已经开源了，应该有很多感兴趣的用户已经在他们的 Linux 系统上安装把玩过了。然而，目前的 Foundation 框架还在紧锣密鼓地开发中，所以如果你想开发出比命令行更复杂一点的程序，就得链接已有的 Linux 库，如 GTK, Cairo 或者 libpng 以开发出图形界面的程序。</p>
+        
+
+        <p class="article-more-link">
+          
+            <a href="/2016/01/13/swift-ubuntu-x11-window-app/#more" target="_blank">阅读全文</a>
+          
+       </p>
+    </div>
+    <footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/APPVENTURE/">APPVENTURE</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+
+<div class="comments-count">
+	
+</div>
+
+</footer>
+
+
+    </article>
+
+
+
+
+
+
+   
+    
+    <article class="post-expand post" itemprop="articleBody"> 
+        
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/01/12/ios-contacts-framework/" target="_blank" title="初识 iOS 9 中新的联系人框架" itemprop="url">初识 iOS 9 中新的联系人框架</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-01-12T00:00:00.000Z" itemprop="datePublished">2016-01-12</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+    <div class="article-content">
+        
+        <blockquote>
+<p>作者：gabriel theodoropoulos，<a href="http://www.appcoda.com/ios-contacts-framework/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-09-29<br>译者：<a href="http://wxgbridgeq.github.io/" target="_blank" rel="noopener">BridgeQ</a>，<a href="http://www.jianshu.com/users/ef1058d2d851" target="_blank" rel="noopener">星夜暮晨</a>；校对：<a href="http://linusling.com" target="_blank" rel="noopener">小铁匠Linus</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>同每一代 iOS 系统版本的更新一样，最新发布的 iOS 9 为用户和开发者带来了许多新特性以及原有功能的改善。在这个版本中，我们不仅看到了很多首次推出的 API，还可以看到许多针对原有框架和类库的更新。此外，一些旧版本的 API 被标记为 <code>deprecated</code>（校对注：意为新版本已被弃用），而使用了更好的 API 来替代。iOS 9 中，新的 <em>Contacts framework</em> （联系人框架）是最好的例子了，它是来代替原有 <em><a href="http://www.appcoda.com/ios-programming-import-contact-address-book/" target="_blank" rel="noopener">AddressBook framework</a></em> 的。该框架更加符合技术潮流且简单易用。</p>
+        
+
+        <p class="article-more-link">
+          
+            <a href="/2016/01/12/ios-contacts-framework/#more" target="_blank">阅读全文</a>
+          
+       </p>
+    </div>
+    <footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/AppCoda/">AppCoda</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-入门/">Swift 入门</a>
+  </div>
+
+</div>
+
+
+
+
+<div class="comments-count">
+	
+</div>
+
+</footer>
+
+
+    </article>
+
+
+
+
+
+
+   
+    
+    <article class="post-expand post" itemprop="articleBody"> 
+        
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/01/11/public-properties-with-private-setters/" target="_blank" title="Swift：带有私有设置方法的公有属性" itemprop="url">Swift：带有私有设置方法的公有属性</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-01-11T00:00:00.000Z" itemprop="datePublished">2016-01-11</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+    <div class="article-content">
+        
+        <blockquote>
+<p>作者：Thomas Hanning，<a href="http://www.thomashanning.com/public-properties-with-private-setters/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-12-24<br>译者：<a href="http://daizi.me" target="_blank" rel="noopener">小袋子</a>；校对：<a href="http://weibo.com/lfbWb" target="_blank" rel="noopener">lfb_CD</a>；定稿：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>Swift 可以很方便地创建带有私有设置方法的公有属性。这可以让你的代码更加安全和简洁。</p>
+        
+
+        <p class="article-more-link">
+          
+            <a href="/2016/01/11/public-properties-with-private-setters/#more" target="_blank">阅读全文</a>
+          
+       </p>
+    </div>
+    <footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Thomas-Hanning/">Thomas Hanning</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-入门/">Swift 入门</a>
+  </div>
+
+</div>
+
+
+
+
+<div class="comments-count">
+	
+</div>
+
+</footer>
+
+
+    </article>
+
+
+
+
+
+
+   
+    
+    <article class="post-expand post" itemprop="articleBody"> 
+        
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/01/08/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/" target="_blank" title="iOS 并发：从 NSOperation 和 Dispatch Queues 开始" itemprop="url">iOS 并发：从 NSOperation 和 Dispatch Queues 开始</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-01-08T00:00:00.000Z" itemprop="datePublished">2016-01-08</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+    <div class="article-content">
+        
+        <blockquote>
+<p>作者：hossam ghareeb，<a href="http://www.appcoda.com/ios-concurrency/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-12-09<br>译者：<a href="http://www.jianshu.com/users/97c49dfd1f9f/latest_articles" target="_blank" rel="noopener">ray16897188</a>；校对：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="noopener">Channe</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>并发（Concurrency）在 iOS 开发中总是被看作是洪水猛兽一般。人们以为它是一个很危险的领域，很多开发者都尽量避免与其接触。更有传闻说你一定要竭尽所能的避免写任何关于多线程的代码。假如你对并发不是很了解却还去使用它的话，那么我同意：并发是很危险的。只是它的危险是因为你不了解它。试想一下常人一生中体验过的危险运动和行为有多少，很多对吧？但是当掌握了之后，就会统统变成小菜一碟。并发是把双刃剑，你应该掌握并学会如何去使用它。它能帮你写出效率高、执行快、反应灵敏的 App，而与此同时，对它的滥用会无情的毁掉你的 App。这就是为什么在开始写任何关于并发的代码之前，先要想一想你为什么要用到并发、需要用到哪个（与并发有关的）API 来解决这个问题。iOS 中我们有很多能用到的 API。在此教程里我会讲到最常用的两个：<code>NSOperation</code> 和 <code>Dispatch Queues</code>（派发队列）。</p>
+        
+
+        <p class="article-more-link">
+          
+            <a href="/2016/01/08/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/#more" target="_blank">阅读全文</a>
+          
+       </p>
+    </div>
+    <footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/AppCoda/">AppCoda</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+
+<div class="comments-count">
+	
+</div>
+
+</footer>
+
+
+    </article>
+
+
+
+
+
+
+   
+    
+    <article class="post-expand post" itemprop="articleBody"> 
+        
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/01/07/app-thinning-appcoda/" target="_blank" title="如何使用 iOS 9 App 瘦身功能" itemprop="url">如何使用 iOS 9 App 瘦身功能</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-01-07T09:20:00.000Z" itemprop="datePublished">2016-01-07</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+    <div class="article-content">
+        
+        <blockquote>
+<p>作者：gregg mojica，<a href="http://www.appcoda.com/app-thinning/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-10-11<br>译者：<a href="http://ijack.pw/" target="_blank" rel="noopener">JackAlan</a>；校对：<a href="http://weibo.com/lfbWb" target="_blank" rel="noopener">lfb_CD</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p><strong>更新</strong>: iOS 9 有个 bug 影响 APP 瘦身功能，这个 bug 在 iOS 9.0.2 被修复。从 AppStore 下载 App 时请留意。</p>
+<p>iOS 9 已经变成了一个大<a href="http://techcrunch.com/2015/09/21/apple-announces-50-ios-9-adoption-and-iphone-6s-launch-day-specifics/" target="_blank" rel="noopener">热门</a>。发布几周后，这个新的操作系统在 iOS 设备上的安装量就超过了一半。它的普及率打破了 iOS 7 在 2013 年的记录。</p>
+<p>在写完上一篇文章之后 <a href="http://www.appcoda.com/search-api-sfsafariviewcontroller/" target="_blank" rel="noopener">Search APIs and SFSafariViewController in iOS 9</a>，我们继续学习如何使用 App 瘦身这个 iOS 9 中令人兴奋的特性。在此教程中，我们将探索为什么要使用 App 瘦身以及如何在自己的 App 中使用这个令人兴奋的新特性。</p>
+        
+
+        <p class="article-more-link">
+          
+            <a href="/2016/01/07/app-thinning-appcoda/#more" target="_blank">阅读全文</a>
+          
+       </p>
+    </div>
+    <footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/AppCoda/">AppCoda</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+
+<div class="comments-count">
+	
+</div>
+
+</footer>
+
+
+    </article>
+
+
+
+
+
+
+   
+    
+    <article class="post-expand post" itemprop="articleBody"> 
+        
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/01/06/swift-qa-2016-01-06/" target="_blank" title="每周 Swift 社区问答 2016-01-06" itemprop="url">每周 Swift 社区问答 2016-01-06</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-01-06T23:00:00.000Z" itemprop="datePublished">2016-01-06</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+    <div class="article-content">
+        
+        <p>作者：<a href="http://codebuild.me" target="_blank" rel="noopener">shanks</a> &amp; <a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="noopener">pmst</a></p>
+<p>本周整理问题如下：</p>
+<ul>
+<li><a href="#Q1">Question on extracting a substring from a url</a></li>
+<li><a href="#Q2">All func pointers need a protocol now</a></li>
+<li><a href="#Q3">Property for Double and CGFloat</a></li>
+<li><a href="#Q4">Question on dismissing model ViewController</a></li>
+<li><a href="#Q5">count numbers in array and order them by count in swift</a></li>
+<li><a href="#Q6">Cannot invoke [Method] with argument list of type ( , )</a></li>
+<li><a href="#Q7">Swift programming style</a></li>
+</ul>
+<p>对应的代码都放到了 github 上，有兴趣的同学可以下载下来研究：<a href="https://github.com/SwiftGGTeam/SwiftCommunityWeeklyQA/tree/master/20160106/%E6%AF%8F%E5%91%A8%20Swift%20%E7%A4%BE%E5%8C%BA%E9%97%AE%E7%AD%9420160106.playground" target="_blank" rel="noopener">点击下载</a></p>
+        
+
+        <p class="article-more-link">
+          
+            <a href="/2016/01/06/swift-qa-2016-01-06/#more" target="_blank">阅读全文</a>
+          
+       </p>
+    </div>
+    <footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/社区问答/">社区问答</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a><a href="/tags/iOS-开发/">iOS 开发</a>
+  </div>
+
+</div>
+
+
+
+
+<div class="comments-count">
+	
+</div>
+
+</footer>
+
+
+    </article>
+
+
+
+
+
+
 
   <nav id="page-nav" class="clearfix">
     <a class="extend prev" rel="prev" href="/page/18/"><span></span>上一页</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/17/">17</a><a class="page-number" href="/page/18/">18</a><span class="page-number current">19</span><a class="page-number" href="/page/20/">20</a><a class="page-number" href="/page/21/">21</a><span class="space">&hellip;</span><a class="page-number" href="/page/28/">28</a><a class="extend next" rel="next" href="/page/20/">下一页<span></span></a>
@@ -1399,7 +1409,7 @@
 		<ul>
 		
 		  
-			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
 		  
 		
 		  
@@ -1451,7 +1461,7 @@
 		  
 		
 		  
-			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>21</sup></a></li>
 		  
 		
 		  
@@ -1459,15 +1469,15 @@
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>2</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>5</sup></a></li>
 		  
 		
 		  
@@ -1503,11 +1513,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>10</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>4</sup></a></li>
 		  
 		
 		  
@@ -1551,15 +1557,11 @@
 		  
 		
 		  
-			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>1</sup></a></li>
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>23</sup></a></li>
 		  
 		
 		  
@@ -1579,7 +1581,7 @@
 		  
 		
 		  
-			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>2</sup></a></li>
 		  
 		
 		  
@@ -1640,11 +1642,11 @@
 			
 		
 			
-				<li><a href="/tags/Swift/" title="Swift">Swift<sup>96</sup></a></li>
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>88</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>83</sup></a></li>
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>84</sup></a></li>
 			
 		
 			
@@ -1656,11 +1658,11 @@
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
@@ -1668,15 +1670,11 @@
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>5</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -1692,11 +1690,7 @@
 			
 		
 			
-				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
 			
 		
 			
@@ -1704,11 +1698,19 @@
 			
 		
 			
-				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>2</sup></a></li>
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>2</sup></a></li>
 			
 		
 		</ul>

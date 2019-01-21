@@ -1,0 +1,990 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>以流的形式执行 Multipart 请求 | 以流的形式执行 Multipart 请求 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="multipart request，stream,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Soroush Khanlou，原文链接，原文日期：2018-11-14译者：郑一一；校对：numbbbbb，pmst；定稿：Forelax   Foundation 框架中的 URL 类提供了非常全面的功能，此后还在 iOS 7 中新增了 URLSession 类。尽管如此，基础库中仍然缺少 multipart 文件上传的功能。">
+<meta name="keywords" content="multipart request，stream">
+<meta property="og:type" content="article">
+<meta property="og:title" content="以流的形式执行 Multipart 请求">
+<meta property="og:url" content="https://swift.gg/2019/01/21/streaming-multipart-requests/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Soroush Khanlou，原文链接，原文日期：2018-11-14译者：郑一一；校对：numbbbbb，pmst；定稿：Forelax   Foundation 框架中的 URL 类提供了非常全面的功能，此后还在 iOS 7 中新增了 URLSession 类。尽管如此，基础库中仍然缺少 multipart 文件上传的功能。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-01-21T03:14:54.828Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="以流的形式执行 Multipart 请求">
+<meta name="twitter:description" content="作者：Soroush Khanlou，原文链接，原文日期：2018-11-14译者：郑一一；校对：numbbbbb，pmst；定稿：Forelax   Foundation 框架中的 URL 类提供了非常全面的功能，此后还在 iOS 7 中新增了 URLSession 类。尽管如此，基础库中仍然缺少 multipart 文件上传的功能。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2019/01/21/streaming-multipart-requests/" target="_blank" title="以流的形式执行 Multipart 请求" itemprop="url">以流的形式执行 Multipart 请求</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2019-01-21T00:00:00.000Z" itemprop="datePublished">2019-01-21</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Soroush Khanlou，<a href="http://khanlou.com/2018/11/streaming-multipart-requests/" target="_blank" rel="noopener">原文链接</a>，原文日期：2018-11-14<br>译者：<a href="https://www.jianshu.com/u/076cc5e18bb8" target="_blank" rel="noopener">郑一一</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>，<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="noopener">pmst</a>；定稿：<a href="http://forelax.space" target="_blank" rel="noopener">Forelax</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>Foundation 框架中的 URL 类提供了非常全面的功能，此后还在 iOS 7 中新增了 URLSession 类。尽管如此，基础库中仍然缺少 multipart 文件上传的功能。</p>
+<a id="more"></a>
+<h2 id="什么是-multipart-请求？"><a href="#什么是-multipart-请求？" class="headerlink" title="什么是 multipart 请求？"></a>什么是 multipart 请求？</h2><p>Multipart 编码实际上就是在网络中上传大型文件的方法。在浏览器中，有时候你会选择一个文件作为表单提交内容的一部分。这个文件便是以 multipart 请求的方式实现上传的。</p>
+<p>乍一看，multipart 请求和一般请求差不多。不同之处是 multipart 请求额外为 <code>HTTP</code> 请求体指定了唯一编码。同 JSON 编码（<code>{&quot;key&quot;: &quot;value&quot;}</code>）或者 URL 字符编码 (<code>key=value</code>) 相比，multipart 编码干的事略微有所不同。因为 multipart 请求体实际上只是一串字节流，接收端实体在解析数据时，需要知道字节流中各个部分之间的界限。所以 multipart 请求需要使用 “boundaries” 来解决这个问题。在请求首部的 <code>Content-Type</code> 中，可以定义 boundary：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Accept: application/json</span><br><span class="line">Content-Type: multipart/form-data; boundary=khanlou.comNczcJGcxe</span><br></pre></td></tr></table></figure>
+<p>Boundary 的具体内容并不重要，唯一需要注意的是：在请求体中，boundary 是不能重复出现（这样才能体现 boundary 的作用）。你可以使用 UUID 作为 boundary。</p>
+<p>请求的每一部分可以是普通数据（比如图片）或者元数据（一般是文本，对应一个名字，组成一个键值对）。如果数据是图片的话，那它看起来应该是这样的：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">--&lt;boundary&gt;</span><br><span class="line">Content-Disposition: form-data; name=&lt;name&gt;; filename=&lt;filename.jpg&gt;</span><br><span class="line">Content-Type: image/jpeg</span><br><span class="line"></span><br><span class="line">&lt;image data&gt;</span><br></pre></td></tr></table></figure>
+<p>如果是普通文本，则是这样：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">--&lt;boundary&gt;</span><br><span class="line">Content-Disposition: form-data; name=&lt;name&gt;</span><br><span class="line">Content-Type: text/plain</span><br><span class="line"></span><br><span class="line">&lt;some text&gt;</span><br></pre></td></tr></table></figure>
+<p>请求结尾会有一个带着两个连字符的 boundary，<code>--&lt;boundary&gt;--</code>。（此处需要注意，所有新行必须是回车换行。）</p>
+<p>以上就是关于 multipart 请求的所有内容，并不是特别复杂。事实上，当在写第一个有关 multipart 编码的客户端实现时，我有些抵触阅读 multipart/form-data 的 <a href="https://tools.ietf.org/html/rfc7578" target="_blank" rel="noopener">RFC</a>。可是在开始阅读之后，我对这个协议的理解更深了。整个文档可读性很强，很轻易就能直达知识的源头。</p>
+<p>我在开源的 <a href="https://github.com/backchannel/BackchannelSDK-iOS" target="_blank" rel="noopener">Backchannel SDK</a> 实现了上述功能。<a href="https://github.com/backchannel/BackchannelSDK-iOS/blob/master/Source/Image%20Chooser/BAKUploadAttachmentRequest.m" target="_blank" rel="noopener"><code>BAKUploadAttachmentRequest</code></a> 和 <a href="https://github.com/backchannel/BackchannelSDK-iOS/blob/master/Source/Image%20Chooser/BAKMultipartRequestBuilder.m" target="_blank" rel="noopener"><code>BAKMultipartRequestBuilder</code></a> 类包含了处理 mulitipart 的方法。在这个项目中，仅仅包含了处理单个文件的情况，并且没有包括元数据。但是作为范例，依旧很好地展示了 mulitipart 请求是如何构建的。可以通过添加额外的实现代码，来支持元数据和多文件的功能。</p>
+<p>无论是使用一个请求上传多个文件，还是多个请求分别对应上传一个文件，来实现多文件上传功能，都会碰到一个问题。这个问题就是，如果你尝试一次性上传很多文件的话，app 将会闪退。这是因为使用 <a href="https://github.com/backchannel/BackchannelSDK-iOS/blob/master/Source/Image%20Chooser/BAKMultipartRequestBuilder.m#L66-L70" target="_blank" rel="noopener">该版本的代码</a>，加载的数据会直接进入内存，在内存暴涨的情况下，即使使用当下性能最强的旗舰手机也会有闪退发生。</p>
+<h2 id="将硬盘中数据以流的形式读取"><a href="#将硬盘中数据以流的形式读取" class="headerlink" title="将硬盘中数据以流的形式读取"></a>将硬盘中数据以流的形式读取</h2><p>最常见的解决方法是将硬盘中的数据以流的形式读取出来。其核心思想是文件的字节数据会一直保存在硬盘里，直到被读取并发往网络。内存中只保留了很小一部分的镜像数据。</p>
+<p>目前，我想出两种方法可以解决这个问题。第一个方法，把 multipart 请求体中的所有数据写到硬盘的一个新文件中，并使用 URLSession 的 <code>uploadTask(with request: URLRequest, fromFile fileURL: URL)</code> 方法将文件转化为流。这个方法可以奏效，但我并不想为每一个请求新建一个新文件保存到硬盘中。因为这意味着在请求发出后，还需要删除这个文件。</p>
+<p>第二种方法是将内存和硬盘的数据合并在一起，并通过统一的接口向网络输出数据。</p>
+<p>如果你觉得第二种方法听起来像是 <a href="http://khanlou.com/2015/10/clustering/" target="_blank" rel="noopener">类簇</a>，恭喜你，完全正确。很多常用 Cocoa 类都允许创建子类，并实现一些父类方法，使其和父类表现一致。回想一下 <code>NSArray</code> 的 <code>-count</code> 属性和 <code>-objectAtIndex:</code> 方法。因为 <code>NSArray</code> 的所有其它方法都是基于 <code>-count</code> 属性和 <code>-objectAtIndex:</code> 方法实现的，你可以非常轻易地创建优化版本的 <code>NSArray</code> 子类。</p>
+<p>你可以创建一个 <code>NSData</code> 子类，它无需真正从硬盘读取数据，而只是创建一个指针直接指向硬盘中的数据。这样做的好处是是不需要把数据载入内存中进行读取。这种方法称为内存映射，基于 Unix 方法 <code>mmap</code>。你可以通过 <code>.mappedIfSafe</code> 或者 <code>alwaysMapped</code> 选项，来使用 <code>NSData</code> 的这项特性。因为 <code>NSData</code> 是一个类簇，我们将创建一个 <code>ConcatenatedData</code> 子类（就像 <code>FlattenCollection</code> 在 Swift 中的工作方式），该子类会将多个 <code>NSData</code> 对象视作一个连续的 <code>NSData</code>。完成创建以后，我们就做好所有准备来解决这个问题啦。</p>
+<p>通过查看 <code>NSData</code> 所有原生方法，可以发现，需要实现的是 <code>-count</code> 和 <code>-bytes</code>。实现 <code>-count</code> 并不难，我们可以把所有 <code>NSData</code> 对象的大小相加得到；但在实现 <code>-bytes</code> 时则会有个问题。 <code>-bytes</code> 需要返回一个指向一段连续缓冲区的指针，而目前我们并没有这个指针。</p>
+<p>在基础库中，提供了 <code>NSInputStream</code> 类用于处理不连续的数据。非常幸运，<code>NSInputStream</code> 同样是一个类簇。我们可以创建一个子类，将多条流合并。在使用子类时，感觉上就像是一条流。通过使用 <code>+inputStreamWithData:</code> 和 <code>+inputStreamWithURL:</code> 方法，可以轻易地创建一条输入流，用来代表硬盘中的文件和内存中的数据（比如 boundaries）。</p>
+<p>通过阅读最好的第三方网络库源代码，你会发现 <a href="https://github.com/AFNetworking/AFNetworking" target="_blank" rel="noopener">AFNetworking</a> 采用了<a href="https://github.com/AFNetworking/AFNetworking/blob/009e3bb6673edc183c4f2baf552ad7cccba94d58/AFNetworking/AFURLRequestSerialization.m#L896-L927" target="_blank" rel="noopener">这种方法</a>。（<a href="https://github.com/Alamofire/Alamofire" target="_blank" rel="noopener">Alamofire</a>，Swift 版本的 AFNetworking，则采用了第一种方法，<a href="https://github.com/Alamofire/Alamofire/blob/ff16ce9e87aeb0ee1f30b28789db1fff01e8fb02/Source/MultipartFormData.swift#L432-L455" target="_blank" rel="noopener">将数据全部加载到内存中</a>，但如果数据量太大，就会写到硬盘的一个文件中。）</p>
+<h2 id="将所有部分拼接起来"><a href="#将所有部分拼接起来" class="headerlink" title="将所有部分拼接起来"></a>将所有部分拼接起来</h2><p>你可以在 <a href="https://gist.github.com/khanlou/8cc2e3cb23ec8d03b1fc187f5922e244" target="_blank" rel="noopener">这里</a> 看看我的串行输入流的实现（是用 Objective-C 实现的，以后我可能还会写一个 Swift 版本的）。</p>
+<p>通过 <code>SKSerialInputStream</code> 类，可以将流组合在一起。下面展示了前缀和后缀属性：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">MultipartComponent</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> prefixData: <span class="type">Data</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> string = <span class="string">""</span><span class="string">"</span></span><br><span class="line"><span class="string">        <span class="subst">\(<span class="keyword">self</span>.boundary)</span></span></span><br><span class="line"><span class="string">        Content-Disposition: form-data; name="</span>\(<span class="keyword">self</span>.name); filename=<span class="string">"<span class="subst">\(<span class="keyword">self</span>.filename)</span>"</span></span><br><span class="line">        <span class="string">""</span><span class="string">"</span></span><br><span class="line"><span class="string">        return string.data(using: .utf8)</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">    </span></span><br><span class="line"><span class="string">    var postfixData: Data &#123;</span></span><br><span class="line"><span class="string">        return "</span>\r\n<span class="string">".data(using: .utf8)</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>将元数据和文件的 <code>dataStream</code> 组合在一起，得到一条输入流：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">MultipartComponent</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> inputStream: <span class="type">NSInputStream</span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">let</span> streams = [</span><br><span class="line">            <span class="type">NSInputStream</span>(data: prefixData),</span><br><span class="line">            <span class="keyword">self</span>.fileDataStream,</span><br><span class="line">            <span class="type">NSInputStream</span>(data: postfixData),</span><br><span class="line">        ]</span><br><span class="line">    </span><br><span class="line">        <span class="keyword">return</span> <span class="type">SKSerialInputStream</span>(inputStreams: streams)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>创建好每一部分输入流之后，就可以把所有流组合在一起，得到一条完整输入流。此外，在请求结尾还需要添加一个 boundary：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">RequestBuilder</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> bodyInputStream: <span class="type">NSInputStream</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> stream = parts</span><br><span class="line">            .<span class="built_in">map</span>(&#123; $<span class="number">0</span>.inputStream &#125;)</span><br><span class="line">            + [<span class="type">NSInputStream</span>(data: <span class="string">"--<span class="subst">\(<span class="keyword">self</span>.boundary)</span>--"</span>.data(using: .utf8))]</span><br><span class="line">    </span><br><span class="line">        <span class="keyword">return</span> <span class="type">SKSerialInputStream</span>(inputStreams: streams)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最后，将 <code>bodyInputStream</code> 赋值给 URL 请求的 <code>httpBodyStream</code> 属性：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> urlRequest = <span class="type">URLRequest</span>(url: url)</span><br><span class="line"></span><br><span class="line">urlRequest.httpBodyStream = requestBuilder.bodyInputStream;</span><br></pre></td></tr></table></figure>
+<p>注意，<code>httpBodyStream</code> 和 <code>httpBody</code> 两个属性是互斥的——两个属性不会同时生效。设置 <code>httpBodyStream</code> 会使得 <code>Data</code> 版本 <code>httpBody</code> 失效，反之亦然。</p>
+<p>流文件上传的关键是能够将多条输入流合并成一条流。<code>SKSerialInputStream</code> 类完成了整个工作。尽管说子类化 <code>NSInputStream</code> 有一些困难，可一旦解决这个问题，我们就离成功不远啦。</p>
+<h2 id="子类化过程中需要注意的问题"><a href="#子类化过程中需要注意的问题" class="headerlink" title="子类化过程中需要注意的问题"></a>子类化过程中需要注意的问题</h2><p>子类化 <code>NSInputStream</code> 的过程不会太轻松，甚至可以说很困难。你必须实现 9 个方法。其中的 7 个方法，父类只有一些微不足道的默认实现。而在文档中只提到了 9 个方法中的 3 个，所以你还得实现 6 个 <code>NSStream</code> （<code>NSInputStream</code> 的父类）的方法，其中有 2 个是 run loop 方法，并允许空实现。在这之前，你还需要额外 <a href="http://blog.bjhomer.com/2011/04/subclassing-nsinputstream.html" target="_blank" rel="noopener">实现 3 个私有方法</a>，不过现在不必实现了。此外，还需要定义 3 个<code>只读</code>属性：<code>streamStatus</code>，<code>streamError</code>，<code>delegate</code>。</p>
+<p>在处理完上述子类化相关的细节后，接下来的挑战是创建一个 <code>NSInputStream</code> 子类，其行为应该和 API 使用者所期望的保持一致。然而，这个类状态的重度耦合是不容易被人发现的。</p>
+<p>有一些状态需要保证行为一致。举个例子，<code>hasBytesAvailable</code> 是不同于其它状态的，但还是存在细微的联系。在我最近发现的一个 bug 里，<code>hasBytesAvailable</code> 属性会返回 <code>self.currentIndex != self.inputStreams.count</code>，但是这会造成一个 bug，流会一直处于开启的状态，并最终造成请求超时。修复这个 bug 的办法是改为返回 <code>YES</code>，但我一直没有找到这个 bug 的根源所在。</p>
+<p>另外一个状态 <code>streamStatus</code>，存在许多可能的值，其中比较重要的两个值是 <code>NSStreamStatusOpen</code> 和 <code>NSStreamStatusClosed</code>。</p>
+<p>最后一个比较有意思的状态是字节数，从 <code>read</code> 方法中返回值。这个属性除了会返回正整型数之外，还会返回 -1，-1 代表有错误产生，需要进一步检查非空属性 <code>streamError</code> 来获取更多信息。字节数还可以返回 0，根据文档描述，这是标明流结尾的另外一种方式。</p>
+<p>文档并不会告诉你哪些状态的组合是有意义的。比如说流产生一个 <code>streamError</code>，但状态却是 <code>NSStreamStatusClosed</code>，而不是 <code>NSStreamStatusError</code>，在这种情况下是否会有问题？想要管理好所有的状态非常难，不过到最后终究还是能解决的。</p>
+<p>对于 <code>SKSerialStream</code> 类，是否可以在所有情况下都能正常工作，我还不是特别有信心。但看起来，<code>SKSerialStream</code> 通过使用 URLSession 能很好地支持上传 multipart 数据。如果你在使用这份代码的时候发现任何问题，请务必联系我，我们可以一起不断优化这个类。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Khanlou/">Khanlou</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/iOS-开发/">iOS 开发</a><a href="/tags/Swift/">Swift</a><a href="/tags/Objective-C/">Objective-C</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2019/01/21/streaming-multipart-requests/" data-title="以流的形式执行 Multipart 请求 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2019/01/15/nshipster-language-server-protocol/"  title="Language Server Protocol">
+ <strong>下一篇</strong><br/> 
+ <span>Language Server Protocol
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2019/01/21/streaming-multipart-requests/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是-multipart-请求？"><span class="toc-number">1.</span> <span class="toc-text">什么是 multipart 请求？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#将硬盘中数据以流的形式读取"><span class="toc-number">2.</span> <span class="toc-text">将硬盘中数据以流的形式读取</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#将所有部分拼接起来"><span class="toc-number">3.</span> <span class="toc-text">将所有部分拼接起来</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#子类化过程中需要注意的问题"><span class="toc-number">4.</span> <span class="toc-text">子类化过程中需要注意的问题</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>43</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>21</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>36</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>23</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>169</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>88</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>84</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-进化/" title="Swift 进化">Swift 进化<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>2</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2019 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftGG 专属 Reveal 优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/XzKhGY">领取立减 143 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
