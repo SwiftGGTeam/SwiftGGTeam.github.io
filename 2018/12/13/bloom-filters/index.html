@@ -1,0 +1,1036 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>布隆过滤器与 Swift 4.2 | 布隆过滤器与 Swift 4.2 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="布隆过滤器， Hashable,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="本文描述了如何使用 Swift 4.2 新特性 Hashable 实现布隆过滤器。">
+<meta name="keywords" content="布隆过滤器， Hashable">
+<meta property="og:type" content="article">
+<meta property="og:title" content="布隆过滤器与 Swift 4.2">
+<meta property="og:url" content="https://swift.gg/2018/12/13/bloom-filters/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="本文描述了如何使用 Swift 4.2 新特性 Hashable 实现布隆过滤器。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-02-19T03:45:13.515Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="布隆过滤器与 Swift 4.2">
+<meta name="twitter:description" content="本文描述了如何使用 Swift 4.2 新特性 Hashable 实现布隆过滤器。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2018/12/13/bloom-filters/" target="_blank" title="布隆过滤器与 Swift 4.2" itemprop="url">布隆过滤器与 Swift 4.2</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2018-12-13T00:00:00.000Z" itemprop="datePublished">2018-12-13</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Soroush Khanlou，<a href="http://khanlou.com/2018/09/bloom-filters/" target="_blank" rel="noopener">原文链接</a>，原文日期：2018-09-19<br>译者：<a href="https://github.com/WAMaker" target="_blank" rel="noopener">WAMaker</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>，<a href="http://linusling.com" target="_blank" rel="noopener">小铁匠Linus</a>；定稿：<a href="http://forelax.space" target="_blank" rel="noopener">Forelax</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>Swift 4.2 为哈希的实现带来了一些新的变化。在此之前，哈希交由对象本身全权代理。当你向对象索取 <code>哈希值（hashValue）</code>时，它会把处理好的整型值作为哈希值返回。而现在，实现了 <code>Hashable</code> 协议的对象则描述了它的参数是如何组合，并传递给作为入参的 <code>Hasher</code> 对象。这样做有以下几点好处：</p>
+<ul>
+<li>写出好的哈希算法很难。Swift 的使用者不需要知道如何组合参数来获得更好的哈希值。</li>
+<li>出于不提倡用户以任何形式存储哈希值，以及 <a href="https://twitter.com/jckarter/status/1042453831496327168" target="_blank" rel="noopener">一些安全方面因素</a> 的考虑，哈希值在程序每次运行的时候都应该有所不同。描述性的哈希允许哈希函数的种子在每次程序运行的时候发生改变。</li>
+<li>能实现更多有意思的数据结构，这也是我们这篇文章接下来会聚焦的。</li>
+</ul>
+<a id="more"></a>
+<p>我之前写过一篇关于 <a href="http://khanlou.com/2016/07/implementing-dictionary-in-swift/" target="_blank" rel="noopener">如何使用 Swift 的 <code>Hashable</code> 协议从零实现 <code>Dictionary</code></a> 的文章（先阅读它会帮助你阅读本文，但这不是必须的）。今天，我想谈论一种不同类型的，基于概率性而非明确性的数据结构：布隆过滤器（Bloom Filters）。我们会使用 Swift 4.2 的新特性，包括新的哈希模型来构建它。</p>
+<p>布隆过滤器很怪异。想象这样一种数据结构：</p>
+<ul>
+<li>你能够往里插入数据</li>
+<li>你能够查询一个值是否存在</li>
+<li>只需要少量存储资源就能存储大量对象</li>
+</ul>
+<p>但是：</p>
+<ul>
+<li>你不能枚举其中的对象</li>
+<li>它有时会出现误报（但不会出现漏报）</li>
+<li>你不能从中移除数据</li>
+</ul>
+<p>什么时候会想要这种数据结构呢？Medium 使用它们来 <a href="https://blog.medium.com/what-are-bloom-filters-1ec2a50c68ff" target="_blank" rel="noopener">跟踪博文的阅读状态</a>。必应使用它们做 <a href="https://www.youtube.com/watch?v=80LKF2qph6I" target="_blank" rel="noopener">搜索索引</a>。你可以使用它们来构建一个缓存，在无需访问数据库的情况下就能判断用户名是否有效（例如在 @-mention 中）。像服务器这样可能拥有巨大的规模，却不一定有巨大资源的场景中，它们会非常有用。</p>
+<p>（如果你之前做过图形方面的工作，可能好奇它是如何与 <a href="https://en.wikipedia.org/wiki/Bloom_(shader_effect" target="_blank" rel="noopener">高光过滤器</a>) 产生联系的。答案是没有联系。高光过滤器（bloom filters）是小写的 b，而布隆过滤器（Bloom Filters）是由一个叫布隆的人命名的。完全是个巧合。）</p>
+<p>那它们是如何运作的呢？</p>
+<p>将对象放入布隆过滤器如同将它放入集合或字典：计算对象的哈希值，并根据存储数组的大小对哈希值求余。就这点而言，使用布隆过滤器只需要修改该索引处的值：将 false 改为 true，而不用像使用集合或字典那样，把对象存放到索引位置。</p>
+<p>我们先通过一个简单的例子来理解过滤器是如果运作的，之后再对它进行扩展。想象一个拥有 8 个 false 值的布尔数组（或称之为 <a href="https://gist.github.com/natecook1000/552dc3d23d2fc4a54d2e9fcd309e59e9" target="_blank" rel="noopener">比特数组</a>）：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |</span><br><span class="line">---------------------------------</span><br><span class="line">|   |   |   |   |   |   |   |   |</span><br></pre></td></tr></table></figure>
+<p>它代表了我们的布隆过滤器。我想要插入字符串“soroush”。它的哈希值是 9192644045266971309，当这个值余 8 时得到 5。我们修改那一位的值。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |</span><br><span class="line">---------------------------------</span><br><span class="line">|   |   |   |   |   | * |   |   |</span><br></pre></td></tr></table></figure>
+<p>接下来我想要插入字符串“swift”，它的哈希值是 7052914221234348788，余 8 得 4，修改索引 4 的值。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |</span><br><span class="line">---------------------------------</span><br><span class="line">|   |   |   |   | * | * |   |   |</span><br></pre></td></tr></table></figure>
+<p>要测试布隆过滤器是否包含“soroush”，我再次计算它的哈希值并求余，仍旧得到余数 5，对应值是 true。“soroush”确实在布隆过滤器中。</p>
+<p>然而仅仅测试能够通过的用例是不够的，我们需要写一些会导致失败的用例。测试字符串“khanlou”取余得到的索引值是 2，因此我们知道它不在布隆过滤器中。到此为止一切都好。接下去一个测试：对“hashable”字符串取余得到的索引值是 5，这就发生了一次冲突！即使这个值从来没有被加入过，过滤器仍返回了 true。这便是布隆过滤器会发生误报的例子。</p>
+<p>有两个主要的策略可以尽可能减少误报。第一个策略，也是两个策略中相对有趣的：我们可以使用不同的哈希函数计算两次或三次哈希值而非一次。只要它们都是表现良好的哈希函数（均匀分布，一致性，最小的碰撞几率），我们就能为每个值生成多个索引改变布尔值。这次，我们计算两次“soroush”的哈希值，生成 2 个索引并改变布尔值。这时，当我们检查“khanlou”是否在布隆过滤器中，其中一个哈希值可能会和“soroush”的一个哈希值冲突，但两个值同时发生冲突的可能性就会变得很小。你可以把这个数字扩大。在下面的代码我会做 3 次哈希计算，但你可以做更多次。</p>
+<p>当然，如果你计算更多次哈希值，每个元素在布尔数组中会占据更多的空间。事实上，现在的数据几乎不占用空间。8 个布尔值的数组对应 1 字节。所以第二个减小误报的策略是扩大数组的规模。我们能将数组变得足够大而不用担心它的空间消耗。下面的代码中我们会默认使用 512 比特大小的数组。</p>
+<p>现在，即使同时使用这些策略，你依然会得到冲突，即误报，但冲突的几率会减小。这是布隆过滤器的一个缺陷，但在合适的场景用它来节省速度与空间是一笔不错的交易。</p>
+<p>在开始具体的代码之前我有另外三点想要谈谈。首先，你不能改变布隆过滤器的大小。当你对哈希值取余时，这是在破坏信息，在不保留原始哈希值的情况下你不能回溯之前的信息 —— 保留原始值相当于否决了这个数据结构节约空间的优势。</p>
+<p>其次，你能看到想要枚举布隆过滤器所有的值是多么异想天开。你不再拥有这些值，只是它们以哈希形式存在的替代品。</p>
+<p>最后，你同样能看到想要从布隆过滤器中移除元素是不可能的。如果想将布尔值变回 false，你并不知道是哪些值将它变为 true。是准备移除的值还是其它值？这样做会造成漏报和误报。（这对你来说可能是值得权衡的）你可以在每个索引上保留计数而非布尔值来解决这个问题，虽然保留计数还是会带来存储问题，但根据使用场景的不同，这样做或许是值得的。</p>
+<p>废话不多说，让我们开始着手编码。我在这里做的一些决策和你可能会做的有所不同，第一个不同就是要不要让对象支持范型。我认为让对象包含更多关于它需要存储内容的元数据是有意义的，但如果你发现这样做限制太多，你可以改变它。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">BloomFilter</span>&lt;<span class="title">Element</span>: <span class="title">Hashable</span>&gt; </span>&#123;</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们需要存储两种主要的数据。第一个是 <code>data</code>，用于表示比特数组。它存储了所有和哈希值有关的标记：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">var</span> data: [<span class="type">Bool</span>]</span><br></pre></td></tr></table></figure>
+<p>接下来，我们需要不同的哈希函数。一些布隆过滤器确实会使用不同的方法计算哈希值，但我觉得使用相同的算法，同时混入一个随机生成的值会更简单。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">let</span> seeds: [<span class="type">Int</span>]</span><br></pre></td></tr></table></figure>
+<p>当初始化布隆过滤器时，我们需要初始化这两个实例变量。比特数组会简单的重复 <code>false</code> 值来初始化，而种子值则使用 Swift 4.2 的新 API <code>Int.random</code> 来生成我们需要的种子值。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">init</span>(size: <span class="type">Int</span>, hashCount: <span class="type">Int</span>) &#123;</span><br><span class="line">	data = <span class="type">Array</span>(repeating: <span class="literal">false</span>, <span class="built_in">count</span>: size)</span><br><span class="line">	seeds = (<span class="number">0</span>..&lt;hashCount).<span class="built_in">map</span>(&#123; <span class="number">_</span> <span class="keyword">in</span> <span class="type">Int</span>.random(<span class="keyword">in</span>: <span class="number">0</span>..&lt;<span class="type">Int</span>.<span class="built_in">max</span>) &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>同时，创建一个带有默认值的便利构造器。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">init</span>() &#123;</span><br><span class="line">	<span class="keyword">self</span>.<span class="keyword">init</span>(size: <span class="number">512</span>, hashCount: <span class="number">3</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们要实现两个主要的方法：<code>insert</code> 和 <code>contains</code>。它们都需要接收元素作为参数并为每一个种子值计算出对应的哈希值。私有的帮助方法会很有用。由于种子值代表了“不同的”哈希函数，我们就需要为每一个种子生成对应的哈希值。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">hashes</span><span class="params">(<span class="keyword">for</span> element: Element)</span></span> -&gt; [<span class="type">Int</span>] &#123;</span><br><span class="line">	<span class="keyword">return</span> seeds.<span class="built_in">map</span>(&#123; seed -&gt; <span class="type">Int</span> <span class="keyword">in</span></span><br><span class="line">		<span class="comment">// ...</span></span><br><span class="line">	&#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>要实现函数主体，我们需要创建一个 <code>Hasher</code> 对象（Swift 4.2 新特性），将想要进行哈希计算的对象传给它。带上种子确保了生成的哈希值不会冲突。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">hashes</span><span class="params">(<span class="keyword">for</span> element: Element)</span></span> -&gt; [<span class="type">Int</span>] &#123;</span><br><span class="line">	<span class="keyword">return</span> seeds.<span class="built_in">map</span>(&#123; seed -&gt; <span class="type">Int</span> <span class="keyword">in</span></span><br><span class="line">		<span class="keyword">var</span> hasher = <span class="type">Hasher</span>()</span><br><span class="line">		hasher.combine(element)</span><br><span class="line">		hasher.combine(seed)</span><br><span class="line">		<span class="keyword">let</span> hashValue = <span class="built_in">abs</span>(hasher.finalize())</span><br><span class="line">		<span class="keyword">return</span> hashValue</span><br><span class="line">	&#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>同时，注意哈希值的绝对值。哈希计算有可能产生负数，这会导致我们的数组访问崩溃。取绝对值操作减少了 1 比特的信息熵，对我们来说是有益的。</p>
+<p>理想的情况是你能够使用种子来初始化 <code>Hasher</code> 而不是把它混合进去。Swift 的 <code>Hasher</code> 会在每次程序启动的时候被分配一个不同的种子（除非你 <a href="https://github.com/apple/swift-evolution/blob/master/proposals/0206-hashable-enhancements.md#effect-on-abi-stability" target="_blank" rel="noopener">设置固定的环境变量</a> 让种子在不同启动间保持一致，而这样做通常是一些测试目的），意味着你不能把这些值写到磁盘上。如果我们控制了 <code>Hasher</code> 的种子，我们就能将这些值写到磁盘上了。而就像这个布隆过滤器展示的那样，它应该只被用于内存缓存。</p>
+<p><code>hashes(for:)</code> 方法完成了很多繁重的工作，让 <code>insert</code> 方法非常简洁：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">insert</span><span class="params">(<span class="number">_</span> element: Element)</span></span> &#123;</span><br><span class="line">	hashes(<span class="keyword">for</span>: element)</span><br><span class="line">		.forEach(&#123; hash <span class="keyword">in</span></span><br><span class="line">			data[hash % data.<span class="built_in">count</span>] = <span class="literal">true</span></span><br><span class="line">		&#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>生成所有的哈希值，分别余上 <code>data</code> 数组的长度，并设置对应索引位的值为 <code>true</code>。</p>
+<p><code>contains</code> 方法也同样简单，同时也给了我们使用 Swift 4.2 另一个新特性 <code>allSatisfy</code> 的机会。这个新方法可以判断序列中的所有对象是否都通过了某项用 block 表示的测试：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">contains</span><span class="params">(<span class="number">_</span> element: Element)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> hashes(<span class="keyword">for</span>: element)</span><br><span class="line">		.allSatisfy(&#123; hash <span class="keyword">in</span></span><br><span class="line">			data[hash % data.<span class="built_in">count</span>]</span><br><span class="line">		&#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>因为 <code>data[hash % data.count]</code> 的结果已经是布尔值了，它与 <code>allSatisfy</code> 十分契合。</p>
+<p>你也可以添加 <code>isEmpty</code> 方法用来检测 <code>data</code> 中的所有值是否都是 false。</p>
+<p>布隆过滤器是一种奇怪的数据结构。我们接触的大多数数据结构都是明确性的。当把一个对象放入字典中时，你知道那个值之后一直在那儿。而布隆过滤器是概率性的，牺牲确定性来换取空间和速度。布隆过滤器不是你会每天用的数据结构，但当你确实需要它时，就会感受到有它真好。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Khanlou/">Khanlou</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift/">Swift</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2018/12/13/bloom-filters/" data-title="布隆过滤器与 Swift 4.2 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2018/12/17/swift-property-observers/" title="Swift 属性观察器">
+  <strong>上一篇</strong><br/>
+  <span>
+  Swift 属性观察器</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2018/12/06/friday-qa-2015-04-17-lets-build-swiftarray/"  title="让我们构建一个Swift.Array">
+ <strong>下一篇</strong><br/> 
+ <span>让我们构建一个Swift.Array
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2018/12/13/bloom-filters/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ 
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>43</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>67</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>36</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>169</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>98</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>84</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2019 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftGG 专属 Reveal 优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/XzKhGY">领取立减 143 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
