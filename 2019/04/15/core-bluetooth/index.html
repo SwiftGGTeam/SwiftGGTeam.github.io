@@ -1,0 +1,1114 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  
+    <title>Core Bluetooth 教程 | 在 iOS 11 中使用 Core Bluetooth | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="蓝牙，Core Bluetooth Framework,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="详细描述了使用 Core Bluetooth 的全流程。包括注册成为 Bluetooth SIG 的会员，以及 GATT 规范的查阅。">
+<meta name="keywords" content="蓝牙，Core Bluetooth Framework">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在 iOS 11 中使用 Core Bluetooth">
+<meta property="og:url" content="https://swift.gg/2019/04/15/core-bluetooth/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="详细描述了使用 Core Bluetooth 的全流程。包括注册成为 Bluetooth SIG 的会员，以及 GATT 规范的查阅。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://appcoda.com/wp-content/uploads/2018/04/membership.png">
+<meta property="og:image" content="https://appcoda.com/wp-content/uploads/2018/04/central-peripheral.png">
+<meta property="og:image" content="https://appcoda.com/wp-content/uploads/2018/04/heart-rate-monitor-device.png">
+<meta property="og:image" content="https://appcoda.com/wp-content/uploads/2018/04/bluetooth-found-ryhthm.png">
+<meta property="og:image" content="https://appcoda.com/wp-content/uploads/2018/04/hrm-demo-1024x433.png">
+<meta property="og:updated_time" content="2019-04-15T08:11:35.373Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="在 iOS 11 中使用 Core Bluetooth">
+<meta name="twitter:description" content="详细描述了使用 Core Bluetooth 的全流程。包括注册成为 Bluetooth SIG 的会员，以及 GATT 规范的查阅。">
+<meta name="twitter:image" content="https://appcoda.com/wp-content/uploads/2018/04/membership.png">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2019/04/15/core-bluetooth/" target="_blank" title="在 iOS 11 中使用 Core Bluetooth" itemprop="url">在 iOS 11 中使用 Core Bluetooth</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2019-04-15T00:00:00.000Z" itemprop="datePublished">2019-04-15</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Andrew Jaffee，<a href="https://appcoda.com/core-bluetooth/" target="_blank" rel="noopener">原文链接</a>，原文日期：2018-04-17<br>译者：<a href="https://github.com/dzyding" target="_blank" rel="noopener">灰s</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a>，<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>；定稿：<a href="http://forelax.space" target="_blank" rel="noopener">Forelax</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>作为 iOS 开发，我们十分清楚人们都喜欢互通性。我们喜欢通过无线设备与其他人进行沟通这一点是显而易见的。最近，我们开始希望能够与那些曾经被认为是独立的普通设备进行<em>通信</em>。我们开始喜欢，甚至是期望，部分无线设备可以收集并且分析自己的数据（通常称为“可穿戴设备”）。许多设备已经成为我们生活里的一部分，还为还有一个专门的术语来描述它：“Internet of Things” 或者 “IoT”（物联网）。现在地球上有数十亿的无线通讯设备。在这篇教程中，我们将聚焦 IoT 其中的一部分：蓝牙。  </p>
+<p>我将说明蓝牙技术背后的基本概念，以及：  </p>
+<ul>
+<li>展示如何精通蓝牙方向的软件开发，从而为你提供巨大的职业机遇  </li>
+<li>提醒你必须去确认在发布一个使用蓝牙技术的应用时是否需要通过“资格审查”  </li>
+<li>给你提供 Apple 的<a href="https://developer.apple.com/documentation/corebluetooth" target="_blank" rel="noopener"><strong><em>Core Bluetooth</em></strong></a> 框架概述 (<a href="https://developer.apple.com/library/archive/documentation/NetworkingInternetWeb/Conceptual/CoreBluetooth_concepts/AboutCoreBluetooth/Introduction.html#//apple_ref/doc/uid/TP40013257-CH1-SW1" target="_blank" rel="noopener"><strong>也可以参阅这里</strong></a>)  </li>
+<li>最后，带领你使用 Swift 4 并通过 <em>Core Bluetooth</em> 和一个蓝牙设备来开发一款用于监控心率的 iOS 应用程序</li>
+</ul>
+<blockquote>
+<p>提示：注意跟随阅读文章中包含的超链接。对于开发者这是重要的资料，它确保你完全理解蓝牙的工作方式以及苹果是如何支持蓝牙这种技术的。</p>
+</blockquote>
+<a id="more"></a>
+<h2 id="蓝牙-一项迅速发展的技术"><a href="#蓝牙-一项迅速发展的技术" class="headerlink" title="蓝牙 - 一项迅速发展的技术"></a>蓝牙 - 一项迅速发展的技术</h2><p>在一篇文章中不可能说清楚如何为整个物联网开发软件，但实际上，对所有这些无线设备进行数据分析是很有启发性的 - 实际上是很不可思议的。连接着的东西无处不在并且可以预测这个小东西的增长速度将是惊人的。如果你观察一下我们今天讨论的内容，在“短程段”中，使用如蓝牙和无线网的技术，然后添加上“广域类别”中，使用如电话的技术（比如: CDMA），<a href="https://www.ericsson.com/en/mobility-report/internet-of-things-forecast" target="_blank" rel="noopener"><strong>你将看到</strong></a> ~ 2014 年的 125 亿设备迅速增加到 2022 年预计的 300 亿。  </p>
+<p>蓝牙是一种短距离无线通讯技术的标准化规范。<a href="https://www.bluetooth.com/zh-cn" target="_blank" rel="noopener"><strong>Bluetooth Special Interest Group（蓝牙技术联盟）</strong></a> 管理和保护这种短程无线技术背后的研发、发展还有知识产权。SIG 确保关于蓝牙的制造商，开发者和销售者他们的硬件和软件都是基于标准化规范。  </p>
+<p>根据 Bluetooth SIG 报道，<a href="https://www.bluetooth.com/bluetooth-technology" target="_blank" rel="noopener"><strong>“今年有将近 40 亿台设备使用蓝牙进行连接。蓝牙将连接手机、平板电脑、个人电脑，蓝牙将会将我们彼此连接。”</strong></a>。一家对短程通讯技术进行深度投资的公司 Ellisys 对此表示认同，并 <a href="https://globenewswire.com/news-release/2018/02/22/1379920/0/en/Ellisys-Increases-Support-for-Bluetooth-Mesh-Networking-on-Protocol-Solutions.html" target="_blank" rel="noopener"><strong>“预估 2018 年将有近 40 亿台新的蓝牙设备上市”</strong></a>。请记住，<em>仅在今年</em>就有 40 亿<em>新</em>蓝牙设备上市。  </p>
+<p>根据这个趋势，一家收集“市场和消费数据”的公司 Statista 认为全球的蓝牙设备 <a href="https://www.statista.com/statistics/283638/installed-base-forecast-bluetooth-enabled-devices-2012-2018/" target="_blank" rel="noopener"><strong>将从 2012 年的 35 亿增长到 2018 年预估的 100 亿</strong></a>。</p>
+<h2 id="对于你的职业生涯，蓝牙意味着什么"><a href="#对于你的职业生涯，蓝牙意味着什么" class="headerlink" title="对于你的职业生涯，蓝牙意味着什么"></a>对于你的职业生涯，蓝牙意味着什么</h2><p>Dogtown Media 有限责任公司，一家 iOS 端“物联网蓝牙应用”精品开发商，该公司声称 <a href="http://www.dogtownmedia.com/app-development-services/internet-of-things-bluetooth-app-development/" target="_blank" rel="noopener"><strong>“根据麦肯锡全球研究所（McKinsey Global Institute）的专家预测，在未来 9 年内，物联网将对全球经济产生超过 6 万亿美元的影响”</strong></a> 。这对于像你我这样的 iOS 开发意味着什么？Dogtown 说 <a href="http://www.dogtownmedia.com/app-development-services/internet-of-things-bluetooth-app-development/" target="_blank" rel="noopener"><strong>“未来几年，对那些有远见的初创企业和创业者来说，将是令人兴奋的、多产的，而且非常有利可图的。”</strong></a><br>翻译：作为一个有前瞻性或者想创业的青年，应该学习使用蓝牙来进行应用程序的开发，因为在这个迅速扩大的市场，你的下个任务或者岗位有很大可能需要这个技能。  </p>
+<p><strong>免责声明</strong>：  </p>
+<blockquote>
+<ul>
+<li><em>我与 Dogtown Media, LLC 之间没有任何的从属关系。在搜索到这篇文章的期间，我发现了这家公司的网站，看到他们专门从事 iOS 端的蓝牙开发。</em>  </li>
+<li><em>我是 Bluetooth SIG 的一名 “Adopter” 级别成员。</em>  </li>
+</ul>
+</blockquote>
+<h2 id="在提交你使用-Core-Bluetooth-开发的应用程序被审核之前"><a href="#在提交你使用-Core-Bluetooth-开发的应用程序被审核之前" class="headerlink" title="在提交你使用 Core Bluetooth 开发的应用程序被审核之前"></a>在提交你使用 Core Bluetooth 开发的应用程序被审核之前</h2><p>在蓝牙技术刚展露头角之际，我经常看到开发者们找一些参考资料，然后立即投入到涉及无线设备的应用开发中，并提交蓝牙应用到 Apple 的 AppStore 中。我想说：别那么快，伙计。  </p>
+<p>Bluetooth SIG 规定，<a href="https://www.bluetooth.com/develop-with-bluetooth/qualification-listing" target="_blank" rel="noopener"><strong>“所有使用蓝牙技术的产品必须完成 Bluetooth Qualification Process（蓝牙资格审核）。”</strong></a> 我听到有人说，“市面上有太多基于蓝牙的应用；没有人会注意到我的”。呃，并不是这样。蓝牙技术有 <a href="https://www.bluetooth.com/about-us/governing-documents" target="_blank" rel="noopener"><strong>版权，专利，并且授权</strong></a> 给应用开发者。如果你想让你的应用程序被聚焦并且展示你集成了蓝牙技术的事实，请记住：  </p>
+<blockquote>
+<p><em>Bluetooth</em> 商标 - 包括 BLUETOOTH 文字商标，图形商标（符文 B 和椭圆形设计），还有组合商标（蓝牙文字商标和设计）- 这些都被 Bluetooth SIG 所拥有。只有 Bluetooth SIG 的成员并且拥有对应资格和申报过的产品才可以展示，相关功能或者使用任何商标。为了保护这些商标，Bluetooth SIG 管理了一套执行程序，监控市场并进行审核，以确保会员使用商标的行为符合蓝牙品牌指南，并确保最终发布的产品与已通过资格审查程序的商品和服务相对应。</p>
+</blockquote>
+<p>来看一下 Bluetooth SIG 的 <a href="https://www.bluetooth.com/develop-with-bluetooth/qualification-listing" target="_blank" rel="noopener"><strong>资质 FAQ</strong></a>：</p>
+<blockquote>
+<p>如果我没有给我的产品申请相应的资质会怎么样?  </p>
+<p>如果你没有给你的产品申请相应的资质，你将成为执法行动的对象。请阅读这里的 <a href="https://www.bluetooth.com/develop-with-bluetooth/qualification-listing" target="_blank" rel="noopener"><strong>更新策略</strong></a>，其中我们概述了升级计划。如果没有采取纠正措施，您的 Bluetooth SIG 会员资质可能被暂停或撤销。</p>
+</blockquote>
+<p>别傻了，别去冒险。最重要的一点是，我们所有人都应该努力追求最高的诚信和诚实，在应该给予信任的时候给予信任，并促进遵守标准，使协同工作成为规范，而不是例外。数千个人贡献了数千个小时的工作和数百万美元用于发展蓝牙的标准和 <a href="http://www.ipwatchdog.com/2015/05/10/evolution-of-technology-bluetooth-the-once-and-future-king/id=57473/" target="_blank" rel="noopener"><strong>多项专利</strong></a>，从而创造了一套明显有用的知识财产。</p>
+<h2 id="别让我吓着你"><a href="#别让我吓着你" class="headerlink" title="别让我吓着你"></a>别让我吓着你</h2><p>人们常常被「商标」、「专利」、「版权」、「资质」、「会员」、等严厉的词语所吓倒，尤其是 “强制执行。”不要开始担心使用蓝牙进行开发的事。<em>加入 Bluetooth SIG！它是免费的！</em> <a href="https://www.bluetooth.com/develop-with-bluetooth/join" target="_blank" rel="noopener"><strong>点击这里</strong></a>，然后：</p>
+<blockquote>
+<p>首先成为一个 Adopter 级别的会员。使用蓝牙技术开发一款产品，会员资格是必须的，Adopter 级别会员拥有以下这些福利：<br>• 根据 <a href="https://www.bluetooth.com/~/media/downloads/pcla%20esign%20version%20version%2011.ashx?la=en" target="_blank" rel="noopener"><strong>Bluetooth Patent/Copyright License Agreement（蓝牙专利/版权许可协议）</strong></a> 使用蓝牙技术生产产品的许可<br>• 根据 <a href="https://www.bluetooth.com/~/media/files/membership/btla.ashx?la=en" target="_blank" rel="noopener"><strong>Bluetooth Trademark License Agreement（蓝牙商标许可协议）</strong></a> 在符合条件的产品上使用蓝牙商标的许可<br>• 能够与数以万计的 Bluetooth SIG 成员建立网络，并在各种各样的行业中合作 — 从芯片制造商到应用程序的开发者，设备制造商和服务提供商<br>• 能够参加 <a href="https://www.bluetooth.com/specifications/working-groups/working-groups-committees" target="_blank" rel="noopener"><strong>SIG 专家组、研究小组和工作组中的子小组</strong></a><br>• 访问诸如 Profile Tuning Suite（PTS）之类的工具，提供协议和协同测试……</p>
+</blockquote>
+<h2 id="成为-Bluetooth-SIG-的一员"><a href="#成为-Bluetooth-SIG-的一员" class="headerlink" title="成为 Bluetooth SIG 的一员"></a>成为 Bluetooth SIG 的一员</h2><p>成为 SIG 的一员 <a href="https://www.bluetooth.com/develop-with-bluetooth/build" target="_blank" rel="noopener"><strong>会包含很多好处</strong></a>。你可以免费使用教育工具包、培训视频、网络研讨会、开发人员论坛、开发人员支持服务、白皮书、产品测试工具，并帮助确保您的应用程序满足国际监管要求（主要是关于 <a href="https://www.fda.gov/MedicalDevices/DigitalHealth/WirelessMedicalDevices/default.htm" target="_blank" rel="noopener"><strong>射频排放</strong></a>）。  </p>
+<p>你只要成为会员就会得到一些曝光。我的公司是它的一个成员，所以在 Bluetooth SIG’s Member Directory 中可以 <a href="https://www.bluetooth.com/develop-with-bluetooth/join/member-directory?q=microIT%20Infrastructure,%20LLC" target="_blank" rel="noopener"><strong>被看到</strong></a>：<br><img src="https://appcoda.com/wp-content/uploads/2018/04/membership.png" alt="">  </p>
+<p>一旦你开发了一款应用，使其通过 SIG 认证，并获得 Apple App Store 的许可，那么你的产品同时也会被 SIG 公开上市，这时你将获得更多的曝光。  </p>
+<h2 id="对应用程序进行资格认证既简单又便宜"><a href="#对应用程序进行资格认证既简单又便宜" class="headerlink" title="对应用程序进行资格认证既简单又便宜"></a>对应用程序进行资格认证既简单又便宜</h2><p>当你对自己基于 Core Bluetooth 开发的应用程序感到满意，并准备将其提交到 Apple App Store 进行审核，请停下，然后前往 Bluetooth SIG 的网页对你的应用程序进行 <a href="https://www.bluetooth.com/develop-with-bluetooth/qualification-listing" target="_blank" rel="noopener"><strong>认证</strong></a>。SIG 将为您提供一个整洁的 <a href="https://launchstudio.bluetooth.com/" target="_blank" rel="noopener"><strong>“Launch Studio”</strong></a>，它是您用来完成 Bluetooth Qualification Process 的在线工具。”  </p>
+<p>对于大多数应用程序，比如我将在本教程中介绍的 “GATT - based Profile Client（app），”认证和上市的费用是 100 美元。花一些精力来确保您的代码符合 Bluetooth 规范和做一些测试，将是非常值得的。最后，可以给你的应用程序印上蓝牙的商标。这个 <a href="https://www.bluetooth.com/develop-with-bluetooth/marketing-branding" target="_blank" rel="noopener"><strong>商标</strong></a> “在全球范围内都是可识别的，消费者认知度高达92%。”  </p>
+<p>请不要担心 100 美元的问题。你更有可能获得一份拥有丰厚薪水或者时薪的工作，并为公司处理这些蓝牙的合规问题。</p>
+<h2 id="理解-Core-Bluetooth"><a href="#理解-Core-Bluetooth" class="headerlink" title="理解 Core Bluetooth"></a>理解 Core Bluetooth</h2><p>大多数情况下，使用蓝牙设备是非常简单的。开发与蓝牙通讯的软件却有可能非常复杂。这就是为什么 Apple 创造了 <a href="https://developer.apple.com/library/archive/documentation/NetworkingInternetWeb/Conceptual/CoreBluetooth_concepts/CoreBluetoothOverview/CoreBluetoothOverview.html#//apple_ref/doc/uid/TP40013257-CH2-SW1" target="_blank" rel="noopener"><strong><em>Core Bluetooth</em></strong> <strong>框架</strong></a>：  </p>
+<blockquote>
+<p>Core Bluetooth 框架让您的 iOS 和 Mac 应用程序与蓝牙低能耗设备通信。例如，您的应用程序可以发现、搜索低能量的外围设备还有与之交互，比如心率监视器、数字恒温器，甚至其他 iOS 设备。  </p>
+</blockquote>
+<blockquote>
+<p>该框架是蓝牙 4.0 规范中关于使用低能耗设备的抽象。就是说，它为你，也就是开发者，隐藏了规范中很多底层的细节，使你更容易开发与低能耗设备进行交互的应用程序。因为该框架是基于标准规范的，所有规范中的很多概念和术语被采用了……  </p>
+</blockquote>
+<p>请注意是“低能量设备”。当使用 <em>Core Bluetooth</em> 我们并不是处理如无线扬声器这样的经典蓝牙设备。与这类设备的通讯会很快的耗尽电池能量。<em>Core Bluetooth</em> 是针对“Bluetooth Low Energy”（BLE）的 API，也称为“Bluetooth 4.0”。BLE 使用的电力要少得多，因为它的设计目的是通信少量的数据。BLE 设备的一个很好的例子是心率监测器（HRM）。它几乎每秒钟只发送几个字节的数据。这就是为什么人们可以带着一个 HRM 或者带着他们的 iPhone 跑一个小时，记录跑步期间心率的变化，而看不到电池电量的巨大消耗。注意，随着本文的进行，像 BLE 这种首字母缩略词的数量正在增加。  </p>
+<p>为了我们能够一起流畅的讨论 <em>Core Bluetooth</em> 你需要学习一个新的词汇表。  </p>
+<p>分别从 <a href="https://developer.apple.com/library/archive/documentation/NetworkingInternetWeb/Conceptual/CoreBluetooth_concepts/CoreBluetoothOverview/CoreBluetoothOverview.html#//apple_ref/doc/uid/TP40013257-CH2-SW17" target="_blank" rel="noopener"><strong>客户端/服务端和生产者/消费者模型</strong></a> 的角度考虑 BLE 协议。<br><img src="https://appcoda.com/wp-content/uploads/2018/04/central-peripheral.png" alt="">  </p>
+<h2 id="The-Peripheral（外围设备）"><a href="#The-Peripheral（外围设备）" class="headerlink" title="The Peripheral（外围设备）"></a>The Peripheral（外围设备）</h2><p><em>外围设备</em>是硬件/软件的一部分，就像 HRM。大多数 HRM 设备搜集或/和计算数据，如每分钟心跳、HRM 的电池电量水平、以及所谓的“RR-Interval”。设备传输这些数据到另一个需要它们的实体或实体组。外围设备是<em>服务者</em>和<em>生产者</em>。市场上比较流行的 HRM 有 <a href="https://www.wahoofitness.com/devices/heart-rate-monitors/wahoo-tickr-heart-rate-strap" target="_blank" rel="noopener"><strong>Wahoo TICKR，</strong></a><a href="https://www.polar.com/us-en/products/accessories/h10_heart_rate_sensor" target="_blank" rel="noopener"><strong>Polar H7，</strong></a>和 <a href="https://www.scosche.com/rhythm-plus-heart-rate-monitor-armband" target="_blank" rel="noopener"><strong>Scosche Rhythm+</strong></a>。<br><img src="https://appcoda.com/wp-content/uploads/2018/04/heart-rate-monitor-device.png" alt="">  </p>
+<p>我将通过编写连接到这三种设备的 Swift 4 代码来展示 BLE 等标准的重要性。  </p>
+<p><strong><em>Core Bluetooth 视角</em></strong>  </p>
+<p>来自 <a href="https://developer.apple.com/documentation/corebluetooth/cbperipheraldelegate" target="_blank" rel="noopener"><strong>苹果的文档</strong></a>：  </p>
+<blockquote>
+<p>CBPeripheralDelegate  </p>
+<p><a href="https://developer.apple.com/documentation/corebluetooth/cbperipheral" target="_blank" rel="noopener"><code>CBPeripheral</code></a> 对象的代理必须遵守 <a href="https://developer.apple.com/documentation/corebluetooth/cbperipheraldelegate" target="_blank" rel="noopener"><code>CBPeripheralDelegate</code></a> 协议。代理使用这个协议的方法来对一个远程外围设备的服务和属性，进行发现、探索、还有交互方面的监控。这个协议里面没有必须遵守的方法。  </p>
+</blockquote>
+<h2 id="The-Central（中央设备）"><a href="#The-Central（中央设备）" class="headerlink" title="The Central（中央设备）"></a>The Central（中央设备）</h2><p><em>中央设备</em>是硬件/软件的一部分，就像 iPhone、iPad、MacBook、<br>iMac 等。这些设备可以使用应用程序扫描像 HRM 这样的蓝牙外围设备。中央设备是一个<em>客户</em>以及 <em>消费者</em>。它们与 HRM 是连通的，所以它们可以使用从外围设备中取出的像每分钟心跳、电池的电量水平、还有“RR-Interval”这样的数据。中央设备接收这些数据，可以对数据执行增值计算，或者只是通过用户界面显示数据，或者是存储数据以供将来分析、展示，或者是聚合和数据分析（就像统计分析需要足够的数据来确定重要的和有意义的趋势），或其他类似的操作。  </p>
+<p><strong><em>Core Bluetooth 视角</em></strong>  </p>
+<p>来自 <a href="https://developer.apple.com/documentation/corebluetooth/cbcentralmanagerdelegate" target="_blank" rel="noopener"><strong>苹果的文档</strong></a>：  </p>
+<blockquote>
+<p><a href="https://developer.apple.com/documentation/corebluetooth/cbcentralmanagerdelegate" target="_blank" rel="noopener"><code>CBCentralManagerDelegate</code></a> 协议定义了方法，<a href="https://developer.apple.com/documentation/corebluetooth/cbcentralmanager" target="_blank" rel="noopener"><code>CBCentralManager</code></a> 对象的代理必须遵守它。协议中的可选方法允许代理来监控对外围设备的发现、连接、还有检索。唯一必须实现的方法表明中央设备的可用性，并且当中央设备的状态发生更新时被调用。</p>
+</blockquote>
+<h2 id="通过广播找到外围设备"><a href="#通过广播找到外围设备" class="headerlink" title="通过广播找到外围设备"></a>通过广播找到外围设备</h2><p>如果你的 iPhone 或 iPad 找不到这些外设从而不能连接到它们，那么 HRM 之类的外设就没什么用了。因此，它们不断通过无线频段发送着数据的小片段（包），说着类似这样的话：“嘿，我是 Scosche Rhythm+ 心率检测器；我能提供类似我的穿戴者每分钟心率的功能；我能提供类似我的电池电量水平的信息。”当一个对心率感兴趣的<em>中央设备</em>通过<em>扫描</em>找到了这个<em>外围设备</em>，中央设备将连接到它并且它会停止广播。  </p>
+<p>你可能已经使用过 iPhone -&gt; <em>设置</em> -&gt; <em>蓝牙</em> 来开启或关闭蓝牙（包括传统的和 BLE）。当切换到开启，你可以看到你的 iPhone 扫描设备并与它们建立连接，就像下面我所截的两张图，搜索，并且将我的 iPhone 连接到一个 Scosche Rhythm+ HRM：<br><img src="https://appcoda.com/wp-content/uploads/2018/04/bluetooth-found-ryhthm.png" alt="">  </p>
+<p>依照 <a href="https://developer.apple.com/library/archive/documentation/NetworkingInternetWeb/Conceptual/CoreBluetooth_concepts/CoreBluetoothOverview/CoreBluetoothOverview.html#//apple_ref/doc/uid/TP40013257-CH2-SW17" target="_blank" rel="noopener"><strong>苹果</strong></a> 的说法：  </p>
+<blockquote>
+<p>外围设备以广播包的形式广播一些数据。一个广播包是一个相对较小的数据束，其中可能包含外围设备所能提供的有用信息，比如外围设备的名字还有主要功能。例如，数字恒温器可能会广播它能提供房间的当前温度。在 BLE 中，广播是外围设备展示其存在的主要方式。另一方面，中央设备可以扫描和监听任何外围设备，只要这些设备的广播信息是它感兴趣的……  </p>
+</blockquote>
+<p>在这篇教程中，过一会我会向你展示怎样使用 Swift 4 来编码进行外围设备的扫描并连接它们。</p>
+<h2 id="外围设备的各种服务"><a href="#外围设备的各种服务" class="headerlink" title="外围设备的各种服务"></a>外围设备的各种服务</h2><p>服务可能不是你认为的那样。服务<em>描述</em>外围设备提供的主要特性或功能。但它并不是一种具体的测量方法，如每分钟心跳数，而是一种描述从外围设备可以得到的与心脏相关的测量方法的分类。  </p>
+<p>依照 <a href="https://developer.apple.com/library/archive/documentation/NetworkingInternetWeb/Conceptual/CoreBluetooth_concepts/CoreBluetoothOverview/CoreBluetoothOverview.html#//apple_ref/doc/uid/TP40013257-CH2-SW17" target="_blank" rel="noopener"><strong>苹果</strong></a> 的说法：  </p>
+<blockquote>
+<p>服务是一个数据和相关行为的集合，用于实现设备（或设备的一部分）的功能或特性。比如，心率检测器的一项服务可能是公开来自监测器的心率传感器的心率数据。</p>
+</blockquote>
+<p>具体定义一个蓝牙“服务”，我们应该看看 Bluetooth SIG 的 <a href="https://www.bluetooth.com/specifications/gatt/services" target="_blank" rel="noopener"><strong>“GATT Services（服务）”</strong></a> 列表，这里 GATT 代表 <a href="https://www.bluetooth.com/specifications/gatt" target="_blank" rel="noopener"><strong>“Generic Attributes（通用属性）”</strong></a>。  </p>
+<p>向下滚动服务 <a href="https://www.bluetooth.com/specifications/gatt/services" target="_blank" rel="noopener"><strong>列表</strong></a>，直到你在 <strong>Name（名字）</strong> 列中看到 “Heart Rate”。注意， <strong>Uniform Type Identifier (统一类型标识符)</strong> 对应的是 “org.bluetooth.service.heart_rate”，<strong>Assigned Number（指定编码）</strong> 则是 0x180D。请注意在后面的代码中我们将使用 0x180D 这个值。  </p>
+<p>点击 <a href="https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.service.heart_rate.xml" target="_blank" rel="noopener"><strong>“Heart Rate（心率）”</strong></a>，你将打开一个网页，上面用粗体字写着 <strong>Name: Heart Rate</strong>。请注意 <strong>Summary（摘要）</strong> ，“HEART RATE Service（心率服务）公开心率和其他与心率传感器相关的数据，用于健身应用。”向下滚动页面就会发现 <strong>Heart Rate</strong> <em>service</em> 本身并不会提供每分钟跳动的实际心率。这个服务是一个其他数据片段的集合，它们被称为 <em>characteristics（特征）</em>。最后，你会得到一个特征来提供重要数据：心率。  </p>
+<p><strong><em>Core Bluetooth 视角</em></strong>  </p>
+<p>来自 <a href="https://developer.apple.com/documentation/corebluetooth/cbservice" target="_blank" rel="noopener"><strong>苹果的文档</strong></a>：  </p>
+<blockquote>
+<p><a href="https://developer.apple.com/documentation/corebluetooth/cbservice" target="_blank" rel="noopener"><code>CBService</code></a> 和它的子类 <a href="https://developer.apple.com/documentation/corebluetooth/cbmutableservice" target="_blank" rel="noopener"><code>CBMutableService</code></a> 代表一个外围设备的服务 - 为实现设备（或设备的一部分）的功能或特性而收集的数据和相关行为。<code>CBService</code> 对象特指远程外围设备（使用 <a href="https://developer.apple.com/documentation/corebluetooth/cbperipheral" target="_blank" rel="noopener"><code>CBPeripheral</code></a> 对象来表示）的服务。服务组可能是主要的，也有可能是次要的，可能会包含一个特征组的代码，也有可能会包含一个服务组（代表其他的服务组）。  </p>
+</blockquote>
+<h2 id="外围设备服务的特征"><a href="#外围设备服务的特征" class="headerlink" title="外围设备服务的特征"></a>外围设备服务的特征</h2><p>外围设备的服务常常被分解成更细化但相关的信息。特征通常是我们找到重要信息、真实<em>数据</em>的地方。再次查看 <a href="https://developer.apple.com/library/archive/documentation/NetworkingInternetWeb/Conceptual/CoreBluetooth_concepts/CoreBluetoothOverview/CoreBluetoothOverview.html#//apple_ref/doc/uid/TP40013257-CH2-SW17" target="_blank" rel="noopener"><strong>苹果</strong></a> 的说明：  </p>
+<blockquote>
+<p>服务本身是由特征或包含的服务（这里指别的服务）组成。特征更详细的提供了外围设备的服务信息。例如，刚才描述的心率服务，可能包含一个描述设备的心率传感器所在目标身体位置的特征和另一个传递心率测量数据的特征。  </p>
+</blockquote>
+<p>让我们继续使用 HRM 作为例子。请返回那个用粗体字写着 <strong>Name: Heart Rate（名字：心率）</strong> 的 <a href="https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.service.heart_rate.xml" target="_blank" rel="noopener"><strong>界面</strong></a>。向下滚动直到你看到 <strong>Service Characteristics（服务特征）</strong>。那是一个包含大量元数据（<em>关于</em>信息的数据）的大表格。请找到 <strong>Heart Rate Measurement（心率测量）</strong> 并点击 <a href="https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.heart_rate_measurement.xml" target="_blank" rel="noopener"><strong>org.bluetooth.characteristic.heart_rate_measurement</strong></a> 然后审查。稍后我会对这个界面进行解释。  </p>
+<p><strong><em>Core Bluetooth 视角</em></strong><br>来自 <a href="https://developer.apple.com/documentation/corebluetooth/cbcharacteristic" target="_blank" rel="noopener"><strong>苹果的文档</strong></a>： </p>
+<blockquote>
+<p><a href="https://developer.apple.com/documentation/corebluetooth/cbcharacteristic" target="_blank" rel="noopener"><code>CBCharacteristic</code></a> 和它的子类 <a href="https://developer.apple.com/documentation/corebluetooth/cbmutablecharacteristic" target="_blank" rel="noopener"><code>CBMutableCharacteristic</code></a> 代表关于外围设备服务的详细信息。<code>CBCharacteristic</code> 对象特指远程外围设备（远程外围设备使用 <code>CBPeripheral</code> 对象表示）服务的特征。一个特征包含一个单一的值以及任意个描述符来描述这个值。特征的属性描述了如何使用这个特征的值以及如何访问这些描述符。</p>
+</blockquote>
+<h2 id="GATT-规范"><a href="#GATT-规范" class="headerlink" title="GATT 规范"></a>GATT 规范</h2><p>当你使用 <em>Core Bluetooth</em> 开发一款需要与蓝牙外围设备交互的应用程序时，你首先应该前往 Bluetooth SIG 的首页。  </p>
+<p>让我们一起回顾我曾经的经历，那会我在开发一个应用程序，用 HRM 做了各种各样非常好玩的功能。查看 <a href="https://www.bluetooth.com/specifications/gatt" target="_blank" rel="noopener"><strong>GATT Specifications（GATT 技术指标）</strong></a> 部分，然后在 <a href="https://www.bluetooth.com/specifications/gatt/services" target="_blank" rel="noopener"><strong>GATT Services（GATT 服务）</strong></a> 下面找到你需要的外围设备服务。  </p>
+<p>在本文介绍的 HRM 示例中，首先在 <a href="https://www.bluetooth.com/specifications/gatt/services" target="_blank" rel="noopener"><strong>GATT Services（GATT 服务）</strong></a> 界面的 <strong>Name（名字）</strong> 列中找到 “Heart Rate”（也就是一个超链接）项。点击 <a href="https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.service.heart_rate.xml" target="_blank" rel="noopener"><strong>“Heart Rate（心率）”</strong></a> 链接并且查看完整的网站。请记住 <strong>Assigned Number（分配符）</strong>（0x180D）然后滑动到底部的 <strong>Service Characteristics（服务特征）</strong> 表。仔细的查看表格并且找到有兴趣的特征。  </p>
+<p>在这个例子中，阅读 <strong>Heart Rate Measurement（心率测量）</strong> 和 <strong>Body Sensor Location（传感器所在身体部位）</strong> 分区，然后点击各自的详细链接，<a href="https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.heart_rate_measurement.xml" target="_blank" rel="noopener"><strong>org.bluetooth.characteristic.heart_rate_measurement</strong></a> 和 <a href="https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.body_sensor_location.xml" target="_blank" rel="noopener"><strong>org.bluetooth.characteristic.body_sensor_location</strong></a>。  </p>
+<p>在 <strong>Heart Rate Measurement（心率测量）</strong> 以及 <strong>Body Sensor Location（传感器所在身体部位）</strong> 界面中，分别记住它们的 <strong>Assigned Number（分配符）</strong>，（0x2A37）和（0x2A38），然后查看界面中的所有信息，以便了解将被发送到该 HRM 应用程序中的蓝牙编码数据结构该如何解译。编写代码时必须把蓝牙编码数据转换成人类可读的格式。  </p>
+<p>随着本教程的深入，我将向你介绍更多细节，特别是当我向你展示，我用来与 BLE HRM 通信的应用程序代码。  </p>
+<p>如果你 <a href="https://www.bluetooth.com/develop-with-bluetooth/join" target="_blank" rel="noopener"><strong>加入</strong></a> Bluetooth SIG ，你可以获得更多关于使用服务和特征进行编程的详细信息。  </p>
+<h2 id="编写-Core-Bluetooth-代码"><a href="#编写-Core-Bluetooth-代码" class="headerlink" title="编写 Core Bluetooth 代码"></a>编写 Core Bluetooth 代码</h2><p>在这次讨论中，我将假设你了解 iOS 应用程序开发的基础知识，包括 Swift 编程语言和 Xcode <em>Single View App</em>（单视图应用程序）模板。测试应用程序的用户界面（UI），包括 Auto Layout（自动布局），代码如下所示，非常简单。  </p>
+<p>我将用一系列步骤来描述代码 — 这些步骤在下面的代码中<em>同样</em>会被解释。因此，在阅读本节中的步骤时，请参阅下面代码中对应的步骤。整个过程基本上是线性的。请记住，其中一些步骤表示回调 — 正在调用的委托方法。  </p>
+<p>在编写应用程序时，我会将 <a href="https://developer.apple.com/library/archive/documentation/NetworkingInternetWeb/Conceptual/CoreBluetooth_concepts/AboutCoreBluetooth/Introduction.html#//apple_ref/doc/uid/TP40013257-CH1-SW1" target="_blank" rel="noopener"><strong><em>Core Bluetooth</em></strong></a> 组件分解成协议或类 — 例如，将核心功能从 UI 中分离出来。但这段代码的目的是向您展示 <em>Core Bluetooth</em> 如何在最少的干扰下工作。我的注释很简单，而且有实际意义。在一个页面中你只会看到重要部分。  </p>
+<h2 id="示例应用程序样式"><a href="#示例应用程序样式" class="headerlink" title="示例应用程序样式"></a>示例应用程序样式</h2><p>针对这篇文章我所开发的应用程序 UI 极其简单。当应用程序被启动，它开始扫描并尝试匹配一个 HRM。扫描的过程通过 <code>UIActivityIndicatorView</code> 类在屏幕上显示并旋转来表明。当没有匹配上任一 HRM 时，通过一个红色正方形的 <code>UIView</code> 来表明。一旦发现一个 HRM 并初步链接，<code>UIActivityIndicatorView</code> 停止旋转并隐藏，并且红色 <code>UIView</code> 转变为绿色。当 HRM 完全链接并被访问，我会显示 HRM 的品牌型号和穿戴者放置在身体上的预定位置。此时我会开始读取并且显示穿戴者每分钟的心率，大约每秒更新。大多数 HRM 都是每秒发送一次每分钟心率值。我人为地设计了一个心率数字的脉冲动画让应用看起来更有吸引力，但是你看到的是我<em>真实</em>的心率。当 HRM 断开链接，我清空所有的信息文本，将正方形 <code>UIView</code> 转变为红色，显示 <code>UIActivityIndicatorView</code> 并开始旋转，同时再次开始扫描 HRM。  </p>
+<p>以下是我的应用程序在与三个不同品牌的 HRM 匹配运行时的样式 — Scosche Rhythm+，Wahoo TICKR，还有Polar H7：  </p>
+<p><img src="https://appcoda.com/wp-content/uploads/2018/04/hrm-demo-1024x433.png" alt="">  </p>
+<p>Rhythm+ 使用红外光“看”我的静脉以确定心率。TICKR 和 H7 使用电极检测告诉我心跳的电脉冲。</p>
+<h2 id="逐步了解我的代码"><a href="#逐步了解我的代码" class="headerlink" title="逐步了解我的代码"></a>逐步了解我的代码</h2><p>你可以在下一段找到完整的源代码。在这里，我将向你介绍实现步骤。  </p>
+<p><strong>Step 0.00 ：</strong> 我必须导入 <code>CoreBluetooth</code> 框架。  </p>
+<p><strong>Step 0.0 ：</strong> 指定 GATT 中的 <strong>Assigned Numbers（分配符）</strong> 为常量。我这样做让蓝牙规范的标识符更具可读性和可维护性，针对 <a href="https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.service.heart_rate.xml" target="_blank" rel="noopener"><strong>“心率”</strong></a> 服务，其 <a href="https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.heart_rate_measurement.xml" target="_blank" rel="noopener"><strong>“心率测量”</strong></a> 特征，还有其 <a href="https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.body_sensor_location.xml" target="_blank" rel="noopener"><strong>“身体传感器位置”</strong></a> 特征。  </p>
+<p><strong>Step 0.1 ：</strong> 创建一个 <code>UIViewController</code> 的子类 <code>HeartRateMonitorViewController</code>。使 <code>HeartRateMonitorViewController</code> 遵守 <a href="https://developer.apple.com/documentation/corebluetooth/cbcentralmanagerdelegate" target="_blank" rel="noopener"><code>**CBCentralManagerDelegate**</code></a> 和 <a href="https://developer.apple.com/documentation/corebluetooth/cbperipheraldelegate" target="_blank" rel="noopener"><code>**CBPeripheralDelegate**</code></a> 协议。我使用协议和委托的设计模式，正如我在 AppCoda 文章中 <a href="https://appcoda.com/protocol-oriented-programming/" target="_blank" rel="noopener"><strong>这里</strong></a> 还有 <a href="https://appcoda.com/swift-delegate/" target="_blank" rel="noopener"><strong>这里</strong></a> 分别描述的那样。我们将实现来自两个协议的方法。我们将调用一些 <em>Core Bluetooth</em> 的方法，一些方法将由 <em>Core Bluetooth</em> 为我们调用，以响应我们自己的调用。  </p>
+<p><strong>Step 0.2 ：</strong> 我们在 <code>HeartRateMonitorViewController</code> 类中定义实例变量，它们代表 <code>CBCentralManager</code> 和 <code>CBPeripheral</code> 类，所以它们在应用程序的生命周期内都是<em>持续存在</em>的。  </p>
+<p><strong>Step 1 ：</strong> 我们为进程在后台创建一个并发队列。我希望 <em>Core Bluetooth</em> 的运行发生在后台。我希望 UI 保持响应。说不定，在一个更复杂的应用程序中，HRM 可能会运行数小时，为用户收集心率数据。用户可能希望使用其他应用程序特性，例如，修改应用程序设置，或者，如果用户正在跑步，并且希望使用 <code>Core Location</code> 来跟踪跑步的路线。因此，在心率数据正在收集和显示的同时，用户可以收集和/或查看他们的地理位置。  </p>
+<p><strong>Step 2 ：</strong> 创建用于扫描、连接、管理和从外围设备收集数据的控制中心。这是<em>必要</em>的一步。缺少了控制中心 <em>Core Bluetooth</em> 将无法工作。另一个必要的：由于 <code>HeartRateMonitorViewController</code> 采用了 <code>CBCentralManagerDelegate</code>，我们将 <code>centralManager</code> 的委托属性设置成 <code>HeartRateMonitorViewController</code>（<code>self</code>）。同时我们还为控制中心指定了 <code>DispatchQueue</code>。  </p>
+<p><strong>Step 3.1 ：</strong> <code>centralManagerDidUpdateState</code> 方法的调用基于设备的蓝牙状态。理想情况下，我们应该考虑一个场景，在该场景中，用户无意（或故意）在 <code>Settings（设置）</code> 应用程序中关闭蓝牙。我们<em>只能</em>在蓝牙为 <code>.poweredOn</code> 状态时才能扫描外围设备。  </p>
+<p><strong>Step 3.2 ：</strong> 控制中心应该扫描感兴趣的外围设备，但<em>前提</em>是设备（如iPhone）开启了蓝牙。还记得上面标题为“通过广播找到外围设备”的部分吗？我们就是这样处理这个调用的。我们的监听<em>只</em>针对正在广播 <a href="https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.service.heart_rate.xml" target="_blank" rel="noopener"><strong>心率</strong></a> 服务（0x180D）的 HRM。我们可以通过添加特定服务的 <code>CBUUIDs</code> 到 <code>serviceUUIDs</code> 数组参数（标记为 <code>withServices</code>），从而达到监听并且连接更多外围设备的目的。例如，在一些健康相关的应用程序中，我们可以监听并连接到 HRM <em>和</em>血压监测器或者 BPM（尽管我们需要再创建一个 <code>CBPeripheral</code> 类的实例变量）。注意，如果我们做了这个调用：  </p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">centralManager?.scanForPeripherals(withServices: <span class="literal">nil</span>)</span><br></pre></td></tr></table></figure>
+<p>我们可以监听范围内<em>所有</em>蓝牙设备的广播。在一些蓝牙功能类的应用程序中它可能有用。  </p>
+<p><strong>Step 4.1 ：</strong> 找到这个应用程序可以连接哪些<em>感兴趣的</em>外围设备（HRM）。这个 <code>didDiscover</code> 方法告诉我们，在扫描时，控制中心已经发现了正在广播的 HRM。  </p>
+<p><strong>Step 4.2 ：</strong> 我们<em>必须</em>在类的实例变量中保存刚刚发现的外围设备的引用，它将持续存在。如果我们仅仅只是使用了一个局部变量，我们会倒霉的。  </p>
+<p><strong>Step 4.3 ：</strong> 因为 <code>HeartRateMonitorViewController</code> 采用了 <code>CBPeripheralDelegate</code> 协议，所以 <code>peripheralHeartRateMonitor</code> 对象必须将它的 <code>delegate</code> 属性设置为 <code>HeartRateMonitorViewController</code>（<code>self</code>）。  </p>
+<p><strong>Step 5 ：</strong> 我们在 <code>didDiscover</code> 中告诉控制中心停止扫描以便保护电池寿命。当已经连接的 HRM 或外围设备断开连接时，我们可以再次开启扫描。  </p>
+<p><strong>Step 6 ：</strong> 此时还在 <code>didDiscover</code> 中，我们连接到被发现的感兴趣的外围设备，一个 HRM。  </p>
+<p><strong>Step 7 ：</strong> <code>didConnect</code> 方法<em>仅仅</em>“当成功与一个外围设备连接时调用。”请注意“成功”这个词。如果你发现一个外围设备但不能连接，那么你需要进行一些调试。请注意我更新了 UI 用来显示我连接了那个外围设备，并表明我已经停止扫描，以及其他一些事情。  </p>
+<p><strong>Step 8 ：</strong> 此时还在 <code>didConnect</code> 方法中，我们在外围设备上寻找感兴趣的服务。具体来说，我们希望找到 <a href="https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.service.heart_rate.xml" target="_blank" rel="noopener"><strong>Heart Rate（心率）</strong></a>（0x180D）服务。  </p>
+<p><strong>Step 9 ：</strong> 当 <code>didDiscoverServices</code> 方法被调用的时候，说明在我们所连接的外围设备上发现了 <a href="https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.service.heart_rate.xml" target="_blank" rel="noopener"><strong>“Heart Rate（心率）”</strong></a> 服务。请记住我们需要寻找感兴趣的<em>特征</em>。这里我对 <strong>Heart Rate（心率）</strong> 服务的所有特征进行了一次循环以找到我接下来要用的那个。如果你前往 Bluetooth SIG 网页中 <a href="https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.service.heart_rate.xml" target="_blank" rel="noopener"><strong>“Heart Rate（心率）”</strong></a> 服务对应的页面，滚动到下面标记为 <strong>Service Characteristics（服务特征）</strong> 的分区，就可以查看那三个可用的特征。  </p>
+<p><strong>Step 10 ：</strong> <code>didDiscoverCharacteristicsFor service</code> 方法证明我们已经发现了感兴趣的服务中所有的特征。  </p>
+<p><strong>Step 11 ：</strong> 首先，我订阅了一个通知 - “read” - 关于感兴趣的 <strong>Body Sensor Location（传感器所在身体部位）</strong> 特征。前往 <a href="https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.service.heart_rate.xml" target="_blank" rel="noopener"><strong>“Heart Rate（心率）”</strong></a> 服务的页面，你会发现这个特征被标记为“Read Mandatory。”调用 <code>peripheral.readValue</code> 将会引起 <code>peripheral:didUpdateValueForCharacteristic:error:</code> 方法稍后被调用，所以我可以将这个特征解析成人类语言。其次，我订阅了一个定期通知 — “notify” — 关于感兴趣的 <strong>Heart Rate Measurement（心率测量）</strong> 特征。前往 <a href="https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.service.heart_rate.xml" target="_blank" rel="noopener"><strong>“Heart Rate（心率）”</strong></a> 服务的页面，你会发现这个特征被标记为“Notify Mandatory。”调用 <code>peripheral.setNotifyValue</code> 将会引起 <code>peripheral:didUpdateValueForCharacteristic:error:</code> 方法稍后被调用，并且是几乎<em>每一秒钟</em>触发一次，所以我可以将这个特征解析成人类语言。  </p>
+<p><strong>Step 12 ：</strong> 因为我对特征 <strong>Body Sensor Location（传感器所在身体部位）</strong> （0x2A38）订阅了读取值，并且对特征 <strong>Heart Rate Measurement（心率测量）</strong> （0x2A37）订阅了定期获取通知，所以如果它们发送值或者定期更新，我将分别获得这两个二进制值。  </p>
+<p><strong>Step 13 ：</strong> 将 BLE <strong>Heart Rate Measurement（心率测量）</strong> 的数据解译成人们可读的格式。前往 GATT 规范的 <a href="https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.heart_rate_measurement.xml" target="_blank" rel="noopener"><strong>页面</strong></a> 找到这个特征。第一个字节是关于其余数据的元数据 (<strong>标记</strong>)。规范告诉我看第一个字节的最低有效位，<strong>Heart Rate Value Format bit（心率值的标识位）</strong>。如果是 0（zero），每分钟的心跳数将以 <code>UINT8</code> 格式在第二字节。我从来没有遇到过一个 HRM 使用第二个字节以外的任何字节，我在这里演示的三个 HRM 也不例外。这就是为什么我忽略了 <strong>Heart Rate Value Format bit（心率值的标识位）</strong> 值为 1（one）的用例。我看过所有被提到的实现，但从来没有能够测试这些实现。对于我无法重现的情况，我不会发表任何看法。  </p>
+<p><strong>Step 14 ：</strong> 将 BLE <strong>Body Sensor Location（传感器所在身体部位）</strong> 的数据解译成人们可读的格式。前往 GATT 规范的 <a href="https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.body_sensor_location.xml" target="_blank" rel="noopener"><strong>页面</strong></a> 找到这个特征。这个特征非常简单。将值 1、2、3、4、5、6 或 7 存储在 8 位中。形成的文本字符串与这些值以解译为目的的展示是一样的。  </p>
+<p><strong>Step 15 ：</strong> 当一个外围设备从控制中心断开时，采取适当的行动。我更新我的 UI 以及……  </p>
+<p><strong>Step 16 ：</strong> 开始扫描，为了发现一个正在广播 <strong>Heart Rate（心率）</strong> 服务（0x180D）的外围设备。  </p>
+<h2 id="我的源代码"><a href="#我的源代码" class="headerlink" title="我的源代码"></a>我的源代码</h2><p>这里是对于我们刚刚所讨论的实现，完整的源代码：<br><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> UIKit</span><br><span class="line"></span><br><span class="line"><span class="comment">// STEP 0.00: 必须导入 CoreBluetooth framework</span></span><br><span class="line"><span class="keyword">import</span> CoreBluetooth</span><br><span class="line"></span><br><span class="line"><span class="comment">// STEP 0.0: 指定 GATT 中的 "Assigned Numbers" 为常量，这样它们会拥有更好的可读性和可维护性</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// MARK: - Core Bluetooth 服务 ID</span></span><br><span class="line"><span class="keyword">let</span> <span class="type">BLE_Heart_Rate_Service_CBUUID</span> = <span class="type">CBUUID</span>(string: <span class="string">"0x180D"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// MARK: - Core Bluetooth 特征 ID</span></span><br><span class="line"><span class="keyword">let</span> <span class="type">BLE_Heart_Rate_Measurement_Characteristic_CBUUID</span> = <span class="type">CBUUID</span>(string: <span class="string">"0x2A37"</span>)</span><br><span class="line"><span class="keyword">let</span> <span class="type">BLE_Body_Sensor_Location_Characteristic_CBUUID</span> = <span class="type">CBUUID</span>(string: <span class="string">"0x2A38"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// STEP 0.1: 这个类同时采用了控制中心和外围设备的委托协议，所以必须遵守这些协议的要求</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">HeartRateMonitorViewController</span>: <span class="title">UIViewController</span>, <span class="title">CBCentralManagerDelegate</span>, <span class="title">CBPeripheralDelegate</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// MARK: - Core Bluetooth 类的成员变量</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// STEP 0.2: 分别创建 CBCentralManager 和 CBPeripheral 的实例变量</span></span><br><span class="line">    <span class="comment">// 所以它们在应用程序的生命周期里持续存在</span></span><br><span class="line">    <span class="keyword">var</span> centralManager: <span class="type">CBCentralManager</span>?</span><br><span class="line">    <span class="keyword">var</span> peripheralHeartRateMonitor: <span class="type">CBPeripheral</span>?</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// MARK: - UI outlets / 成员变量</span></span><br><span class="line">    </span><br><span class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">weak</span> <span class="keyword">var</span> connectingActivityIndicator: <span class="type">UIActivityIndicatorView</span>!</span><br><span class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">weak</span> <span class="keyword">var</span> connectionStatusView: <span class="type">UIView</span>!</span><br><span class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">weak</span> <span class="keyword">var</span> brandNameTextField: <span class="type">UITextField</span>!</span><br><span class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">weak</span> <span class="keyword">var</span> sensorLocationTextField: <span class="type">UITextField</span>!</span><br><span class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">weak</span> <span class="keyword">var</span> beatsPerMinuteLabel: <span class="type">UILabel</span>!</span><br><span class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">weak</span> <span class="keyword">var</span> bluetoothOffLabel: <span class="type">UILabel</span>!</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 设置 HealthKit </span></span><br><span class="line">    <span class="keyword">let</span> healthKitInterface = <span class="type">HealthKitInterface</span>()</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// MARK: - UIViewController delegate</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.viewDidLoad()</span><br><span class="line">        <span class="comment">// 在视图加载完成以后，通常是通过一个 nib，做所有附加的设置。</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 最初，我们在进行扫描并且没有产生连接</span></span><br><span class="line">        connectingActivityIndicator.backgroundColor = <span class="type">UIColor</span>.white</span><br><span class="line">        connectingActivityIndicator.startAnimating()</span><br><span class="line">        connectionStatusView.backgroundColor = <span class="type">UIColor</span>.red</span><br><span class="line">        brandNameTextField.text = <span class="string">"----"</span></span><br><span class="line">        sensorLocationTextField.text = <span class="string">"----"</span></span><br><span class="line">        beatsPerMinuteLabel.text = <span class="string">"---"</span></span><br><span class="line">        <span class="comment">// 以防 Bluetooth 被关闭</span></span><br><span class="line">        bluetoothOffLabel.alpha = <span class="number">0.0</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">// STEP 1: 为控制中心在后台创建一个并发队列</span></span><br><span class="line">        <span class="keyword">let</span> centralQueue: <span class="type">DispatchQueue</span> = <span class="type">DispatchQueue</span>(label: <span class="string">"com.iosbrain.centralQueueName"</span>, attributes: .concurrent)</span><br><span class="line">        <span class="comment">// STEP 2: 创建用于扫描、连接、管理和从外围设备收集数据的控制中心。</span></span><br><span class="line">        centralManager = <span class="type">CBCentralManager</span>(delegate: <span class="keyword">self</span>, queue: centralQueue)</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 从 HKHealthStore 读取心率数据</span></span><br><span class="line">        <span class="comment">// healthKitInterface.readHeartRateData()</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 从 HKHealthStore 读取性别类型</span></span><br><span class="line">        <span class="comment">// healthKitInterface.readGenderType()</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">didReceiveMemoryWarning</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.didReceiveMemoryWarning()</span><br><span class="line">        <span class="comment">// 处理任何可以重新创建的资源</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// MARK: - CBCentralManagerDelegate methods</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// STEP 3.1: 这个方法的调用基于设备的蓝牙状态； </span></span><br><span class="line">    <span class="comment">// 仅在 Bluetooth 为 .poweredOn 时才可以扫描外围设备</span></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">centralManagerDidUpdateState</span><span class="params">(<span class="number">_</span> central: CBCentralManager)</span></span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">switch</span> central.state &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">case</span> .unknown:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">"Bluetooth status is UNKNOWN"</span>)</span><br><span class="line">            bluetoothOffLabel.alpha = <span class="number">1.0</span></span><br><span class="line">        <span class="keyword">case</span> .resetting:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">"Bluetooth status is RESETTING"</span>)</span><br><span class="line">            bluetoothOffLabel.alpha = <span class="number">1.0</span></span><br><span class="line">        <span class="keyword">case</span> .unsupported:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">"Bluetooth status is UNSUPPORTED"</span>)</span><br><span class="line">            bluetoothOffLabel.alpha = <span class="number">1.0</span></span><br><span class="line">        <span class="keyword">case</span> .unauthorized:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">"Bluetooth status is UNAUTHORIZED"</span>)</span><br><span class="line">            bluetoothOffLabel.alpha = <span class="number">1.0</span></span><br><span class="line">        <span class="keyword">case</span> .poweredOff:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">"Bluetooth status is POWERED OFF"</span>)</span><br><span class="line">            bluetoothOffLabel.alpha = <span class="number">1.0</span></span><br><span class="line">        <span class="keyword">case</span> .poweredOn:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">"Bluetooth status is POWERED ON"</span>)</span><br><span class="line">            </span><br><span class="line">            <span class="type">DispatchQueue</span>.main.async &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">                <span class="keyword">self</span>.bluetoothOffLabel.alpha = <span class="number">0.0</span></span><br><span class="line">                <span class="keyword">self</span>.connectingActivityIndicator.startAnimating()</span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// STEP 3.2: 扫描我们感兴趣的外围设备</span></span><br><span class="line">            centralManager?.scanForPeripherals(withServices: [<span class="type">BLE_Heart_Rate_Service_CBUUID</span>])</span><br><span class="line">            </span><br><span class="line">        &#125; <span class="comment">// END switch</span></span><br><span class="line">        </span><br><span class="line">    &#125; <span class="comment">// END func centralManagerDidUpdateState</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// STEP 4.1: 找到这个应用程序可以连接哪些感兴趣的外围设备</span></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">centralManager</span><span class="params">(<span class="number">_</span> central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber)</span></span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">print</span>(peripheral.name!)</span><br><span class="line">        decodePeripheralState(peripheralState: peripheral.state)</span><br><span class="line">        <span class="comment">// STEP 4.2: 必须储存一个外围设备的引用到类的实例变量中</span></span><br><span class="line">        peripheralHeartRateMonitor = peripheral</span><br><span class="line">        <span class="comment">// STEP 4.3: 因为 HeartRateMonitorViewController 采用了 CBPeripheralDelegate 协议，</span></span><br><span class="line">        <span class="comment">// 所以 peripheralHeartRateMonitor 必须设置他的 </span></span><br><span class="line">        <span class="comment">// delegate 属性为 HeartRateMonitorViewController (self)</span></span><br><span class="line">        peripheralHeartRateMonitor?.delegate = <span class="keyword">self</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">// STEP 5: 停止扫描以保护电池的寿命；当断开链接的时候再次扫描。</span></span><br><span class="line">        centralManager?.stopScan()</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// STEP 6: 与已经发现的，感兴趣的外围设备建立连接</span></span><br><span class="line">        centralManager?.connect(peripheralHeartRateMonitor!)</span><br><span class="line">        </span><br><span class="line">    &#125; <span class="comment">// END func centralManager(... didDiscover peripheral</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// STEP 7: “当一个与外围设备的连接被成功创建时调用。”</span></span><br><span class="line">    <span class="comment">// 只有当我们知道与外围设备的连接建立成功之后才能前往下一步</span></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">centralManager</span><span class="params">(<span class="number">_</span> central: CBCentralManager, didConnect peripheral: CBPeripheral)</span></span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="type">DispatchQueue</span>.main.async &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">            </span><br><span class="line">            <span class="keyword">self</span>.brandNameTextField.text = peripheral.name!</span><br><span class="line">            <span class="keyword">self</span>.connectionStatusView.backgroundColor = <span class="type">UIColor</span>.green</span><br><span class="line">            <span class="keyword">self</span>.beatsPerMinuteLabel.text = <span class="string">"---"</span></span><br><span class="line">            <span class="keyword">self</span>.sensorLocationTextField.text = <span class="string">"----"</span></span><br><span class="line">            <span class="keyword">self</span>.connectingActivityIndicator.stopAnimating()</span><br><span class="line">            </span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// STEP 8: 在外围设备上寻找感兴趣的服务</span></span><br><span class="line">        peripheralHeartRateMonitor?.discoverServices([<span class="type">BLE_Heart_Rate_Service_CBUUID</span>])</span><br><span class="line"></span><br><span class="line">    &#125; <span class="comment">// END func centralManager(... didConnect peripheral</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// STEP 15: 当一个外围设备断开连接，使用适当的方法</span></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">centralManager</span><span class="params">(<span class="number">_</span> central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?)</span></span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// print("Disconnected!")</span></span><br><span class="line">        </span><br><span class="line">        <span class="type">DispatchQueue</span>.main.async &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">            </span><br><span class="line">            <span class="keyword">self</span>.brandNameTextField.text = <span class="string">"----"</span></span><br><span class="line">            <span class="keyword">self</span>.connectionStatusView.backgroundColor = <span class="type">UIColor</span>.red</span><br><span class="line">            <span class="keyword">self</span>.beatsPerMinuteLabel.text = <span class="string">"---"</span></span><br><span class="line">            <span class="keyword">self</span>.sensorLocationTextField.text = <span class="string">"----"</span></span><br><span class="line">            <span class="keyword">self</span>.connectingActivityIndicator.startAnimating()</span><br><span class="line">            </span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// STEP 16: 在这个用例中，开始扫描相同或其他的外设，只要它们是 HRM，就可以重新联机</span></span><br><span class="line">        centralManager?.scanForPeripherals(withServices: [<span class="type">BLE_Heart_Rate_Service_CBUUID</span>])</span><br><span class="line">        </span><br><span class="line">    &#125; <span class="comment">// END func centralManager(... didDisconnectPeripheral peripheral</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// MARK: - CBPeripheralDelegate methods</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">peripheral</span><span class="params">(<span class="number">_</span> peripheral: CBPeripheral, didDiscoverServices error: Error?)</span></span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> service <span class="keyword">in</span> peripheral.services! &#123;</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">if</span> service.uuid == <span class="type">BLE_Heart_Rate_Service_CBUUID</span> &#123;</span><br><span class="line">                </span><br><span class="line">                <span class="built_in">print</span>(<span class="string">"Service: <span class="subst">\(service)</span>"</span>)</span><br><span class="line">                </span><br><span class="line">                <span class="comment">// STEP 9: 在感兴趣的服务中寻找感兴趣的特征</span></span><br><span class="line">                peripheral.discoverCharacteristics(<span class="literal">nil</span>, <span class="keyword">for</span>: service)</span><br><span class="line">                </span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">    &#125; <span class="comment">// END func peripheral(... didDiscoverServices</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// STEP 10: 从感兴趣的服务中，确认我们所发现感兴趣的特征</span></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">peripheral</span><span class="params">(<span class="number">_</span> peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?)</span></span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> characteristic <span class="keyword">in</span> service.characteristics! &#123;</span><br><span class="line">            <span class="built_in">print</span>(characteristic)</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">if</span> characteristic.uuid == <span class="type">BLE_Body_Sensor_Location_Characteristic_CBUUID</span> &#123;</span><br><span class="line">                </span><br><span class="line">                <span class="comment">// STEP 11: 订阅关于感兴趣特征的单次通知；</span></span><br><span class="line">                <span class="comment">// “当你使用这个方法去读取特征的值时，外围设备将会调用…… </span></span><br><span class="line">                <span class="comment">// peripheral:didUpdateValueForCharacteristic:error:”</span></span><br><span class="line">                <span class="comment">//</span></span><br><span class="line">                <span class="comment">// Read    Mandatory</span></span><br><span class="line">                <span class="comment">//</span></span><br><span class="line">                peripheral.readValue(<span class="keyword">for</span>: characteristic)</span><br><span class="line">                </span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> characteristic.uuid == <span class="type">BLE_Heart_Rate_Measurement_Characteristic_CBUUID</span> &#123;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// STEP 11: 订阅关于感兴趣特征的持续通知；</span></span><br><span class="line">                <span class="comment">// “当你启用特征值的通知时，外围设备调用……</span></span><br><span class="line">                <span class="comment">// peripheral(_:didUpdateValueFor:error:)” </span></span><br><span class="line">                <span class="comment">//</span></span><br><span class="line">                <span class="comment">// Notify    Mandatory</span></span><br><span class="line">                <span class="comment">//</span></span><br><span class="line">                peripheral.setNotifyValue(<span class="literal">true</span>, <span class="keyword">for</span>: characteristic)</span><br><span class="line">                </span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">        &#125; <span class="comment">// END for</span></span><br><span class="line">        </span><br><span class="line">    &#125; <span class="comment">// END func peripheral(... didDiscoverCharacteristicsFor service</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// STEP 12: 每当一个特征值定期更新或者发布一次时，我们都会收到通知；</span></span><br><span class="line">    <span class="comment">// 阅读并解译我们订阅的特征值</span></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">peripheral</span><span class="params">(<span class="number">_</span> peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?)</span></span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> characteristic.uuid == <span class="type">BLE_Heart_Rate_Measurement_Characteristic_CBUUID</span> &#123;</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// STEP 13: 通常我们需要将 BLE 的数据解析成人类可读的格式</span></span><br><span class="line">            <span class="keyword">let</span> heartRate = deriveBeatsPerMinute(using: characteristic)</span><br><span class="line">            </span><br><span class="line">            <span class="type">DispatchQueue</span>.main.async &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">                </span><br><span class="line">                <span class="type">UIView</span>.animate(withDuration: <span class="number">1.0</span>, animations: &#123;</span><br><span class="line">                    <span class="keyword">self</span>.beatsPerMinuteLabel.alpha = <span class="number">1.0</span></span><br><span class="line">                    <span class="keyword">self</span>.beatsPerMinuteLabel.text = <span class="type">String</span>(heartRate)</span><br><span class="line">                &#125;, completion: &#123; (<span class="literal">true</span>) <span class="keyword">in</span></span><br><span class="line">                    <span class="keyword">self</span>.beatsPerMinuteLabel.alpha = <span class="number">0.0</span></span><br><span class="line">                &#125;)</span><br><span class="line">                </span><br><span class="line">            &#125; <span class="comment">// END DispatchQueue.main.async...</span></span><br><span class="line"></span><br><span class="line">        &#125; <span class="comment">// END if characteristic.uuid ==...</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> characteristic.uuid == <span class="type">BLE_Body_Sensor_Location_Characteristic_CBUUID</span> &#123;</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// STEP 14: 通常我们需要将 BLE 的数据解析成人类可读的格式</span></span><br><span class="line">            <span class="keyword">let</span> sensorLocation = readSensorLocation(using: characteristic)</span><br><span class="line"></span><br><span class="line">            <span class="type">DispatchQueue</span>.main.async &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">                <span class="keyword">self</span>.sensorLocationTextField.text = sensorLocation</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="comment">// END if characteristic.uuid ==...</span></span><br><span class="line">        </span><br><span class="line">    &#125; <span class="comment">// END func peripheral(... didUpdateValueFor characteristic</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// MARK: - Utilities</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">deriveBeatsPerMinute</span><span class="params">(using heartRateMeasurementCharacteristic: CBCharacteristic)</span></span> -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">let</span> heartRateValue = heartRateMeasurementCharacteristic.value!</span><br><span class="line">        <span class="comment">// 转换为无符号 8 位整数数组</span></span><br><span class="line">        <span class="keyword">let</span> buffer = [<span class="type">UInt8</span>](heartRateValue)</span><br><span class="line"></span><br><span class="line">        <span class="comment">// UInt8: “一个 8 位无符号整数类型。”</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 在缓冲区的第一个字节（8 位）是标记（元数据，用于管理包中其余部分）；</span></span><br><span class="line">        <span class="comment">// 如果最低有效位（LSB）是 0，心率（bpm）则是 UInt8 格式，</span></span><br><span class="line">        <span class="comment">// 如果 LSB 是 1，BPM 则是 UInt16</span></span><br><span class="line">        <span class="keyword">if</span> ((buffer[<span class="number">0</span>] &amp;amp; <span class="number">0x01</span>) == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="comment">// 第二个字节：“心率的格式被设置为 UINT8”</span></span><br><span class="line">            <span class="built_in">print</span>(<span class="string">"BPM is UInt8"</span>)</span><br><span class="line">            <span class="comment">// 将心率写入 HKHealthStore</span></span><br><span class="line">            <span class="comment">// healthKitInterface.writeHeartRateData(heartRate: Int(buffer[1]))</span></span><br><span class="line">            <span class="keyword">return</span> <span class="type">Int</span>(buffer[<span class="number">1</span>])</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123; <span class="comment">// 我从来没有看到过这个用例，所以我把它留给理论学家去争论</span></span><br><span class="line">            <span class="comment">// 第二个和第三个字节：“心率的格式被设置为 UINT16”</span></span><br><span class="line">            <span class="built_in">print</span>(<span class="string">"BPM is UInt16"</span>)</span><br><span class="line">            <span class="keyword">return</span> -<span class="number">1</span></span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">    &#125; <span class="comment">// END func deriveBeatsPerMinute</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">readSensorLocation</span><span class="params">(using sensorLocationCharacteristic: CBCharacteristic)</span></span> -&gt; <span class="type">String</span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">let</span> sensorLocationValue = sensorLocationCharacteristic.value!</span><br><span class="line">        <span class="comment">//  转换为无符号 8 位整数数组</span></span><br><span class="line">        <span class="keyword">let</span> buffer = [<span class="type">UInt8</span>](sensorLocationValue)</span><br><span class="line">        <span class="keyword">var</span> sensorLocation = <span class="string">""</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 只看 8 位</span></span><br><span class="line">        <span class="keyword">if</span> buffer[<span class="number">0</span>] == <span class="number">1</span></span><br><span class="line">        &#123;</span><br><span class="line">            sensorLocation = <span class="string">"Chest"</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> buffer[<span class="number">0</span>] == <span class="number">2</span></span><br><span class="line">        &#123;</span><br><span class="line">            sensorLocation = <span class="string">"Wrist"</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">            sensorLocation = <span class="string">"N/A"</span></span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> sensorLocation</span><br><span class="line">        </span><br><span class="line">    &#125; <span class="comment">// END func readSensorLocation</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">decodePeripheralState</span><span class="params">(peripheralState: CBPeripheralState)</span></span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">switch</span> peripheralState &#123;</span><br><span class="line">            <span class="keyword">case</span> .disconnected:</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">"Peripheral state: disconnected"</span>)</span><br><span class="line">            <span class="keyword">case</span> .connected:</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">"Peripheral state: connected"</span>)</span><br><span class="line">            <span class="keyword">case</span> .connecting:</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">"Peripheral state: connecting"</span>)</span><br><span class="line">            <span class="keyword">case</span> .disconnecting:</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">"Peripheral state: disconnecting"</span>)</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">    &#125; <span class="comment">// END func decodePeripheralState(peripheralState</span></span><br><span class="line"></span><br><span class="line">&#125; <span class="comment">// END class HeartRateMonitorViewController</span></span><br></pre></td></tr></table></figure></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>我希望你喜欢这篇教程。买或者借一个 BLE 设备，然后使用我的代码或自己编写代码来连接它。遵循教程中所有我提供的超链接并且阅读它们。查阅 Bluetooth SIG 的 <a href="https://www.bluetooth.com/" target="_blank" rel="noopener"><strong>网页</strong></a> 以及苹果的 <a href="https://developer.apple.com/documentation/corebluetooth" target="_blank" rel="noopener"><strong><em>Core Bluetooth</em></strong></a>（<a href="https://developer.apple.com/library/archive/documentation/NetworkingInternetWeb/Conceptual/CoreBluetooth_concepts/AboutCoreBluetooth/Introduction.html#//apple_ref/doc/uid/TP40013257-CH1-SW1" target="_blank" rel="noopener"><strong>这里</strong></a> 也可以看到）框架文档，你一定可以对蓝牙技术有一个概览。  </p>
+<p>感谢阅读。记得享受你的工作。不要忘记，当你的简历上面有蓝牙的经验将是你的职业生涯的一大亮点。  </p>
+<p>作为参考，你可以 <a href="https://github.com/appcoda/HealthKit-and-Bluetooth-HRM" target="_blank" rel="noopener"><strong>在 GitHub 上面查看完整的源代码</strong></a>。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/appcoda/">appcoda</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/教程/">教程</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2019/04/15/core-bluetooth/" data-title="在 iOS 11 中使用 Core Bluetooth | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2019/02/25/void/"  title="Void">
+ <strong>下一篇</strong><br/> 
+ <span>Void
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2019/04/15/core-bluetooth/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#蓝牙-一项迅速发展的技术"><span class="toc-number">1.</span> <span class="toc-text">蓝牙 - 一项迅速发展的技术</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#对于你的职业生涯，蓝牙意味着什么"><span class="toc-number">2.</span> <span class="toc-text">对于你的职业生涯，蓝牙意味着什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#在提交你使用-Core-Bluetooth-开发的应用程序被审核之前"><span class="toc-number">3.</span> <span class="toc-text">在提交你使用 Core Bluetooth 开发的应用程序被审核之前</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#别让我吓着你"><span class="toc-number">4.</span> <span class="toc-text">别让我吓着你</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#成为-Bluetooth-SIG-的一员"><span class="toc-number">5.</span> <span class="toc-text">成为 Bluetooth SIG 的一员</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#对应用程序进行资格认证既简单又便宜"><span class="toc-number">6.</span> <span class="toc-text">对应用程序进行资格认证既简单又便宜</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#理解-Core-Bluetooth"><span class="toc-number">7.</span> <span class="toc-text">理解 Core Bluetooth</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#The-Peripheral（外围设备）"><span class="toc-number">8.</span> <span class="toc-text">The Peripheral（外围设备）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#The-Central（中央设备）"><span class="toc-number">9.</span> <span class="toc-text">The Central（中央设备）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#通过广播找到外围设备"><span class="toc-number">10.</span> <span class="toc-text">通过广播找到外围设备</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#外围设备的各种服务"><span class="toc-number">11.</span> <span class="toc-text">外围设备的各种服务</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#外围设备服务的特征"><span class="toc-number">12.</span> <span class="toc-text">外围设备服务的特征</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GATT-规范"><span class="toc-number">13.</span> <span class="toc-text">GATT 规范</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#编写-Core-Bluetooth-代码"><span class="toc-number">14.</span> <span class="toc-text">编写 Core Bluetooth 代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#示例应用程序样式"><span class="toc-number">15.</span> <span class="toc-text">示例应用程序样式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#逐步了解我的代码"><span class="toc-number">16.</span> <span class="toc-text">逐步了解我的代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#我的源代码"><span class="toc-number">17.</span> <span class="toc-text">我的源代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">18.</span> <span class="toc-text">总结</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>43</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>36</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>169</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>100</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>84</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://ijack.pw/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg" />
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer" >
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2019 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftGG 专属 Reveal 优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/XzKhGY">领取立减 143 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
