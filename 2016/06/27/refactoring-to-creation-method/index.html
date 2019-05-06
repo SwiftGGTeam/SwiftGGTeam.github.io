@@ -1,9 +1,9 @@
 
  <!DOCTYPE HTML>
 <html lang="zh-CN">
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="UTF-8">
-  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
   
     <title>《重构与模式》 Swift 版之创建方法 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
@@ -21,7 +21,7 @@
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="想让代码更具可读性变得更加简洁的话可以考虑重构成这种模式哦，下面就来举例说明下重构一段 Swift 初始化构造器的代码吧。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-05-05T16:00:50.848Z">
+<meta property="og:updated_time" content="2019-05-06T06:19:35.940Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="《重构与模式》 Swift 版之创建方法">
 <meta name="twitter:description" content="想让代码更具可读性变得更加简洁的话可以考虑重构成这种模式哦，下面就来举例说明下重构一段 Swift 初始化构造器的代码吧。">
@@ -39,14 +39,14 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/gitment.css">
 </head>
-
+</html>
   <body>
     <header>
       
 <div>
 		
 			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -72,7 +72,7 @@
  					
 						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
 							<label>搜索</label>
-						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
 						</form>
 					
 					</li>
@@ -106,11 +106,11 @@
 <a id="more"></a>
 <p>第一个模式就是<strong>创建方法</strong>。</p>
 <h3 id="重构之前"><a href="#重构之前" class="headerlink" title="重构之前"></a>重构之前</h3><p>先假设你有一个 model，比如是借款，并且里面有一些不同的初始化构造器（initializer）。在这个例子中，每个初始化构造器都有存在的理由——每个初始化构造器代表了对应了不同的借款类型：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Loan</span> </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> commitment: <span class="type">NSDecimalNumber</span></span><br><span class="line">    <span class="keyword">let</span> riskRating: <span class="type">Float</span></span><br><span class="line">    <span class="keyword">let</span> maturity: <span class="type">Int</span></span><br><span class="line">    <span class="keyword">let</span> expiry: <span class="type">NSDate</span>?</span><br><span class="line">    <span class="keyword">let</span> capitalStrategy: <span class="type">String</span>?</span><br><span class="line">    <span class="keyword">let</span> outstanding: <span class="type">NSDecimalNumber</span>?</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>(commitment: <span class="type">NSDecimalNumber</span>, riskRating: <span class="type">Float</span>, maturity: <span class="type">Int</span>, expiry: <span class="type">NSDate</span>?, capitalStrategy: <span class="type">String</span>?, outstanding: <span class="type">NSDecimalNumber</span>?) &#123;</span><br><span class="line">        <span class="keyword">self</span>.commitment = commitment</span><br><span class="line">        <span class="keyword">self</span>.riskRating = riskRating</span><br><span class="line">        <span class="keyword">self</span>.maturity = maturity</span><br><span class="line">        <span class="keyword">self</span>.expiry = expiry</span><br><span class="line">        <span class="keyword">self</span>.capitalStrategy = capitalStrategy</span><br><span class="line">        <span class="keyword">self</span>.outstanding = outstanding</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>(commitment: <span class="type">NSDecimalNumber</span>, riskRating: <span class="type">Float</span>, maturity: <span class="type">Int</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.<span class="keyword">init</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: <span class="literal">nil</span>, capitalStrategy: <span class="literal">nil</span>, outstanding: <span class="literal">nil</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>(commitment: <span class="type">NSDecimalNumber</span>, riskRating: <span class="type">Float</span>, maturity: <span class="type">Int</span>, expiry: <span class="type">NSDate</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.<span class="keyword">init</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: expiry, capitalStrategy: <span class="literal">nil</span>, outstanding: <span class="literal">nil</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>(commitment: <span class="type">NSDecimalNumber</span>, outstanding: <span class="type">NSDecimalNumber</span>, riskRating: <span class="type">Float</span>, maturity: <span class="type">Int</span>, expiry: <span class="type">NSDate</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.<span class="keyword">init</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: expiry, capitalStrategy: <span class="literal">nil</span>, outstanding: outstanding)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>(capitalStrategy: <span class="type">String</span>, commitment: <span class="type">NSDecimalNumber</span>, riskRating: <span class="type">Float</span>, maturity: <span class="type">Int</span>, expiry: <span class="type">NSDate</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.<span class="keyword">init</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: expiry, capitalStrategy: capitalStrategy, outstanding: <span class="literal">nil</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>(capitalStrategy: <span class="type">String</span>, commitment: <span class="type">NSDecimalNumber</span>, outstanding: <span class="type">NSDecimalNumber</span>, riskRating: <span class="type">Float</span>, maturity: <span class="type">Int</span>, expiry: <span class="type">NSDate</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.<span class="keyword">init</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: expiry, capitalStrategy: capitalStrategy, outstanding: outstanding)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Loan</span> </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> commitment: <span class="type">NSDecimalNumber</span></span><br><span class="line">    <span class="keyword">let</span> riskRating: <span class="type">Float</span></span><br><span class="line">    <span class="keyword">let</span> maturity: <span class="type">Int</span></span><br><span class="line">    <span class="keyword">let</span> expiry: <span class="type">NSDate?</span></span><br><span class="line">    <span class="keyword">let</span> capitalStrategy: <span class="type">String?</span></span><br><span class="line">    <span class="keyword">let</span> outstanding: <span class="type">NSDecimalNumber?</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>(commitment: <span class="type">NSDecimalNumber</span>, riskRating: <span class="type">Float</span>, maturity: <span class="type">Int</span>, expiry: <span class="type">NSDate?</span>, capitalStrategy: <span class="type">String?</span>, outstanding: <span class="type">NSDecimalNumber?</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.commitment = commitment</span><br><span class="line">        <span class="keyword">self</span>.riskRating = riskRating</span><br><span class="line">        <span class="keyword">self</span>.maturity = maturity</span><br><span class="line">        <span class="keyword">self</span>.expiry = expiry</span><br><span class="line">        <span class="keyword">self</span>.capitalStrategy = capitalStrategy</span><br><span class="line">        <span class="keyword">self</span>.outstanding = outstanding</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>(commitment: <span class="type">NSDecimalNumber</span>, riskRating: <span class="type">Float</span>, maturity: <span class="type">Int</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.<span class="keyword">init</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: <span class="literal">nil</span>, capitalStrategy: <span class="literal">nil</span>, outstanding: <span class="literal">nil</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>(commitment: <span class="type">NSDecimalNumber</span>, riskRating: <span class="type">Float</span>, maturity: <span class="type">Int</span>, expiry: <span class="type">NSDate</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.<span class="keyword">init</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: expiry, capitalStrategy: <span class="literal">nil</span>, outstanding: <span class="literal">nil</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>(commitment: <span class="type">NSDecimalNumber</span>, outstanding: <span class="type">NSDecimalNumber</span>, riskRating: <span class="type">Float</span>, maturity: <span class="type">Int</span>, expiry: <span class="type">NSDate</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.<span class="keyword">init</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: expiry, capitalStrategy: <span class="literal">nil</span>, outstanding: outstanding)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>(capitalStrategy: <span class="type">String</span>, commitment: <span class="type">NSDecimalNumber</span>, riskRating: <span class="type">Float</span>, maturity: <span class="type">Int</span>, expiry: <span class="type">NSDate</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.<span class="keyword">init</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: expiry, capitalStrategy: capitalStrategy, outstanding: <span class="literal">nil</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>(capitalStrategy: <span class="type">String</span>, commitment: <span class="type">NSDecimalNumber</span>, outstanding: <span class="type">NSDecimalNumber</span>, riskRating: <span class="type">Float</span>, maturity: <span class="type">Int</span>, expiry: <span class="type">NSDate</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.<span class="keyword">init</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: expiry, capitalStrategy: capitalStrategy, outstanding: outstanding)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>看看这代码，你会完全没有思路（除非你知道所有的借贷类型），不知道该用哪个初始化构造器。当然了，一些刚刚接触这代码的新人可能还对项目的业务不是很清楚，所以他们可能会用错初始化构造器，甚至会对这些初始化构造器的作用意图感到疑惑。</p>
 <p>是时候来重构了！</p>
 <h3 id="重构之后"><a href="#重构之后" class="headerlink" title="重构之后"></a>重构之后</h3><p>用创建方法（Creator Method）重构后的代码如下：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Loan</span> </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> commitment: <span class="type">NSDecimalNumber</span></span><br><span class="line">    <span class="keyword">let</span> riskRating: <span class="type">Float</span></span><br><span class="line">    <span class="keyword">let</span> maturity: <span class="type">Int</span></span><br><span class="line">    <span class="keyword">let</span> expiry: <span class="type">NSDate</span>?</span><br><span class="line">    <span class="keyword">let</span> capitalStrategy: <span class="type">String</span>?</span><br><span class="line">    <span class="keyword">let</span> outstanding: <span class="type">NSDecimalNumber</span>?</span><br><span class="line">    </span><br><span class="line">	 <span class="comment">// 原来的初始化构造器（initializer）现在可以是私有的</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">init</span>(commitment: <span class="type">NSDecimalNumber</span>, riskRating: <span class="type">Float</span>, maturity: <span class="type">Int</span>, expiry: <span class="type">NSDate</span>?, capitalStrategy: <span class="type">String</span>?, outstanding: <span class="type">NSDecimalNumber</span>?) &#123;</span><br><span class="line">        <span class="keyword">self</span>.commitment = commitment</span><br><span class="line">        <span class="keyword">self</span>.riskRating = riskRating</span><br><span class="line">        <span class="keyword">self</span>.maturity = maturity</span><br><span class="line">        <span class="keyword">self</span>.expiry = expiry</span><br><span class="line">        <span class="keyword">self</span>.capitalStrategy = capitalStrategy</span><br><span class="line">        <span class="keyword">self</span>.outstanding = outstanding</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">createTermLoan</span><span class="params">(commitment: NSDecimalNumber, riskRating: Float, maturity: Int)</span></span> -&gt; <span class="type">Loan</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">Loan</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: <span class="literal">nil</span>, capitalStrategy: <span class="literal">nil</span>, outstanding: <span class="literal">nil</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">createTermLoan</span><span class="params">(capitalStrategy: String, commitment: NSDecimalNumber, outstanding: NSDecimalNumber, riskRating: Float, maturity: Int, expiry: NSDate)</span></span> -&gt; <span class="type">Loan</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">Loan</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: expiry, capitalStrategy: capitalStrategy, outstanding: outstanding)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">createRevolverLoan</span><span class="params">(commitment: NSDecimalNumber, outstanding: NSDecimalNumber, riskRating: Float, maturity: Int, expiry: NSDate)</span></span> -&gt; <span class="type">Loan</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">Loan</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: expiry, capitalStrategy: <span class="literal">nil</span>, outstanding: outstanding)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">createRevolverLoan</span><span class="params">(capitalStrategy: String, commitment: NSDecimalNumber, riskRating: Float, maturity: Int, expiry: NSDate)</span></span> -&gt; <span class="type">Loan</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">Loan</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: expiry, capitalStrategy: capitalStrategy, outstanding: <span class="literal">nil</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">createRCTL</span><span class="params">(commitment: NSDecimalNumber, riskRating: Float, maturity: Int, expiry: NSDate)</span></span> -&gt; <span class="type">Loan</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">Loan</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: expiry, capitalStrategy: <span class="literal">nil</span>, outstanding: <span class="literal">nil</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Loan</span> </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> commitment: <span class="type">NSDecimalNumber</span></span><br><span class="line">    <span class="keyword">let</span> riskRating: <span class="type">Float</span></span><br><span class="line">    <span class="keyword">let</span> maturity: <span class="type">Int</span></span><br><span class="line">    <span class="keyword">let</span> expiry: <span class="type">NSDate?</span></span><br><span class="line">    <span class="keyword">let</span> capitalStrategy: <span class="type">String?</span></span><br><span class="line">    <span class="keyword">let</span> outstanding: <span class="type">NSDecimalNumber?</span></span><br><span class="line">    </span><br><span class="line">	 <span class="comment">// 原来的初始化构造器（initializer）现在可以是私有的</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">init</span>(commitment: <span class="type">NSDecimalNumber</span>, riskRating: <span class="type">Float</span>, maturity: <span class="type">Int</span>, expiry: <span class="type">NSDate?</span>, capitalStrategy: <span class="type">String?</span>, outstanding: <span class="type">NSDecimalNumber?</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.commitment = commitment</span><br><span class="line">        <span class="keyword">self</span>.riskRating = riskRating</span><br><span class="line">        <span class="keyword">self</span>.maturity = maturity</span><br><span class="line">        <span class="keyword">self</span>.expiry = expiry</span><br><span class="line">        <span class="keyword">self</span>.capitalStrategy = capitalStrategy</span><br><span class="line">        <span class="keyword">self</span>.outstanding = outstanding</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">createTermLoan</span><span class="params">(commitment: NSDecimalNumber, riskRating: Float, maturity: Int)</span></span> -&gt; <span class="type">Loan</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">Loan</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: <span class="literal">nil</span>, capitalStrategy: <span class="literal">nil</span>, outstanding: <span class="literal">nil</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">createTermLoan</span><span class="params">(capitalStrategy: String, commitment: NSDecimalNumber, outstanding: NSDecimalNumber, riskRating: Float, maturity: Int, expiry: NSDate)</span></span> -&gt; <span class="type">Loan</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">Loan</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: expiry, capitalStrategy: capitalStrategy, outstanding: outstanding)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">createRevolverLoan</span><span class="params">(commitment: NSDecimalNumber, outstanding: NSDecimalNumber, riskRating: Float, maturity: Int, expiry: NSDate)</span></span> -&gt; <span class="type">Loan</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">Loan</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: expiry, capitalStrategy: <span class="literal">nil</span>, outstanding: outstanding)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">createRevolverLoan</span><span class="params">(capitalStrategy: String, commitment: NSDecimalNumber, riskRating: Float, maturity: Int, expiry: NSDate)</span></span> -&gt; <span class="type">Loan</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">Loan</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: expiry, capitalStrategy: capitalStrategy, outstanding: <span class="literal">nil</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">createRCTL</span><span class="params">(commitment: NSDecimalNumber, riskRating: Float, maturity: Int, expiry: NSDate)</span></span> -&gt; <span class="type">Loan</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">Loan</span>(commitment: commitment, riskRating: riskRating, maturity: maturity, expiry: expiry, capitalStrategy: <span class="literal">nil</span>, outstanding: <span class="literal">nil</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>注意到重构后的代码多么漂亮了吗！当你初始化一个借贷的 model 时，你知道它的作用了。</p>
 <p>虽然我一般不会在类里使用这么多的初始化构造器，而且有时在 Swift 中可以根据不同的实际情况使用更好的方法来解决问题（比如使用枚举）。不过如果我想让我的代码更具可读性、变得更加简洁，我一定会考虑重构成这种模式。</p>
 <blockquote>
@@ -151,9 +151,9 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
+ <div class="prev">
  <a href="/2016/06/28/adding-siri-to-ios-10-apps-in-swift-tutorial/" title="使用 Swift 在 iOS 10 中集成 Siri —— SiriKit 教程（Part 1）">
-  <strong>上一篇</strong><br/>
+  <strong>上一篇</strong><br>
   <span>
   使用 Swift 在 iOS 10 中集成 Siri —— SiriKit 教程（Part 1）</span>
 </a>
@@ -161,8 +161,8 @@
 
 
 <div class="next">
-<a href="/2016/06/24/ios-10-api-diff/"  title="今年 WWDC 大会有哪些新技术？">
- <strong>下一篇</strong><br/> 
+<a href="/2016/06/24/ios-10-api-diff/" title="今年 WWDC 大会有哪些新技术？">
+ <strong>下一篇</strong><br> 
  <span>今年 WWDC 大会有哪些新技术？
 </span>
 </a>
@@ -277,11 +277,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -321,15 +321,15 @@
 		  
 		
 		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -482,11 +482,11 @@
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
@@ -498,6 +498,10 @@
 			
 		
 			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/教程/" title="教程">教程<sup>5</sup></a></li>
 			
 		
@@ -506,7 +510,7 @@
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
@@ -514,11 +518,7 @@
 			
 		
 			
-				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
 			
 		
 			
@@ -526,7 +526,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
 			
 		
 			
@@ -701,7 +701,7 @@
 
   <div class="wechatpart">
 	<p class="asidetitle">微信公众号</p>
-	<img src="/img/wechat.jpg" />
+	<img src="/img/wechat.jpg">
 </div>
 
 </aside>
@@ -710,9 +710,9 @@
     <footer>
 
 
-<div id="footer" >
+<div id="footer">
 	
-	<div class="social-font" class="clearfix">
+	<div class="social-font">
 		
 		
 		
@@ -942,7 +942,7 @@ $(document).ready(function(){
 <!-- Totop Begin -->
 <!--
 	<div id="totop">
-	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
 	</div>
 	<script src="/js/totop.js"></script>
 -->

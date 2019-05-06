@@ -1,9 +1,9 @@
 
  <!DOCTYPE HTML>
 <html lang="zh-CN">
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="UTF-8">
-  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
   
     <title>更加 Swift 化的 Collection View 和 Table View Cells | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
@@ -22,7 +22,7 @@
 <meta property="og:description" content="想知道Swift化tableView和collectionView是什么样子的吗，只要用使用枚举的case情况做标识就能搞定哦。">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://swift.gg/img/articles/being-swifty-with-collection-view-and-table-view-cells/53092553e2ff9f43.png1454341216.473366">
-<meta property="og:updated_time" content="2019-05-05T16:00:50.836Z">
+<meta property="og:updated_time" content="2019-05-06T06:19:35.928Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="更加 Swift 化的 Collection View 和 Table View Cells">
 <meta name="twitter:description" content="想知道Swift化tableView和collectionView是什么样子的吗，只要用使用枚举的case情况做标识就能搞定哦。">
@@ -41,14 +41,14 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/gitment.css">
 </head>
-
+</html>
   <body>
     <header>
       
 <div>
 		
 			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -74,7 +74,7 @@
  					
 						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
 							<label>搜索</label>
-						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
 						</form>
 					
 					</li>
@@ -106,7 +106,7 @@
 <!--此处开始正文-->
 <p>这是一个常见的场景：你有一个 tableView 或者一个 collectionView，并且里面含有大量不同种类的内容。你想做到基于不同种类的内容而展示不一样的 <code>cell</code> ，而且这些 <code>cell</code> 都混合在同一个部件里（原谅我站在艺术的角度去设计），它看起来就如下图所示：</p>
 <a id="more"></a>
-<p><img src="/img/articles/being-swifty-with-collection-view-and-table-view-cells/53092553e2ff9f43.png1454341216.473366" alt=""> </p>
+<p><img src="/img/articles/being-swifty-with-collection-view-and-table-view-cells/53092553e2ff9f43.png1454341216.473366" alt> </p>
 <p>在 Objective-C 中，最典型就是使用 NSArray 来记录 collectionView 的数据源，然后通过对比每个数据源的类型后再对 cell 进行操作，现在看来这种方式是特别不方便的。</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath &#123;</span><br><span class="line"></span><br><span class="line">    UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@&quot;identifier&quot; forIndexPath:indexPath];</span><br><span class="line"> </span><br><span class="line">    id record = self.records[indexPath.row];</span><br><span class="line"> </span><br><span class="line">    if([record isKindOfClass:[PlaythroughItem class]]) &#123;</span><br><span class="line">        // ...</span><br><span class="line">    &#125;</span><br><span class="line">    else if([record isKindOfClass:[ReviewItem class]]) &#123;</span><br><span class="line">        // ...</span><br><span class="line">    &#125;</span><br><span class="line">    else if([record isKindOfClass:[TrailerItem class]]) &#123;</span><br><span class="line">        // ...</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    return cell;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><em>战栗吧</em></p>
@@ -115,14 +115,14 @@
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">NewsItem</span> </span>&#123;</span><br><span class="line">  <span class="keyword">case</span> <span class="type">Trailer</span>(index: <span class="type">Int</span>)</span><br><span class="line">  <span class="keyword">case</span> <span class="type">Review</span>(index: <span class="type">Int</span>)</span><br><span class="line">  <span class="keyword">case</span> <span class="type">Playthrough</span>(index: <span class="type">Int</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>索引仅仅是用来记录数据在数据库中<em>位置</em>的方法。我们采取这种索引的方法来标识所需数据在 collectionView 中位置的展示。对于特定视频，我们就不需要其所关联的所有数据了，所需要的信息仅需要在 collectionView 中的 cell 点击之后才去通过索引获取。</p>
 <p>我们有一个简单的 collectionView，它里面含有三个自定义的 <code>cell</code> 。我使用 <code>NewsFeed.swift</code> 文件作为这个新闻 collectionView 的主要数据源。我特别感兴趣的是 <code>cellForItemAtIndexPath</code> 方法，通过 <code>NewsItem</code> 枚举来区分 <code>record</code> 的类型，从而产生相对应的 <code>cell</code>：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">collectionView</span><span class="params">(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath)</span></span> -&gt; <span class="type">UICollectionViewCell</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> record = records[indexPath.row]</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">switch</span>(record) &#123;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">case</span> .<span class="type">Playthrough</span>(<span class="keyword">let</span> index): </span><br><span class="line">        <span class="keyword">let</span> cell = collectionView.dequeueReusableCellWithReuseIdentifier(<span class="string">"PlaythroughCell"</span>, forIndexPath: indexPath) <span class="keyword">as</span>! <span class="type">PlaythroughCollectionViewCell</span></span><br><span class="line">        <span class="keyword">let</span> playthrough = <span class="type">MediaDB</span>.playthroughAtIndex(index)</span><br><span class="line">        cell.titleLabel.text = playthrough.title</span><br><span class="line">        cell.lengthLabel.text = playthrough.length.prettyTime</span><br><span class="line">        <span class="keyword">return</span> cell</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">case</span> .<span class="type">Review</span>(<span class="keyword">let</span> index):</span><br><span class="line">        <span class="keyword">let</span> cell = collectionView.dequeueReusableCellWithReuseIdentifier(<span class="string">"ReviewCell"</span>, forIndexPath: indexPath) <span class="keyword">as</span>! <span class="type">ReviewCollectionViewCell</span></span><br><span class="line">        <span class="keyword">let</span> review = <span class="type">MediaDB</span>.reviewAtIndex(index)</span><br><span class="line">        cell.ratingLabel.text = <span class="string">"<span class="subst">\(review.rating)</span> out of 10"</span></span><br><span class="line">        cell.titleLabel.text = review.title</span><br><span class="line">        <span class="keyword">return</span> cell</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">case</span> .<span class="type">Trailer</span>(<span class="keyword">let</span> index):</span><br><span class="line">        <span class="keyword">let</span> cell = collectionView.dequeueReusableCellWithReuseIdentifier(<span class="string">"TrailerCell"</span>, forIndexPath: indexPath) <span class="keyword">as</span>! <span class="type">TrailerCollectionViewCell</span></span><br><span class="line">        <span class="keyword">let</span> trailer = <span class="type">MediaDB</span>.trailerAtIndex(index)</span><br><span class="line">        cell.titleLabel.text = trailer.title</span><br><span class="line">        cell.lengthLabel.text = trailer.length.prettyTime</span><br><span class="line">        <span class="keyword">return</span> cell</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">collectionView</span><span class="params">(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath)</span></span> -&gt; <span class="type">UICollectionViewCell</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> record = records[indexPath.row]</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">switch</span>(record) &#123;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">case</span> .<span class="type">Playthrough</span>(<span class="keyword">let</span> index): </span><br><span class="line">        <span class="keyword">let</span> cell = collectionView.dequeueReusableCellWithReuseIdentifier(<span class="string">"PlaythroughCell"</span>, forIndexPath: indexPath) <span class="keyword">as</span>! <span class="type">PlaythroughCollectionViewCell</span></span><br><span class="line">        <span class="keyword">let</span> playthrough = <span class="type">MediaDB</span>.playthroughAtIndex(index)</span><br><span class="line">        cell.titleLabel.text = playthrough.title</span><br><span class="line">        cell.lengthLabel.text = playthrough.length.prettyTime</span><br><span class="line">        <span class="keyword">return</span> cell</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">case</span> .<span class="type">Review</span>(<span class="keyword">let</span> index):</span><br><span class="line">        <span class="keyword">let</span> cell = collectionView.dequeueReusableCellWithReuseIdentifier(<span class="string">"ReviewCell"</span>, forIndexPath: indexPath) <span class="keyword">as</span>! <span class="type">ReviewCollectionViewCell</span></span><br><span class="line">        <span class="keyword">let</span> review = <span class="type">MediaDB</span>.reviewAtIndex(index)</span><br><span class="line">        cell.ratingLabel.text = <span class="string">"\(review.rating) out of 10"</span></span><br><span class="line">        cell.titleLabel.text = review.title</span><br><span class="line">        <span class="keyword">return</span> cell</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">case</span> .<span class="type">Trailer</span>(<span class="keyword">let</span> index):</span><br><span class="line">        <span class="keyword">let</span> cell = collectionView.dequeueReusableCellWithReuseIdentifier(<span class="string">"TrailerCell"</span>, forIndexPath: indexPath) <span class="keyword">as</span>! <span class="type">TrailerCollectionViewCell</span></span><br><span class="line">        <span class="keyword">let</span> trailer = <span class="type">MediaDB</span>.trailerAtIndex(index)</span><br><span class="line">        cell.titleLabel.text = trailer.title</span><br><span class="line">        cell.lengthLabel.text = trailer.length.prettyTime</span><br><span class="line">        <span class="keyword">return</span> cell</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>上面的代码可以清晰看出，<code>record</code> 可以表示为 <code>NewsItem</code> 枚举里三个 case 中任意一个：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">NewsItem</span> </span>&#123;</span><br><span class="line">  <span class="keyword">case</span> <span class="type">Trailer</span>(index: <span class="type">Int</span>)</span><br><span class="line">  <span class="keyword">case</span> <span class="type">Review</span>(index: <span class="type">Int</span>)</span><br><span class="line">  <span class="keyword">case</span> <span class="type">Playthrough</span>(index: <span class="type">Int</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>当我们想在 collectionView 中展示一个 <code>cell</code> 的时候，我们可以通过相关的索引值去找到数据库中所对应的那一项。</p>
 <p>这段代码让我觉得很不舒服。有许多重复代码，尤其是 switch 显得非常笨重，在每个 case 中都做了太多事情。</p>
 <p>但是，如果我创建了一个可以用在 collectionView cell 上的处理任何数据源的协议呢？鉴于每个视图（view）都并不相同，所以我不希望这个协议在模型（model）中使用。但我可以在特定的 collectionView cell 的子类上使用它。</p>
 <p>所以，我创建了一个叫做 <code>NewsCellPresentable</code> 协议，这个协议被自定义的 collectionView cell 所扩展：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">NewsCellPresentable</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">configureForIndex</span><span class="params">(index: Int)</span></span></span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">PlaythroughCollectionViewCell</span>: <span class="title">NewsCellPresentable</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">configureForIndex</span><span class="params">(index: Int)</span></span> &#123;</span><br><span class="line">        <span class="keyword">let</span> playthrough = <span class="type">MediaDB</span>.playthroughAtIndex(index)</span><br><span class="line">        <span class="keyword">self</span>.titleLabel.text = playthrough.title</span><br><span class="line">        <span class="keyword">self</span>.lengthLabel.text = playthrough.length.prettyTime</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">ReviewCollectionViewCell</span>: <span class="title">NewsCellPresentable</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">configureForIndex</span><span class="params">(index: Int)</span></span> &#123;</span><br><span class="line">        <span class="keyword">let</span> review = <span class="type">MediaDB</span>.reviewAtIndex(index)</span><br><span class="line">        <span class="keyword">self</span>.titleLabel.text = review.title</span><br><span class="line">        <span class="keyword">self</span>.ratingLabel.text = <span class="string">"<span class="subst">\(review.rating)</span> out of 10"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">TrailerCollectionViewCell</span>: <span class="title">NewsCellPresentable</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">configureForIndex</span><span class="params">(index: Int)</span></span> &#123;</span><br><span class="line">        <span class="keyword">let</span> trailer = <span class="type">MediaDB</span>.trailerAtIndex(index)</span><br><span class="line">        <span class="keyword">self</span>.titleLabel.text = trailer.title</span><br><span class="line">        <span class="keyword">self</span>.lengthLabel.text = trailer.length.prettyTime</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">NewsCellPresentable</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">configureForIndex</span><span class="params">(index: Int)</span></span></span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">PlaythroughCollectionViewCell</span>: <span class="title">NewsCellPresentable</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">configureForIndex</span><span class="params">(index: Int)</span></span> &#123;</span><br><span class="line">        <span class="keyword">let</span> playthrough = <span class="type">MediaDB</span>.playthroughAtIndex(index)</span><br><span class="line">        <span class="keyword">self</span>.titleLabel.text = playthrough.title</span><br><span class="line">        <span class="keyword">self</span>.lengthLabel.text = playthrough.length.prettyTime</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">ReviewCollectionViewCell</span>: <span class="title">NewsCellPresentable</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">configureForIndex</span><span class="params">(index: Int)</span></span> &#123;</span><br><span class="line">        <span class="keyword">let</span> review = <span class="type">MediaDB</span>.reviewAtIndex(index)</span><br><span class="line">        <span class="keyword">self</span>.titleLabel.text = review.title</span><br><span class="line">        <span class="keyword">self</span>.ratingLabel.text = <span class="string">"\(review.rating) out of 10"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">TrailerCollectionViewCell</span>: <span class="title">NewsCellPresentable</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">configureForIndex</span><span class="params">(index: Int)</span></span> &#123;</span><br><span class="line">        <span class="keyword">let</span> trailer = <span class="type">MediaDB</span>.trailerAtIndex(index)</span><br><span class="line">        <span class="keyword">self</span>.titleLabel.text = trailer.title</span><br><span class="line">        <span class="keyword">self</span>.lengthLabel.text = trailer.length.prettyTime</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这样写看起来已经很简洁明了了。现在我们回到 <code>cellForItemAtIndexPath</code> 方法中对代码进行修改，修改后如下所示：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">collectionView</span><span class="params">(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath)</span></span> -&gt; <span class="type">UICollectionViewCell</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> record = records[indexPath.row]</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">var</span> cell: <span class="type">NewsCellPresentable</span></span><br><span class="line">    <span class="keyword">switch</span>(record) &#123;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">case</span> .<span class="type">Playthrough</span>(<span class="keyword">let</span> index):</span><br><span class="line">        cell = collectionView.dequeueReusableCellWithReuseIdentifier(<span class="string">"PlaythroughCell"</span>, forIndexPath: indexPath) <span class="keyword">as</span>! <span class="type">PlaythroughCollectionViewCell</span></span><br><span class="line">        cell.configureForIndex(index)</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">case</span> .<span class="type">Review</span>(<span class="keyword">let</span> index):</span><br><span class="line">        cell = collectionView.dequeueReusableCellWithReuseIdentifier(<span class="string">"ReviewCell"</span>, forIndexPath: indexPath) <span class="keyword">as</span>! <span class="type">ReviewCollectionViewCell</span></span><br><span class="line">        cell.configureForIndex(index)</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">case</span> .<span class="type">Trailer</span>(<span class="keyword">let</span> index):</span><br><span class="line">        cell = collectionView.dequeueReusableCellWithReuseIdentifier(<span class="string">"TrailerCell"</span>, forIndexPath: indexPath) <span class="keyword">as</span>! <span class="type">TrailerCollectionViewCell</span></span><br><span class="line">        cell.configureForIndex(index)</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">return</span> (cell <span class="keyword">as</span>! <span class="type">MediaCollectionViewCell</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>你觉得这种方法怎么样？这是一种更为简洁的方法吗？如果你有其它不同的实现方法，可以直接在文章下面留言给我，或者在 Twitter 上留言给我，我的用户名是 <a href="https://twitter.com/jquave" target="_blank" rel="noopener">@jquave</a>，希望可以一起交流学习。</p>
@@ -167,9 +167,9 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
+ <div class="prev">
  <a href="/2016/02/03/linkedin-sign-in/" title="如何使用 OAuth 2.0 将 LinkedIn 集成入 iOS 应用">
-  <strong>上一篇</strong><br/>
+  <strong>上一篇</strong><br>
   <span>
   如何使用 OAuth 2.0 将 LinkedIn 集成入 iOS 应用</span>
 </a>
@@ -177,8 +177,8 @@
 
 
 <div class="next">
-<a href="/2016/02/01/protocol-oriented-segue-identifiers-swift/"  title="使用 Swift 的面向协议编程定义 Segue 标识">
- <strong>下一篇</strong><br/> 
+<a href="/2016/02/01/protocol-oriented-segue-identifiers-swift/" title="使用 Swift 的面向协议编程定义 Segue 标识">
+ <strong>下一篇</strong><br> 
  <span>使用 Swift 的面向协议编程定义 Segue 标识
 </span>
 </a>
@@ -293,11 +293,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -337,15 +337,15 @@
 		  
 		
 		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -498,11 +498,11 @@
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
@@ -514,6 +514,10 @@
 			
 		
 			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/教程/" title="教程">教程<sup>5</sup></a></li>
 			
 		
@@ -522,7 +526,7 @@
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
@@ -530,11 +534,7 @@
 			
 		
 			
-				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
 			
 		
 			
@@ -542,7 +542,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
 			
 		
 			
@@ -717,7 +717,7 @@
 
   <div class="wechatpart">
 	<p class="asidetitle">微信公众号</p>
-	<img src="/img/wechat.jpg" />
+	<img src="/img/wechat.jpg">
 </div>
 
 </aside>
@@ -726,9 +726,9 @@
     <footer>
 
 
-<div id="footer" >
+<div id="footer">
 	
-	<div class="social-font" class="clearfix">
+	<div class="social-font">
 		
 		
 		
@@ -958,7 +958,7 @@ $(document).ready(function(){
 <!-- Totop Begin -->
 <!--
 	<div id="totop">
-	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
 	</div>
 	<script src="/js/totop.js"></script>
 -->

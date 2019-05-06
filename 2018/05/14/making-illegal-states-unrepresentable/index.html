@@ -1,9 +1,9 @@
 
  <!DOCTYPE HTML>
 <html lang="zh-CN">
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="UTF-8">
-  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
   
     <title>使非法状态不可表示 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
@@ -21,7 +21,7 @@
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Ole Begemann，原文链接，原文日期：2018-03-27译者：小袋子；校对：numbbbbb；定稿：CMB    你知道 URLSession 能同时返回响应和错误吗？  我之前介绍过，Swift 强类型系统的一个主要优点是天生具备编译器强制遵循的文档规范。 类型是编译器强制遵循的文档规范类型为函数的行为设立了一种“界限”，因此一个易用的 API 应该精心选择输入输出类型。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-05-05T16:00:50.864Z">
+<meta property="og:updated_time" content="2019-05-06T06:19:35.960Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="使非法状态不可表示">
 <meta name="twitter:description" content="作者：Ole Begemann，原文链接，原文日期：2018-03-27译者：小袋子；校对：numbbbbb；定稿：CMB    你知道 URLSession 能同时返回响应和错误吗？  我之前介绍过，Swift 强类型系统的一个主要优点是天生具备编译器强制遵循的文档规范。 类型是编译器强制遵循的文档规范类型为函数的行为设立了一种“界限”，因此一个易用的 API 应该精心选择输入输出类型。">
@@ -39,14 +39,14 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/gitment.css">
 </head>
-
+</html>
   <body>
     <header>
       
 <div>
 		
 			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -72,7 +72,7 @@
  					
 						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
 							<label>搜索</label>
-						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
 						</form>
 					
 					</li>
@@ -135,9 +135,9 @@
 <p>这段代码首先下载一个大文件，然后在几秒后取消。最后，完成的处理中返回了一个非 <code>nil</code> 的响应和错误。</p>
 <p>（这里假设指定的时间间隔内，能够获取到服务器响应的头部，但不能完成下载。如果你的网速非常慢或者非常变态，请自行调整这个时间参数）</p>
 <h2 id="正确的类型应该是什么？"><a href="#正确的类型应该是什么？" class="headerlink" title="正确的类型应该是什么？"></a>正确的类型应该是什么？</h2><p>Brandon 和 Stephen 随后在 <a href="https://www.pointfree.co/episodes/ep9-algebraic-data-types-exponents" target="_blank" rel="noopener">Point-Free 的第九集视频</a>中发布了他们对问题的跟进。他们认为“正确”的参数类型应该是：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">(<span class="type">URLResponse</span>?, <span class="type">Result</span>&lt;<span class="type">Data</span>, <span class="type">Error</span>&gt;)</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">(<span class="type">URLResponse?</span>, <span class="type">Result</span>&lt;<span class="type">Data</span>, <span class="type">Error</span>&gt;)</span><br></pre></td></tr></table></figure>
 <p>我不同意，因为如果有数据，就一定有响应，不可能只有数据没有响应。我认为应该是这样的：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="type">Result</span>&lt;(<span class="type">Data</span>, <span class="type">URLResponse</span>), (<span class="type">Error</span>, <span class="type">URLResponse</span>?)&gt;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="type">Result</span>&lt;(<span class="type">Data</span>, <span class="type">URLResponse</span>), (<span class="type">Error</span>, <span class="type">URLResponse?</span>)&gt;</span><br></pre></td></tr></table></figure>
 <p>解读：你将要么得到数据和响应（后者肯定不是 <code>nil</code>），要么得到一个错误和一个可选类型的响应。不可否认，我的建议与一般的 <code>Result</code> 类型定义相悖，因为它将失败参数约束为不能符合 <code>Error</code> 的 <a href="https://developer.apple.com/documentation/swift/error" target="_blank" rel="noopener">Error</a> 协议—<code>(Error, URLResponse?)</code>。目前 <a href="https://forums.swift.org/t/adding-result-to-the-standard-library/6932/58" target="_blank" rel="noopener">Swift 论坛正在讨论</a> <code>Error</code> 约束是否有必要。</p>
 <h2 id="Result-类型"><a href="#Result-类型" class="headerlink" title="Result 类型"></a><code>Result</code> 类型</h2><p>由于 <code>URLResponse</code> 参数的非直观行为，<code>URLSession</code> 的API 显得特别棘手。但是 Apple 几乎所有的基于回调的异步 API 都有相同的问题，它们所提供的类型使得非法状态可以表示。</p>
 <p>如何解决这个问题呢？</p>
@@ -186,9 +186,9 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
+ <div class="prev">
  <a href="/2018/05/17/enums-and-optionals/" title="Swift 的可选型枚举">
-  <strong>上一篇</strong><br/>
+  <strong>上一篇</strong><br>
   <span>
   Swift 的可选型枚举</span>
 </a>
@@ -196,8 +196,8 @@
 
 
 <div class="next">
-<a href="/2018/05/10/elm-native-ui-in-production/"  title="Elm Native UI in Production">
- <strong>下一篇</strong><br/> 
+<a href="/2018/05/10/elm-native-ui-in-production/" title="Elm Native UI in Production">
+ <strong>下一篇</strong><br> 
  <span>Elm Native UI in Production
 </span>
 </a>
@@ -312,11 +312,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -356,15 +356,15 @@
 		  
 		
 		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -517,11 +517,11 @@
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
@@ -533,6 +533,10 @@
 			
 		
 			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/教程/" title="教程">教程<sup>5</sup></a></li>
 			
 		
@@ -541,7 +545,7 @@
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
@@ -549,11 +553,7 @@
 			
 		
 			
-				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
 			
 		
 			
@@ -561,7 +561,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
 			
 		
 			
@@ -736,7 +736,7 @@
 
   <div class="wechatpart">
 	<p class="asidetitle">微信公众号</p>
-	<img src="/img/wechat.jpg" />
+	<img src="/img/wechat.jpg">
 </div>
 
 </aside>
@@ -745,9 +745,9 @@
     <footer>
 
 
-<div id="footer" >
+<div id="footer">
 	
-	<div class="social-font" class="clearfix">
+	<div class="social-font">
 		
 		
 		
@@ -977,7 +977,7 @@ $(document).ready(function(){
 <!-- Totop Begin -->
 <!--
 	<div id="totop">
-	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
 	</div>
 	<script src="/js/totop.js"></script>
 -->

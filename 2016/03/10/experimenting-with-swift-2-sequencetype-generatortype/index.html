@@ -1,9 +1,9 @@
 
  <!DOCTYPE HTML>
 <html lang="zh-CN">
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="UTF-8">
-  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
   
     <title>初探 Swift Sequences 和 Generators | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
@@ -22,7 +22,7 @@
 <meta property="og:description" content="对于Swift自定义序列不明白的可以来看下本文，讲解了Swift Sequencestype和Swift Generatorstype。">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://swift.gg/img/articles/experimenting-with-swift-2-sequencetype-generatortype/sequences.png1457572217.60734">
-<meta property="og:updated_time" content="2019-05-05T16:00:50.836Z">
+<meta property="og:updated_time" content="2019-05-06T06:19:35.932Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="初探 Swift Sequences 和 Generators">
 <meta name="twitter:description" content="对于Swift自定义序列不明白的可以来看下本文，讲解了Swift Sequencestype和Swift Generatorstype。">
@@ -41,14 +41,14 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/gitment.css">
 </head>
-
+</html>
   <body>
     <header>
       
 <div>
 		
 			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -74,7 +74,7 @@
  					
 						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
 							<label>搜索</label>
-						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
 						</form>
 					
 					</li>
@@ -116,10 +116,10 @@
 <p>序列协议中提供了许多有意思的方法，这些方法很多都已经在扩展中实现了，例如 <strong>map</strong>、<strong>flatmap</strong>（深入了解可以参看 <a href="http://www.uraimo.com/2015/10/08/Swift2-map-flatmap-demystified/" target="_blank" rel="noopener">map and flatMap</a>）、<strong>filter</strong>、<strong>reduce</strong>、<strong>subsequence functions</strong> 等。</p>
 <p>这些方法让 <code>SequenceType</code> 协议的作用远远大于只进行 for each 遍历。</p>
 <p>让我们来看下 <code>GeneratorType</code> 的定义：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">protocol</span> <span class="title">GeneratorType</span> </span>&#123;</span><br><span class="line">    <span class="keyword">typealias</span> <span class="type">Element</span></span><br><span class="line">    <span class="comment">/// Advance to the next element and return it, or `nil` if no next</span></span><br><span class="line">    <span class="comment">/// element exists.</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">next</span><span class="params">()</span></span> -&gt; <span class="type">Self</span>.<span class="type">Element</span>?</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">protocol</span> <span class="title">GeneratorType</span> </span>&#123;</span><br><span class="line">    <span class="keyword">typealias</span> <span class="type">Element</span></span><br><span class="line">    <span class="comment">/// Advance to the next element and return it, or `nil` if no next</span></span><br><span class="line">    <span class="comment">/// element exists.</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">next</span><span class="params">()</span></span> -&gt; <span class="type">Self</span>.<span class="type">Element?</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这个简单的协议只包含了一个 <code>next()</code> 方法，该方法用来返回生成器管理的下一个元素。至关重要的一点是，当序列遍历到最后时，生成器应该返回 <em>nil</em>。接下来当我们构造一个无限序列的时候，来看看为什么这里要返回 <code>nil</code>。</p>
 <p>首先，我们来写一个简单的斐波那契数序列生成器：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">FibonacciGenerator</span> : <span class="title">GeneratorType</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> last = (<span class="number">0</span>,<span class="number">1</span>)</span><br><span class="line">    <span class="keyword">var</span> endAt:<span class="type">Int</span></span><br><span class="line">    <span class="keyword">var</span> lastIteration = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span>(end:<span class="type">Int</span>)&#123;</span><br><span class="line">        endAt = end</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">next</span><span class="params">()</span></span> -&gt; <span class="type">Int</span>?&#123;</span><br><span class="line">        <span class="keyword">guard</span> lastIteration&lt;endAt <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">        &#125;</span><br><span class="line">        lastIteration++</span><br><span class="line"></span><br><span class="line">        <span class="keyword">let</span> next = last.<span class="number">0</span></span><br><span class="line">        last = (last.<span class="number">1</span>,last.<span class="number">0</span>+last.<span class="number">1</span>)</span><br><span class="line">        <span class="keyword">return</span> next</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">FibonacciGenerator</span> : <span class="title">GeneratorType</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> last = (<span class="number">0</span>,<span class="number">1</span>)</span><br><span class="line">    <span class="keyword">var</span> endAt:<span class="type">Int</span></span><br><span class="line">    <span class="keyword">var</span> lastIteration = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span>(end:<span class="type">Int</span>)&#123;</span><br><span class="line">        endAt = end</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">next</span><span class="params">()</span></span> -&gt; <span class="type">Int?</span>&#123;</span><br><span class="line">        <span class="keyword">guard</span> lastIteration&lt;endAt <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">        &#125;</span><br><span class="line">        lastIteration++</span><br><span class="line"></span><br><span class="line">        <span class="keyword">let</span> next = last.<span class="number">0</span></span><br><span class="line">        last = (last.<span class="number">1</span>,last.<span class="number">0</span>+last.<span class="number">1</span>)</span><br><span class="line">        <span class="keyword">return</span> next</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>为了定义一个有限序列，我们需要一个自定义构造函数来指定一个序列长度。当到达这个长度时 <code>next()</code> 方法就返回 <em>nil</em>。这里我们用元组（Tuple）实现起来会节省很多代码量，让我们看下如何使用这个生成器：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> fg = <span class="type">FibonacciGenerator</span>(end:<span class="number">10</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> <span class="keyword">let</span> fib = fg.next() &#123;</span><br><span class="line">    <span class="built_in">print</span>(fib)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>用这种方式我们就可以遍历生成器中的元素，直到生成器返回 <em>nil</em>。</p>
@@ -131,7 +131,7 @@
 <p>这种定义方式跟上面序列的最终效果是一样的。唯一的区别就是 <code>generate</code> 方法返回了 <code>AnyGenerator&lt;Int&gt;</code> 类型。它已经不是我们开始的时候定义的简单<em>生成器类型</em>。</p>
 <p>这种做法在这里看起来可能没太大用处，但是在很多情况下，相较于让一个生成器嵌入一个序列集合中，用一个简单 <code>anyGenerator()</code> 方法来生成的序列更具扩展性。</p>
 <p>例如，我们用 <a href="https://en.wikipedia.org/wiki/Lucas_number" target="_blank" rel="noopener">Lucas 序列</a>的前 10 个数来创建一个序列。Lucas 序列与斐波那契序列非常相似，不同之处是斐波那契序列以 0，1 开头而 Lucas 序列以 2，1 开头，所以当然最终会生成截然不同的序列，例如：2，1，3，4，7，11，18，29…下面我们只定义一个生成器，并用它来初始化一个数组。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> last = (<span class="number">2</span>,<span class="number">1</span>)</span><br><span class="line"><span class="keyword">var</span> <span class="built_in">c</span> = <span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> lucas = <span class="built_in">anyGenerator</span>&#123;</span><br><span class="line">    ()-&gt;<span class="type">Int</span>? <span class="keyword">in</span></span><br><span class="line">    <span class="keyword">guard</span> <span class="built_in">c</span>&lt;<span class="number">10</span> <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">c</span>++</span><br><span class="line">    <span class="keyword">let</span> next = last.<span class="number">0</span></span><br><span class="line">    last = (last.<span class="number">1</span>,last.<span class="number">0</span>+last.<span class="number">1</span>)</span><br><span class="line">    <span class="keyword">return</span> next</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> a = <span class="type">Array</span>(lucas) <span class="comment">//[2, 1, 3, 4, 7, 11, 18, 29, 47, 76]</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> last = (<span class="number">2</span>,<span class="number">1</span>)</span><br><span class="line"><span class="keyword">var</span> <span class="built_in">c</span> = <span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> lucas = <span class="built_in">anyGenerator</span>&#123;</span><br><span class="line">    ()-&gt;<span class="type">Int?</span> <span class="keyword">in</span></span><br><span class="line">    <span class="keyword">guard</span> <span class="built_in">c</span>&lt;<span class="number">10</span> <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">c</span>++</span><br><span class="line">    <span class="keyword">let</span> next = last.<span class="number">0</span></span><br><span class="line">    last = (last.<span class="number">1</span>,last.<span class="number">0</span>+last.<span class="number">1</span>)</span><br><span class="line">    <span class="keyword">return</span> next</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> a = <span class="type">Array</span>(lucas) <span class="comment">//[2, 1, 3, 4, 7, 11, 18, 29, 47, 76]</span></span><br></pre></td></tr></table></figure>
 <p>看起来不错，我们删除了一些无用的代码，我们也可以扩展我们的算法，让它返回一个<a href="http://www.wikiwand.com/en/Golden_ratio" target="_blank" rel="noopener">黄金分割比</a>，让我们试试：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Darwin</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> <span class="type">Phi</span> = (sqrt(<span class="number">5</span>)+<span class="number">1.0</span>)/<span class="number">2</span></span><br><span class="line"><span class="keyword">let</span> phi = <span class="number">1</span>/<span class="type">Phi</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">luc</span><span class="params">(n:Int)</span></span>-&gt;<span class="type">Int</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="type">Int</span>(pow(<span class="type">Phi</span>, <span class="type">Double</span>(n))+pow(-phi,<span class="type">Double</span>(n)))</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">c</span> = <span class="number">0</span></span><br><span class="line"><span class="keyword">var</span> compactLucas = <span class="built_in">anyGenerator</span>&#123; <span class="built_in">c</span>&lt;<span class="number">10</span> ? luc(<span class="built_in">c</span>++): <span class="literal">nil</span> &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> a2 = <span class="type">Array</span>(compactLucas) <span class="comment">//[2, 1, 3, 4, 7, 11, 18, 29, 47, 76]</span></span><br></pre></td></tr></table></figure>
 <p>这样确实行得通吗？当然，你可以下载 <a href="https://github.com/uraimo/Swift-Playgrounds/" target="_blank" rel="noopener">playground</a> 或<a href="https://raw.githubusercontent.com/uraimo/Swift-Playgrounds/master/archives/2015-11-12-SequenceTypeGeneratorTypePlayground.playground.zip" target="_blank" rel="noopener">打包的 zip 文件</a>来验证。</p>
@@ -194,9 +194,9 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
+ <div class="prev">
  <a href="/2016/03/11/whats-up-in-swift-evolution/" title="Swift 新进展（2016年1月份）">
-  <strong>上一篇</strong><br/>
+  <strong>上一篇</strong><br>
   <span>
   Swift 新进展（2016年1月份）</span>
 </a>
@@ -204,8 +204,8 @@
 
 
 <div class="next">
-<a href="/2016/03/09/swift-qa-2016-03-09/"  title="每周 Swift 社区问答 2016-03-09（第十二期）">
- <strong>下一篇</strong><br/> 
+<a href="/2016/03/09/swift-qa-2016-03-09/" title="每周 Swift 社区问答 2016-03-09（第十二期）">
+ <strong>下一篇</strong><br> 
  <span>每周 Swift 社区问答 2016-03-09（第十二期）
 </span>
 </a>
@@ -320,11 +320,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -364,15 +364,15 @@
 		  
 		
 		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -525,11 +525,11 @@
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
@@ -541,6 +541,10 @@
 			
 		
 			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/教程/" title="教程">教程<sup>5</sup></a></li>
 			
 		
@@ -549,7 +553,7 @@
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
@@ -557,11 +561,7 @@
 			
 		
 			
-				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
 			
 		
 			
@@ -569,7 +569,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
 			
 		
 			
@@ -744,7 +744,7 @@
 
   <div class="wechatpart">
 	<p class="asidetitle">微信公众号</p>
-	<img src="/img/wechat.jpg" />
+	<img src="/img/wechat.jpg">
 </div>
 
 </aside>
@@ -753,9 +753,9 @@
     <footer>
 
 
-<div id="footer" >
+<div id="footer">
 	
-	<div class="social-font" class="clearfix">
+	<div class="social-font">
 		
 		
 		
@@ -985,7 +985,7 @@ $(document).ready(function(){
 <!-- Totop Begin -->
 <!--
 	<div id="totop">
-	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
 	</div>
 	<script src="/js/totop.js"></script>
 -->

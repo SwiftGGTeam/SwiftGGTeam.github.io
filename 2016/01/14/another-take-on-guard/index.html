@@ -1,9 +1,9 @@
 
  <!DOCTYPE HTML>
 <html lang="zh-CN">
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="UTF-8">
-  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
   
     <title>关于 guard 的另一种观点 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
@@ -21,7 +21,7 @@
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Erica Sadun，原文链接，原文日期：2016-01-01译者：walkingway；校对：saitjr；定稿：shanks   今天，iOS Dev 周刊 贴出一篇 Alexei Kuznetsov 的关于『从你的代码中删除 guard 』的文章。Kuznetsov 指出支持他这篇文章的理论依据主要来自于 Robert C. Martin，这位世界顶级软件开发大师提出：代码必须精简">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-05-05T16:00:50.832Z">
+<meta property="og:updated_time" content="2019-05-06T06:19:35.928Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="关于 guard 的另一种观点">
 <meta name="twitter:description" content="作者：Erica Sadun，原文链接，原文日期：2016-01-01译者：walkingway；校对：saitjr；定稿：shanks   今天，iOS Dev 周刊 贴出一篇 Alexei Kuznetsov 的关于『从你的代码中删除 guard 』的文章。Kuznetsov 指出支持他这篇文章的理论依据主要来自于 Robert C. Martin，这位世界顶级软件开发大师提出：代码必须精简">
@@ -39,14 +39,14 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/gitment.css">
 </head>
-
+</html>
   <body>
     <header>
       
 <div>
 		
 			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -72,7 +72,7 @@
  					
 						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
 							<label>搜索</label>
-						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
 						</form>
 					
 					</li>
@@ -107,7 +107,7 @@
 <p>我写这篇文章的目的是为了反驳 Kuznetsov 提出的观点，接下来我要说说我的看法。</p>
 <a id="more"></a>
 <h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><p>下面的代码片段来自于苹果官方《Swift Programming Language》书中的示例，他设计了一个虚拟的自动贩卖机。 <code>vend</code> 函数实现了『顾客成功付款后，将商品分发到消费者手中』的功能。如果我没数错的话，官方提供的原始函数一共是 18 行代码（25 ~ 42 行），这个数量包括三条 <code>guard</code> 语句，四条执行语句，以及他们之间的换行符。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Item</span> </span>&#123;</span><br><span class="line">	<span class="keyword">var</span> price: <span class="type">Int</span></span><br><span class="line">	<span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">VendingMachineError</span>: <span class="title">ErrorType</span> </span>&#123;</span><br><span class="line">	<span class="keyword">case</span> <span class="type">InvalidSelection</span></span><br><span class="line">	<span class="keyword">case</span> <span class="type">InsufficientFunds</span>(coinsNeeded: <span class="type">Int</span>)</span><br><span class="line">	<span class="keyword">case</span> <span class="type">OutOfStock</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">VendingMachine</span> </span>&#123;</span><br><span class="line">	<span class="keyword">var</span> inventory = [</span><br><span class="line">		<span class="string">"Candy Bar"</span>: <span class="type">Item</span>(price: <span class="number">12</span>, <span class="built_in">count</span>: <span class="number">7</span>),</span><br><span class="line">		<span class="string">"Chips"</span>: <span class="type">Item</span>(price: <span class="number">10</span>, <span class="built_in">count</span>: <span class="number">4</span>),</span><br><span class="line">		<span class="string">"Pretzels"</span>: <span class="type">Item</span>(price: <span class="number">7</span>, <span class="built_in">count</span>: <span class="number">11</span>)</span><br><span class="line">    ]</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> coinsDeposited = <span class="number">0</span></span><br><span class="line">	</span><br><span class="line">	<span class="function"><span class="keyword">func</span> <span class="title">dispense</span><span class="params">(snack: String)</span></span> &#123;</span><br><span class="line">		<span class="built_in">print</span>(<span class="string">"Dispensing <span class="subst">\(snack)</span>"</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">func</span> <span class="title">vend</span><span class="params">(itemNamed name: String)</span></span> <span class="keyword">throws</span> &#123;</span><br><span class="line">		<span class="keyword">guard</span> <span class="keyword">var</span> item = inventory[name] <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="keyword">throw</span> <span class="type">VendingMachineError</span>.<span class="type">InvalidSelection</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">guard</span> item.<span class="built_in">count</span> &gt; <span class="number">0</span> <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="keyword">throw</span> <span class="type">VendingMachineError</span>.<span class="type">OutOfStock</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">guard</span> item.price &lt;= coinsDeposited <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="keyword">throw</span> <span class="type">VendingMachineError</span>.<span class="type">InsufficientFunds</span>(coinsNeeded: item.price - coinsDeposited)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        coinsDeposited -= item.price</span><br><span class="line">        --item.<span class="built_in">count</span></span><br><span class="line">        inventory[name] = item</span><br><span class="line">        dispense(name)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Item</span> </span>&#123;</span><br><span class="line">	<span class="keyword">var</span> price: <span class="type">Int</span></span><br><span class="line">	<span class="keyword">var</span> <span class="built_in">count</span>: <span class="type">Int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">VendingMachineError</span>: <span class="title">ErrorType</span> </span>&#123;</span><br><span class="line">	<span class="keyword">case</span> <span class="type">InvalidSelection</span></span><br><span class="line">	<span class="keyword">case</span> <span class="type">InsufficientFunds</span>(coinsNeeded: <span class="type">Int</span>)</span><br><span class="line">	<span class="keyword">case</span> <span class="type">OutOfStock</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">VendingMachine</span> </span>&#123;</span><br><span class="line">	<span class="keyword">var</span> inventory = [</span><br><span class="line">		<span class="string">"Candy Bar"</span>: <span class="type">Item</span>(price: <span class="number">12</span>, <span class="built_in">count</span>: <span class="number">7</span>),</span><br><span class="line">		<span class="string">"Chips"</span>: <span class="type">Item</span>(price: <span class="number">10</span>, <span class="built_in">count</span>: <span class="number">4</span>),</span><br><span class="line">		<span class="string">"Pretzels"</span>: <span class="type">Item</span>(price: <span class="number">7</span>, <span class="built_in">count</span>: <span class="number">11</span>)</span><br><span class="line">    ]</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> coinsDeposited = <span class="number">0</span></span><br><span class="line">	</span><br><span class="line">	<span class="function"><span class="keyword">func</span> <span class="title">dispense</span><span class="params">(snack: String)</span></span> &#123;</span><br><span class="line">		<span class="built_in">print</span>(<span class="string">"Dispensing \(snack)"</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">func</span> <span class="title">vend</span><span class="params">(itemNamed name: String)</span></span> <span class="keyword">throws</span> &#123;</span><br><span class="line">		<span class="keyword">guard</span> <span class="keyword">var</span> item = inventory[name] <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="keyword">throw</span> <span class="type">VendingMachineError</span>.<span class="type">InvalidSelection</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">guard</span> item.<span class="built_in">count</span> &gt; <span class="number">0</span> <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="keyword">throw</span> <span class="type">VendingMachineError</span>.<span class="type">OutOfStock</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">guard</span> item.price &lt;= coinsDeposited <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="keyword">throw</span> <span class="type">VendingMachineError</span>.<span class="type">InsufficientFunds</span>(coinsNeeded: item.price - coinsDeposited)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        coinsDeposited -= item.price</span><br><span class="line">        --item.<span class="built_in">count</span></span><br><span class="line">        inventory[name] = item</span><br><span class="line">        dispense(name)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>Kuznetsov 重构了官方自动贩卖机的代码，去掉 <code>guard</code> 语句，并尽量缩减了每个函数的语句数量。恕我直言，我不喜欢这种重构，看完他的代码来解释下原因。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">vend</span><span class="params">(itemNamed name: String)</span></span> <span class="keyword">throws</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> item = <span class="keyword">try</span> validatedItemNamed(name)</span><br><span class="line">    reduceDepositedCoinsBy(item.price)</span><br><span class="line">    removeFromInventory(item, name: name)</span><br><span class="line">    dispense(name)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">validatedItemNamed</span><span class="params">(name: String)</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Item</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> item = <span class="keyword">try</span> itemNamed(name)</span><br><span class="line">    <span class="keyword">try</span> validate(item)</span><br><span class="line">    <span class="keyword">return</span> item</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">reduceDepositedCoinsBy</span><span class="params">(price: Int)</span></span> &#123;</span><br><span class="line">    coinsDeposited -= price</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">removeFromInventory</span><span class="params">(<span class="keyword">var</span> item: Item, name: String)</span></span> &#123;</span><br><span class="line">    --item.<span class="built_in">count</span></span><br><span class="line">    inventory[name] = item</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">itemNamed</span><span class="params">(name: String)</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Item</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">let</span> item = inventory[name] &#123;</span><br><span class="line">        <span class="keyword">return</span> item</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="type">VendingMachineError</span>.<span class="type">InvalidSelection</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">validate</span><span class="params">(item: Item)</span></span> <span class="keyword">throws</span> &#123;</span><br><span class="line">    <span class="keyword">try</span> validateCount(item.<span class="built_in">count</span>)</span><br><span class="line">    <span class="keyword">try</span> validatePrice(item.price)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">validateCount</span><span class="params">(<span class="built_in">count</span>: Int)</span></span> <span class="keyword">throws</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">count</span> == <span class="number">0</span> &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="type">VendingMachineError</span>.<span class="type">OutOfStock</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">validatePrice</span><span class="params">(price: Int)</span></span> <span class="keyword">throws</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> coinsDeposited &lt; price &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="type">VendingMachineError</span>.<span class="type">InsufficientFunds</span>(coinsNeeded: price - coinsDeposited)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h2 id="重构的结果不但冗长，而且复杂"><a href="#重构的结果不但冗长，而且复杂" class="headerlink" title="重构的结果不但冗长，而且复杂"></a>重构的结果不但冗长，而且复杂</h2><p>Kuznetsov 的主要目标是缩减函数的尺寸。但重构的结果却是『将之前 18 行代码骤增到 46 行』，并且将这些逻辑分散在至少八个函数中。这种形式的重构降低了代码的可读性，一个简单的线性故事变成了一个混乱的集合，没有清晰的业务逻辑。</p>
@@ -157,9 +157,9 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
+ <div class="prev">
  <a href="/2016/01/15/help-yourself-to-some-swift/" title="要不要来点 Swift">
-  <strong>上一篇</strong><br/>
+  <strong>上一篇</strong><br>
   <span>
   要不要来点 Swift</span>
 </a>
@@ -167,8 +167,8 @@
 
 
 <div class="next">
-<a href="/2016/01/13/swift-qa-2016-01-13/"  title="每周 Swift 社区问答 2016-01-13">
- <strong>下一篇</strong><br/> 
+<a href="/2016/01/13/swift-qa-2016-01-13/" title="每周 Swift 社区问答 2016-01-13">
+ <strong>下一篇</strong><br> 
  <span>每周 Swift 社区问答 2016-01-13
 </span>
 </a>
@@ -283,11 +283,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -327,15 +327,15 @@
 		  
 		
 		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -488,11 +488,11 @@
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
@@ -504,6 +504,10 @@
 			
 		
 			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/教程/" title="教程">教程<sup>5</sup></a></li>
 			
 		
@@ -512,7 +516,7 @@
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
@@ -520,11 +524,7 @@
 			
 		
 			
-				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
 			
 		
 			
@@ -532,7 +532,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
 			
 		
 			
@@ -707,7 +707,7 @@
 
   <div class="wechatpart">
 	<p class="asidetitle">微信公众号</p>
-	<img src="/img/wechat.jpg" />
+	<img src="/img/wechat.jpg">
 </div>
 
 </aside>
@@ -716,9 +716,9 @@
     <footer>
 
 
-<div id="footer" >
+<div id="footer">
 	
-	<div class="social-font" class="clearfix">
+	<div class="social-font">
 		
 		
 		
@@ -948,7 +948,7 @@ $(document).ready(function(){
 <!-- Totop Begin -->
 <!--
 	<div id="totop">
-	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
 	</div>
 	<script src="/js/totop.js"></script>
 -->

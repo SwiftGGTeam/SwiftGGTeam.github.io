@@ -1,9 +1,9 @@
 
  <!DOCTYPE HTML>
 <html lang="zh-CN">
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="UTF-8">
-  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
   
     <title>在 Swift 2 beta 6中使用 try? 抛出可选异常 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
@@ -21,7 +21,7 @@
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Benedikt Terhechte，原文链接，原文日期：2015-08-25译者：lfb_CD；校对：小锅；定稿：shanks   Swift 2.0 beta 6 新增了一个关键字 try?，这为我们处理异常又增加一个新的途径。这篇简短的文章阐述了这个关键字的基础知识，同时说明为何这个新关键字很酷。 在 Swift 1.x 中，我们只能通过可选数据类型和 NSError 来处理异常。我">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-05-05T16:00:50.868Z">
+<meta property="og:updated_time" content="2019-05-06T06:19:35.916Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="在 Swift 2 beta 6中使用 try? 抛出可选异常">
 <meta name="twitter:description" content="作者：Benedikt Terhechte，原文链接，原文日期：2015-08-25译者：lfb_CD；校对：小锅；定稿：shanks   Swift 2.0 beta 6 新增了一个关键字 try?，这为我们处理异常又增加一个新的途径。这篇简短的文章阐述了这个关键字的基础知识，同时说明为何这个新关键字很酷。 在 Swift 1.x 中，我们只能通过可选数据类型和 NSError 来处理异常。我">
@@ -39,14 +39,14 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/gitment.css">
 </head>
-
+</html>
   <body>
     <header>
       
 <div>
 		
 			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -72,7 +72,7 @@
  					
 						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
 							<label>搜索</label>
-						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
 						</form>
 					
 					</li>
@@ -108,7 +108,7 @@
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> success = <span class="type">Result</span>&lt;<span class="type">String</span>, <span class="type">NSError</span>&gt;.<span class="type">Success</span>(<span class="string">"success"</span>)</span><br></pre></td></tr></table></figure>
 <p>在 Swift 2.0 中， 苹果引进了 <code>try</code>/<code>catch</code> 的异常处理方式。在底层实现中，Swift 并没有像其他编程语言(比如 Objective-C 或者 Java) 一样使用代价昂贵的堆栈处理。相反地，它们返回了类似 <code>Either</code> 或者 <code>Result</code> 的东西 。从语法上隐藏了这些东西，就是为了使异常处理使用起来更加简单<sup>1</sup>。</p>
 <h2 id="Swift-2-0-beta-5-或之前版本"><a href="#Swift-2-0-beta-5-或之前版本" class="headerlink" title="Swift 2.0 beta 5 或之前版本"></a>Swift 2.0 beta 5 或之前版本</h2><p>然而，随着代码中使用 <code>do/try/catch</code> 的增多，你会发现代码嵌套得越来越混乱，因为 <code>do</code> 与处理可选值（optionals）的语句看起来不兼容。这儿有一段丑陋的代码，注意观察我们是怎么用 <code>let</code> <code>do</code> <code>let</code> 嵌入到 <code>if let</code> 中的<sup>2</sup>。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"><span class="comment">// get the currently logged in user</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">loggedInUser</span><span class="params">()</span></span> -&gt; <span class="type">Int</span>? &#123; <span class="keyword">return</span> <span class="number">0</span> &#125;</span><br><span class="line"><span class="comment">// get his name</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getUserName</span> <span class="params">(userId: Int)</span></span> <span class="keyword">throws</span> -&gt; <span class="type">String</span> &#123; <span class="keyword">return</span> <span class="string">"Claus"</span> &#125;</span><br><span class="line"><span class="comment">// create a new image post with this username. Returns the post data</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">imagePostForUserName</span><span class="params">(name: String, imageURL: NSURL?)</span></span> -&gt; <span class="type">NSData</span>? &#123; <span class="keyword">return</span> <span class="type">NSData</span>() &#125;</span><br><span class="line"><span class="comment">// post the data to a server</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">postImage</span><span class="params">(data: NSData)</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Bool</span> &#123; <span class="keyword">return</span> <span class="literal">true</span> &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> uid = loggedInUser() &#123;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">	<span class="keyword">let</span> username = <span class="keyword">try</span> getUserName(uid)</span><br><span class="line">	<span class="keyword">if</span> <span class="keyword">let</span> data = imagePostForUserName(username, imageURL: <span class="literal">nil</span>) &#123;</span><br><span class="line">	    <span class="keyword">do</span> &#123;</span><br><span class="line">		<span class="keyword">let</span> success = <span class="keyword">try</span> postImage(data)</span><br><span class="line">		<span class="keyword">if</span> success &#123;</span><br><span class="line">		    <span class="built_in">print</span> (<span class="string">"Submitted"</span>)</span><br><span class="line">		&#125;  </span><br><span class="line">	    &#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">		<span class="comment">// more error handling</span></span><br><span class="line">	    &#125;</span><br><span class="line">	&#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">	<span class="comment">// todo: error handling</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"><span class="comment">// get the currently logged in user</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">loggedInUser</span><span class="params">()</span></span> -&gt; <span class="type">Int?</span> &#123; <span class="keyword">return</span> <span class="number">0</span> &#125;</span><br><span class="line"><span class="comment">// get his name</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getUserName</span> <span class="params">(userId: Int)</span></span> <span class="keyword">throws</span> -&gt; <span class="type">String</span> &#123; <span class="keyword">return</span> <span class="string">"Claus"</span> &#125;</span><br><span class="line"><span class="comment">// create a new image post with this username. Returns the post data</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">imagePostForUserName</span><span class="params">(name: String, imageURL: NSURL?)</span></span> -&gt; <span class="type">NSData?</span> &#123; <span class="keyword">return</span> <span class="type">NSData</span>() &#125;</span><br><span class="line"><span class="comment">// post the data to a server</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">postImage</span><span class="params">(data: NSData)</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Bool</span> &#123; <span class="keyword">return</span> <span class="literal">true</span> &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> uid = loggedInUser() &#123;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">	<span class="keyword">let</span> username = <span class="keyword">try</span> getUserName(uid)</span><br><span class="line">	<span class="keyword">if</span> <span class="keyword">let</span> data = imagePostForUserName(username, imageURL: <span class="literal">nil</span>) &#123;</span><br><span class="line">	    <span class="keyword">do</span> &#123;</span><br><span class="line">		<span class="keyword">let</span> success = <span class="keyword">try</span> postImage(data)</span><br><span class="line">		<span class="keyword">if</span> success &#123;</span><br><span class="line">		    <span class="built_in">print</span> (<span class="string">"Submitted"</span>)</span><br><span class="line">		&#125;  </span><br><span class="line">	    &#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">		<span class="comment">// more error handling</span></span><br><span class="line">	    &#125;</span><br><span class="line">	&#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">	<span class="comment">// todo: error handling</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>很难对这段代码进行简化的一个原因是, <code>do</code> 会打破我们使用多重 <code>guard</code> 或 <code>let</code> 的连续性<sup>3</sup>。</p>
 <h2 id="Swift-2-0-beta-6"><a href="#Swift-2-0-beta-6" class="headerlink" title="Swift 2.0 beta 6"></a>Swift 2.0 beta 6</h2><p>在 beta6 中，我们有了一个新的关键字 <code>try?</code> ,它在代码执行失败时会抛出错误并返回可选值 <code>None</code>,而在执行成功的情况下，会直接返回可选值 <code>Some</code>。<br>以下直接引用<a href="http://adcdownload.apple.com/Developer_Tools/Xcode_7_beta_6/Xcode_7_beta_6_Release_Notes.pdf" target="_blank" rel="noopener">官方的更新日志</a>:</p>
 <blockquote>
@@ -165,9 +165,9 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
+ <div class="prev">
  <a href="/2015/09/11/optional-throw-swift/" title="在 Swift 2 beta 6中使用 try? 抛出可选异常">
-  <strong>上一篇</strong><br/>
+  <strong>上一篇</strong><br>
   <span>
   在 Swift 2 beta 6中使用 try? 抛出可选异常</span>
 </a>
@@ -175,8 +175,8 @@
 
 
 <div class="next">
-<a href="/2015/09/11/simulator-vs-real-device/"  title="模拟器和真机调试哪个更好？">
- <strong>下一篇</strong><br/> 
+<a href="/2015/09/11/simulator_vs_real_device/" title="模拟器和真机调试哪个更好？">
+ <strong>下一篇</strong><br> 
  <span>模拟器和真机调试哪个更好？
 </span>
 </a>
@@ -291,11 +291,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -335,15 +335,15 @@
 		  
 		
 		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -496,11 +496,11 @@
 			
 		
 			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
@@ -512,6 +512,10 @@
 			
 		
 			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/教程/" title="教程">教程<sup>5</sup></a></li>
 			
 		
@@ -520,7 +524,7 @@
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
@@ -528,11 +532,7 @@
 			
 		
 			
-				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
 			
 		
 			
@@ -540,7 +540,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
 			
 		
 			
@@ -715,7 +715,7 @@
 
   <div class="wechatpart">
 	<p class="asidetitle">微信公众号</p>
-	<img src="/img/wechat.jpg" />
+	<img src="/img/wechat.jpg">
 </div>
 
 </aside>
@@ -724,9 +724,9 @@
     <footer>
 
 
-<div id="footer" >
+<div id="footer">
 	
-	<div class="social-font" class="clearfix">
+	<div class="social-font">
 		
 		
 		
@@ -956,7 +956,7 @@ $(document).ready(function(){
 <!-- Totop Begin -->
 <!--
 	<div id="totop">
-	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
 	</div>
 	<script src="/js/totop.js"></script>
 -->
