@@ -1,9 +1,9 @@
 
  <!DOCTYPE HTML>
 <html lang="zh-CN">
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="UTF-8">
-  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
   
     <title>在 Swift 中实现字典 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
@@ -21,7 +21,7 @@
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="怎么在 Swift 实现字典是很多人想知道的吧，那么下面就来详细说下 Swift 字典类型实现过程吧。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-05-05T16:00:50.848Z">
+<meta property="og:updated_time" content="2019-06-18T13:48:09.137Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="在 Swift 中实现字典">
 <meta name="twitter:description" content="怎么在 Swift 实现字典是很多人想知道的吧，那么下面就来详细说下 Swift 字典类型实现过程吧。">
@@ -39,14 +39,14 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/gitment.css">
 </head>
-
+</html>
   <body>
     <header>
       
 <div>
 		
 			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -72,7 +72,7 @@
  					
 						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
 							<label>搜索</label>
-						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
 						</form>
 					
 					</li>
@@ -111,7 +111,7 @@
 </blockquote>
 <p>我从 <code>Mike Ash</code> 的文章 <a href="https://www.mikeash.com/pyblog/friday-qa-2012-03-16-lets-build-nsmutabledictionary.html" target="_blank" rel="noopener">让我们构建 NSMutableDictionary</a>  获取了一些灵感，特别是重新计算数组容量的规则。</p>
 <p>让我们开始吧。我们知道 <code>Key</code> 和 <code>Value</code> 都应该支持泛型，而且 <code>Key</code> 必须遵循 <code>Hashable</code> 协议。遵循 <code>Hashable</code> 协议的也一定同时遵循 <code>Equatable</code> 协议。(译者注，<code>Hashable</code> 协议继承自 <code>Equatable</code> 协议)</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Dictionary</span>&lt;<span class="title">Key</span>, <span class="title">Value</span> <span class="title">where</span> <span class="title">Key</span>: <span class="title">Hashable</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> storage = <span class="comment">//some Array...</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">subscript</span>(key: <span class="type">Key</span>) -&gt; <span class="type">Value</span>? &#123;</span><br><span class="line">        <span class="keyword">get</span> &#123;</span><br><span class="line">	        <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">set</span> &#123;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Dictionary</span>&lt;<span class="title">Key</span>, <span class="title">Value</span> <span class="title">where</span> <span class="title">Key</span>: <span class="title">Hashable</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> storage = <span class="comment">//some Array...</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">subscript</span>(key: <span class="type">Key</span>) -&gt; <span class="type">Value?</span> &#123;</span><br><span class="line">        <span class="keyword">get</span> &#123;</span><br><span class="line">	        <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">set</span> &#123;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这是我们类型的基本结构。我们知道我们的数组必须是支持泛型的，但是还不知道具体的值是什么。由于两个不同的关键字经过哈希和取模操作后可能会指向数组的同一个位置，这样就会造成冲突，因此每个占位对象需要支持存储多个值。现在让来我们设计 <code>Placeholder</code>：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Placeholder</span>&lt;<span class="title">Key</span>, <span class="title">Value</span> <span class="title">where</span> <span class="title">Key</span>: <span class="title">Hashable</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> values: [(<span class="type">Key</span>, <span class="type">Value</span>)] = []</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这个对象存储很多经过哈希和取模操作后指向字典同一位置的键和值。如果我们很好的设计了字典，那么每个 <code>Placeholder</code> 包含的键值对将不会超过一个，但是超过一个的情况也会发生。一个比较好的实现是用一个链表来存储 <code>Placeholder</code> 的属性 <code>values</code>。我将留作一个练习给读者。</p>
@@ -126,9 +126,9 @@
 <p>取值的过程相当简单。对键进行哈希，取绝对值，取模操作，然后我们获取了在那个位置上的占位对象。我将会把从占位对象中获取值的过程交给占位对象自己去做。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">get</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> position = <span class="built_in">abs</span>(key.hashValue) % storage.<span class="built_in">count</span></span><br><span class="line">    <span class="keyword">return</span> storage[position].firstValue(matchingKey: key)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>真正神奇的是在下面这个方法。我们需要找到第一个包含那个键的键值对。在 Swift 3 中我们可以使用 <code>SequenceType</code> 协议中的 <code>first(where:)</code> 方法来实现，但目前我们使用普通的写法 <code>lazy.filter( /* block */ ).first</code> 来获取键值对。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">firstValue</span><span class="params">(matchingKey key: Key)</span></span> -&gt; <span class="type">Value</span>? &#123;</span><br><span class="line">    <span class="keyword">let</span> matchingKeyValuePair = values.<span class="built_in">lazy</span>.<span class="built_in">filter</span>(&#123; $<span class="number">0.0</span> == key &#125;).first</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">firstValue</span><span class="params">(matchingKey key: Key)</span></span> -&gt; <span class="type">Value?</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> matchingKeyValuePair = values.<span class="built_in">lazy</span>.<span class="built_in">filter</span>(&#123; $<span class="number">0.0</span> == key &#125;).first</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>一旦我们拿到表示键值对的元组，我们就可以直接调用 <code>.1</code> 获取对应的值。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">firstValue</span><span class="params">(matchingKey key: Key)</span></span> -&gt; <span class="type">Value</span>? &#123;</span><br><span class="line">    <span class="keyword">return</span> values.<span class="built_in">lazy</span>.<span class="built_in">filter</span>(&#123; $<span class="number">0.0</span> == key &#125;).first?.<span class="number">1</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">firstValue</span><span class="params">(matchingKey key: Key)</span></span> -&gt; <span class="type">Value?</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> values.<span class="built_in">lazy</span>.<span class="built_in">filter</span>(&#123; $<span class="number">0.0</span> == key &#125;).first?.<span class="number">1</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这几乎是 <code>Dictionary</code> 的基本实现了。23 行 Swift 代码。所有代码在这个 <a href="https://gist.github.com/khanlou/f01475a2ece9facb8e1cbc97288b4ac8" target="_blank" rel="noopener">gist</a> 中。</p>
 <p>还有几个有意思的事情还没有实现。首先，需要有惰性求值的 <code>generate()</code>，这样的话 <code>Dictionary</code> 就遵循 <code>SequenceType</code> 协议了。</p>
 <blockquote>
@@ -194,9 +194,9 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
+ <div class="prev">
  <a href="/2016/08/09/magical-view-rotation-with-stackview/" title="使用 StackView 实现魔术般的视图旋转适配">
-  <strong>上一篇</strong><br/>
+  <strong>上一篇</strong><br>
   <span>
   使用 StackView 实现魔术般的视图旋转适配</span>
 </a>
@@ -204,8 +204,8 @@
 
 
 <div class="next">
-<a href="/2016/08/05/afternoon-whoa-swifts-guard-case/"  title="午后问答：Swift 中的 guard case = 语法">
- <strong>下一篇</strong><br/> 
+<a href="/2016/08/05/afternoon-whoa-swifts-guard-case/" title="午后问答：Swift 中的 guard case = 语法">
+ <strong>下一篇</strong><br> 
  <span>午后问答：Swift 中的 guard case = 语法
 </span>
 </a>
@@ -320,11 +320,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -368,11 +368,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
 		  
 		
 		  
@@ -428,19 +428,19 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
@@ -744,7 +744,7 @@
 
   <div class="wechatpart">
 	<p class="asidetitle">微信公众号</p>
-	<img src="/img/wechat.jpg" />
+	<img src="/img/wechat.jpg">
 </div>
 
 </aside>
@@ -753,9 +753,9 @@
     <footer>
 
 
-<div id="footer" >
+<div id="footer">
 	
-	<div class="social-font" class="clearfix">
+	<div class="social-font">
 		
 		
 		
@@ -985,7 +985,7 @@ $(document).ready(function(){
 <!-- Totop Begin -->
 <!--
 	<div id="totop">
-	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
 	</div>
 	<script src="/js/totop.js"></script>
 -->

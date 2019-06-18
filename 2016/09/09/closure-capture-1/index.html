@@ -1,9 +1,9 @@
 
  <!DOCTYPE HTML>
 <html lang="zh-CN">
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="UTF-8">
-  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
   
     <title>Swift 闭包捕获系列一：闭包是如何捕获变量的 | 闭包捕获语义第一弹：一网打尽！ | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
@@ -22,7 +22,7 @@
 <meta property="og:description" content="Swift 的闭包也有着不同的捕获语义，本文介绍的就是 Swift 闭包是如何工作来捕获变量的实现过程。">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="http://alisoftware.github.io/assets/pokemon-drumroll.gif">
-<meta property="og:updated_time" content="2019-05-05T16:00:50.852Z">
+<meta property="og:updated_time" content="2019-06-18T13:48:09.137Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="闭包捕获语义第一弹：一网打尽！">
 <meta name="twitter:description" content="Swift 的闭包也有着不同的捕获语义，本文介绍的就是 Swift 闭包是如何工作来捕获变量的实现过程。">
@@ -41,14 +41,14 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/gitment.css">
 </head>
-
+</html>
   <body>
     <header>
       
 <div>
 		
 			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -74,7 +74,7 @@
  					
 						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
 							<label>搜索</label>
-						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
 						</form>
 					
 					</li>
@@ -108,7 +108,7 @@
 <a id="more"></a>
 <h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>在 Swift 中，闭包捕获他们所引用的变量：虽然这些变量在闭包之外声明，但只要在闭包内使用都会默认被闭包保留引用（retain），这是为了确保闭包执行时，这些变量还活着（译者注：没有被提前释放）。</p>
 <p>在文章接下来的部分，我们来定义一个简单的 <code>Pokemon</code>（口袋妖怪）类：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Pokemon</span>: <span class="title">CustomDebugStringConvertible</span> </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> name: <span class="type">String</span></span><br><span class="line">  <span class="keyword">init</span>(name: <span class="type">String</span>) &#123;</span><br><span class="line">    <span class="keyword">self</span>.name = name</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">var</span> debugDescription: <span class="type">String</span> &#123; <span class="keyword">return</span> <span class="string">"&lt;Pokemon <span class="subst">\(name)</span>&gt;"</span> &#125;</span><br><span class="line">  <span class="keyword">deinit</span> &#123; <span class="built_in">print</span>(<span class="string">"<span class="subst">\(<span class="keyword">self</span>)</span> escaped!"</span>) &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Pokemon</span>: <span class="title">CustomDebugStringConvertible</span> </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> name: <span class="type">String</span></span><br><span class="line">  <span class="keyword">init</span>(name: <span class="type">String</span>) &#123;</span><br><span class="line">    <span class="keyword">self</span>.name = name</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">var</span> debugDescription: <span class="type">String</span> &#123; <span class="keyword">return</span> <span class="string">"&lt;Pokemon \(name)&gt;"</span> &#125;</span><br><span class="line">  <span class="keyword">deinit</span> &#123; <span class="built_in">print</span>(<span class="string">"\(self) escaped!"</span>) &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>接下来声明一个简单的函数，他接受一个闭包作为参数，然后在一段时间后执行这个闭包（使用 GCD）。下面的例子展示了闭包是如何捕获外部变量的。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">delay</span><span class="params">(seconds: NSTimeInterval, closure: <span class="params">()</span></span></span>-&gt;()) &#123;</span><br><span class="line">  <span class="keyword">let</span> time = dispatch_time(<span class="type">DISPATCH_TIME_NOW</span>, <span class="type">Int64</span>(seconds * <span class="type">Double</span>(<span class="type">NSEC_PER_SEC</span>)))</span><br><span class="line">  dispatch_after(time, dispatch_get_main_queue()) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"🕑"</span>)</span><br><span class="line">    closure()</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <blockquote>
@@ -116,7 +116,7 @@
 </blockquote>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">delay</span><span class="params">(seconds: Int, closure: <span class="params">()</span></span></span>-&gt;()) &#123;</span><br><span class="line">  <span class="keyword">let</span> time = <span class="type">DispatchTime</span>.now() + .seconds(seconds)</span><br><span class="line">  <span class="type">DispatchQueue</span>.main.after(when: time) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"🕑"</span>)</span><br><span class="line">    closure()</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h2 id="默认的捕获语义"><a href="#默认的捕获语义" class="headerlink" title="默认的捕获语义"></a>默认的捕获语义</h2><p>现在，先从一个简单的例子开始：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo1</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">let</span> pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Mewtwo"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: <span class="subst">\(pokemon)</span>"</span>)</span><br><span class="line">  delay(<span class="number">1</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure: <span class="subst">\(pokemon)</span>"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"bye"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo1</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">let</span> pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Mewtwo"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: \(pokemon)"</span>)</span><br><span class="line">  delay(<span class="number">1</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure: \(pokemon)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"bye"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这个例子看上去很简单，但它有趣的地方在于闭包的运行被推迟了 1 秒钟，所以当 demo1() 函数执行完毕后，闭包才开始执行；并且 1 秒后当闭包被执行的时候 <code>Pokemon</code> 实例依然存活着。</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">before closure: &lt;Pokemon Mewtwo&gt;</span><br><span class="line">bye</span><br><span class="line">🕑</span><br><span class="line">inside closure: &lt;Pokemon Mewtwo&gt;</span><br><span class="line">&lt;Pokemon Mewtwo&gt; escaped!</span><br></pre></td></tr></table></figure>
 <p>这是因为闭包捕获（强引用）了 <code>pokemon</code> 变量：编译器发现在闭包内部引用了 <code>pokemon</code> 变量，它会自动捕获该变量（默认是强引用），所以 <code>pokemon</code> 的生命周期与闭包自身是一致的。</p>
@@ -127,33 +127,33 @@
 </blockquote>
 <h2 id="被捕获的变量在执行时才取值"><a href="#被捕获的变量在执行时才取值" class="headerlink" title="被捕获的变量在执行时才取值"></a>被捕获的变量在执行时才取值</h2><p>有一点值得注意的是 <strong>Swift 在闭包执行时才会取出捕获变量的值</strong>[^1]。我们可以认为它之前捕获的是变量的引用（或指针）。</p>
 <p>这里有一个有趣的例子：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo2</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Pikachu"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: <span class="subst">\(pokemon)</span>"</span>)</span><br><span class="line">  delay(<span class="number">1</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure: <span class="subst">\(pokemon)</span>"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Mewtwo"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"after closure: <span class="subst">\(pokemon)</span>"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo2</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Pikachu"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: \(pokemon)"</span>)</span><br><span class="line">  delay(<span class="number">1</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure: \(pokemon)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Mewtwo"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"after closure: \(pokemon)"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>你能猜猜打印的结果吗？答案如下：</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">before closure: &lt;Pokemon Pikachu&gt;</span><br><span class="line">&lt;Pokemon Pikachu&gt; escaped!</span><br><span class="line">after closure: &lt;Pokemon Mewtwo&gt;</span><br><span class="line">🕑</span><br><span class="line">inside closure: &lt;Pokemon Mewtwo&gt;</span><br><span class="line">&lt;Pokemon Mewtwo&gt; escaped!</span><br></pre></td></tr></table></figure>
 <p>请注意我们在创建完闭包之后修改了 <code>pokemon</code> 对象，闭包延迟一秒后执行（虽然此时已经脱离了 <code>demo2()</code> 函数的作用域），我们打印的结果是新的 <code>pokemon</code> 对象，而不是旧的！这是因为 Swift 默认捕获的是变量的引用。</p>
 <p>具体的细节为：首先初始化一个值为 Pikachu 的 <code>pokemon</code> 对象，接着修改该对象的值为 Mewtwo（译者注：创建了新对象），之前值为 Pikachu 的对象由于没有其他变量强引用，所以会被释放。接着闭包等待一秒钟执行，打印捕获 pokemon 变量（引用）的内容。</p>
 <p>这个特性对于值类型也是一样的，关于这一点或许会有些奇怪，比如下面例子中的 <code>Int</code> 类型：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo3</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> value = <span class="number">42</span></span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: <span class="subst">\(value)</span>"</span>)</span><br><span class="line">  delay(<span class="number">1</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure: <span class="subst">\(value)</span>"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  value = <span class="number">1337</span></span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"after closure: <span class="subst">\(value)</span>"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo3</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> value = <span class="number">42</span></span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: \(value)"</span>)</span><br><span class="line">  delay(<span class="number">1</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure: \(value)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  value = <span class="number">1337</span></span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"after closure: \(value)"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>打印结果：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">before closure: <span class="number">42</span></span><br><span class="line">after closure: <span class="number">1337</span></span><br><span class="line">🕑</span><br><span class="line">inside closure: <span class="number">1337</span></span><br></pre></td></tr></table></figure>
 <p>你没看错，闭包打印了新的整型变量值—尽管整型变量是值类型！—因为它捕获了变量的引用，而不是变量自身的内容！</p>
 <h2 id="你可以修改闭包中捕获的变量"><a href="#你可以修改闭包中捕获的变量" class="headerlink" title="你可以修改闭包中捕获的变量"></a>你可以修改闭包中捕获的变量</h2><p>如果捕获的是变量 <code>var</code>（而不是常量 <code>let</code>），你也可以<strong>在闭包中</strong>[^2]修改它的值。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo4</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> value = <span class="number">42</span></span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: <span class="subst">\(value)</span>"</span>)</span><br><span class="line">  delay(<span class="number">1</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure 1, before change: <span class="subst">\(value)</span>"</span>)</span><br><span class="line">    value = <span class="number">1337</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure 1, after change: <span class="subst">\(value)</span>"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  delay(<span class="number">2</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure 2: <span class="subst">\(value)</span>"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo4</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> value = <span class="number">42</span></span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: \(value)"</span>)</span><br><span class="line">  delay(<span class="number">1</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure 1, before change: \(value)"</span>)</span><br><span class="line">    value = <span class="number">1337</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure 1, after change: \(value)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  delay(<span class="number">2</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure 2: \(value)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>代码的打印结果如下：</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">before closure: 42</span><br><span class="line">🕑</span><br><span class="line">inside closure 1, before change: 42</span><br><span class="line">inside closure 1, after change: 1337</span><br><span class="line">🕑</span><br><span class="line">inside closure 2: 1337</span><br></pre></td></tr></table></figure>
 <p>变量 <code>value</code> 的值在闭包内部被修改了（尽管它已经被捕获了，但并不等同于一个常量拷贝，它依然保持着对原变量的引用）。接着第二个闭包执行时打印的就是这个新值了，此刻第一个闭包已经执行完毕并释放了所有的引用，而且 <code>value</code> 变量也脱离了 <code>demo4()</code> 函数的作用域。</p>
 <h2 id="捕获一个变量作为一个常量拷贝"><a href="#捕获一个变量作为一个常量拷贝" class="headerlink" title="捕获一个变量作为一个常量拷贝"></a>捕获一个变量作为一个常量拷贝</h2><p>如果想要在闭包<strong>创建时</strong>捕获变量的值，而不是在闭包执行时才去获取变量的值，你可以使用 <strong>捕获列表</strong></p>
 <p>捕获列表写在闭包的方括号之间，紧跟闭包的左括号（并且在闭包的参数或返回类型之前）[^3]</p>
 <p>在创建闭包时捕获变量的值（而不是变量的引用），你可以使用 <code>[localVar = varToCapture]</code> 捕获列表。看上去像这样：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo5</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> value = <span class="number">42</span></span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: <span class="subst">\(value)</span>"</span>)</span><br><span class="line">  delay(<span class="number">1</span>) &#123; [constValue = value] <span class="keyword">in</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure: <span class="subst">\(constValue)</span>"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  value = <span class="number">1337</span></span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"after closure: <span class="subst">\(value)</span>"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo5</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> value = <span class="number">42</span></span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: \(value)"</span>)</span><br><span class="line">  delay(<span class="number">1</span>) &#123; [constValue = value] <span class="keyword">in</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure: \(constValue)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  value = <span class="number">1337</span></span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"after closure: \(value)"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>打印结果：</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">before closure: 42</span><br><span class="line">after closure: 1337</span><br><span class="line">🕑</span><br><span class="line">inside closure: 42</span><br></pre></td></tr></table></figure>
 <p>与上面的 <code>demo3()</code> 比较，这次闭包打印的是变量创建时的值，而不是后来赋的新值 1337，即使整个闭包的执行是在对变量重新赋值之后。</p>
 <p>这就是 <code>[constValue = value]</code> 在闭包中所做的事情：在闭包创建时捕获变量 value 的内容 — 而不是变量的引用。</p>
 <h2 id="回到-Pokemon-上"><a href="#回到-Pokemon-上" class="headerlink" title="回到 Pokemon 上"></a>回到 Pokemon 上</h2><p>正如我们上面所看到的：如果一个变量是引用类型—就像我们的 Pokemon 类，闭包并没有真正（强引用）捕获变量的引用，而是捕获了一个针对原始实例 pokemon 的拷贝：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo6</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Pikachu"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: <span class="subst">\(pokemon)</span>"</span>)</span><br><span class="line">  delay(<span class="number">1</span>) &#123; [pokemonCopy = pokemon] <span class="keyword">in</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure: <span class="subst">\(pokemonCopy)</span>"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Mewtwo"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"after closure: <span class="subst">\(pokemon)</span>"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo6</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Pikachu"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: \(pokemon)"</span>)</span><br><span class="line">  delay(<span class="number">1</span>) &#123; [pokemonCopy = pokemon] <span class="keyword">in</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure: \(pokemonCopy)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Mewtwo"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"after closure: \(pokemon)"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这类似创建了一个中间变量指向同一个 pokemon，然后捕获了这个中间变量：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo6_equivalent</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Pikachu"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: <span class="subst">\(pokemon)</span>"</span>)</span><br><span class="line">  <span class="comment">// here we create an intermediate variable to hold the instance </span></span><br><span class="line">  <span class="comment">// pointed by the variable at that point in the code:</span></span><br><span class="line">  <span class="keyword">let</span> pokemonCopy = pokemon</span><br><span class="line">  delay(<span class="number">1</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure: <span class="subst">\(pokemonCopy)</span>"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Mewtwo"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"after closure: <span class="subst">\(pokemon)</span>"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo6_equivalent</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Pikachu"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: \(pokemon)"</span>)</span><br><span class="line">  <span class="comment">// here we create an intermediate variable to hold the instance </span></span><br><span class="line">  <span class="comment">// pointed by the variable at that point in the code:</span></span><br><span class="line">  <span class="keyword">let</span> pokemonCopy = pokemon</span><br><span class="line">  delay(<span class="number">1</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure: \(pokemonCopy)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Mewtwo"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"after closure: \(pokemon)"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>事实上，使用捕获列表完全等同于上述代码的行为…除了中间变量 <code>pokemonCopy</code> 属于闭包的局部变量，只能在闭包内部访问。 </p>
 <p>相比 <code>demo2()</code> 直接使用 <code>pokemon</code>，<code>demo6()</code> 则使用了 <code>[pokemonCopy = pokemon] in …</code>，<code>demo6()</code> 输出如下：</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">before closure: &lt;Pokemon Pikachu&gt;</span><br><span class="line">after closure: &lt;Pokemon Mewtwo&gt;</span><br><span class="line">&lt;Pokemon Mewtwo&gt; escaped!</span><br><span class="line">🕑</span><br><span class="line">inside closure: &lt;Pokemon Pikachu&gt;</span><br><span class="line">&lt;Pokemon Pikachu&gt; escaped!</span><br></pre></td></tr></table></figure>
@@ -176,9 +176,9 @@
 </ul>
 <h2 id="知识点整合"><a href="#知识点整合" class="headerlink" title="知识点整合"></a>知识点整合</h2><p>上面的知识点都掌握了吗？我承认，确实有点多…</p>
 <p>下面是一个人为设计的例子，它包含了闭包创建时就对变量取值—归功于捕获列表，以及先捕获变量的引用，而真正的取值放到闭包执行时这两种情形：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo7</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Mew"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"➡️ Initial pokemon is <span class="subst">\(pokemon)</span>"</span>)</span><br><span class="line"></span><br><span class="line">  delay(<span class="number">1</span>) &#123; [capturedPokemon = pokemon] <span class="keyword">in</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"closure 1 — pokemon captured at creation time: <span class="subst">\(capturedPokemon)</span>"</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"closure 1 — variable evaluated at execution time: <span class="subst">\(pokemon)</span>"</span>)</span><br><span class="line">    pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Pikachu"</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"closure 1 - pokemon has been now set to <span class="subst">\(pokemon)</span>"</span>)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Mewtwo"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"🔄 pokemon changed to <span class="subst">\(pokemon)</span>"</span>)</span><br><span class="line"></span><br><span class="line">  delay(<span class="number">2</span>) &#123; [capturedPokemon = pokemon] <span class="keyword">in</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"closure 2 — pokemon captured at creation time: <span class="subst">\(capturedPokemon)</span>"</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"closure 2 — variable evaluated at execution time: <span class="subst">\(pokemon)</span>"</span>)</span><br><span class="line">    pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Charizard"</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"closure 2 - value has been now set to <span class="subst">\(pokemon)</span>"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo7</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Mew"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"➡️ Initial pokemon is \(pokemon)"</span>)</span><br><span class="line"></span><br><span class="line">  delay(<span class="number">1</span>) &#123; [capturedPokemon = pokemon] <span class="keyword">in</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"closure 1 — pokemon captured at creation time: \(capturedPokemon)"</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"closure 1 — variable evaluated at execution time: \(pokemon)"</span>)</span><br><span class="line">    pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Pikachu"</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"closure 1 - pokemon has been now set to \(pokemon)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Mewtwo"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"🔄 pokemon changed to \(pokemon)"</span>)</span><br><span class="line"></span><br><span class="line">  delay(<span class="number">2</span>) &#123; [capturedPokemon = pokemon] <span class="keyword">in</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"closure 2 — pokemon captured at creation time: \(capturedPokemon)"</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"closure 2 — variable evaluated at execution time: \(pokemon)"</span>)</span><br><span class="line">    pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Charizard"</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"closure 2 - value has been now set to \(pokemon)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>能猜猜打印结果是什么吗？可能有点难猜，不过这是一个很好的练习，通过自己判断打印结果来测试你是否掌握了今天的课程…</p>
-<p><img src="http://alisoftware.github.io/assets/pokemon-drumroll.gif" alt=""></p>
+<p><img src="http://alisoftware.github.io/assets/pokemon-drumroll.gif" alt></p>
 <p>下面是打印结果，你猜对了吗？</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">➡️ Initial pokemon is &lt;Pokemon Mew&gt;</span><br><span class="line">🔄 pokemon changed to &lt;Pokemon Mewtwo&gt;</span><br><span class="line">🕑</span><br><span class="line">closure 1 — pokemon captured at creation time: &lt;Pokemon Mew&gt;</span><br><span class="line">closure 1 — variable evaluated at execution time: &lt;Pokemon Mewtwo&gt;</span><br><span class="line">closure 1 - pokemon has been now set to &lt;Pokemon Pikachu&gt;</span><br><span class="line">&lt;Pokemon Mew&gt; escaped!</span><br><span class="line">🕑</span><br><span class="line">closure 2 — pokemon captured at creation time: &lt;Pokemon Mewtwo&gt;</span><br><span class="line">closure 2 — variable evaluated at execution time: &lt;Pokemon Pikachu&gt;</span><br><span class="line">&lt;Pokemon Pikachu&gt; escaped!</span><br><span class="line">closure 2 - value has been now set to &lt;Pokemon Charizard&gt;</span><br><span class="line">&lt;Pokemon Mewtwo&gt; escaped!</span><br><span class="line">&lt;Pokemon Charizard&gt; escaped!</span><br></pre></td></tr></table></figure>
 <p>所以，到底发生了什么？稍微有点复杂，让我给大家来逐步解释一下：</p>
@@ -263,9 +263,9 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
+ <div class="prev">
  <a href="/2016/09/12/default-arguments-in-protocols/" title="面向协议的日志：给 Swift 协议添加默认参数">
-  <strong>上一篇</strong><br/>
+  <strong>上一篇</strong><br>
   <span>
   面向协议的日志：给 Swift 协议添加默认参数</span>
 </a>
@@ -273,8 +273,8 @@
 
 
 <div class="next">
-<a href="/2016/09/08/questions-can-you-call-super-in-a-setter/"  title="答疑：能在 setter 方法中调用父类么？">
- <strong>下一篇</strong><br/> 
+<a href="/2016/09/08/questions-can-you-call-super-in-a-setter/" title="答疑：能在 setter 方法中调用父类么？">
+ <strong>下一篇</strong><br> 
  <span>答疑：能在 setter 方法中调用父类么？
 </span>
 </a>
@@ -389,11 +389,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -437,11 +437,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
 		  
 		
 		  
@@ -497,19 +497,19 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
@@ -813,7 +813,7 @@
 
   <div class="wechatpart">
 	<p class="asidetitle">微信公众号</p>
-	<img src="/img/wechat.jpg" />
+	<img src="/img/wechat.jpg">
 </div>
 
 </aside>
@@ -822,9 +822,9 @@
     <footer>
 
 
-<div id="footer" >
+<div id="footer">
 	
-	<div class="social-font" class="clearfix">
+	<div class="social-font">
 		
 		
 		
@@ -1054,7 +1054,7 @@ $(document).ready(function(){
 <!-- Totop Begin -->
 <!--
 	<div id="totop">
-	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
 	</div>
 	<script src="/js/totop.js"></script>
 -->

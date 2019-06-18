@@ -1,9 +1,9 @@
 
  <!DOCTYPE HTML>
 <html lang="zh-CN">
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="UTF-8">
-  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
   
     <title>Mirror 的工作原理 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
@@ -21,7 +21,7 @@
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Mike Ash，原文链接，原文日期：2018-09-26译者：Nemocdz；校对：numbbbbb，小铁匠Linus；定稿：Forelax   尽管 Swift 重心在强调静态类型上，但它同时支持丰富的元数据类型。元数据类型允许代码在运行时检查和操作任意值。这个功能通过 Mirror API 暴露给 Swift 开发者。大家可能会感到困惑，在 Swift 这种如此强调静态类型的语言里，">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-05-05T16:00:50.868Z">
+<meta property="og:updated_time" content="2019-06-18T13:48:09.153Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Mirror 的工作原理">
 <meta name="twitter:description" content="作者：Mike Ash，原文链接，原文日期：2018-09-26译者：Nemocdz；校对：numbbbbb，小铁匠Linus；定稿：Forelax   尽管 Swift 重心在强调静态类型上，但它同时支持丰富的元数据类型。元数据类型允许代码在运行时检查和操作任意值。这个功能通过 Mirror API 暴露给 Swift 开发者。大家可能会感到困惑，在 Swift 这种如此强调静态类型的语言里，">
@@ -39,14 +39,14 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/gitment.css">
 </head>
-
+</html>
   <body>
     <header>
       
 <div>
 		
 			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -72,7 +72,7 @@
  					
 						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
 							<label>搜索</label>
-						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
 						</form>
 					
 					</li>
@@ -112,12 +112,12 @@
 <h2 id="代码结构"><a href="#代码结构" class="headerlink" title="代码结构"></a>代码结构</h2><p>反射的 API 有一部分是用 Swift 实现的，另一部分是用 C++ 实现的。Swift 更适合用在实现更 Swift 的接口，并让很多任务变得更简单。Swift 的运行时的底层是使用 C++ 实现的，但是在 Swift 中不能直接访问 C++ 的类，所以有一个 C 的连接层。反射的 Swift 实现在 <a href="https://github.com/apple/swift/blob/master/stdlib/public/core/ReflectionMirror.swift" target="_blank" rel="noopener">ReflectionMirror.swift</a>，C++ 实现在 <a href="https://github.com/apple/swift/blob/master/stdlib/public/runtime/ReflectionMirror.mm" target="_blank" rel="noopener">ReflectionMirror.mm</a>。</p>
 <p>这两者通过一小组暴露给 Swift 的 C++ 函数进行通信的。与其使用 Swift 生成的 C 桥接层，不如将这些函数在 Swift 中直接声明成指定的自定义符号，而这些名字的 C++ 函数则专门实现为可以被 Swift 直接调用的方式。这两部分的代码可以在不关心桥接机制会在幕后如何处理传递值的情况下交互，但仍需要准确的知道 Swift 应该如何传递参数和返回值。除非你在使用需要它的运行时代码，否则别轻易尝试这些。</p>
 <p>举个例子，让我们看下在 <code>ReflectionMirror.swift</code> 中的 <code>_getChildCount</code> 函数：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">@_silgen_name(<span class="string">"swift_reflectionMirror_count"</span>)</span><br><span class="line"><span class="keyword">internal</span> <span class="function"><span class="keyword">func</span> <span class="title">_getChildCount</span>&lt;T&gt;<span class="params">(<span class="number">_</span>: T, type: Any.<span class="keyword">Type</span>)</span></span> -&gt; <span class="type">Int</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">@_silgen_name(<span class="string">"swift_reflectionMirror_count"</span>)</span><br><span class="line"><span class="keyword">internal</span> <span class="function"><span class="keyword">func</span> <span class="title">_getChildCount</span>&lt;T&gt;<span class="params">(<span class="number">_</span>: T, type: <span class="keyword">Any</span>.<span class="keyword">Type</span>)</span></span> -&gt; <span class="type">Int</span></span><br></pre></td></tr></table></figure>
 <p><code>@_silgen_name</code> 修饰符会通知 Swift 编译器将这个函数映射成 <code>swift_reflectionMirror_count</code> 符号，而不是 Swift 通常对应到的 <code>_getChildCount</code> 方法名修饰。需要注意的是，最前面的下划线表示这个修饰符是被保留在标准库中的。在 C++ 这边，这个函数是这样的：</p>
 <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">SWIFT_CC(swift) SWIFT_RUNTIME_STDLIB_INTERFACE</span><br><span class="line"><span class="keyword">intptr_t</span> swift_reflectionMirror_count(OpaqueValue *value,</span><br><span class="line">                                      <span class="keyword">const</span> Metadata *type,</span><br><span class="line">                                      <span class="keyword">const</span> Metadata *T) &#123;</span><br></pre></td></tr></table></figure>
 <p><code>SWIFT_CC(swift)</code> 会告诉编译器这个函数使用的是 Swift 的调用约定，而不是 C/C++ 的。<code>SWIFT_RUNTIME_STDLIB_INTERFACE</code> 标记这是个函数，在 Swift 侧的一部分接口中，而且它还有标记为 <code>extern &quot;C&quot;</code> 的作用从而避免 C++ 的方法名修饰，并确保它在 Swift 侧会有预期的符号。同时，C++ 的参数会去特意匹配在 Swift 中声明的函数调用。当 Swift 调用 <code>_getChildCount</code> 时，C++ 会用包含的 Swift 值指针的 <code>value</code>，包含类型参数的 <code>type</code>，包含类型相应的范型 <code>&lt;T&gt;</code> 的 <code>T</code> 的函数参数来调用此函数。</p>
 <p><code>Mirror</code> 的在 Swift 和 C++ 之间的全部接口由以下函数组成：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">@_silgen_name(<span class="string">"swift_reflectionMirror_normalizedType"</span>)</span><br><span class="line"><span class="keyword">internal</span> <span class="function"><span class="keyword">func</span> <span class="title">_getNormalizedType</span>&lt;T&gt;<span class="params">(<span class="number">_</span>: T, type: Any.<span class="keyword">Type</span>)</span></span> -&gt; <span class="type">Any</span>.<span class="type">Type</span></span><br><span class="line"></span><br><span class="line">@_silgen_name(<span class="string">"swift_reflectionMirror_count"</span>)</span><br><span class="line"><span class="keyword">internal</span> <span class="function"><span class="keyword">func</span> <span class="title">_getChildCount</span>&lt;T&gt;<span class="params">(<span class="number">_</span>: T, type: Any.<span class="keyword">Type</span>)</span></span> -&gt; <span class="type">Int</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">internal</span> <span class="keyword">typealias</span> <span class="type">NameFreeFunc</span> = <span class="meta">@convention</span>(<span class="built_in">c</span>) (<span class="type">UnsafePointer</span>&lt;<span class="type">CChar</span>&gt;?) -&gt; <span class="type">Void</span></span><br><span class="line"></span><br><span class="line">@_silgen_name(<span class="string">"swift_reflectionMirror_subscript"</span>)</span><br><span class="line"><span class="keyword">internal</span> <span class="function"><span class="keyword">func</span> <span class="title">_getChild</span>&lt;T&gt;<span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">  of: T,</span></span></span><br><span class="line"><span class="function"><span class="params">  type: Any.<span class="keyword">Type</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">  index: Int,</span></span></span><br><span class="line"><span class="function"><span class="params">  outName: UnsafeMutablePointer&lt;UnsafePointer&lt;CChar&gt;?&gt;,</span></span></span><br><span class="line"><span class="function"><span class="params">  outFreeFunc: UnsafeMutablePointer&lt;NameFreeFunc?&gt;</span></span></span><br><span class="line"><span class="function"><span class="params">)</span></span> -&gt; <span class="type">Any</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Returns 'c' (class), 'e' (enum), 's' (struct), 't' (tuple), or '\0' (none)</span></span><br><span class="line">@_silgen_name(<span class="string">"swift_reflectionMirror_displayStyle"</span>)</span><br><span class="line"><span class="keyword">internal</span> <span class="function"><span class="keyword">func</span> <span class="title">_getDisplayStyle</span>&lt;T&gt;<span class="params">(<span class="number">_</span>: T)</span></span> -&gt; <span class="type">CChar</span></span><br><span class="line"></span><br><span class="line">@_silgen_name(<span class="string">"swift_reflectionMirror_quickLookObject"</span>)</span><br><span class="line"><span class="keyword">internal</span> <span class="function"><span class="keyword">func</span> <span class="title">_getQuickLookObject</span>&lt;T&gt;<span class="params">(<span class="number">_</span>: T)</span></span> -&gt; <span class="type">AnyObject</span>?</span><br><span class="line"></span><br><span class="line">@_silgen_name(<span class="string">"_swift_stdlib_NSObject_isKindOfClass"</span>)</span><br><span class="line"><span class="keyword">internal</span> <span class="function"><span class="keyword">func</span> <span class="title">_isImpl</span><span class="params">(<span class="number">_</span> object: AnyObject, kindOf: AnyObject)</span></span> -&gt; <span class="type">Bool</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">@_silgen_name(<span class="string">"swift_reflectionMirror_normalizedType"</span>)</span><br><span class="line"><span class="keyword">internal</span> <span class="function"><span class="keyword">func</span> <span class="title">_getNormalizedType</span>&lt;T&gt;<span class="params">(<span class="number">_</span>: T, type: <span class="keyword">Any</span>.<span class="keyword">Type</span>)</span></span> -&gt; <span class="type">Any</span>.<span class="type">Type</span></span><br><span class="line"></span><br><span class="line">@_silgen_name(<span class="string">"swift_reflectionMirror_count"</span>)</span><br><span class="line"><span class="keyword">internal</span> <span class="function"><span class="keyword">func</span> <span class="title">_getChildCount</span>&lt;T&gt;<span class="params">(<span class="number">_</span>: T, type: <span class="keyword">Any</span>.<span class="keyword">Type</span>)</span></span> -&gt; <span class="type">Int</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">internal</span> <span class="keyword">typealias</span> <span class="type">NameFreeFunc</span> = <span class="meta">@convention</span>(<span class="built_in">c</span>) (<span class="type">UnsafePointer</span>&lt;<span class="type">CChar</span>&gt;?) -&gt; <span class="type">Void</span></span><br><span class="line"></span><br><span class="line">@_silgen_name(<span class="string">"swift_reflectionMirror_subscript"</span>)</span><br><span class="line"><span class="keyword">internal</span> <span class="function"><span class="keyword">func</span> <span class="title">_getChild</span>&lt;T&gt;<span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">  of: T,</span></span></span><br><span class="line"><span class="function"><span class="params">  type: <span class="keyword">Any</span>.<span class="keyword">Type</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">  index: Int,</span></span></span><br><span class="line"><span class="function"><span class="params">  outName: UnsafeMutablePointer&lt;UnsafePointer&lt;CChar&gt;?&gt;,</span></span></span><br><span class="line"><span class="function"><span class="params">  outFreeFunc: UnsafeMutablePointer&lt;NameFreeFunc?&gt;</span></span></span><br><span class="line"><span class="function"><span class="params">)</span></span> -&gt; <span class="type">Any</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Returns 'c' (class), 'e' (enum), 's' (struct), 't' (tuple), or '\0' (none)</span></span><br><span class="line">@_silgen_name(<span class="string">"swift_reflectionMirror_displayStyle"</span>)</span><br><span class="line"><span class="keyword">internal</span> <span class="function"><span class="keyword">func</span> <span class="title">_getDisplayStyle</span>&lt;T&gt;<span class="params">(<span class="number">_</span>: T)</span></span> -&gt; <span class="type">CChar</span></span><br><span class="line"></span><br><span class="line">@_silgen_name(<span class="string">"swift_reflectionMirror_quickLookObject"</span>)</span><br><span class="line"><span class="keyword">internal</span> <span class="function"><span class="keyword">func</span> <span class="title">_getQuickLookObject</span>&lt;T&gt;<span class="params">(<span class="number">_</span>: T)</span></span> -&gt; <span class="type">AnyObject?</span></span><br><span class="line"></span><br><span class="line">@_silgen_name(<span class="string">"_swift_stdlib_NSObject_isKindOfClass"</span>)</span><br><span class="line"><span class="keyword">internal</span> <span class="function"><span class="keyword">func</span> <span class="title">_isImpl</span><span class="params">(<span class="number">_</span> object: AnyObject, kindOf: AnyObject)</span></span> -&gt; <span class="type">Bool</span></span><br></pre></td></tr></table></figure>
 <h2 id="神奇的动态派发"><a href="#神奇的动态派发" class="headerlink" title="神奇的动态派发"></a>神奇的动态派发</h2><p>没有一种单一、通用的方式去获取任意类型中我们想要的信息。元组、结构、类和枚举都需要不同的代码去完成这些繁多的任务，比如说查找子元素的数量。其中还有一些更深、微妙的不同之处，比如对 Swift 和 Objective-C 的类的不同处理。</p>
 <p>所有的这些函数因为需要不同类型的检查而需要派发不同的实现代码。这听起来有点像动态方法派发，除了选择哪种实现去调用比检查对象类型所使用的方法更复杂之外。这些反射代码尝试去简化使用包含 C++ 版本信息的接口的抽象基类，还有一大堆包含各种各样情况的子类进行 C++ 的动态派发。一个单独的函数会将一个 Swift 类型映射成一个其中的 C++ 类的实例。在一个实例上调用一个方法然后派发合适的实现。</p>
 <p>映射的函数叫做 <code>call</code>，声明是这样的：</p>
@@ -125,7 +125,7 @@
 <p><code>passedValue</code> 是实际需要传入的Swift的值的指针。<code>T</code> 是该值得静态类型，对应 Swift 中的范型参数 <code>&lt;T&gt;</code>。<code>passedType</code> 是被显式传递进 Swift 侧并且会实际应用在反射过程中的类型（这个类型和在使用 <code>Mirror</code> 作为父类的实例在实际运行时的对象类型不一样）。最后，<code>f</code> 参数会传递这个函数查找到的会被调用的实现的对象引用。然后这个函数会返回当这个 <code>f</code> 参数调用时的返回值，可以让使用者更方便的获得返回值。</p>
 <p><code>call</code> 的实现并没有想象中那么令人激动。主要是一个大型的 <code>switch</code> 声明和一些额外的代码去处理特殊的情况。重要的是它会用一个 <code>ReflectionMirrorImpl</code> 的子类实例去结束调用 <code>f</code>，然后会调用这个实例上的方法去让真正的工作完成。</p>
 <p>这是 <code>ReflectionMirrorImpl</code>，接口的所有东西都要传入：</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ReflectionMirrorImpl</span> &#123;</span></span><br><span class="line">  <span class="keyword">const</span> Metadata *type;</span><br><span class="line">  OpaqueValue *value;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="keyword">char</span> <span class="title">displayStyle</span><span class="params">()</span> </span>= <span class="number">0</span>;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> intptr_t <span class="title">count</span><span class="params">()</span> </span>= <span class="number">0</span>;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> AnyReturn <span class="title">subscript</span><span class="params">(<span class="keyword">intptr_t</span> index, <span class="keyword">const</span> <span class="keyword">char</span> **outName,</span></span></span><br><span class="line">                              void (**outFreeFunc)(const char *)) = 0;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="keyword">const</span> <span class="keyword">char</span> *<span class="title">enumCaseName</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> <span class="literal">nullptr</span>; &#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> SWIFT_OBJC_INTEROP</span></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> id <span class="title">quickLookObject</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> nil; &#125;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">virtual</span> ~ReflectionMirrorImpl() &#123;&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ReflectionMirrorImpl</span> &#123;</span></span><br><span class="line">  <span class="keyword">const</span> Metadata *type;</span><br><span class="line">  OpaqueValue *value;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="keyword">char</span> <span class="title">displayStyle</span><span class="params">()</span> </span>= <span class="number">0</span>;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> intptr_t <span class="title">count</span><span class="params">()</span> </span>= <span class="number">0</span>;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> AnyReturn <span class="title">subscript</span><span class="params">(<span class="keyword">intptr_t</span> index, <span class="keyword">const</span> <span class="keyword">char</span> **outName,</span></span></span><br><span class="line"><span class="function"><span class="params">                              <span class="keyword">void</span> (**outFreeFunc)(<span class="keyword">const</span> <span class="keyword">char</span> *))</span> </span>= <span class="number">0</span>;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="keyword">const</span> <span class="keyword">char</span> *<span class="title">enumCaseName</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> <span class="literal">nullptr</span>; &#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> SWIFT_OBJC_INTEROP</span></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> id <span class="title">quickLookObject</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> nil; &#125;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">virtual</span> ~ReflectionMirrorImpl() &#123;&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 <p>作用在 Swift 和 C++ 组件之间的接口函数就会用 <code>call</code> 去调用相应的方法。比如，<code>swift_reflectionMirror_count</code> 是这样的：</p>
 <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">SWIFT_CC(swift) SWIFT_RUNTIME_STDLIB_INTERFACE</span><br><span class="line"><span class="keyword">intptr_t</span> swift_reflectionMirror_count(OpaqueValue *value,</span><br><span class="line">                                      <span class="keyword">const</span> Metadata *type,</span><br><span class="line">                                      <span class="keyword">const</span> Metadata *T) &#123;</span><br><span class="line">  <span class="keyword">return</span> call(value, T, type, [](ReflectionMirrorImpl *impl) &#123;</span><br><span class="line">    <span class="keyword">return</span> impl-&gt;count();</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h2 id="元组的反射"><a href="#元组的反射" class="headerlink" title="元组的反射"></a>元组的反射</h2><p>先看看元组的反射，应该是最简单的一种了，但还是做了不少工作。它一开始会返回 <code>&#39;t&#39;</code> 的显示样式来表明这是一个元组：</p>
@@ -134,7 +134,7 @@
 <p>接下来是 <code>count</code> 方法。此时我们知道 <code>type</code> 实际上是一个 <code>TupleTypeMetadata</code> 类型的指针而不仅仅是一个 <code>Metadata</code> 类型的指针。<code>TupleTypeMetadata</code> 有一个记录元组的元素数量的 <code>NumElements</code> 字段，然后这个方法就完成了：</p>
 <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">intptr_t</span> count() &#123;</span><br><span class="line">    <span class="keyword">auto</span> *Tuple = <span class="keyword">static_cast</span>&lt;<span class="keyword">const</span> TupleTypeMetadata *&gt;(type);</span><br><span class="line">    <span class="keyword">return</span> Tuple-&gt;NumElements;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
 <p><code>subscript</code> 方法会做更多一点的工作。它也从一样的的 <code>static_cast</code> 函数开始：</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function">AnyReturn <span class="title">subscript</span><span class="params">(<span class="keyword">intptr_t</span> i, <span class="keyword">const</span> <span class="keyword">char</span> **outName,</span></span></span><br><span class="line">                      void (**outFreeFunc)(const char *)) &#123;</span><br><span class="line">    <span class="keyword">auto</span> *Tuple = <span class="keyword">static_cast</span>&lt;<span class="keyword">const</span> TupleTypeMetadata *&gt;(type);</span><br></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function">AnyReturn <span class="title">subscript</span><span class="params">(<span class="keyword">intptr_t</span> i, <span class="keyword">const</span> <span class="keyword">char</span> **outName,</span></span></span><br><span class="line"><span class="function"><span class="params">                      <span class="keyword">void</span> (**outFreeFunc)(<span class="keyword">const</span> <span class="keyword">char</span> *))</span> </span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> *Tuple = <span class="keyword">static_cast</span>&lt;<span class="keyword">const</span> TupleTypeMetadata *&gt;(type);</span><br></pre></td></tr></table></figure>
 <p>接下来，会有一个边界检查避免调用者请求了这个元组不存在的索引：</p>
 <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (i &lt; <span class="number">0</span> || (<span class="keyword">size_t</span>)i &gt; Tuple-&gt;NumElements)</span><br><span class="line">      swift::crash(<span class="string">"Swift mirror subscript bounds check failure"</span>);</span><br></pre></td></tr></table></figure>
 <p>下标有两个作用：可以检索元素和对应的名字。对于一个结构体或者类来说，这个名字就是所储存的属性名。而对于元组来说，这个名字要么是该元素的元组标签，要么在没有标签的情况下就是一个类似 <code>.0</code> 的数值指示器。</p>
@@ -201,7 +201,7 @@
 <p>子元素的数量是元数据给出的字段的数量，也可能是 0（如果这个类型实际上不能支持反射的话）：</p>
 <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">intptr_t</span> count() &#123;</span><br><span class="line">  <span class="keyword">if</span> (!isReflectable()) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">auto</span> *Struct = <span class="keyword">static_cast</span>&lt;<span class="keyword">const</span> StructMetadata *&gt;(type);</span><br><span class="line">  <span class="keyword">return</span> Struct-&gt;getDescription()-&gt;NumFields;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>像之前那样，<code>subscript</code> 方法是比较复杂的部分。它开始也是类似的，做边界检查和查找偏移值：</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function">AnyReturn <span class="title">subscript</span><span class="params">(<span class="keyword">intptr_t</span> i, <span class="keyword">const</span> <span class="keyword">char</span> **outName,</span></span></span><br><span class="line">                    void (**outFreeFunc)(const char *)) &#123;</span><br><span class="line">  <span class="keyword">auto</span> *Struct = <span class="keyword">static_cast</span>&lt;<span class="keyword">const</span> StructMetadata *&gt;(type);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (i &lt; <span class="number">0</span> || (<span class="keyword">size_t</span>)i &gt; Struct-&gt;getDescription()-&gt;NumFields)</span><br><span class="line">    swift::crash(<span class="string">"Swift mirror subscript bounds check failure"</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Load the offset from its respective vector.</span></span><br><span class="line">  <span class="keyword">auto</span> fieldOffset = Struct-&gt;getFieldOffsets()[i];</span><br></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function">AnyReturn <span class="title">subscript</span><span class="params">(<span class="keyword">intptr_t</span> i, <span class="keyword">const</span> <span class="keyword">char</span> **outName,</span></span></span><br><span class="line"><span class="function"><span class="params">                    <span class="keyword">void</span> (**outFreeFunc)(<span class="keyword">const</span> <span class="keyword">char</span> *))</span> </span>&#123;</span><br><span class="line">  <span class="keyword">auto</span> *Struct = <span class="keyword">static_cast</span>&lt;<span class="keyword">const</span> StructMetadata *&gt;(type);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (i &lt; <span class="number">0</span> || (<span class="keyword">size_t</span>)i &gt; Struct-&gt;getDescription()-&gt;NumFields)</span><br><span class="line">    swift::crash(<span class="string">"Swift mirror subscript bounds check failure"</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Load the offset from its respective vector.</span></span><br><span class="line">  <span class="keyword">auto</span> fieldOffset = Struct-&gt;getFieldOffsets()[i];</span><br></pre></td></tr></table></figure>
 <p>从结构体字段中获取类型信息会更复杂一点。这项工作通过 <code>_swift_getFieldAt</code> 帮助方法进行：</p>
 <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Any result;</span><br><span class="line"></span><br><span class="line">_swift_getFieldAt(type, i, [&amp;](llvm::StringRef name, FieldType fieldInfo) &#123;</span><br></pre></td></tr></table></figure>
 <p>一但它有字段信息，一切就会进行得和元组对应部分的代码类似。填写名字和计算字段储存的指针：</p>
@@ -228,7 +228,7 @@
 <p><code>count</code> 方法可以用 <code>getInfo</code> 方法去检索 payload 的类型，并返回 0 或 1 表示 payload 类型是否为 null：</p>
 <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">intptr_t</span> count() &#123;</span><br><span class="line">  <span class="keyword">if</span> (!isReflectable()) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> Metadata *payloadType;</span><br><span class="line">  getInfo(<span class="literal">nullptr</span>, &amp;payloadType, <span class="literal">nullptr</span>);</span><br><span class="line">  <span class="keyword">return</span> (payloadType != <span class="literal">nullptr</span>) ? <span class="number">1</span> : <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><code>subscript</code>方法开始会获取所有有关这个值的信息：</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function">AnyReturn <span class="title">subscript</span><span class="params">(<span class="keyword">intptr_t</span> i, <span class="keyword">const</span> <span class="keyword">char</span> **outName,</span></span></span><br><span class="line">                    void (**outFreeFunc)(const char *)) &#123;</span><br><span class="line">  <span class="keyword">unsigned</span> tag;</span><br><span class="line">  <span class="keyword">const</span> Metadata *payloadType;</span><br><span class="line">  <span class="keyword">bool</span> indirect;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">auto</span> *caseName = getInfo(&amp;tag, &amp;payloadType, &amp;indirect);</span><br></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function">AnyReturn <span class="title">subscript</span><span class="params">(<span class="keyword">intptr_t</span> i, <span class="keyword">const</span> <span class="keyword">char</span> **outName,</span></span></span><br><span class="line"><span class="function"><span class="params">                    <span class="keyword">void</span> (**outFreeFunc)(<span class="keyword">const</span> <span class="keyword">char</span> *))</span> </span>&#123;</span><br><span class="line">  <span class="keyword">unsigned</span> tag;</span><br><span class="line">  <span class="keyword">const</span> Metadata *payloadType;</span><br><span class="line">  <span class="keyword">bool</span> indirect;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">auto</span> *caseName = getInfo(&amp;tag, &amp;payloadType, &amp;indirect);</span><br></pre></td></tr></table></figure>
 <p>实际的复制值需要更多的工作。为了处理间接的值，整个过程在一个额外的 box 中进行：</p>
 <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">const</span> Metadata *boxType = (indirect ? &amp;METADATA_SYM(Bo).base : payloadType);</span><br><span class="line">BoxPair pair = swift_allocBox(boxType);</span><br></pre></td></tr></table></figure>
 <p>间接的情况下，真实值要在 box 中取出：</p>
@@ -240,7 +240,7 @@
 <h2 id="其余种类"><a href="#其余种类" class="headerlink" title="其余种类"></a>其余种类</h2><p>文件中还有三种其他的实现，每种几乎都没做什么事情。<code>ObjCClassImpl</code> 处理 Objective-C 的类。它甚至不去尝试返回任何子元素，因为 Objective-C 在 ivars 的内容上允许太多种补救方案了。Objective-C 的类允许保持野指针一直存在，并需要单独的逻辑让实现不要去碰那个值。因为这样的值尝试作为 <code>Mirror</code> 子元素返回，会违反 Swift 的安全性保证。因为没有办法可靠地去告知应该如何处理如果值出了问题，所以代码避开处理整个这种情况。</p>
 <p><code>MetatypeImpl</code> 处理元类型。如果将 <code>Mirror</code> 用在实际的类型，比如这样用 <code>Mirror(reflecting:String.self)</code>，这时就会用到它。第一反应是，它会在这时提供一些有用的信息。但实际上它仅仅返回空，甚至没有去尝试获取任何东西。同样的，<code>OpaqueImpl</code> 处理不透明的类型并返回空。</p>
 <h2 id="Swift-侧接口"><a href="#Swift-侧接口" class="headerlink" title="Swift 侧接口"></a>Swift 侧接口</h2><p>在 Swift 侧，<code>Mirror</code> 调用在 C++ 侧实现的接口函数，去检索需要的信息，然后以更友好的方式去展现。这些会在 <code>Mirror</code> 的初始化器中完成：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">internal</span> <span class="keyword">init</span>(internalReflecting subject: <span class="type">Any</span>,</span><br><span class="line">            subjectType: <span class="type">Any</span>.<span class="type">Type</span>? = <span class="literal">nil</span>,</span><br><span class="line">            customAncestor: <span class="type">Mirror</span>? = <span class="literal">nil</span>)</span><br><span class="line">&#123;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">internal</span> <span class="keyword">init</span>(internalReflecting subject: <span class="type">Any</span>,</span><br><span class="line">            subjectType: <span class="type">Any</span>.<span class="type">Type?</span> = <span class="literal">nil</span>,</span><br><span class="line">            customAncestor: <span class="type">Mirror?</span> = <span class="literal">nil</span>)</span><br><span class="line">&#123;</span><br></pre></td></tr></table></figure>
 <p><code>subjectType</code> 是将要被反射 <code>subject</code> 的值的类型。这通常是值的运行时类型，但如果调用者用 <code>superclassMirror</code> 去找到上面的类的层级，它可以是父类。如果调用者不传 入<code>subjectType</code>，代码会问 C++ 侧的代码要 <code>subject</code> 的类型：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> subjectType = subjectType ?? _getNormalizedType(subject, type: type(of: subject))</span><br></pre></td></tr></table></figure>
 <p>然后它就会获取子元素的数量，创建一个稍后获取每个子元素个体的集合来构建构建 <code>children</code> 对象：</p>
@@ -253,7 +253,7 @@
 <p>除此之外，给相同值返回一个将 <code>superclass</code> 作为 <code>subjectType</code> 的新 <code>Mirror</code>：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">  <span class="keyword">return</span> <span class="type">Mirror</span>(internalReflecting: subject,</span><br><span class="line">                subjectType: superclass,</span><br><span class="line">                customAncestor: customAncestor)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>最后，它获取并解析显示的样式，并设置 <code>Mirror</code> 的剩下的属性：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">  <span class="keyword">let</span> rawDisplayStyle = _getDisplayStyle(subject)</span><br><span class="line">  <span class="keyword">switch</span> <span class="type">UnicodeScalar</span>(<span class="type">Int</span>(rawDisplayStyle)) &#123;</span><br><span class="line">  <span class="keyword">case</span> <span class="string">"c"</span>: <span class="keyword">self</span>.displayStyle = .<span class="keyword">class</span></span><br><span class="line">  <span class="keyword">case</span> <span class="string">"e"</span>: <span class="keyword">self</span>.displayStyle = .<span class="keyword">enum</span></span><br><span class="line">  <span class="keyword">case</span> <span class="string">"s"</span>: <span class="keyword">self</span>.displayStyle = .<span class="keyword">struct</span></span><br><span class="line">  <span class="keyword">case</span> <span class="string">"t"</span>: <span class="keyword">self</span>.displayStyle = .tuple</span><br><span class="line">  <span class="keyword">case</span> <span class="string">"\0"</span>: <span class="keyword">self</span>.displayStyle = <span class="literal">nil</span></span><br><span class="line">  <span class="keyword">default</span>: <span class="built_in">preconditionFailure</span>(<span class="string">"Unknown raw display style '<span class="subst">\(rawDisplayStyle)</span>'"</span>)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">self</span>.subjectType = subjectType</span><br><span class="line">  <span class="keyword">self</span>._defaultDescendantRepresentation = .generated</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">  <span class="keyword">let</span> rawDisplayStyle = _getDisplayStyle(subject)</span><br><span class="line">  <span class="keyword">switch</span> <span class="type">UnicodeScalar</span>(<span class="type">Int</span>(rawDisplayStyle)) &#123;</span><br><span class="line">  <span class="keyword">case</span> <span class="string">"c"</span>: <span class="keyword">self</span>.displayStyle = .<span class="keyword">class</span></span><br><span class="line">  <span class="keyword">case</span> <span class="string">"e"</span>: <span class="keyword">self</span>.displayStyle = .<span class="keyword">enum</span></span><br><span class="line">  <span class="keyword">case</span> <span class="string">"s"</span>: <span class="keyword">self</span>.displayStyle = .<span class="keyword">struct</span></span><br><span class="line">  <span class="keyword">case</span> <span class="string">"t"</span>: <span class="keyword">self</span>.displayStyle = .tuple</span><br><span class="line">  <span class="keyword">case</span> <span class="string">"\0"</span>: <span class="keyword">self</span>.displayStyle = <span class="literal">nil</span></span><br><span class="line">  <span class="keyword">default</span>: <span class="built_in">preconditionFailure</span>(<span class="string">"Unknown raw display style '\(rawDisplayStyle)'"</span>)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">self</span>.subjectType = subjectType</span><br><span class="line">  <span class="keyword">self</span>._defaultDescendantRepresentation = .generated</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>Swift 丰富的元数据类型大多数在幕后存在，为像协议一致性检查和泛型类型解决这样的事提供支持。其中某些通过 <code>Mirror</code> 类 型暴露给用户，从而允许在运行时检查任意值。对于静态类型的 Swift 生态来说，这种方式一开始看起来有点奇怪和神秘，但根据已经存在的信息来看，它其实是个简单直接的应用。这个实现的探索旅程应该会帮助大家了解神秘之处，并在使用 <code>Mirror</code> 时可以意识到背后正在进行着什么。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
@@ -293,9 +293,9 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
+ <div class="prev">
  <a href="/2018/11/19/useful-optional-extensions/" title="实用的可选项（Optional）扩展">
-  <strong>上一篇</strong><br/>
+  <strong>上一篇</strong><br>
   <span>
   实用的可选项（Optional）扩展</span>
 </a>
@@ -303,8 +303,8 @@
 
 
 <div class="next">
-<a href="/2018/11/12/nshipster-nsdataasset/"  title="NSDataAsset">
- <strong>下一篇</strong><br/> 
+<a href="/2018/11/12/nshipster-nsdataasset/" title="NSDataAsset">
+ <strong>下一篇</strong><br> 
  <span>NSDataAsset
 </span>
 </a>
@@ -419,11 +419,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -467,11 +467,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
 		  
 		
 		  
@@ -527,19 +527,19 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
@@ -843,7 +843,7 @@
 
   <div class="wechatpart">
 	<p class="asidetitle">微信公众号</p>
-	<img src="/img/wechat.jpg" />
+	<img src="/img/wechat.jpg">
 </div>
 
 </aside>
@@ -852,9 +852,9 @@
     <footer>
 
 
-<div id="footer" >
+<div id="footer">
 	
-	<div class="social-font" class="clearfix">
+	<div class="social-font">
 		
 		
 		
@@ -1084,7 +1084,7 @@ $(document).ready(function(){
 <!-- Totop Begin -->
 <!--
 	<div id="totop">
-	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
 	</div>
 	<script src="/js/totop.js"></script>
 -->

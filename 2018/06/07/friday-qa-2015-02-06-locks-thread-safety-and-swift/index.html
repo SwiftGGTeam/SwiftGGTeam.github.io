@@ -1,9 +1,9 @@
 
  <!DOCTYPE HTML>
 <html lang="zh-CN">
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="UTF-8">
-  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
   
     <title>Swift 中的锁和线程安全 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
@@ -21,7 +21,7 @@
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Mike Ash，原文链接，原文日期：2015-02-06译者：Lefe_x；校对：numbbbbb，Yousanflics，liberalism；定稿：CMB   在 Swift 中有个有趣的现象：它没有与线程相关的语法，也没有明确的互斥锁/锁（mutexes/locks）概念，甚至 Objective-C 中有的 @synchronized 和原子属性它都没有。幸运的是，苹果系统的 A">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-05-05T16:00:50.864Z">
+<meta property="og:updated_time" content="2019-06-18T13:48:09.153Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift 中的锁和线程安全">
 <meta name="twitter:description" content="作者：Mike Ash，原文链接，原文日期：2015-02-06译者：Lefe_x；校对：numbbbbb，Yousanflics，liberalism；定稿：CMB   在 Swift 中有个有趣的现象：它没有与线程相关的语法，也没有明确的互斥锁/锁（mutexes/locks）概念，甚至 Objective-C 中有的 @synchronized 和原子属性它都没有。幸运的是，苹果系统的 A">
@@ -39,14 +39,14 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/gitment.css">
 </head>
-
+</html>
   <body>
     <header>
       
 <div>
 		
 			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -72,7 +72,7 @@
  					
 						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
 							<label>搜索</label>
-						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
 						</form>
 					
 					</li>
@@ -174,17 +174,17 @@
 <h3 id="模仿-synchronized"><a href="#模仿-synchronized" class="headerlink" title="模仿 @synchronized"></a>模仿 <code>@synchronized</code></h3><p>有了上面的封装，模仿 <code>@synchronized</code> 的实现就变得很简单。给你的类添加一个属性，持有一个锁，然后使用 <code>with</code> 替代 <code>@synchronized</code> ：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> queue = dispatch_queue_create(<span class="string">"com.example.myqueue"</span>, <span class="literal">nil</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">setEntryForKey</span><span class="params">(key: Key, entry: Entry)</span></span> &#123;</span><br><span class="line">    with(queue) &#123;</span><br><span class="line">        entries[key] = entry</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>从 block 中获取数据比较麻烦。<code>@synchronized</code> 可以从内部 <code>return</code> ，但是 <code>with</code> 做不到。你必须使用一个 <code>var</code> 变量在 block 内部赋值给它：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">entryForKey</span><span class="params">(key: Key)</span></span> -&gt; <span class="type">Entry</span>? &#123;</span><br><span class="line">    <span class="keyword">var</span> result: <span class="type">Entry</span>?</span><br><span class="line">    with(queue) &#123;</span><br><span class="line">        result = entries[key]</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> result</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">entryForKey</span><span class="params">(key: Key)</span></span> -&gt; <span class="type">Entry?</span> &#123;</span><br><span class="line">    <span class="keyword">var</span> result: <span class="type">Entry?</span></span><br><span class="line">    with(queue) &#123;</span><br><span class="line">        result = entries[key]</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> result</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>按理说可以将这段代码当做模板封装在一个通用函数中，但是它无法通过 Swift 编译器的类型推断，目前还没有找到解决方法。</p>
 <h3 id="模拟原子属性"><a href="#模拟原子属性" class="headerlink" title="模拟原子属性"></a>模拟原子属性</h3><p>原子属性（<code>atomic</code>）并不常用。与其他代码属性不同，原子属性并不支持组合率。如果函数 f 不存在内存泄漏，函数 g 不存在内存泄漏，那么函数 h 只是调用 f 和 g 也不会存在内存泄漏。但是原子属性并不满足这个条件。举一个例子，假设你有一个定义成原子属性并且线程安全的 Account 类：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> checkingAccount = <span class="type">Account</span>(amount: <span class="number">100</span>)</span><br><span class="line"><span class="keyword">let</span> savingsAccount = <span class="type">Account</span>(amount: <span class="number">0</span>)</span><br></pre></td></tr></table></figure>
 <p>现在要把钱转到储蓄账户中：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">checkingAccount.withDraw(<span class="number">100</span>)</span><br><span class="line">savingsAccount.deposit(<span class="number">100</span>)</span><br></pre></td></tr></table></figure>
 <p>在另一个线程中，统计并显示余额：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="built_in">println</span>(<span class="string">"Your total balance is: <span class="subst">\(checkingAccount.amount + savingsAccount.amount)</span>"</span>)</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="built_in">println</span>(<span class="string">"Your total balance is: \(checkingAccount.amount + savingsAccount.amount)"</span>)</span><br></pre></td></tr></table></figure>
 <p>在某些情况下，这段代码会打印 0，而不是 100，尽管事实上这些 Account 对象本身是原子属性，并且用户确实有 100 的余额。所以，最好让整个子系统都满足原子性，而不是单个属性。</p>
 <p>在极少数情况下，原子属性是有用的，因为它并不依赖其他特性，只需要线程安全即可。要在 Swift 中实现这一点，需要一个计算属性来完成锁定，用另一个常规属性保存值：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">let</span> queue = dispatch_queue_create(<span class="string">"..."</span>, <span class="literal">nil</span>)</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">var</span> _myPropertyStorage: <span class="type">SomeType</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> myProperty: <span class="type">SomeType</span> &#123;</span><br><span class="line">    <span class="keyword">get</span> &#123;</span><br><span class="line">        <span class="keyword">var</span> result: <span class="type">SomeType</span>?</span><br><span class="line">        with(queue) &#123;</span><br><span class="line">            result = _myPropertyStorage</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> result!</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">set</span> &#123;</span><br><span class="line">        with(queue) &#123;</span><br><span class="line">            _myPropertyStorage = newValue</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">let</span> queue = dispatch_queue_create(<span class="string">"..."</span>, <span class="literal">nil</span>)</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">var</span> _myPropertyStorage: <span class="type">SomeType</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> myProperty: <span class="type">SomeType</span> &#123;</span><br><span class="line">    <span class="keyword">get</span> &#123;</span><br><span class="line">        <span class="keyword">var</span> result: <span class="type">SomeType?</span></span><br><span class="line">        with(queue) &#123;</span><br><span class="line">            result = _myPropertyStorage</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> result!</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">set</span> &#123;</span><br><span class="line">        with(queue) &#123;</span><br><span class="line">            _myPropertyStorage = newValue</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h3 id="如何选择锁-API"><a href="#如何选择锁-API" class="headerlink" title="如何选择锁 API"></a>如何选择锁 API</h3><p><code>pthread</code> API 在 Swift 中不太好用，而且功能并不比其它 API 多。一般我比较喜欢在 C 和 Objective-C 中使用它们，因为它们又好用又高效。但是在 Swift 中，除非必要，我一般不会用。</p>
 <p>一般来说不需要用读写锁，大多数情况下读写速度都非常快。读写锁带来的额外开销超过了并发读取带来的效率提升。</p>
 <p>递归锁会发生死锁。多数情况下它们是有用的，但如果你发现自己需要获取一个已经在当前线程被锁住的锁，那最好重新设计代码，通常来说不会出现这种需求。</p>
@@ -231,9 +231,9 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
+ <div class="prev">
  <a href="/2018/06/11/friday-qa-2015-05-29-concurrent-memory-deallocation-in-the-objective-c-runtime/" title="Objective-C Runtime 中内存释放的并发问题">
-  <strong>上一篇</strong><br/>
+  <strong>上一篇</strong><br>
   <span>
   Objective-C Runtime 中内存释放的并发问题</span>
 </a>
@@ -241,8 +241,8 @@
 
 
 <div class="next">
-<a href="/2018/06/04/temp-file-helper/"  title="Swift 工具类：处理临时文件">
- <strong>下一篇</strong><br/> 
+<a href="/2018/06/04/temp-file-helper/" title="Swift 工具类：处理临时文件">
+ <strong>下一篇</strong><br> 
  <span>Swift 工具类：处理临时文件
 </span>
 </a>
@@ -357,11 +357,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -405,11 +405,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
 		  
 		
 		  
@@ -465,19 +465,19 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
@@ -781,7 +781,7 @@
 
   <div class="wechatpart">
 	<p class="asidetitle">微信公众号</p>
-	<img src="/img/wechat.jpg" />
+	<img src="/img/wechat.jpg">
 </div>
 
 </aside>
@@ -790,9 +790,9 @@
     <footer>
 
 
-<div id="footer" >
+<div id="footer">
 	
-	<div class="social-font" class="clearfix">
+	<div class="social-font">
 		
 		
 		
@@ -1022,7 +1022,7 @@ $(document).ready(function(){
 <!-- Totop Begin -->
 <!--
 	<div id="totop">
-	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
 	</div>
 	<script src="/js/totop.js"></script>
 -->

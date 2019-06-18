@@ -1,9 +1,9 @@
 
  <!DOCTYPE HTML>
 <html lang="zh-CN">
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="UTF-8">
-  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
   
     <title>MQTT 的遗愿消息 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
@@ -24,7 +24,7 @@
 <meta property="og:image" content="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/07/mqtt-e1467656045427.png">
 <meta property="og:image" content="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/07/1__clear_____build_debug_MQTTHotTub__ssh__and_9__clear_____build_debug_MQTTHotTub__ssh_-1.png">
 <meta property="og:image" content="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/07/abnormalDisconnect.png">
-<meta property="og:updated_time" content="2019-05-05T16:00:50.852Z">
+<meta property="og:updated_time" content="2019-06-18T13:48:09.141Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="MQTT 的遗愿消息">
 <meta name="twitter:description" content="作者：Joe，原文链接，原文日期：2016-07-04译者：粉红星云；校对：shanks；定稿：CMB    这里是在 Linux 上使用 Swift 来编写MQTT客户端系列的一篇文章。 在这篇文章里，我们将着眼在 MQTT 的遗愿消息。一般是连接着代理程序的客户端预定义好 LWT（Last Will and Testament）的。如果客户端异常地断开连接，代理程序(the broker)将">
@@ -43,14 +43,14 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/gitment.css">
 </head>
-
+</html>
   <body>
     <header>
       
 <div>
 		
 			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -76,7 +76,7 @@
  					
 						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
 							<label>搜索</label>
-						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
 						</form>
 					
 					</li>
@@ -106,25 +106,25 @@
 <p>作者：Joe，<a href="http://dev.iachieved.it/iachievedit/mqtt-last-will-and-testament/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-07-04<br>译者：<a href="http://www.jianshu.com/users/f4d4f97d8b90/latest_articles" target="_blank" rel="noopener">粉红星云</a>；校对：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p><img src="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/07/mqtt-e1467656045427.png" alt=""></p>
+<p><img src="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/07/mqtt-e1467656045427.png" alt></p>
 <p>这里是在 <code>Linux</code> 上使用 <code>Swift</code> 来编写<a href="https://en.wikipedia.org/wiki/MQTT" target="_blank" rel="noopener">MQTT</a>客户端系列的一篇文章。</p>
 <p>在这篇文章里，我们将着眼在 <code>MQTT</code> 的<a href="http://www.hivemq.com/blog/mqtt-essentials-part-9-last-will-and-testament" target="_blank" rel="noopener">遗愿消息</a>。一般是连接着代理程序的客户端预定义好 <code>LWT</code>（Last Will and Testament）的。如果客户端异常地断开连接，代理程序(the broker)将会广播 <code>LWT</code> 消息到所有订阅者的客户端中。</p>
 <a id="more"></a>
 <p>比如说，你正在搭建一个聊天应用，每个客户端与代理程序连接着并且订阅了<code>/chat/hottub</code>，被发布到<code>/chat/hottub</code>的消息被所有的订阅者接收。加入一个“聊天室”是一简单有效的方法（比如：<code>MQTT</code> 主题）。</p>
 <p>在正常情况下，一个客户端主动退出的时候，我们一般会期待看见这样的消息：“Joe 离开了<code>/chat/hottub</code>”。这个实现起来很简单，在用户用户离开的时候，发布一个<code>/exit</code>的消息然后关闭客户端。但如果一个客户端非正常地中断连接（如网络异常、客户端闪退等等），谁来给代理程序发遗愿消息呢。</p>
 <p>下面展示如何给 <code>MQTT</code> 客户端设置遗言：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Client</span>:<span class="title">MQTT</span>, <span class="title">MQTTDelegate</span> </span>&#123;</span><br><span class="line">  <span class="keyword">init</span>(clientId:<span class="type">String</span>) &#123;</span><br><span class="line">    <span class="keyword">super</span>.<span class="keyword">init</span>(clientId:clientId)</span><br><span class="line">    <span class="keyword">super</span>.willMessage =  <span class="type">MQTTWill</span>(topic:<span class="string">"/chat/hottub"</span>,</span><br><span class="line">                                  message:<span class="string">"&#123;\"client\":\"<span class="subst">\(clientId)</span>\",\"message\":\"Abnormal Disconnect\"&#125;"</span>)</span><br><span class="line">    <span class="keyword">super</span>.delegate = <span class="keyword">self</span></span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Client</span>:<span class="title">MQTT</span>, <span class="title">MQTTDelegate</span> </span>&#123;</span><br><span class="line">  <span class="keyword">init</span>(clientId:<span class="type">String</span>) &#123;</span><br><span class="line">    <span class="keyword">super</span>.<span class="keyword">init</span>(clientId:clientId)</span><br><span class="line">    <span class="keyword">super</span>.willMessage =  <span class="type">MQTTWill</span>(topic:<span class="string">"/chat/hottub"</span>,</span><br><span class="line">                                  message:<span class="string">"&#123;\"client\":\"\(clientId)\",\"message\":\"Abnormal Disconnect\"&#125;"</span>)</span><br><span class="line">    <span class="keyword">super</span>.delegate = <span class="keyword">self</span></span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><code>willMessage</code> 是 <code>MQTT</code> 的一个 <code>MQTTWill</code> 类型的成员属性。 <code>MQTTWill</code> 由标题和消息构成。在我们这个例子中标题可以是我们的聊天频道<code>/chat/hottub</code>，消息则是由我们客户端 ID 和一个简单的异常连接中断的字符串组成的 JSON 字符串。</p>
 <h2 id="获取代码"><a href="#获取代码" class="headerlink" title="获取代码"></a>获取代码</h2><p>我们搭建程序用的 <code>Swift 3.0</code> 是来自苹果最新的代码仓库的，并且有持续更新我们程序的代码。需要先按照我们的<a href="http://dev.iachieved.it/iachievedit/introducing-swift-3-0/" target="_blank" rel="noopener">apt-get仓库</a>安装 <code>Swift 3.0</code>。</p>
 <p>我们 <code>MQTT</code> 聊天室的例子在<a href="https://github.com/iachievedit/MQTTHotTub" target="_blank" rel="noopener">GitHub</a>上。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"># git clone https:<span class="comment">//github.com/iachievedit/MQTTHotTub</span></span><br><span class="line"># cd <span class="type">MQTTHotTub</span></span><br><span class="line"># swift build</span><br></pre></td></tr></table></figure>
 <p>出于测试的目的，需要运行 <code>MQTTHotTub</code> 两回，所以需要打开两个终端。</p>
-<p><img src="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/07/1__clear_____build_debug_MQTTHotTub__ssh__and_9__clear_____build_debug_MQTTHotTub__ssh_-1.png" alt=""></p>
+<p><img src="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/07/1__clear_____build_debug_MQTTHotTub__ssh__and_9__clear_____build_debug_MQTTHotTub__ssh_-1.png" alt></p>
 <p>用这个命令运行客户端 <code>.build/debug/MQTTHotTub</code>。</p>
 <h2 id="Prisencolinensinainciusol"><a href="#Prisencolinensinainciusol" class="headerlink" title="Prisencolinensinainciusol"></a>Prisencolinensinainciusol</h2><p>我们的客户端 <code>MQTTHotTub</code> 模拟了一个<a href="https://www.youtube.com/watch?v=Kj5TL1l9QYQ&amp;t=1m37s" target="_blank" rel="noopener">语无伦次</a>聊天对话。发布的每条消息都是以 <code>JSON</code> 格式的传递的。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">&#123;<span class="string">"client"</span>:<span class="string">"octxktfo"</span>, <span class="string">"message"</span>:<span class="string">"Gyxswhz nsoxfnj gz."</span>&#125;</span><br><span class="line">&#123;<span class="string">"client"</span>:<span class="string">"ajyhyjic"</span>, <span class="string">"message"</span>:<span class="string">"Cmr w bzwubzv mwfhtklz."</span>&#125;</span><br></pre></td></tr></table></figure>
 <p>当一个客户端接收到一条不是自己发布的消息，会有过滤消息的过程：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> cid != clientId &#123;</span><br><span class="line">  <span class="type">SLogInfo</span>(<span class="string">"Received \"<span class="subst">\(msg)</span>\" from <span class="subst">\(cid)</span>"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> cid != clientId &#123;</span><br><span class="line">  <span class="type">SLogInfo</span>(<span class="string">"Received \"\(msg)\" from \(cid)"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>如果我们监听发送给一个特定主题的消息，并且我们也向那个主题发送消息。就像回声一样，客户端将也会接受到自己发布的消息。这就是用 <code>cid != clientId</code> 来过滤的目的了。</p>
 <p>可以观察到每个客户端控制台打印记录，看看他们从别的客户端接收到的消息：</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Received &quot;Wlfu zrqyj tady obxnjl lupihobi nph oapplt nyidmja.&quot; from octxktfo</span><br><span class="line">Received &quot;Cmr w bzwubzv mwfhtklz.&quot; from ajyhyjic</span><br></pre></td></tr></table></figure>
@@ -132,7 +132,7 @@
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Received &quot;Abnormal Disconnect&quot; from octxktfo</span><br></pre></td></tr></table></figure>
 <p><img src="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/07/abnormalDisconnect.png" alt="连接异常中断"></p>
 <p>以上就是 <code>MQTT</code> 的遗愿消息的实操啦。中断连接的客户端没有机会去广播自己要退出，所以代理程序代替它发布了客户端的死前遗言到对话/聊天室:</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">&#123;<span class="string">"client"</span>:<span class="string">"<span class="subst">\(clientId)</span>"</span>,<span class="string">"message"</span>:<span class="string">"Abnormal Disconnect"</span>&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">&#123;<span class="string">"client"</span>:<span class="string">"\(clientId)"</span>,<span class="string">"message"</span>:<span class="string">"Abnormal Disconnect"</span>&#125;</span><br></pre></td></tr></table></figure>
 <h2 id="必须要有死前遗言吗"><a href="#必须要有死前遗言吗" class="headerlink" title="必须要有死前遗言吗"></a>必须要有死前遗言吗</h2><p>必须这个词太严肃了，这个问题的答案是 “不”，你的 <code>MQTT</code> 客户端不需要提供一个遗愿消息。如果你想要提供的话，这里有很多的<a href="http://stackoverflow.com/questions/17270863/mqtt-what-is-the-purpose-or-usage-of-last-will-testament/17385293#17385293" target="_blank" rel="noopener">其他案例</a>可以指导你。</p>
 <h2 id="接下来的计划"><a href="#接下来的计划" class="headerlink" title="接下来的计划"></a>接下来的计划</h2><p>我们继续地很努力地研究在 <code>Linux</code> 上使用 <code>Swift</code> 来实现<a href="http://stackoverflow.com/questions/17270863/mqtt-what-is-the-purpose-or-usage-of-last-will-testament/17385293#17385293" target="_blank" rel="noopener">MQTT</a>。在这篇文章后，我们的将专注于实现 <code>MQTT</code> 的安全连接（<code>MQTT SSL</code>）上。</p>
 <blockquote>
@@ -173,9 +173,9 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
+ <div class="prev">
  <a href="/2016/10/25/swift-option-sets/" title="Swift 中的选项集合">
-  <strong>上一篇</strong><br/>
+  <strong>上一篇</strong><br>
   <span>
   Swift 中的选项集合</span>
 </a>
@@ -183,8 +183,8 @@
 
 
 <div class="next">
-<a href="/2016/10/21/service-agnostic-mobile-analytics/"  title="与服务器无关的移动端分析">
- <strong>下一篇</strong><br/> 
+<a href="/2016/10/21/service-agnostic-mobile-analytics/" title="与服务器无关的移动端分析">
+ <strong>下一篇</strong><br> 
  <span>与服务器无关的移动端分析
 </span>
 </a>
@@ -299,11 +299,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -347,11 +347,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
 		  
 		
 		  
@@ -407,19 +407,19 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
@@ -723,7 +723,7 @@
 
   <div class="wechatpart">
 	<p class="asidetitle">微信公众号</p>
-	<img src="/img/wechat.jpg" />
+	<img src="/img/wechat.jpg">
 </div>
 
 </aside>
@@ -732,9 +732,9 @@
     <footer>
 
 
-<div id="footer" >
+<div id="footer">
 	
-	<div class="social-font" class="clearfix">
+	<div class="social-font">
 		
 		
 		
@@ -964,7 +964,7 @@ $(document).ready(function(){
 <!-- Totop Begin -->
 <!--
 	<div id="totop">
-	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
 	</div>
 	<script src="/js/totop.js"></script>
 -->

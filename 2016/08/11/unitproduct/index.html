@@ -1,9 +1,9 @@
 
  <!DOCTYPE HTML>
 <html lang="zh-CN">
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="UTF-8">
-  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
   
     <title>将 Measurements 和 Units 应用到物理学 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
@@ -21,7 +21,7 @@
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="本文讲解在 Swift 中使用 Measurements 和 Units 来计算乘除的方程，以及还有 UnitProduct 协议的用法。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-05-05T16:00:50.848Z">
+<meta property="og:updated_time" content="2019-06-18T13:48:09.137Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="将 Measurements 和 Units 应用到物理学">
 <meta name="twitter:description" content="本文讲解在 Swift 中使用 Measurements 和 Units 来计算乘除的方程，以及还有 UnitProduct 协议的用法。">
@@ -39,14 +39,14 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/gitment.css">
 </head>
-
+</html>
   <body>
     <header>
       
 <div>
 		
 			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -72,7 +72,7 @@
  					
 						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
 							<label>搜索</label>
-						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
 						</form>
 					
 					</li>
@@ -153,11 +153,11 @@
 <p>首先要注意的是，我们可以把所有的方程都归纳成 <em>a = b × c</em> 的形式，而除法可以被重写成乘法的形式：<em>速度 = 长度 / 时间 ⇔ 长度 = 速度 × 时间</em>。</p>
 <p>其次，虽然有些方程超过了两个因子，我们总是可以通过一个中间量将其归纳成只有两个因子的形式（见上述例子中的体积方程式）。</p>
 <h2 id="UnitProduct-协议"><a href="#UnitProduct-协议" class="headerlink" title="UnitProduct 协议"></a>UnitProduct 协议</h2><p>因此，我们需要找到一个方式，可以在类型系统中通过三个 unit 类来描述 <em>a = b × c</em> 的关系，并且我们希望这个实现方式可以被任意类型所接受。所以我们定义一个叫做 <code>UnitProduct</code> 的协议，他有 <code>Factor1</code> 和 <code>Factor2</code> 两个关联类型。我们将其类型设定成 <a href="https://developer.apple.com/reference/foundation/nsdimension" target="_blank" rel="noopener"><code>Dimension</code></a>，这是所有维度单位的父类：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">/// Describes the relation Self = Factor1 * Factor2.</span></span><br><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">UnitProduct</span> </span>&#123;</span><br><span class="line">    associatedtype <span class="type">Factor1</span>: <span class="type">Dimension</span></span><br><span class="line">    associatedtype <span class="type">Factor2</span>: <span class="type">Dimension</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">/// Describes the relation Self = Factor1 * Factor2.</span></span><br><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">UnitProduct</span> </span>&#123;</span><br><span class="line">    <span class="keyword">associatedtype</span> <span class="type">Factor1</span>: <span class="type">Dimension</span></span><br><span class="line">    <span class="keyword">associatedtype</span> <span class="type">Factor2</span>: <span class="type">Dimension</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>我们还需要什么呢？为了进行计算，我们需要在计算时指定这些值需要转换的实际 <em>单位</em>。换句话说，我们必须告诉类型系统，<em>米</em> 除以 <em>秒</em> 将会产生一个结果，他的单位是 <em>米每秒</em>，而不是 <em>千米每小时</em>。我们在协议里添加一个叫做 <code>defaultUnitMapping()</code> 的静态方法来实现这个目的。他会返回一个三元组，分别表示上述的 a，b 和 c。</p>
 <p>在理想的情况下，我希望这个方法的返回值是 <code>(Factor1, Factor2, Self)</code>，但是当我们通过一个具体的类，例如 <a href="https://developer.apple.com/reference/foundation/nsunitlength" target="_blank" rel="noopener"><code>UnitLength</code></a> 来实现这个协议的时候，使用 <code>Self</code> 会引起一些问题。Unit 类不是一个 final 类，意味着他可以被子类化。如果我们通过 <code>UnitLength</code> 来实现协议，并且使用 <code>UnitLength</code> 作为 <code>Self</code> 的返回值，这个实现会被其子类继承，<a href="https://twitter.com/slava_pestov/status/755288757427838977" target="_blank" rel="noopener">但这并不符合我们的协议</a>，因为 <code>Self</code> 指向了子类的类型。<a href="http://stackoverflow.com/a/37555215/116862" target="_blank" rel="noopener">出于此</a>，编译器不允许我们这样做。如果 <code>UnitLength</code> 是值类型或者 final 类的话，那结果是不同的。</p>
 <p>作为一种可行的方案，我们可以引进第三个关联类型来表示乘法的结果。我不喜欢这个方案，因为它强制协议的实现者来指定关联类型。虽然这非常不直观，却是可行的，完整的协议将变成：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">UnitProduct</span> </span>&#123;</span><br><span class="line">    associatedtype <span class="type">Factor1</span>: <span class="type">Dimension</span></span><br><span class="line">    associatedtype <span class="type">Factor2</span>: <span class="type">Dimension</span></span><br><span class="line">    associatedtype <span class="type">Product</span>: <span class="type">Dimension</span> <span class="comment">// is always == Self</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">defaultUnitMapping</span><span class="params">()</span></span> -&gt; (<span class="type">Factor1</span>, <span class="type">Factor2</span>, <span class="type">Product</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">UnitProduct</span> </span>&#123;</span><br><span class="line">    <span class="keyword">associatedtype</span> <span class="type">Factor1</span>: <span class="type">Dimension</span></span><br><span class="line">    <span class="keyword">associatedtype</span> <span class="type">Factor2</span>: <span class="type">Dimension</span></span><br><span class="line">    <span class="keyword">associatedtype</span> <span class="type">Product</span>: <span class="type">Dimension</span> <span class="comment">// is always == Self</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">defaultUnitMapping</span><span class="params">()</span></span> -&gt; (<span class="type">Factor1</span>, <span class="type">Factor2</span>, <span class="type">Product</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这足够在类型系统中表示他们之间的数学关系，并且为计算提供了关于单位关系的足够信息。</p>
 <p>接下来，我们来写一个具体的实现。请记住，我们想实现的关系是 <em><a href="https://developer.apple.com/reference/foundation/nsunitlength" target="_blank" rel="noopener">UnitLength</a> = <a href="https://developer.apple.com/reference/foundation/nsunitspeed" target="_blank" rel="noopener">UnitSpeed</a> × <a href="https://developer.apple.com/reference/foundation/nsunitduration" target="_blank" rel="noopener">UnitDuration</a></em>，所以我们让 <code>UnitLength</code> 实现了协议：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">/// UnitLength = UnitSpeed * UnitDuration</span></span><br><span class="line"><span class="comment">/// ⇔ UnitSpeed = UnitLength / UnitDuration</span></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UnitLength</span>: <span class="title">UnitProduct</span> </span>&#123;</span><br><span class="line">    <span class="keyword">typealias</span> <span class="type">Factor1</span> = <span class="type">UnitSpeed</span></span><br><span class="line">    <span class="keyword">typealias</span> <span class="type">Factor2</span> = <span class="type">UnitDuration</span></span><br><span class="line">    <span class="keyword">typealias</span> <span class="type">Product</span> = <span class="type">UnitLength</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">defaultUnitMapping</span><span class="params">()</span></span> -&gt; (<span class="type">UnitSpeed</span>, <span class="type">UnitDuration</span>, <span class="type">UnitLength</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> (.metersPerSecond, .seconds, .meters)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -222,9 +222,9 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
+ <div class="prev">
  <a href="/2016/08/12/collaborative-writing-on-github/" title="在 GitHub 上进行协同写作">
-  <strong>上一篇</strong><br/>
+  <strong>上一篇</strong><br>
   <span>
   在 GitHub 上进行协同写作</span>
 </a>
@@ -232,8 +232,8 @@
 
 
 <div class="next">
-<a href="/2016/08/10/button-animation-stackview/"  title="这样的 StackView 动画，你想到了吗？">
- <strong>下一篇</strong><br/> 
+<a href="/2016/08/10/button-animation-stackview/" title="这样的 StackView 动画，你想到了吗？">
+ <strong>下一篇</strong><br> 
  <span>这样的 StackView 动画，你想到了吗？
 </span>
 </a>
@@ -348,11 +348,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -396,11 +396,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
 		  
 		
 		  
@@ -456,19 +456,19 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
@@ -772,7 +772,7 @@
 
   <div class="wechatpart">
 	<p class="asidetitle">微信公众号</p>
-	<img src="/img/wechat.jpg" />
+	<img src="/img/wechat.jpg">
 </div>
 
 </aside>
@@ -781,9 +781,9 @@
     <footer>
 
 
-<div id="footer" >
+<div id="footer">
 	
-	<div class="social-font" class="clearfix">
+	<div class="social-font">
 		
 		
 		
@@ -1013,7 +1013,7 @@ $(document).ready(function(){
 <!-- Totop Begin -->
 <!--
 	<div id="totop">
-	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
 	</div>
 	<script src="/js/totop.js"></script>
 -->

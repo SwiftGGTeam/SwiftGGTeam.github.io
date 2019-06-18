@@ -1,9 +1,9 @@
 
  <!DOCTYPE HTML>
 <html lang="zh-CN">
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="UTF-8">
-  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
   
     <title>防止序列为空 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
@@ -21,7 +21,7 @@
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="很多人都疑问要怎么防止序列（sequence）为空呢，本文就来探讨下这个问题吧。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-05-05T16:00:50.848Z">
+<meta property="og:updated_time" content="2019-06-18T13:48:09.137Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="防止序列为空">
 <meta name="twitter:description" content="很多人都疑问要怎么防止序列（sequence）为空呢，本文就来探讨下这个问题吧。">
@@ -39,14 +39,14 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/gitment.css">
 </head>
-
+</html>
   <body>
     <header>
       
 <div>
 		
 			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -72,7 +72,7 @@
  					
 						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
 							<label>搜索</label>
-						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
 						</form>
 					
 					</li>
@@ -107,7 +107,7 @@
 <p>我们先不考虑这种处理是否有问题（我认为这种处理是正确的，因为一个空序列里没有元素，对元素的断言也就不会失败），Jeremy Pereira 提出了一个相当巧妙的解决方案：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">all</span><span class="params">(@noescape <span class="keyword">where</span> predicate: Generator.Element <span class="keyword">throws</span> -&gt; Bool)</span></span> <span class="keyword">rethrows</span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">	<span class="keyword">var</span> <span class="built_in">count</span> = <span class="number">0</span></span><br><span class="line">       <span class="keyword">for</span> element <span class="keyword">in</span> <span class="keyword">self</span> &#123;</span><br><span class="line">	    <span class="keyword">guard</span> <span class="keyword">try</span> predicate(element) <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">false</span> &#125;</span><br><span class="line">	    <span class="built_in">count</span> += <span class="number">1</span></span><br><span class="line">       &#125;</span><br><span class="line">       <span class="keyword">return</span> <span class="built_in">count</span> &gt; <span class="number">0</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>但从此讨论中延伸出的另一个大问题是“如何优雅地判断一个序列是否为空？”。我的方法是用缓冲区（buffer）并进行预处理。以下是我的第一次尝试，粗糙不堪，请不吝指教。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">struct</span> <span class="title">BufferedSequence</span>&lt;<span class="title">Base</span> : <span class="title">SequenceType</span>&gt;:<span class="title">GeneratorType</span>, <span class="title">SequenceType</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">internal</span> <span class="keyword">var</span> _base: <span class="type">Base</span></span><br><span class="line">    <span class="keyword">internal</span> <span class="keyword">var</span> _generator: <span class="type">Base</span>.<span class="type">Generator</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">var</span> bufferedElement: <span class="type">Base</span>.<span class="type">Generator</span>.<span class="type">Element</span>?</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">init</span>(<span class="number">_</span> base: <span class="type">Base</span>) &#123;</span><br><span class="line">        _base = base</span><br><span class="line">        _generator = base.generate()</span><br><span class="line">        bufferedElement = _generator.next()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">next</span><span class="params">()</span></span> -&gt; <span class="type">Base</span>.<span class="type">Generator</span>.<span class="type">Element</span>? &#123;</span><br><span class="line">        <span class="keyword">defer</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> bufferedElement != <span class="literal">nil</span> &#123;</span><br><span class="line">                bufferedElement = _generator.next()</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> bufferedElement</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">isEmpty</span><span class="params">()</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> bufferedElement == <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">struct</span> <span class="title">BufferedSequence</span>&lt;<span class="title">Base</span> : <span class="title">SequenceType</span>&gt;:<span class="title">GeneratorType</span>, <span class="title">SequenceType</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">internal</span> <span class="keyword">var</span> _base: <span class="type">Base</span></span><br><span class="line">    <span class="keyword">internal</span> <span class="keyword">var</span> _generator: <span class="type">Base</span>.<span class="type">Generator</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">var</span> bufferedElement: <span class="type">Base</span>.<span class="type">Generator</span>.<span class="type">Element?</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">init</span>(<span class="number">_</span> base: <span class="type">Base</span>) &#123;</span><br><span class="line">        _base = base</span><br><span class="line">        _generator = base.generate()</span><br><span class="line">        bufferedElement = _generator.next()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">next</span><span class="params">()</span></span> -&gt; <span class="type">Base</span>.<span class="type">Generator</span>.<span class="type">Element?</span> &#123;</span><br><span class="line">        <span class="keyword">defer</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> bufferedElement != <span class="literal">nil</span> &#123;</span><br><span class="line">                bufferedElement = _generator.next()</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> bufferedElement</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">isEmpty</span><span class="params">()</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> bufferedElement == <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>有趣的是，写这个小东西最难的不是如何进行预处理，而是将 Swift 3 的语法转换回 Swift 2.2，这样我就能在 playground 中进行混编了。</p>
 <p>你的语法转换进行的怎样了？已经全部转换成 3 的语法了？还是坚守 2.2 写生产代码？</p>
 <blockquote>
@@ -148,9 +148,9 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
+ <div class="prev">
  <a href="/2016/07/29/recursive-tail-calls-and-trampolines-in-swift/" title="在 iOS 10 中使用 Swift 3 和 UIViewPropertyAnimator 编写动画">
-  <strong>上一篇</strong><br/>
+  <strong>上一篇</strong><br>
   <span>
   在 iOS 10 中使用 Swift 3 和 UIViewPropertyAnimator 编写动画</span>
 </a>
@@ -158,8 +158,8 @@
 
 
 <div class="next">
-<a href="/2016/07/27/swift3-changes/"  title="Swift 3 新变化">
- <strong>下一篇</strong><br/> 
+<a href="/2016/07/27/swift3-changes/" title="Swift 3 新变化">
+ <strong>下一篇</strong><br> 
  <span>Swift 3 新变化
 </span>
 </a>
@@ -274,11 +274,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -322,11 +322,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
 		  
 		
 		  
@@ -382,19 +382,19 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
@@ -698,7 +698,7 @@
 
   <div class="wechatpart">
 	<p class="asidetitle">微信公众号</p>
-	<img src="/img/wechat.jpg" />
+	<img src="/img/wechat.jpg">
 </div>
 
 </aside>
@@ -707,9 +707,9 @@
     <footer>
 
 
-<div id="footer" >
+<div id="footer">
 	
-	<div class="social-font" class="clearfix">
+	<div class="social-font">
 		
 		
 		
@@ -939,7 +939,7 @@ $(document).ready(function(){
 <!-- Totop Begin -->
 <!--
 	<div id="totop">
-	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
 	</div>
 	<script src="/js/totop.js"></script>
 -->

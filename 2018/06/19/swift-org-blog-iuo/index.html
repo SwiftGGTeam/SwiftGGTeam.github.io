@@ -1,9 +1,9 @@
 
  <!DOCTYPE HTML>
 <html lang="zh-CN">
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="UTF-8">
-  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
   
     <title>重新实现可选类型的隐式解包 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
@@ -25,7 +25,7 @@
 <meta property="og:image" content="https://swift.gg/img/articles/swift-org-blog-iuo/40166527-52d1029a-59f1-11e8-94f2-44d9dc1660ce.png1529377151.9917665">
 <meta property="og:image" content="https://swift.gg/img/articles/swift-org-blog-iuo/40213466-2dd070ba-5a88-11e8-888a-0ca5066f4d36.png1529377152.1436236">
 <meta property="og:image" content="https://swift.gg/img/articles/swift-org-blog-iuo/40213471-336db9ba-5a88-11e8-9b8e-11287e1bfccd.png1529377152.292037">
-<meta property="og:updated_time" content="2019-05-05T16:00:50.864Z">
+<meta property="og:updated_time" content="2019-06-18T13:48:09.153Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="重新实现可选类型的隐式解包">
 <meta name="twitter:description" content="重新实现隐式解包的原因，会碰到问题。">
@@ -44,14 +44,14 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/gitment.css">
 </head>
-
+</html>
   <body>
     <header>
       
 <div>
 		
 			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -77,7 +77,7 @@
  					
 						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
 							<label>搜索</label>
-						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
 						</form>
 					
 					</li>
@@ -128,7 +128,7 @@
 2. 方法的参数类型声明
 3. 方法的返回值类型声明
 </code></pre><p>在其它地方使用 <code>!</code> 将被标记成一个错误。Swift 4.1 之前的版本就已经实现了这个检测，但是遗漏了一些情况：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> fn: (<span class="type">Int</span>!) -&gt; <span class="type">Int</span>! = ...   <span class="comment">// error: not a function declaration!</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> fn: (<span class="type">Int!</span>) -&gt; <span class="type">Int!</span> = ...   <span class="comment">// error: not a function declaration!</span></span><br></pre></td></tr></table></figure>
 <p>这里 Swift 4.1 显示了弃用警告，但是仍然默认了隐式解包的行为。在近期测试版本的新实现中，编译器会将 <code>!</code> 视为 <code>?</code>，同时在诊断信息中告诉你发生了什么，以及这种用法会被废弃。  </p>
 <p><strong>译者配图：</strong>  </p>
 <p><img src="/img/articles/swift-org-blog-iuo/40213466-2dd070ba-5a88-11e8-888a-0ca5066f4d36.png1529377152.1436236" alt="old-2"><br><img src="/img/articles/swift-org-blog-iuo/40213471-336db9ba-5a88-11e8-9b8e-11287e1bfccd.png1529377152.292037" alt="new-2"></p>
@@ -148,7 +148,7 @@
 <p>它将继续按照老版本的方式工作，因为在这里将表达式看作 <code>Optional</code> 执行 <code>map(_:)</code> 方法无法进行类型检测。取而代之，我们会对 <code>values</code> 进行强制解包，并对返回的数组执行 <code>map(_:)</code> 方法。</p>
 <h3 id="无法推断类型"><a href="#无法推断类型" class="headerlink" title="无法推断类型"></a>无法推断类型</h3><p>因为隐式解包可选不再是一个类型，所以不能被推断成一种类型或者类型的任何部分。</p>
 <p>在下面的例子中，尽管右边的赋值包含一个被声明为隐式解包的值，左边类型推断仅表示这个值（或者返回值）是一个可选类型。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> x: <span class="type">Int</span>!</span><br><span class="line"><span class="keyword">let</span> y = x   <span class="comment">// y has type Int?</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">forcedResult</span><span class="params">()</span></span> -&gt; <span class="type">Int</span>! &#123; ... &#125;</span><br><span class="line"><span class="keyword">let</span> getValue = forcedResult    <span class="comment">// getValue 的类型是 () -&gt; Int?</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">id</span>&lt;T&gt;<span class="params">(<span class="number">_</span> value: T)</span></span> -&gt; <span class="type">T</span> &#123; <span class="keyword">return</span> value &#125;</span><br><span class="line"><span class="keyword">let</span> z = id(x)   <span class="comment">// z 的类型是 Int?</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">apply</span>&lt;T&gt;<span class="params">(<span class="number">_</span> fn: <span class="params">()</span></span></span> -&gt; <span class="type">T</span>) -&gt; <span class="type">T</span> &#123; <span class="keyword">return</span> fn() &#125;</span><br><span class="line"><span class="keyword">let</span> w: <span class="type">Int</span> = apply(forcedResult)    <span class="comment">// 报错，因为 apply() 返回的是 Int?</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> x: <span class="type">Int!</span></span><br><span class="line"><span class="keyword">let</span> y = x   <span class="comment">// y has type Int?</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">forcedResult</span><span class="params">()</span></span> -&gt; <span class="type">Int!</span> &#123; ... &#125;</span><br><span class="line"><span class="keyword">let</span> getValue = forcedResult    <span class="comment">// getValue 的类型是 () -&gt; Int?</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">id</span>&lt;T&gt;<span class="params">(<span class="number">_</span> value: T)</span></span> -&gt; <span class="type">T</span> &#123; <span class="keyword">return</span> value &#125;</span><br><span class="line"><span class="keyword">let</span> z = id(x)   <span class="comment">// z 的类型是 Int?</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">apply</span>&lt;T&gt;<span class="params">(<span class="number">_</span> fn: <span class="params">()</span></span></span> -&gt; <span class="type">T</span>) -&gt; <span class="type">T</span> &#123; <span class="keyword">return</span> fn() &#125;</span><br><span class="line"><span class="keyword">let</span> w: <span class="type">Int</span> = apply(forcedResult)    <span class="comment">// 报错，因为 apply() 返回的是 Int?</span></span><br></pre></td></tr></table></figure>
 <p>还有一些特殊的实例会遇到这个问题，比如 <code>AnyObject</code> 的查找操作，<code>try?</code> 和 <code>switch</code>。</p>
 <h4 id="AnyObject-的查找操作"><a href="#AnyObject-的查找操作" class="headerlink" title="AnyObject 的查找操作"></a>AnyObject 的查找操作</h4><p><code>AnyObject</code> 的查找结果会被当作一个隐式解包的可选类型。如果你查找一个本身就被声明成隐式解包的属性，那么表达式现在就有两层隐式解包 ( <code>property</code> 被声明为 <code>UILabel!</code>)：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getLabel</span><span class="params">(object: AnyObject)</span></span> -&gt; <span class="type">UILabel</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> object.property <span class="comment">// forces both optionals, resulting in a UILabel</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -158,7 +158,7 @@
 <p>我们可以使用一个明确的类型来修复这个问题：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Implicitly unwrap object.property due to explicit type.</span></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> label: <span class="type">UILabel</span> = object.property &#123;</span><br><span class="line">  functionTakingLabel(label) <span class="comment">// okay</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h4 id="try"><a href="#try" class="headerlink" title="try?"></a><code>try?</code></h4><p>类似的，<code>try?</code> 会添加一层可选性，所以当对一个返回值为隐式可选类型的方法使用 <code>try?</code> 时，你可能会发现现在需要更改代码来显式对两层可选性进行解包。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">test</span><span class="params">()</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Int</span>! &#123; ... &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> x = <span class="keyword">try</span>? test() &#123;</span><br><span class="line">  <span class="keyword">let</span> y: <span class="type">Int</span> = x    <span class="comment">// error: x is an Int?</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> x: <span class="type">Int</span> = <span class="keyword">try</span>? test() &#123; <span class="comment">// explicitly typed as Int</span></span><br><span class="line">  <span class="keyword">let</span> y: <span class="type">Int</span> = x    <span class="comment">// okay, x is an Int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> x = <span class="keyword">try</span>? test(), <span class="keyword">let</span> y = x &#123; <span class="comment">// okay, x is Int?, y is Int</span></span><br><span class="line"> ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">test</span><span class="params">()</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Int!</span> &#123; ... &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> x = <span class="keyword">try</span>? test() &#123;</span><br><span class="line">  <span class="keyword">let</span> y: <span class="type">Int</span> = x    <span class="comment">// error: x is an Int?</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> x: <span class="type">Int</span> = <span class="keyword">try</span>? test() &#123; <span class="comment">// explicitly typed as Int</span></span><br><span class="line">  <span class="keyword">let</span> y: <span class="type">Int</span> = x    <span class="comment">// okay, x is an Int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> x = <span class="keyword">try</span>? test(), <span class="keyword">let</span> y = x &#123; <span class="comment">// okay, x is Int?, y is Int</span></span><br><span class="line"> ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h4 id="switch"><a href="#switch" class="headerlink" title="switch"></a><code>switch</code></h4><p>Swift 4.1 可以编译下面这样的代码，因为它将 <code>output</code> 作为隐式解包对待：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">switchExample</span><span class="params">(input: String!)</span></span> -&gt; <span class="type">String</span> &#123;</span><br><span class="line">  <span class="keyword">switch</span> input &#123;</span><br><span class="line">  <span class="keyword">case</span> <span class="string">"okay"</span>:</span><br><span class="line">    <span class="keyword">return</span> <span class="string">"fine"</span></span><br><span class="line">  <span class="keyword">case</span> <span class="keyword">let</span> output:</span><br><span class="line">    <span class="keyword">return</span> output  <span class="comment">// 隐式解包可选值，返回 String</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>请注意，如果用下面这种方法实现这个例子，无法编译成功：</p>
@@ -171,12 +171,12 @@
 <h3 id="使用可选类型和隐式解包可选类型重载输入输出参数"><a href="#使用可选类型和隐式解包可选类型重载输入输出参数" class="headerlink" title="使用可选类型和隐式解包可选类型重载输入输出参数"></a>使用可选类型和隐式解包可选类型重载输入输出参数</h3><p>如果在 Swift 4.1 中尝试去重载一个函数并且 in-out 参数是隐式解包可选类型，会显示一个弃用警告</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">someKindOfOptional</span><span class="params">(<span class="number">_</span>: <span class="keyword">inout</span> Int?)</span></span> &#123; ... &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Warning in Swift 4.1.  Error in new implementation.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">someKindOfOptional</span><span class="params">(<span class="number">_</span>: <span class="keyword">inout</span> Int!)</span></span> &#123; ... &#125;</span><br></pre></td></tr></table></figure>
 <p>Swift 4.1 中，如果 in-out 参数是可选的，那可以直接传入一个隐式解包可选类型的值，反之亦然。这样就可以删除上面的第二个重载（假设两个函数实现完全一致）：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">someKindOfOptional</span><span class="params">(<span class="number">_</span>: <span class="keyword">inout</span> Int?)</span></span> &#123; ... &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> i: <span class="type">Int</span>! = <span class="number">1</span></span><br><span class="line">someKindOfOptional(&amp;i)   <span class="comment">// 完全没问题，i 的类型是 Optional&lt;Int&gt;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">someKindOfOptional</span><span class="params">(<span class="number">_</span>: <span class="keyword">inout</span> Int?)</span></span> &#123; ... &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> i: <span class="type">Int!</span> = <span class="number">1</span></span><br><span class="line">someKindOfOptional(&amp;i)   <span class="comment">// 完全没问题，i 的类型是 Optional&lt;Int&gt;</span></span><br></pre></td></tr></table></figure>
 <p>在之后的新版本中，由于 <code>Int!</code> 与 <code>Int?</code> 是同义词，重载的可选性不再有意义。因此，和上面例子中类似的重载都会报错，并且第二个重载（声明为 <code>Int!</code>）必须被删除。</p>
 <h3 id="ImplicitlyUnwrappedOptional-扩展"><a href="#ImplicitlyUnwrappedOptional-扩展" class="headerlink" title="ImplicitlyUnwrappedOptional 扩展"></a>ImplicitlyUnwrappedOptional 扩展</h3><p>现在 <code>ImplicitlyUnwrappedOptional&lt;T&gt;</code> 只是 <code>Optional&lt;T&gt;</code> 的别名，而且不能直接使用，所以尝试给它创建 <code>extension</code> 会编译失败：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 1:11: error: 'ImplicitlyUnwrappedOptional' has been renamed to 'Optional'</span></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">ImplicitlyUnwrappedOptional</span> </span>&#123;</span><br></pre></td></tr></table></figure>
 <h3 id="nil-桥接"><a href="#nil-桥接" class="headerlink" title="nil 桥接"></a>nil 桥接</h3><p>对 <code>nil</code> 类型的值进行桥接时不会报运行时错误，而是把 <code>nil</code> 桥接为 <code>NSNull</code> 。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">C</span>: <span class="title">NSObject</span> </span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> iuoElement: <span class="type">C</span>! = <span class="literal">nil</span></span><br><span class="line"><span class="keyword">let</span> array: [<span class="type">Any</span>] = [iuoElement <span class="keyword">as</span> <span class="type">Any</span>]</span><br><span class="line"><span class="keyword">let</span> ns = array <span class="keyword">as</span> <span class="type">NSArray</span></span><br><span class="line"><span class="keyword">let</span> element = ns[<span class="number">0</span>] <span class="comment">// Swift 4.1: Fatal error: Attempt to bridge</span></span><br><span class="line">                    <span class="comment">// an implicitly unwrapped optional containing nil</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> value = element <span class="keyword">as</span>? <span class="type">NSNull</span>, value == <span class="type">NSNull</span>() &#123;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"pass"</span>)     <span class="comment">// 新版本中会执行到这里</span></span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"fail"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">C</span>: <span class="title">NSObject</span> </span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> iuoElement: <span class="type">C!</span> = <span class="literal">nil</span></span><br><span class="line"><span class="keyword">let</span> array: [<span class="type">Any</span>] = [iuoElement <span class="keyword">as</span> <span class="type">Any</span>]</span><br><span class="line"><span class="keyword">let</span> ns = array <span class="keyword">as</span> <span class="type">NSArray</span></span><br><span class="line"><span class="keyword">let</span> element = ns[<span class="number">0</span>] <span class="comment">// Swift 4.1: Fatal error: Attempt to bridge</span></span><br><span class="line">                    <span class="comment">// an implicitly unwrapped optional containing nil</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> value = element <span class="keyword">as</span>? <span class="type">NSNull</span>, value == <span class="type">NSNull</span>() &#123;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"pass"</span>)     <span class="comment">// 新版本中会执行到这里</span></span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"fail"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>隐式解包的可选类型已经被重新实现，它们不再是 <code>Optional&lt;T&gt;</code> 的特殊形式。因此，类型检测的一致性将会更好，编译器的特殊情况也会更少。删除这些特殊情况会减少处理声明时的错误数量。  </p>
 <p>导入的 Object-C API 可能会返回隐式解包的值。你可能会发现在声明 <code>@IBOutlet</code> 属性（或者任何初始化之前不会使用的值）时使用隐式解包会更加方便。不过总体来说，隐式解包能不用最好别用，改用 <code>if let</code> 和 <code>guard let</code> 来显式解包。如果确定有值，就用 <code>!</code> 来显式强制解包。</p>
 <h3 id="反馈"><a href="#反馈" class="headerlink" title="反馈"></a>反馈</h3><p>如果你对这篇文章有疑问或者想法，可以在 Swift 论坛中参与<a href="https://forums.swift.org/t/swift-org-blog-reimplementation-of-implicitly-unwrapped-optionals/12175" target="_blank" rel="noopener">相关讨论</a>。</p>
@@ -218,9 +218,9 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
+ <div class="prev">
  <a href="/2018/06/25/forcing-compiler-errors-in-swift/" title="Swift中的强制编译时报错">
-  <strong>上一篇</strong><br/>
+  <strong>上一篇</strong><br>
   <span>
   Swift中的强制编译时报错</span>
 </a>
@@ -228,8 +228,8 @@
 
 
 <div class="next">
-<a href="/2018/06/11/friday-qa-2015-05-29-concurrent-memory-deallocation-in-the-objective-c-runtime/"  title="Objective-C Runtime 中内存释放的并发问题">
- <strong>下一篇</strong><br/> 
+<a href="/2018/06/11/friday-qa-2015-05-29-concurrent-memory-deallocation-in-the-objective-c-runtime/" title="Objective-C Runtime 中内存释放的并发问题">
+ <strong>下一篇</strong><br> 
  <span>Objective-C Runtime 中内存释放的并发问题
 </span>
 </a>
@@ -344,11 +344,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -392,11 +392,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
 		  
 		
 		  
@@ -452,19 +452,19 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
@@ -768,7 +768,7 @@
 
   <div class="wechatpart">
 	<p class="asidetitle">微信公众号</p>
-	<img src="/img/wechat.jpg" />
+	<img src="/img/wechat.jpg">
 </div>
 
 </aside>
@@ -777,9 +777,9 @@
     <footer>
 
 
-<div id="footer" >
+<div id="footer">
 	
-	<div class="social-font" class="clearfix">
+	<div class="social-font">
 		
 		
 		
@@ -1009,7 +1009,7 @@ $(document).ready(function(){
 <!-- Totop Begin -->
 <!--
 	<div id="totop">
-	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
 	</div>
 	<script src="/js/totop.js"></script>
 -->

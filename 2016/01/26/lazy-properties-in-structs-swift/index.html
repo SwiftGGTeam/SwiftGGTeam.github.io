@@ -1,9 +1,9 @@
 
  <!DOCTYPE HTML>
 <html lang="zh-CN">
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="UTF-8">
-  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
   
     <title>结构体中的 Lazy 属性探究 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
@@ -21,7 +21,7 @@
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Ole Begemann，原文链接，原文日期：2015-12-17译者：pmst；校对：Cee；定稿：小锅    定稿注：原文没有提供源码，作为一个走心的翻译组，我们已经将本篇文章的最终版源码作成 Playground，可以到这个地址进行下载。   更新： 2015-12-17 提到 Swift evolution 邮件列表中一个关于行为属性的新提案，如果这个提案被采取，则本篇文章中的大部">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-05-05T16:00:50.836Z">
+<meta property="og:updated_time" content="2019-06-18T13:48:09.121Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="结构体中的 Lazy 属性探究">
 <meta name="twitter:description" content="作者：Ole Begemann，原文链接，原文日期：2015-12-17译者：pmst；校对：Cee；定稿：小锅    定稿注：原文没有提供源码，作为一个走心的翻译组，我们已经将本篇文章的最终版源码作成 Playground，可以到这个地址进行下载。   更新： 2015-12-17 提到 Swift evolution 邮件列表中一个关于行为属性的新提案，如果这个提案被采取，则本篇文章中的大部">
@@ -39,14 +39,14 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/gitment.css">
 </head>
-
+</html>
   <body>
     <header>
       
 <div>
 		
 			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -72,7 +72,7 @@
  					
 						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
 							<label>搜索</label>
-						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
 						</form>
 					
 					</li>
@@ -129,7 +129,7 @@
 <p>这样该结构体依旧保留了它的值语义。值类型内部使用引用类型是惯用伎俩，以这种方式实现能够保证值语义。标准库中许多集合类型都是以这种方式实现的。</p>
 <h3 id="并发性"><a href="#并发性" class="headerlink" title="并发性"></a>并发性</h3><p>这种实现方式还存在最后一个潜在问题，也就是未考虑并发性。倘若 <code>LazyBox.value</code> 还未完成值计算操作，同时被多个线程访问，那么计算函数就将被执行多次。这些都是你需要避免的情况，万一计算函数会产生副作用或相当耗内存呢，对吧？</p>
 <p>我们可以将内部 <code>_value</code> 属性的所有读写操作都安排到一个私有串行队列中，这样就能够保证函数仅被执行一次。下面是新的实现方式：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">LazyBox</span>&lt;<span class="title">T</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">init</span>(computation: () -&gt; <span class="type">T</span>) &#123;</span><br><span class="line">        _value = .<span class="type">NotYetComputed</span>(computation)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> _value: <span class="type">LazyValue</span>&lt;<span class="type">T</span>&gt;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/// 所有对于 `_value` 的读写都在这个线程队列中。</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">let</span> queue = dispatch_queue_create(</span><br><span class="line">        <span class="string">"LazyBox._value"</span>, <span class="type">DISPATCH_QUEUE_SERIAL</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> value: <span class="type">T</span> &#123;</span><br><span class="line">        <span class="keyword">var</span> returnValue: <span class="type">T</span>? = <span class="literal">nil</span></span><br><span class="line">        dispatch_sync(queue) &#123;</span><br><span class="line">            <span class="keyword">switch</span> <span class="keyword">self</span>._value &#123;</span><br><span class="line">            <span class="keyword">case</span> .<span class="type">NotYetComputed</span>(<span class="keyword">let</span> computation):</span><br><span class="line">                <span class="keyword">let</span> result = computation()</span><br><span class="line">                <span class="keyword">self</span>._value = .<span class="type">Computed</span>(result)</span><br><span class="line">                returnValue = result</span><br><span class="line">            <span class="keyword">case</span> .<span class="type">Computed</span>(<span class="keyword">let</span> result):</span><br><span class="line">                returnValue = result</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">assert</span>(returnValue != <span class="literal">nil</span>)</span><br><span class="line">        <span class="keyword">return</span> returnValue!</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">LazyBox</span>&lt;<span class="title">T</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">init</span>(computation: () -&gt; <span class="type">T</span>) &#123;</span><br><span class="line">        _value = .<span class="type">NotYetComputed</span>(computation)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> _value: <span class="type">LazyValue</span>&lt;<span class="type">T</span>&gt;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/// 所有对于 `_value` 的读写都在这个线程队列中。</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">let</span> queue = dispatch_queue_create(</span><br><span class="line">        <span class="string">"LazyBox._value"</span>, <span class="type">DISPATCH_QUEUE_SERIAL</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> value: <span class="type">T</span> &#123;</span><br><span class="line">        <span class="keyword">var</span> returnValue: <span class="type">T?</span> = <span class="literal">nil</span></span><br><span class="line">        dispatch_sync(queue) &#123;</span><br><span class="line">            <span class="keyword">switch</span> <span class="keyword">self</span>._value &#123;</span><br><span class="line">            <span class="keyword">case</span> .<span class="type">NotYetComputed</span>(<span class="keyword">let</span> computation):</span><br><span class="line">                <span class="keyword">let</span> result = computation()</span><br><span class="line">                <span class="keyword">self</span>._value = .<span class="type">Computed</span>(result)</span><br><span class="line">                returnValue = result</span><br><span class="line">            <span class="keyword">case</span> .<span class="type">Computed</span>(<span class="keyword">let</span> result):</span><br><span class="line">                returnValue = result</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">assert</span>(returnValue != <span class="literal">nil</span>)</span><br><span class="line">        <span class="keyword">return</span> returnValue!</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>使用这种方式的缺点是每次访问 <code>value</code> 时都会造成一个小的性能影响，倘若多个线程同时读取该值时可能引起争用，毕竟它们都要经过同一个串行队列。鉴于每次缓存值被计算后队列中要执行的工作量相当少，在大多数情况中都可以忽略不计。</p>
 <p>值得注意的是 Swift 并没有为 <code>lazy</code> 关键字提供上述保证。<a href="https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/Properties.html#//apple_ref/doc/uid/TP40014097-CH14-ID257" target="_blank" rel="noopener">官方文档</a>里是这么说的：</p>
 <blockquote>
@@ -174,9 +174,9 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
+ <div class="prev">
  <a href="/2016/01/27/generic-tableviewcells/" title="使用泛型来优化 TableView Cells 的使用体验">
-  <strong>上一篇</strong><br/>
+  <strong>上一篇</strong><br>
   <span>
   使用泛型来优化 TableView Cells 的使用体验</span>
 </a>
@@ -184,8 +184,8 @@
 
 
 <div class="next">
-<a href="/2016/01/25/friday-qa-2015-11-06-why-is-swifts-string-api-so-hard/"  title="Friday Q&amp;A 2015-11-06：为什么 Swift 中的 String API 如此难用？">
- <strong>下一篇</strong><br/> 
+<a href="/2016/01/25/friday-qa-2015-11-06-why-is-swifts-string-api-so-hard/" title="Friday Q&amp;A 2015-11-06：为什么 Swift 中的 String API 如此难用？">
+ <strong>下一篇</strong><br> 
  <span>Friday Q&amp;A 2015-11-06：为什么 Swift 中的 String API 如此难用？
 </span>
 </a>
@@ -300,11 +300,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -348,11 +348,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
 		  
 		
 		  
@@ -408,19 +408,19 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
@@ -724,7 +724,7 @@
 
   <div class="wechatpart">
 	<p class="asidetitle">微信公众号</p>
-	<img src="/img/wechat.jpg" />
+	<img src="/img/wechat.jpg">
 </div>
 
 </aside>
@@ -733,9 +733,9 @@
     <footer>
 
 
-<div id="footer" >
+<div id="footer">
 	
-	<div class="social-font" class="clearfix">
+	<div class="social-font">
 		
 		
 		
@@ -965,7 +965,7 @@ $(document).ready(function(){
 <!-- Totop Begin -->
 <!--
 	<div id="totop">
-	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
 	</div>
 	<script src="/js/totop.js"></script>
 -->

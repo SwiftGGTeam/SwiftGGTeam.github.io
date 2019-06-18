@@ -1,9 +1,9 @@
 
  <!DOCTYPE HTML>
 <html lang="zh-CN">
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="UTF-8">
-  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
   
     <title>iOS：选择 Realm 而不是 CoreData | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
@@ -21,7 +21,7 @@
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Tomasz Szulc，原文链接，原文日期：2015-11-29译者：Cee；校对：千叶知风；定稿：千叶知风    我已在网上多次看到「Realm」这个词。我甚至曾在十月时有机会参加由 Swift 用户组组织的 Realm 聚会。最终，我有机会用上了 Realm 这个框架。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-05-05T16:00:50.828Z">
+<meta property="og:updated_time" content="2019-06-18T13:48:09.117Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="iOS：选择 Realm 而不是 CoreData">
 <meta name="twitter:description" content="作者：Tomasz Szulc，原文链接，原文日期：2015-11-29译者：Cee；校对：千叶知风；定稿：千叶知风    我已在网上多次看到「Realm」这个词。我甚至曾在十月时有机会参加由 Swift 用户组组织的 Realm 聚会。最终，我有机会用上了 Realm 这个框架。">
@@ -39,14 +39,14 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/gitment.css">
 </head>
-
+</html>
   <body>
     <header>
       
 <div>
 		
 			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -72,7 +72,7 @@
  					
 						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
 							<label>搜索</label>
-						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
 						</form>
 					
 					</li>
@@ -111,7 +111,7 @@
 <p><strong>免责声明：</strong>接下来所写的仅仅只覆盖了 Realm 框架中最基本的一部分。我建议你们接下来可以去阅读<a href="https://realm.io/docs/swift/latest/" target="_blank" rel="noopener">官方文档</a>来获取更多的信息。在这儿我并不想向你们展示关于 Realm 框架的全部内容，因为这篇文章不可能像文档一样又臭又长，并且我自己也会避免这样的问题发生。官方的文档非常的棒，你在开工前可以先读一下它。</p>
 <p>我的这个案例并不是很复杂而是非常简单的。整个 app 只有两个抽象模型（Model）类： <code>Day</code> 和 <code>DrinkLogEntry</code> 。此外，这个 app 也需要这些功能：添加、更新、筛选和排序存储的数据。正如我所说这是个简单的 app 。接下来我会呈现 app 中的一些代码片段。</p>
 <h2 id="抽象模型（Model）"><a href="#抽象模型（Model）" class="headerlink" title="抽象模型（Model）"></a>抽象模型（Model）</h2><p>Realm 中没有像 xcdatamodel-like 这样的文件。抽象模型仅仅是继承自 <code>Object</code> 类的文件。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> 表示了用户一天的生活。 Day 这个类的信息包含用户所喝的水和他们的每天喝水的目标。</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Day</span>: <span class="title">Object</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">dynamic</span> <span class="keyword">var</span> identifier: <span class="type">String</span>!</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/// 表示一天的开始的时间戳（UTC+0 时区）</span></span><br><span class="line">    <span class="keyword">dynamic</span> <span class="keyword">var</span> timestamp: <span class="type">NSTimeInterval</span> = <span class="number">0</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">/// 用户所喝的水的量（毫升）</span></span><br><span class="line">    <span class="keyword">dynamic</span> <span class="keyword">var</span> waterDrank: <span class="type">Float</span> = <span class="number">0</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">/// 用户每天喝水的目标（毫升）</span></span><br><span class="line">    <span class="keyword">dynamic</span> <span class="keyword">var</span> dailyGoal: <span class="type">Float</span> = <span class="number">0</span> <span class="comment">// ml</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">var</span> drinkLogs = <span class="type">List</span>&lt;<span class="type">DrinkLogEntry</span>&gt;()</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">convenience</span> <span class="keyword">init</span>(timestamp: <span class="type">NSTimeInterval</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.<span class="keyword">init</span>()</span><br><span class="line">        <span class="keyword">self</span>.timestamp = timestamp</span><br><span class="line">        <span class="keyword">self</span>.identifier = <span class="type">Day</span>.convertTimestampIntoIdentifier(timestamp)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">override</span> <span class="class"><span class="keyword">class</span> <span class="title">func</span> <span class="title">primaryKey</span>() -&gt; <span class="title">String</span>? </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">"identifier"</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">override</span> <span class="class"><span class="keyword">class</span> <span class="title">func</span> <span class="title">indexedProperties</span>() -&gt; [<span class="title">String</span>] </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> [<span class="string">"identifier"</span>]</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">func</span> <span class="title">convertTimestampIntoIdentifier</span>(<span class="title">timestamp</span>: <span class="title">NSTimeInterval</span>) -&gt; <span class="title">String</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">String</span>(format: <span class="string">"%.0f"</span>, arguments: [timestamp])</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> 表示了用户一天的生活。 Day 这个类的信息包含用户所喝的水和他们的每天喝水的目标。</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Day</span>: <span class="title">Object</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">dynamic</span> <span class="keyword">var</span> identifier: <span class="type">String!</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">/// 表示一天的开始的时间戳（UTC+0 时区）</span></span><br><span class="line">    <span class="keyword">dynamic</span> <span class="keyword">var</span> timestamp: <span class="type">NSTimeInterval</span> = <span class="number">0</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">/// 用户所喝的水的量（毫升）</span></span><br><span class="line">    <span class="keyword">dynamic</span> <span class="keyword">var</span> waterDrank: <span class="type">Float</span> = <span class="number">0</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">/// 用户每天喝水的目标（毫升）</span></span><br><span class="line">    <span class="keyword">dynamic</span> <span class="keyword">var</span> dailyGoal: <span class="type">Float</span> = <span class="number">0</span> <span class="comment">// ml</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">var</span> drinkLogs = <span class="type">List</span>&lt;<span class="type">DrinkLogEntry</span>&gt;()</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">convenience</span> <span class="keyword">init</span>(timestamp: <span class="type">NSTimeInterval</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.<span class="keyword">init</span>()</span><br><span class="line">        <span class="keyword">self</span>.timestamp = timestamp</span><br><span class="line">        <span class="keyword">self</span>.identifier = <span class="type">Day</span>.convertTimestampIntoIdentifier(timestamp)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">override</span> <span class="class"><span class="keyword">class</span> <span class="title">func</span> <span class="title">primaryKey</span>() -&gt; <span class="title">String</span>? </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">"identifier"</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">override</span> <span class="class"><span class="keyword">class</span> <span class="title">func</span> <span class="title">indexedProperties</span>() -&gt; [<span class="title">String</span>] </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> [<span class="string">"identifier"</span>]</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">func</span> <span class="title">convertTimestampIntoIdentifier</span>(<span class="title">timestamp</span>: <span class="title">NSTimeInterval</span>) -&gt; <span class="title">String</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">String</span>(format: <span class="string">"%.0f"</span>, arguments: [timestamp])</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>所有前有 <code>dynamic</code> 关键字的属性都会被转化成数据抽象层的一部分。Realm 也支持关系型数据。在这个例子中 Day 这个类中存在 drinkLogs 的一对多关系。一对一的关系就仅是类中的特定属性了。</p>
 <p>Realm 也支持从 Core Data 中迁移数据。当你需要迁移的时候，可以定义一个闭包并且执行它，然后你就能顺利地执行迁移属性的所有步骤了（译者注：<a href="https://realm.io/news/migrating-from-core-data-to-realm/" target="_blank" rel="noopener">如何从 Core Data 迁移到 Realm</a>）。</p>
 <h2 id="索引属性（Indexed-properties）和主键（Primary-keys）"><a href="#索引属性（Indexed-properties）和主键（Primary-keys）" class="headerlink" title="索引属性（Indexed properties）和主键（Primary keys）"></a>索引属性（Indexed properties）和主键（Primary keys）</h2><p>Realm 框架有很多 Core Data 中没有的新特性（也有可能是我没找到，或者说我就是想提一下这点😊）。第一点就是「索引属性」了。你可以定义需要被索引的属性集合。当属性个数比较小的时候，搜索会变得很快。这有助于性能的提升。</p>
@@ -177,9 +177,9 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
+ <div class="prev">
  <a href="/2015/12/08/building-a-todo-app-using-realm-and-swift/" title="使用 Realm 和 Swift 创建 ToDo 应用">
-  <strong>上一篇</strong><br/>
+  <strong>上一篇</strong><br>
   <span>
   使用 Realm 和 Swift 创建 ToDo 应用</span>
 </a>
@@ -187,8 +187,8 @@
 
 
 <div class="next">
-<a href="/2015/12/07/a-handful-of-swift-style-rules-swiftlang/"  title="几个 Swift 代码规范">
- <strong>下一篇</strong><br/> 
+<a href="/2015/12/07/a-handful-of-swift-style-rules-swiftlang/" title="几个 Swift 代码规范">
+ <strong>下一篇</strong><br> 
  <span>几个 Swift 代码规范
 </span>
 </a>
@@ -303,11 +303,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -351,11 +351,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
 		  
 		
 		  
@@ -411,19 +411,19 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
@@ -727,7 +727,7 @@
 
   <div class="wechatpart">
 	<p class="asidetitle">微信公众号</p>
-	<img src="/img/wechat.jpg" />
+	<img src="/img/wechat.jpg">
 </div>
 
 </aside>
@@ -736,9 +736,9 @@
     <footer>
 
 
-<div id="footer" >
+<div id="footer">
 	
-	<div class="social-font" class="clearfix">
+	<div class="social-font">
 		
 		
 		
@@ -968,7 +968,7 @@ $(document).ready(function(){
 <!-- Totop Begin -->
 <!--
 	<div id="totop">
-	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
 	</div>
 	<script src="/js/totop.js"></script>
 -->

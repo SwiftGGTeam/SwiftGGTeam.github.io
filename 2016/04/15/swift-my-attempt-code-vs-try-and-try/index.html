@@ -1,9 +1,9 @@
 
  <!DOCTYPE HTML>
 <html lang="zh-CN">
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="UTF-8">
-  <meta name="baidu-site-verification" content="vqJV77bZM6" />
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
   
     <title>对比 attempt、try? 和 try! | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
@@ -21,7 +21,7 @@
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="如何使用 attempt 来重现 try? 和其 try! 的所有行为，下面我们就来讨论一番吧。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-05-05T16:00:50.840Z">
+<meta property="og:updated_time" content="2019-06-18T13:48:09.129Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="对比 attempt、try? 和 try!">
 <meta name="twitter:description" content="如何使用 attempt 来重现 try? 和其 try! 的所有行为，下面我们就来讨论一番吧。">
@@ -39,14 +39,14 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/gitment.css">
 </head>
-
+</html>
   <body>
     <header>
       
 <div>
 		
 			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"/></a>
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -72,7 +72,7 @@
  					
 						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
 							<label>搜索</label>
-						<input name="s" type="hidden" value= 4873498141517765035 ><input type="search" name="q" size="30" placeholder="搜索"><br>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
 						</form>
 					
 					</li>
@@ -114,7 +114,7 @@
 <p>但是，需要结合 <code>guard</code> 调用时，由于不能够在尾随闭包中将 <code>guard</code> 所需要的 <code>else</code> 闭包和 <code>attempt</code> 闭包区分开来，因此需要使用一个更为传统的参数方法。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">guard</span> <span class="keyword">let</span> fileContents = attempt(closure: &#123;</span><br><span class="line">    <span class="number">_</span> -&gt; [<span class="type">NSURL</span>] <span class="keyword">in</span></span><br><span class="line">    <span class="keyword">let</span> url = <span class="type">NSURL</span>(fileURLWithPath: <span class="string">"/Users/notarealuser"</span>)</span><br><span class="line">    <span class="keyword">let</span> mgr = <span class="type">NSFileManager</span>.defaultManager()</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">try</span> mgr.contentsOfDirectoryAtURL(</span><br><span class="line">            url, includingPropertiesForKeys: <span class="literal">nil</span>, </span><br><span class="line">            options: [])</span><br><span class="line">&#125;) <span class="keyword">else</span> &#123; <span class="built_in">fatalError</span>(<span class="string">"failed"</span>) &#125;</span><br></pre></td></tr></table></figure>
 <p><code>attempt</code> 的相关代码如下所示，您也可以在 <code>GitHub</code> 上访问内容更丰富的 <code>CoreError.swift</code> 代码实现，它当中还增加（更新）了语境化的实用工具 (<code>Contextualization Utilities</code>)。因为 <code>Swift</code> 将会采用更现代化的调试标识符，因此这种尖叫蛇式大写 (SCREAMING_SNAKE_CASE，译者注：如您所见，就是在大写单词之间加上下划线) 的常量将很快被移除。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">/// 由文件路径 (File Path)、行数 (Line Number) 和错误元组 (Error Tuple) 组成</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">typealias</span> <span class="type">CommonErrorHandlerType</span> = (<span class="type">String</span>, <span class="type">Int</span>, <span class="type">ErrorType</span>) -&gt; <span class="type">Void</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/// 可以打印上下文和错误的默认错误处理器</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">let</span> defaultCommonErrorHandler: <span class="type">CommonErrorHandlerType</span> = &#123;</span><br><span class="line">    filePath, lineNumber, error <span class="keyword">in</span></span><br><span class="line">    <span class="keyword">let</span> trimmedFileName: <span class="type">String</span> = (filePath <span class="keyword">as</span> <span class="type">NSString</span>).lastPathComponent</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"Error <span class="subst">\(trimmedFileName)</span>:<span class="subst">\(lineNumber)</span> <span class="subst">\(error)</span>"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/// 引入错误处理器来替代 `try?`</span></span><br><span class="line"><span class="comment">/// 默认的错误处理器将会在返回 nil 之前打印错误信息</span></span><br><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">attempt</span>&lt;T&gt;<span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">file fileName: String = <span class="keyword">__FILE__</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">line lineNumber: Int = <span class="keyword">__LINE__</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">    crashOnError: Bool = <span class="literal">false</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">    errorHandler: CommonErrorHandlerType = defaultCommonErrorHandler,</span></span></span><br><span class="line"><span class="function"><span class="params">// 感谢 http://twitter.com/Kametrixom/status/<span class="number">709809975447707648</span></span></span></span><br><span class="line"><span class="function"><span class="params">@noescape closure: <span class="params">()</span></span></span> <span class="keyword">throws</span> -&gt; <span class="type">T</span>) -&gt; <span class="type">T</span>? &#123; </span><br><span class="line"></span><br><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line"><span class="comment">// 只有当闭包成功的时候，才会返回执行，这会返回 T</span></span><br><span class="line"><span class="keyword">return</span> <span class="keyword">try</span> closure()</span><br><span class="line">        &#125; <span class="keyword">catch</span> &#123;</span><br><span class="line"><span class="comment">// 通过崩溃来模仿 try!</span></span><br><span class="line"><span class="keyword">if</span> crashOnError &#123;</span><br><span class="line"><span class="built_in">print</span>(<span class="string">"Fatal error <span class="subst">\(fileName)</span>:<span class="subst">\(lineNumber)</span>: <span class="subst">\(error)</span>"</span>)</span><br><span class="line">                <span class="built_in">fatalError</span>()</span><br><span class="line">            &#125;</span><br><span class="line"><span class="comment">// 运行错误处理器，并返回 nil</span></span><br><span class="line">            errorHandler(fileName, lineNumber, error)</span><br><span class="line"><span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">/// 由文件路径 (File Path)、行数 (Line Number) 和错误元组 (Error Tuple) 组成</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">typealias</span> <span class="type">CommonErrorHandlerType</span> = (<span class="type">String</span>, <span class="type">Int</span>, <span class="type">ErrorType</span>) -&gt; <span class="type">Void</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/// 可以打印上下文和错误的默认错误处理器</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">let</span> defaultCommonErrorHandler: <span class="type">CommonErrorHandlerType</span> = &#123;</span><br><span class="line">    filePath, lineNumber, error <span class="keyword">in</span></span><br><span class="line">    <span class="keyword">let</span> trimmedFileName: <span class="type">String</span> = (filePath <span class="keyword">as</span> <span class="type">NSString</span>).lastPathComponent</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"Error \(trimmedFileName):\(lineNumber) \(error)"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/// 引入错误处理器来替代 `try?`</span></span><br><span class="line"><span class="comment">/// 默认的错误处理器将会在返回 nil 之前打印错误信息</span></span><br><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">attempt</span>&lt;T&gt;<span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">file fileName: String = <span class="keyword">__FILE__</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">line lineNumber: Int = <span class="keyword">__LINE__</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">    crashOnError: Bool = <span class="literal">false</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">    errorHandler: CommonErrorHandlerType = defaultCommonErrorHandler,</span></span></span><br><span class="line"><span class="function"><span class="params">// 感谢 http://twitter.com/Kametrixom/status/<span class="number">709809975447707648</span></span></span></span><br><span class="line"><span class="function"><span class="params">@noescape closure: <span class="params">()</span></span></span> <span class="keyword">throws</span> -&gt; <span class="type">T</span>) -&gt; <span class="type">T?</span> &#123; </span><br><span class="line"></span><br><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line"><span class="comment">// 只有当闭包成功的时候，才会返回执行，这会返回 T</span></span><br><span class="line"><span class="keyword">return</span> <span class="keyword">try</span> closure()</span><br><span class="line">        &#125; <span class="keyword">catch</span> &#123;</span><br><span class="line"><span class="comment">// 通过崩溃来模仿 try!</span></span><br><span class="line"><span class="keyword">if</span> crashOnError &#123;</span><br><span class="line"><span class="built_in">print</span>(<span class="string">"Fatal error \(fileName):\(lineNumber): \(error)"</span>)</span><br><span class="line">                <span class="built_in">fatalError</span>()</span><br><span class="line">            &#125;</span><br><span class="line"><span class="comment">// 运行错误处理器，并返回 nil</span></span><br><span class="line">            errorHandler(fileName, lineNumber, error)</span><br><span class="line"><span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>一如既往，如果您发现了任何问题，或者有任何建议的话，请联系我，让我知晓。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
@@ -154,9 +154,9 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
+ <div class="prev">
  <a href="/2016/04/18/10-Swift-One-Liners-To-Impress-Your-Friends/" title="Swift 中 10 个震惊小伙伴的单行代码">
-  <strong>上一篇</strong><br/>
+  <strong>上一篇</strong><br>
   <span>
   Swift 中 10 个震惊小伙伴的单行代码</span>
 </a>
@@ -164,8 +164,8 @@
 
 
 <div class="next">
-<a href="/2016/04/14/should-i-be-using-a-generator-or-not/"  title="我是否应该使用生成器(Generator)？">
- <strong>下一篇</strong><br/> 
+<a href="/2016/04/14/should-i-be-using-a-generator-or-not/" title="我是否应该使用生成器(Generator)？">
+ <strong>下一篇</strong><br> 
  <span>我是否应该使用生成器(Generator)？
 </span>
 </a>
@@ -280,11 +280,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>7</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -328,11 +328,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>12</sup></a></li>
 		  
 		
 		  
@@ -388,19 +388,19 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
@@ -704,7 +704,7 @@
 
   <div class="wechatpart">
 	<p class="asidetitle">微信公众号</p>
-	<img src="/img/wechat.jpg" />
+	<img src="/img/wechat.jpg">
 </div>
 
 </aside>
@@ -713,9 +713,9 @@
     <footer>
 
 
-<div id="footer" >
+<div id="footer">
 	
-	<div class="social-font" class="clearfix">
+	<div class="social-font">
 		
 		
 		
@@ -945,7 +945,7 @@ $(document).ready(function(){
 <!-- Totop Begin -->
 <!--
 	<div id="totop">
-	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
 	</div>
 	<script src="/js/totop.js"></script>
 -->
