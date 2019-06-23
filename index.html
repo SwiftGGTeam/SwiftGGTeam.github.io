@@ -88,6 +88,88 @@
   <header class="article-info clearfix">
     <h1 itemprop="name">
       
+        <a href="/2019/06/24/sequence-head-tail/" target="_blank" title="将 Swift 序列切分为头部和尾部" itemprop="url">将 Swift 序列切分为头部和尾部</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2019-06-24T00:00:00.000Z" itemprop="datePublished">2019-06-24</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+    <div class="article-content">
+        
+        <blockquote>
+<p>作者：Ole Begemann，<a href="https://oleb.net/2018/sequence-head-tail/" target="_blank" rel="noopener">原文链接</a>，原文日期：2018-11-29<br>译者：<a href="https://github.com/WAMaker" target="_blank" rel="noopener">WAMaker</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>，<a href="https://bignerdcoding.com/" target="_blank" rel="noopener">BigNerdCoding</a>；定稿：<a href="http://forelax.space" target="_blank" rel="noopener">Forelax</a></p>
+</blockquote>
+<p>函数式编程语言的一个常用范式是把一个列表切分为头部（第一个元素）和尾部（其余元素）。在 Haskell 中，<a href="https://en.wikibooks.org/wiki/Haskell/Pattern_matching" target="_blank" rel="noopener">x:xs</a> 会匹配非空列表，将头部绑定给变量 x，尾部绑定给 xs。</p>
+<p><a href="https://academy.realm.io/posts/tryswift-rob-napier-swift-legacy-functional-programming/" target="_blank" rel="noopener">Swift 不是一门函数式编程语言</a>。既没有内置的 <code>List</code> 类型，也没有集合的特定匹配语法。<a href="#foot1" id="1"><sup>[1]</sup></a></p>
+<h2 id="集合（Collections）"><a href="#集合（Collections）" class="headerlink" title="集合（Collections）"></a>集合（Collections）</h2><p>尽管如此，将 <code>Sequence</code> 或 <code>Collection</code> 切分成头部和尾部偶尔很有用。对于集合来说这很容易：<br><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Collection</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> headAndTail: (head: <span class="type">Element</span>, tail: <span class="type">SubSequence</span>)? &#123;</span><br><span class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> head = first <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</span><br><span class="line">        <span class="keyword">return</span> (head, <span class="built_in">dropFirst</span>())</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> (firstLetter, remainder) = <span class="string">"Hello"</span>.headAndTail &#123;</span><br><span class="line">    <span class="comment">// firstLetter: Character == "H"</span></span><br><span class="line">    <span class="comment">// remainder: Substring == "ello"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="序列（Sequence）"><a href="#序列（Sequence）" class="headerlink" title="序列（Sequence）"></a>序列（Sequence）</h2><p>对于序列来说却很困难，因为它们可以是单向（single-pass）的：一些序列只能被迭代一次，迭代器会消耗其中的元素。以网络流为例，一旦你从缓冲区里读取了一个字节，操作系统便将它抛弃了。你无法让它重新来一遍。</p>
+<p>一个可能的解决方案是 <a href="https://developer.apple.com/documentation/swift/sequence/2885155-makeiterator" target="_blank" rel="noopener">创建一个迭代器</a> 读取第一个元素，并把当前的迭代器状态包裹进一个新的 <a href="https://developer.apple.com/documentation/swift/anysequence" target="_blank" rel="noopener">AnySequence</a> 实例：<br><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Sequence</span> </span>&#123;</span><br><span class="line"><span class="keyword">var</span> headAndTail: (head: <span class="type">Element</span>, tail: <span class="type">AnySequence</span>&lt;<span class="type">Element</span>&gt;)? &#123;</span><br><span class="line">    <span class="keyword">var</span> iterator = makeIterator()</span><br><span class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> head = iterator.next() <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</span><br><span class="line">    <span class="keyword">let</span> tail = <span class="type">AnySequence</span> &#123; iterator &#125;</span><br><span class="line">    <span class="keyword">return</span> (head, tail)</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>以上代码能够实现功能，但不是一个好的通用解决方案，尤其是对满足 <code>Collection</code> 的类型而言。将尾部包进 <code>AnySequence</code> 会是一个 <a href="https://github.com/apple/swift-evolution/blob/master/proposals/0234-remove-sequence-subsequence.md#type-erasure-performance" target="_blank" rel="noopener">性能杀手</a>，也不可以使用合适的集合类型 <a href="https://developer.apple.com/documentation/swift/sequence/1641117-subsequence#" target="_blank" rel="noopener">SubSequence</a>。</p>
+<p>为了保护集合的 <code>SubSequence</code> 类型，最好给 <code>Collection</code> 和 <code>Sequence</code> 分别写扩展。（我们也将会看到，这是 Swift 5 所推崇的方案，这点会在后面谈到。）</p>
+<h2 id="保护-SubSequence-类型"><a href="#保护-SubSequence-类型" class="headerlink" title="保护 SubSequence 类型"></a>保护 SubSequence 类型</h2><p>我没有找到一个通用的方案，能够让尾部的 <code>SubSequence</code> 类型完好，也同时能让单向序列正常工作。很感谢 <a href="https://twitter.com/dennisvennink" target="_blank" rel="noopener">Dennis Vennink</a> 能够找出一个解决方案并 <a href="https://twitter.com/dennisvennink/status/1060158576679882753" target="_blank" rel="noopener">分享给我</a>。下面是 <a href="https://gist.github.com/dennisvennink/e8b1921916d3c2f90ab52f47291145ef" target="_blank" rel="noopener">他的代码</a>（我略微对格式进行了修改）：<br><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Sequence</span> </span>&#123;</span><br><span class="line"><span class="keyword">var</span> headAndTail: (head: <span class="type">Element</span>, tail: <span class="type">SubSequence</span>)? &#123;</span><br><span class="line">    <span class="keyword">var</span> first: <span class="type">Element?</span> = <span class="literal">nil</span></span><br><span class="line">    <span class="keyword">let</span> tail = drop(<span class="keyword">while</span>: &#123; element <span class="keyword">in</span></span><br><span class="line">        <span class="keyword">if</span> first == <span class="literal">nil</span> &#123;</span><br><span class="line">            first = element</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> head = first <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> (head, tail)</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>Dennis 的窍门是调用 <a href="https://developer.apple.com/documentation/swift/sequence/2965501-drop" target="_blank" rel="noopener">Sequence.drop(while:)</a>，为尾部保留了 <code>SubSequence</code> 类型，同时在 <code>drop(while:)</code> 内部“捕获”了第一个元素。干得漂亮！</p>
+<h2 id="Swift-5"><a href="#Swift-5" class="headerlink" title="Swift 5"></a>Swift 5</h2><p>上面的代码使用 Swift 4.2。在 Swift 5 中由于序列不再会有关联 <code>SubSequence</code> 类型，只存在于集合中（<a href="https://github.com/apple/swift-evolution/blob/master/proposals/0234-remove-sequence-subsequence.md" target="_blank" rel="noopener">Swift Evolution proposal SE-0234</a>），以上代码会崩溃。<a href="#foot2" id="2"><sup>[2]</sup></a></p>
+<p>这个改变有很多优势，但同样意味着不可能有一种通用的方法能够让 <code>SubSequence</code> 同时对 <code>Sequence</code> 和 <code>Collection</code> 有效。</p>
+<p>相对的，我们把那个简单的解决方案添加给 <code>Collection</code>：<br><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Collection</span> </span>&#123;</span><br><span class="line"><span class="keyword">var</span> headAndTail: (head: <span class="type">Element</span>, tail: <span class="type">SubSequence</span>)? &#123;</span><br><span class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> head = first <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</span><br><span class="line">    <span class="keyword">return</span> (head, <span class="built_in">dropFirst</span>())</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>如果我们需要让 <code>Sequence</code> 拥有同样的功能，就需要添加一个独立的扩展，使用新的 <code>DropWhileSequence</code> 作为返回类型的尾部：<br><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Sequence</span> </span>&#123;</span><br><span class="line"><span class="keyword">var</span> headAndTail: (head: <span class="type">Element</span>, tail: <span class="type">DropWhileSequence</span>&lt;<span class="type">Self</span>&gt;)? &#123;</span><br><span class="line">    <span class="keyword">var</span> first: <span class="type">Element?</span> = <span class="literal">nil</span></span><br><span class="line">    <span class="keyword">let</span> tail = drop(<span class="keyword">while</span>: &#123; element <span class="keyword">in</span></span><br><span class="line">        <span class="keyword">if</span> first == <span class="literal">nil</span> &#123;</span><br><span class="line">            first = element</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> head = first <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> (head, tail)</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>（实现和之前的代码一样，仅仅改变了返回的类型。）</p>
+<hr>
+<p><a id="foot1" href="#1"><sup>[1]</sup></a>为集合添加一种模式匹配结构作为一个 <a href="https://forums.swift.org/t/review-se-0074-implementation-of-binary-search-functions/2438/9" target="_blank" rel="noopener">可行</a> 的特性已经在论坛多次被 <a href="https://forums.swift.org/t/pattern-matching-with-arrays/4735/3" target="_blank" rel="noopener">提及</a>。有了它，你可以像下面这样将一个有序集合解构成头部和尾部：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> numbers = <span class="number">1</span>...<span class="number">10</span></span><br><span class="line"><span class="keyword">let</span> [head, tail...] = numbers</span><br><span class="line"><span class="comment">// head == 1</span></span><br><span class="line"><span class="comment">// tail == 2...10</span></span><br></pre></td></tr></table></figure>
+<p>在 <code>switch</code> 表达式中会很有用。</p>
+<p><a id="foot2" href="#2"><sup>[2]</sup></a>很遗憾我们被误导性的名字 <code>Sequence</code> 给束缚住了。要将 <code>Collection.SubSequence</code> 重命名成更合适的 <code>Slice</code> 会造成 <a href="https://forums.swift.org/t/rationalizing-sequence-subsequence/17586/13" target="_blank" rel="noopener">严重的代码破坏</a>。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+
+        
+
+        <p class="article-more-link">
+          
+       </p>
+    </div>
+    <footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Ole-Begemann/">Ole Begemann</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift/">Swift</a>
+  </div>
+
+</div>
+
+
+
+
+<div class="comments-count">
+	
+</div>
+
+</footer>
+
+
+    </article>
+
+
+
+
+
+
+   
+    
+    <article class="post-expand post" itemprop="articleBody"> 
+        
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
         <a href="/2019/05/06/implementing-a-heap-based-priority-queue-using-swift/" target="_blank" title="使用 Swift 实现基于堆的优先级队列" itemprop="url">使用 Swift 实现基于堆的优先级队列</a>
     </h1>
     <p class="article-time">
@@ -1310,69 +1392,6 @@
 
 
 
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        
-  <header class="article-info clearfix">
-    <h1 itemprop="name">
-      
-        <a href="/2018/11/15/how-mirror-works/" target="_blank" title="Mirror 的工作原理" itemprop="url">Mirror 的工作原理</a>
-    </h1>
-    <p class="article-time">
-      <time datetime="2018-11-15T00:00:00.000Z" itemprop="datePublished">2018-11-15</time>
-      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
-    </p>
-  </header>
-
-    <div class="article-content">
-        
-        <blockquote>
-<p>作者：Mike Ash，<a href="https://swift.org/blog/how-mirror-works/" target="_blank" rel="noopener">原文链接</a>，原文日期：2018-09-26<br>译者：<a href="https://nemocdz.github.io/" target="_blank" rel="noopener">Nemocdz</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>，<a href="http://linusling.com" target="_blank" rel="noopener">小铁匠Linus</a>；定稿：<a href="http://forelax.space" target="_blank" rel="noopener">Forelax</a></p>
-</blockquote>
-<!--此处开始正文-->
-<p>尽管 Swift 重心在强调静态类型上，但它同时支持丰富的元数据类型。元数据类型允许代码在运行时检查和操作任意值。这个功能通过 <code>Mirror</code> API 暴露给 Swift 开发者。大家可能会感到困惑，在 Swift 这种如此强调静态类型的语言里，<code>Mirror</code> 这样的特性是怎么工作的？让我们一起来通过这篇文章了解一下。</p>
-        
-
-        <p class="article-more-link">
-          
-            <a href="/2018/11/15/how-mirror-works/#more" target="_blank">阅读全文</a>
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/Mike-Ash/">Mike Ash</a>,<a class="article-category-link" href="/categories/Mike-Ash/Swift/">Swift</a>
-</div>
-
-
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/Swift/">Swift</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
 
   <nav id="page-nav" class="clearfix">
     <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/29/">29</a><a class="extend next" rel="next" href="/page/2/">下一页<span></span></a>
@@ -1468,7 +1487,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>36</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
 		  
 		
 		  
@@ -1645,7 +1664,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift/" title="Swift">Swift<sup>102</sup></a></li>
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>103</sup></a></li>
 			
 		
 			
