@@ -13,18 +13,18 @@
 
     <meta name="keywords" content="Sequence,swift语言,swift翻译,swift学习">
     <meta name="applicable-device" content="pc,mobile">
-    <meta name="description" content="作者：Ole Begemann，原文链接，原文日期：2018-11-29译者：WAMaker；校对：numbbbbb，BigNerdCoding；定稿：Forelax  函数式编程语言的一个常用范式是把一个列表切分为头部（第一个元素）和尾部（其余元素）。在 Haskell 中，x:xs 会匹配非空列表，将头部绑定给变量 x，尾部绑定给 xs。 Swift 不是一门函数式编程语言。既没有内置的 L">
+    <meta name="description" content="作者：Ole Begemann，原文链接，原文日期：2018-11-29译者：WAMaker；校对：numbbbbb，BigNerdCoding；定稿：Forelax   函数式编程语言的一个常用范式是把一个列表切分为头部（第一个元素）和尾部（其余元素）。在 Haskell 中，x:xs 会匹配非空列表，将头部绑定给变量 x，尾部绑定给 xs。 Swift 不是一门函数式编程语言。既没有内置的">
 <meta name="keywords" content="Sequence">
 <meta property="og:type" content="article">
 <meta property="og:title" content="将 Swift 序列切分为头部和尾部">
 <meta property="og:url" content="https://swift.gg/2019/06/24/sequence-head-tail/index.html">
 <meta property="og:site_name" content="SwiftGG">
-<meta property="og:description" content="作者：Ole Begemann，原文链接，原文日期：2018-11-29译者：WAMaker；校对：numbbbbb，BigNerdCoding；定稿：Forelax  函数式编程语言的一个常用范式是把一个列表切分为头部（第一个元素）和尾部（其余元素）。在 Haskell 中，x:xs 会匹配非空列表，将头部绑定给变量 x，尾部绑定给 xs。 Swift 不是一门函数式编程语言。既没有内置的 L">
+<meta property="og:description" content="作者：Ole Begemann，原文链接，原文日期：2018-11-29译者：WAMaker；校对：numbbbbb，BigNerdCoding；定稿：Forelax   函数式编程语言的一个常用范式是把一个列表切分为头部（第一个元素）和尾部（其余元素）。在 Haskell 中，x:xs 会匹配非空列表，将头部绑定给变量 x，尾部绑定给 xs。 Swift 不是一门函数式编程语言。既没有内置的">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-06-23T16:26:35.955Z">
+<meta property="og:updated_time" content="2019-06-24T02:59:40.658Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="将 Swift 序列切分为头部和尾部">
-<meta name="twitter:description" content="作者：Ole Begemann，原文链接，原文日期：2018-11-29译者：WAMaker；校对：numbbbbb，BigNerdCoding；定稿：Forelax  函数式编程语言的一个常用范式是把一个列表切分为头部（第一个元素）和尾部（其余元素）。在 Haskell 中，x:xs 会匹配非空列表，将头部绑定给变量 x，尾部绑定给 xs。 Swift 不是一门函数式编程语言。既没有内置的 L">
+<meta name="twitter:description" content="作者：Ole Begemann，原文链接，原文日期：2018-11-29译者：WAMaker；校对：numbbbbb，BigNerdCoding；定稿：Forelax   函数式编程语言的一个常用范式是把一个列表切分为头部（第一个元素）和尾部（其余元素）。在 Haskell 中，x:xs 会匹配非空列表，将头部绑定给变量 x，尾部绑定给 xs。 Swift 不是一门函数式编程语言。既没有内置的">
 
     
     <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
@@ -101,8 +101,10 @@
 		<blockquote>
 <p>作者：Ole Begemann，<a href="https://oleb.net/2018/sequence-head-tail/" target="_blank" rel="noopener">原文链接</a>，原文日期：2018-11-29<br>译者：<a href="https://github.com/WAMaker" target="_blank" rel="noopener">WAMaker</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>，<a href="https://bignerdcoding.com/" target="_blank" rel="noopener">BigNerdCoding</a>；定稿：<a href="http://forelax.space" target="_blank" rel="noopener">Forelax</a></p>
 </blockquote>
+<!--此处开始正文-->
 <p>函数式编程语言的一个常用范式是把一个列表切分为头部（第一个元素）和尾部（其余元素）。在 Haskell 中，<a href="https://en.wikibooks.org/wiki/Haskell/Pattern_matching" target="_blank" rel="noopener">x:xs</a> 会匹配非空列表，将头部绑定给变量 x，尾部绑定给 xs。</p>
 <p><a href="https://academy.realm.io/posts/tryswift-rob-napier-swift-legacy-functional-programming/" target="_blank" rel="noopener">Swift 不是一门函数式编程语言</a>。既没有内置的 <code>List</code> 类型，也没有集合的特定匹配语法。<a href="#foot1" id="1"><sup>[1]</sup></a></p>
+<a id="more"></a>
 <h2 id="集合（Collections）"><a href="#集合（Collections）" class="headerlink" title="集合（Collections）"></a>集合（Collections）</h2><p>尽管如此，将 <code>Sequence</code> 或 <code>Collection</code> 切分成头部和尾部偶尔很有用。对于集合来说这很容易：<br><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Collection</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> headAndTail: (head: <span class="type">Element</span>, tail: <span class="type">SubSequence</span>)? &#123;</span><br><span class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> head = first <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</span><br><span class="line">        <span class="keyword">return</span> (head, <span class="built_in">dropFirst</span>())</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> (firstLetter, remainder) = <span class="string">"Hello"</span>.headAndTail &#123;</span><br><span class="line">    <span class="comment">// firstLetter: Character == "H"</span></span><br><span class="line">    <span class="comment">// remainder: Substring == "ello"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <h2 id="序列（Sequence）"><a href="#序列（Sequence）" class="headerlink" title="序列（Sequence）"></a>序列（Sequence）</h2><p>对于序列来说却很困难，因为它们可以是单向（single-pass）的：一些序列只能被迭代一次，迭代器会消耗其中的元素。以网络流为例，一旦你从缓冲区里读取了一个字节，操作系统便将它抛弃了。你无法让它重新来一遍。</p>
 <p>一个可能的解决方案是 <a href="https://developer.apple.com/documentation/swift/sequence/2885155-makeiterator" target="_blank" rel="noopener">创建一个迭代器</a> 读取第一个元素，并把当前的迭代器状态包裹进一个新的 <a href="https://developer.apple.com/documentation/swift/anysequence" target="_blank" rel="noopener">AnySequence</a> 实例：<br><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Sequence</span> </span>&#123;</span><br><span class="line"><span class="keyword">var</span> headAndTail: (head: <span class="type">Element</span>, tail: <span class="type">AnySequence</span>&lt;<span class="type">Element</span>&gt;)? &#123;</span><br><span class="line">    <span class="keyword">var</span> iterator = makeIterator()</span><br><span class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> head = iterator.next() <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</span><br><span class="line">    <span class="keyword">let</span> tail = <span class="type">AnySequence</span> &#123; iterator &#125;</span><br><span class="line">    <span class="keyword">return</span> (head, tail)</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
