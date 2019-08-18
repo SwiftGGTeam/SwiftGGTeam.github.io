@@ -1,0 +1,1099 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>在 Swift 中使用马尔可夫链生成文本 | 在 Swift 中使用马尔可夫链生成文本 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="Swift,Markov chains,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="本文介绍了使用 Swift 来构造马尔可夫链结构，并使用该结构指定输入数据源随机生成文本。">
+<meta name="keywords" content="Swift,Markov chains">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在 Swift 中使用马尔可夫链生成文本">
+<meta property="og:url" content="https://swift.gg/2018/07/23/friday-qa-2018-04-27-generating-text-with-markov-chains-in-swift/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="本文介绍了使用 Swift 来构造马尔可夫链结构，并使用该结构指定输入数据源随机生成文本。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-08-18T15:28:48.238Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="在 Swift 中使用马尔可夫链生成文本">
+<meta name="twitter:description" content="本文介绍了使用 Swift 来构造马尔可夫链结构，并使用该结构指定输入数据源随机生成文本。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2018/07/23/friday-qa-2018-04-27-generating-text-with-markov-chains-in-swift/" target="_blank" title="在 Swift 中使用马尔可夫链生成文本" itemprop="url">在 Swift 中使用马尔可夫链生成文本</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2018-07-23T00:00:00.000Z" itemprop="datePublished">2018-07-23</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Mike Ash，<a href="https://www.mikeash.com/pyblog/friday-qa-2018-04-27-generating-text-with-markov-chains-in-swift.html" target="_blank" rel="noopener">原文链接</a>，原文日期：2018-04-28<br>译者：<a href="http://wuqiuhao.github.io" target="_blank" rel="noopener">Hale</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>，<a href="http://www.jianshu.com/u/2d46948e84e3" target="_blank" rel="noopener">mmoaay</a>，<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>马尔可夫链可用于快速生成真实但无意义的文本。今天，我将使用这种技术来创建一个基于这篇博客内容的文本生成器。这个灵感来源于读者 Jordan Pittman。</p>
+<a id="more"></a>
+<h2 id="马尔可夫链"><a href="#马尔可夫链" class="headerlink" title="马尔可夫链"></a>马尔可夫链</h2><p>理论上讲，马尔可夫链是一种状态机，每一个状态转换都有一个与之相关的概率。你可以选择一个起始状态，然后随机地转换成其他状态，通过转移概率来加权，直到到达一个终止状态。</p>
+<p>马尔可夫链有着<a href="https://en.wikipedia.org/wiki/Markov_chain#Steady-state_analysis_and_limiting_distributions" target="_blank" rel="noopener">广泛的应用</a>，但最有趣的是用于文本生成。在本文生成领域，每个状态是文本的一部分，通常是一个单词。状态和转换是由一些语料库生成的，然后遍历整个链并为每个状态输出单词来生成文本。这样生成的文本通常没有实际意义，因为该链不包含足够的信息来保留语料库的任何潜在含义及语法结构，但是缺乏意义本身却给文本带来了意料之外的乐趣。</p>
+<h2 id="构建算法"><a href="#构建算法" class="headerlink" title="构建算法"></a>构建算法</h2><p>链中的节点由 <code>Word</code> 类的实例表示，此类将会为它所表示的单词保存一个字符串，同时持有一组指向其他单词的链接。</p>
+<p>我们如何表示这一组链接呢？最直接的方法是采用某种计数的集合，它将存储其他 <code>Word</code> 实例以及在输入语料库中转换次数的计数。不过，从这样一个集合中随机选择一个链接可能会非常棘手。一个简单的方法是生成一个范围从 0 到集合元素总计数之间的随机数，然后遍历该集合直到取到很多的链接，然后选中你想要的链接。虽然这个方式简单，但可能比较耗时。另一种方法是预先生成一个数组，用于存储数组中每个链接的累积总数，然后对 0 和总数之间的随机数进行二分搜索。这相对来说更繁琐一些，但执行效率更高。如果你追求更好的方案，你其实可以做更多的预处理，并最终得到一个可以在<a href="http://www.keithschwarz.com/darts-dice-coins/" target="_blank" rel="noopener">常量时间内完成查询的紧凑结构</a>。</p>
+<p>最终，我决定偷懒使用一种在空间上极其浪费，但在时间上效率很高且易于实现的结构。该结构每个 <code>Word</code> 包含一个后续 <code>Words</code> 的数组。如果一个链接被指向多次，那么将会保存重复的 <code>Words</code> 数组。在数组中选择一个随机索引，根据索引返回具有适当权重的随机元素。</p>
+<p><code>Word</code> 类结构如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Word</span> </span>&#123;</span><br><span class="line">   <span class="keyword">let</span> str: <span class="type">String?</span></span><br><span class="line">   <span class="keyword">var</span> links: [<span class="type">Word</span>] = []</span><br><span class="line"></span><br><span class="line">   <span class="keyword">init</span>(str: <span class="type">String?</span>) &#123;</span><br><span class="line">       <span class="keyword">self</span>.str = str</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="function"><span class="keyword">func</span> <span class="title">randomNext</span><span class="params">()</span></span> -&gt; <span class="type">Word</span> &#123;</span><br><span class="line">       <span class="keyword">let</span> index = arc4random_uniform(<span class="type">UInt32</span>(links.<span class="built_in">count</span>))</span><br><span class="line">       <span class="keyword">return</span> links[<span class="type">Int</span>(index)]</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>请注意，<code>links</code> 数组可能会导致大量循环引用。为了避免内存泄漏，我们需要手动清理那些内存。</p>
+<p>我们引入 <code>Chain</code> 类，它将管理链中所有的 <code>Words</code> 。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Chain</span> </span>&#123;</span><br><span class="line">   <span class="keyword">var</span> words: [<span class="type">String?</span>: <span class="type">Word</span>] = [:]</span><br></pre></td></tr></table></figure>
+<p>在 <code>deinit</code> 方法中，清除所有的 <code>links</code> 数组，以消除所有的循环引用。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">deinit</span> &#123;</span><br><span class="line">    <span class="keyword">for</span> word <span class="keyword">in</span> words.values &#123;</span><br><span class="line">        word.links = []</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果没有这一步，许多单词实例的内存都会泄漏。</p>
+<p>现在让我们看看如何将单词添加到链中。<code>add</code> 方法需要一个字符串数组，该数组中每一个元素都保存着一个单词（或调用者希望使用的其他任何字符串）:</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">add</span><span class="params">(<span class="number">_</span> words: [String])</span></span> &#123;</span><br></pre></td></tr></table></figure>
+<p>如果链中没有单词，那么提前返回。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> words.isEmpty &#123; <span class="keyword">return</span> &#125;</span><br></pre></td></tr></table></figure>
+<p>我们想要遍历那些成对的单词，遍历规则是第二个元素的第一个单词紧随第一个元素后面的单词。例如，在句子 “Help, I’m being oppressed,” 中，我们要迭代 <code>(&quot;Help&quot;, &quot;I&#39;m&quot;)</code> ， <code>(&quot;I&#39;m&quot;, &quot;being&quot;)</code> ， <code>(&quot;being&quot;, &quot;oppressed&quot;)</code> 。</p>
+<p>实际上，还需要多做一点事情，因为我们需要编码句子的开头和结尾。我们将句子的开头和结尾用 <code>nil</code> 表示，所以我们要迭代的实际序列是 <code>(nil, &quot;Help&quot;)</code> ， <code>(&quot;Help&quot;, &quot;I&#39;m&quot;)</code> ， <code>(&quot;I&#39;m&quot;, &quot;being&quot;)</code> ， <code>(&quot;being&quot;, &quot;oppressed&quot;)</code> ， <code>(&quot;oppressed&quot;, nil)</code> 。</p>
+<p>为了允许值为 <code>nil</code> ， 我们的数组声明为 <code>String?</code> 类型，而不是 <code>String</code>  类型。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> words = words <span class="keyword">as</span> [<span class="type">String?</span>]</span><br></pre></td></tr></table></figure>
+<p>接下来构造两个数组，一个头部添加 <code>nil</code>，另一个尾部添加 <code>nil</code>。把它们通过 <code>zip</code> 合并在一起生成我们想要的序列：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> wordPairs = <span class="built_in">zip</span>([<span class="literal">nil</span>] + words, words + [<span class="literal">nil</span>])</span><br><span class="line"><span class="keyword">for</span> (first, second) <span class="keyword">in</span> wordPairs &#123;</span><br></pre></td></tr></table></figure>
+<p>对于这一对中的每个单词，我们使用一个辅助方法来获取相应的 <code>Word</code> 对象：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> firstWord = word(first)</span><br><span class="line"><span class="keyword">let</span> secondWord = word(second)</span><br></pre></td></tr></table></figure>
+<p>然后把第二个单词添加到第一个单词的链接中：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">        firstWord.links.append(secondWord)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>Word</code> 辅助方法从 <code>words</code> 字典中提取实例，如果实例不存在就创建一个新实例并将其放入字典中。这样就不用担心字符串匹配不到单词：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">word</span><span class="params">(<span class="number">_</span> str: String?)</span></span> -&gt; <span class="type">Word</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">let</span> word = words[str] &#123;</span><br><span class="line">        <span class="keyword">return</span> word</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> word = <span class="type">Word</span>(str: str)</span><br><span class="line">        words[str] = word</span><br><span class="line">        <span class="keyword">return</span> word</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最后生成我们要的单词序列：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">generate</span><span class="params">()</span></span> -&gt; [<span class="type">String</span>] &#123;</span><br></pre></td></tr></table></figure>
+<p>我们将逐个生成单词，并将他们存储在下面的数组中:</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> result: [<span class="type">String</span>] = []</span><br></pre></td></tr></table></figure>
+<p>这是一个无限循环。因为退出条件没有清晰的映射到循环条件，代码如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">while</span> <span class="literal">true</span> &#123;</span><br></pre></td></tr></table></figure>
+<p>在 <code>result</code> 中获取最后一个字符串构成 <code>Word</code> 实例。这很好地处理了当 <code>result</code> 为空时的初始情况，因为一旦 <code>last</code> 取值为 <code>nil</code> 就表示第一个单词：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> currentWord = word(result.last)</span><br></pre></td></tr></table></figure>
+<p>随机获取链接的词：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> nextWord = currentWord.randomNext()</span><br></pre></td></tr></table></figure>
+<p>如果链接的单词不是结尾，将其追加到 <code>result</code> 中。如果是结束，则终止循环：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">    <span class="keyword">if</span> <span class="keyword">let</span> str = nextWord.str &#123;</span><br><span class="line">        result.append(str)</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">break</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>返回包含所有单词的 <code>result</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">        <span class="keyword">return</span> result</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最后一件事：我们正在使用 <code>String?</code> 作为 <code>words</code> 的键类型，但 <code>Optional</code> 不符合 <code>Hashable</code> 协议。下面是一个扩展，当它的封装类型遵循 <code>Hashable</code> 时添加 <code>Optional</code> 对 <code>Hashable</code> 的实现：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Optional</span>: <span class="title">Hashable</span> <span class="title">where</span> <span class="title">Wrapped</span>: <span class="title">Hashable</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">var</span> hashValue: <span class="type">Int</span> &#123;</span><br><span class="line">        <span class="keyword">switch</span> <span class="keyword">self</span> &#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="keyword">let</span> wrapped?: <span class="keyword">return</span> wrapped.hashValue</span><br><span class="line">        <span class="keyword">case</span> .<span class="keyword">none</span>: <span class="keyword">return</span> <span class="number">42</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>备注：Swift 4.2 中 <code>Optional</code> 类型已默认实现 <code>Hashable</code> 协议</p>
+</blockquote>
+<h2 id="生成输入数据"><a href="#生成输入数据" class="headerlink" title="生成输入数据"></a>生成输入数据</h2><p>以上就是马尔可夫链的结构，下面我们输入一些真实文本试试看。</p>
+<p>我决定从 <code>RSS</code> 提要中提取文本。还有什么比用我自己博客全文作为输入更好的选择呢？</p>
+<p><code>let feedURL = URL(string: &quot;https://www.mikeash.com/pyblog/rss.py?mode=fulltext&quot;)!</code></p>
+<p><code>RSS</code> 是一种 <code>XML</code> 格式，所以我们使用 <code>XMLDocument</code> 来解析它：</p>
+<p><code>let xmlDocument = try! XMLDocument(contentsOf: feedURL, options: [])</code></p>
+<p>文章主体被嵌套在 <code>item</code> 节点下的 <code>description</code> 节点。通过 <code>XPath</code> 查询检索：</p>
+<p><code>let descriptionNodes = try! xmlDocument.nodes(forXPath: &quot;//item/description&quot;)</code></p>
+<p>我们需要 <code>XML</code> 节点中的字符串，所以我们从中提取并过滤掉为 <code>nil</code> 的内容。</p>
+<p><code>let descriptionHTMLs = descriptionNodes.compactMap({ $0.stringValue })</code></p>
+<p>我们根本不用关心标签。<code>NSAttributedString</code> 可以解析 <code>HTML</code> 并生成一个 <code>AttributedString</code>，然后我们可以过滤它：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> descriptionStrings = descriptionHTMLs.<span class="built_in">map</span>(&#123;</span><br><span class="line">   <span class="type">NSAttributedString</span>(html: $<span class="number">0</span>.data(using: .utf8)!, options: [:], documentAttributes: <span class="literal">nil</span>)!.string</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>我们需要一个将字符串分解成若干部分的函数。我们的目的是生成 String 数组，每个数组对应文本里的一句话。一段文本可能会有很多句话，所以 <code>wordSequences</code> 函数会返回一个 String 的二维数组：</p>
+<p><code>func wordSequences(in str: String) -&gt; [[String]] {</code></p>
+<p>然后我们将处理结果存储在一个局部变量中：</p>
+<p><code>var result: [[String]] = []</code></p>
+<p>将字符串分解成句子并不简单。你可以直接搜索标点符号，但需要考虑到像 <code>“Mr. Jock, TV quiz Ph.D., bags few lynx.”</code> 这样的句子，按照标点符号会被分割成四段，但这是一个完整的句子。</p>
+<p><code>NSString</code> 提供了一些智能检查字符串部分的方法，前提是你需要 <code>import Foundation</code> 。我们会枚举 <code>str</code> 包含的句子，并让 <code>Foundation</code> 进行处理：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">str.enumerateSubstrings(<span class="keyword">in</span>: str.startIndex..., options: .bySentences, &#123; substring, substringRange, enclosingRange, stop <span class="keyword">in</span></span><br></pre></td></tr></table></figure>
+<p>在将句子拆分成单词的时候会遇到相似的问题。<code>NSString</code> 也提供了一种用于枚举词的方法，但是存在一些问题，例如丢失标点符号。我最终决定用一种愚蠢的方式来进行单词分割，只按空格进行分割。这意味着你最终将包含标点符号的单词作为字符串的一部分。与标点符号被删除相比，这更多地限制了马尔可夫链，但另一方面，输出会包含合理的标点符号。我觉得这个折中方案还不错。</p>
+<p>一些换行符会进入数据集，我们首先将这些换行符移除：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> words = substring!.<span class="built_in">split</span>(separator: <span class="string">" "</span>).<span class="built_in">map</span>(&#123;</span><br><span class="line">    $<span class="number">0</span>.trimmingCharacters(<span class="keyword">in</span>: <span class="type">CharacterSet</span>.newlines)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>分割的句子最终被添加到 <code>result</code> 中：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">    result.append(words)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>枚举完成后，根据输入的句子计算出 <code>result</code> ，然后将其返回给调用者：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">    <span class="keyword">return</span> result</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>回到主代码。现在已经有办法将字符串转换为句子列表，我们就可以继续构建自己的马尔可夫链。首先我们创建一个空的 <code>Chain</code> 对象：</p>
+<p><code>let chain = Chain()</code></p>
+<p>然后我们遍历所有的字符串，提取句子，并将它们添加到链中：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> str <span class="keyword">in</span> descriptionStrings &#123;</span><br><span class="line">   <span class="keyword">for</span> sentence <span class="keyword">in</span> wordSequences(<span class="keyword">in</span>: str) &#123;</span><br><span class="line">       chain.add(sentence)</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最后一步当然是生成一些新句子！我们调用 <code>generate()</code>，然后用空格连接结果。输出结果可能命中也可能不命中（考虑到该技术的随机性，这并不奇怪），所以我们会多生成一些：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> <span class="number">_</span> <span class="keyword">in</span> <span class="number">0</span> ..&lt; <span class="number">200</span> &#123;</span><br><span class="line">   <span class="built_in">print</span>(<span class="string">"\""</span> + chain.generate().joined(separator: <span class="string">" "</span>) + <span class="string">"\""</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="示例输出"><a href="#示例输出" class="headerlink" title="示例输出"></a>示例输出</h2><p>为了演示，下面是这个程序的一些示例输出：</p>
+<ul>
+<li>“We’re ready to be small, weak references in New York City.”</li>
+<li>“It thus makes no values?”</li>
+<li>“Simple JSON tasks, it’s wasteful if you can be.”</li>
+<li>“Another problem, but it would make things more programming-related mystery goo.”</li>
+<li>“The escalating delays after excessive focus on Friday, September 29th.”</li>
+<li>“You may not set.”</li>
+<li>“Declare conformance to use = Self.init() to detect the requested values.”</li>
+<li>“The tagged pointer is inlined at this nature; even hundreds of software and writing out at 64 bits wide.”</li>
+<li>“We’re ready to express that it works by reader ideas, so the decoding methods for great while, it’s inaccessible to 0xa4, which takes care of increasing addresses as the timing.”</li>
+<li>“APIs which is mostly a one-sided use it yourself?”</li>
+<li>“There’s no surprise.”</li>
+<li>“I wasn’t sure why I’ve been called ‘zero-cost’ in control both take serious effort to miss instead of ARC and games.”</li>
+<li>“For now, we can look at the filesystem.”</li>
+<li>“The intent is intended as reader-writer locks.”</li>
+<li>“For example, we can use of the code?”</li>
+<li>“Swift’s generics can all fields of Swift programming, with them is no parameters are static subscript, these instantiate self = cluster.reduce(0, +) / Double(cluster.count)”</li>
+<li>“However, the common case, you to the left-hand side tables.”</li>
+</ul>
+<p>上面有很多无意义的句子，所以你必须深入挖掘才能找到有意义的句子，但不可否认马尔可夫链可以产生一些非常有趣的输出。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>马尔可夫链有许多实际用途，在用于生成文本时它可能显得比较有趣但不是很实用。除了展示了其娱乐性之外，该代码还说明了在没有明确引用关系的情况下如何处理循环引用，如何灵活地使用 <code>NSString</code> 提供的枚举方法从文本中提取特征，以及简要说明了条件一致性（<a href="https://github.com/apple/swift-evolution/blob/master/proposals/0143-conditional-conformances.md" target="_blank" rel="noopener">conditional conformances</a>）的优点。</p>
+<p>今天就讲这些。期待下次一起分享更多的乐趣，在娱乐中进行学习。<code>Friday Q&amp;A</code> 是由读者的想法驱动的，所以如果你有一些想在这里看到的话题，请给我<a href="mailto:mike@mikeash.com" target="_blank" rel="noopener">发送邮件</a>！</p>
+<blockquote>
+<p>你喜欢这篇文章吗？我正在卖收录了这些文章的一本书！第二卷和第三卷现在也出来了！包括 ePub，PDF，实体版以及 iBook 和 Kindle。<a href="https://www.mikeash.com/book.html" target="_blank" rel="noopener">点击这里查看更多信息</a>。</p>
+</blockquote>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Mike-Ash/">Mike Ash</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift/">Swift</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2018/07/23/friday-qa-2018-04-27-generating-text-with-markov-chains-in-swift/" data-title="在 Swift 中使用马尔可夫链生成文本 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2018/07/26/notificationcenter-removeobserver/" title="Block 形式的通知中心观察者是否需要手动注销">
+  <strong>上一篇</strong><br>
+  <span>
+  Block 形式的通知中心观察者是否需要手动注销</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2018/07/19/swift-3-1-package-manager-deployment-target/" title="Swift Package Manager 重写 macOS 部署目标">
+ <strong>下一篇</strong><br> 
+ <span>Swift Package Manager 重写 macOS 部署目标
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2018/07/23/friday-qa-2018-04-27-generating-text-with-markov-chains-in-swift/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#马尔可夫链"><span class="toc-number">1.</span> <span class="toc-text">马尔可夫链</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#构建算法"><span class="toc-number">2.</span> <span class="toc-text">构建算法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#生成输入数据"><span class="toc-number">3.</span> <span class="toc-text">生成输入数据</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#示例输出"><span class="toc-number">4.</span> <span class="toc-text">示例输出</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">5.</span> <span class="toc-text">总结</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2019 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftUI 重磅教程专属优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/H9aEpi">使用 SwiftGG 优惠码，半价基础上再减 20 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

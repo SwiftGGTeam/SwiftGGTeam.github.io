@@ -1,0 +1,1163 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>Unowned 还是 Weak？生命周期和性能对比 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Umberto Raimondi，原文链接，原文日期：2016-10-27译者：shanks；校对：Crystal Sun；定稿：CMB   每当处理循环引用（retain cycles）时，需要考量对象生命周期来选择unowned或者weak标识符，这已经成为了一个共识。但是有时仍然会心存疑问，在具体的使用中应该选择哪一个，或者退一步讲，保守的只使用 weak 是不是一个好的选择呢？ 本">
+<meta name="keywords" content="Swift 进阶">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Unowned 还是 Weak？生命周期和性能对比">
+<meta property="og:url" content="https://swift.gg/2017/05/16/unowned-or-weak-lifetime-and-performance/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Umberto Raimondi，原文链接，原文日期：2016-10-27译者：shanks；校对：Crystal Sun；定稿：CMB   每当处理循环引用（retain cycles）时，需要考量对象生命周期来选择unowned或者weak标识符，这已经成为了一个共识。但是有时仍然会心存疑问，在具体的使用中应该选择哪一个，或者退一步讲，保守的只使用 weak 是不是一个好的选择呢？ 本">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://www.uraimo.com/imgs/unownedbig.png">
+<meta property="og:image" content="https://www.uraimo.com/imgs/swiftc.png">
+<meta property="og:updated_time" content="2019-08-18T15:28:48.234Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Unowned 还是 Weak？生命周期和性能对比">
+<meta name="twitter:description" content="作者：Umberto Raimondi，原文链接，原文日期：2016-10-27译者：shanks；校对：Crystal Sun；定稿：CMB   每当处理循环引用（retain cycles）时，需要考量对象生命周期来选择unowned或者weak标识符，这已经成为了一个共识。但是有时仍然会心存疑问，在具体的使用中应该选择哪一个，或者退一步讲，保守的只使用 weak 是不是一个好的选择呢？ 本">
+<meta name="twitter:image" content="https://www.uraimo.com/imgs/unownedbig.png">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2017/05/16/unowned-or-weak-lifetime-and-performance/" target="_blank" title="Unowned 还是 Weak？生命周期和性能对比" itemprop="url">Unowned 还是 Weak？生命周期和性能对比</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2017-05-16T00:00:00.000Z" itemprop="datePublished">2017-05-16</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Umberto Raimondi，<a href="https://www.uraimo.com/2016/10/27/unowned-or-weak-lifetime-and-performance/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-10-27<br>译者：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a>；校对：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="noopener">Crystal Sun</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>每当处理循环引用（retain cycles）时，需要考量对象生命周期来选择<code>unowned</code>或者<code>weak</code>标识符，这已经成为了一个共识。但是有时仍然会心存疑问，在具体的使用中应该选择哪一个，或者退一步讲，保守的只使用 weak 是不是一个好的选择呢？</p>
+<p>本文首先对循环引用的基础知识做一个简要介绍，然后会分析 Swift 源代码的一些片段，讲解 <code>unowned</code> 和 <code>weak</code>  在生命周期和性能上的差异点，希望看完本文以后，在的使用场景中，能使用正确的弱引用类型。</p>
+<a id="more"></a>
+<p><strong>目录:</strong></p>
+<ul>
+<li><a href="#the_basic">基础知识</a></li>
+<li><a href="#the_question_unowned_or_weak">问题来了: unowened 还是 weak?</a></li>
+<li><a href="#performance_a_look_under_the_hood">性能：深度探索</a></li>
+<li><a href="#deconstructing_capture_lists_handling">捕获列表处理解析</a></li>
+<li><a href="#conclusion">结论</a></li>
+<li><a href="#footnotes">脚注</a></li>
+</ul>
+<blockquote>
+<p>从 <a href="https://github.com/uraimo/Swift-Playgrounds" target="_blank" rel="noopener">GitHub</a> 或者 <a href="https://www.uraimo.com/archives/2016-10-27-UnownedWeakPlayground.playground.zip" target="_blank" rel="noopener">zipped</a> 获取本文相关的 Playground 代码。然后从<a href="https://www.uraimo.com/archives/closure.zip" target="_blank" rel="noopener">这里</a>获取闭包案例和 SIL，SILGen 以及 LLVM IR 的输出。</p>
+</blockquote>
+<p><a name="the_basic"></a></p>
+<h3 id="基础知识"><a href="#基础知识" class="headerlink" title="基础知识"></a>基础知识</h3><p>众所周知，<code>Swift</code> 利用古老并且有效的自动引用计数（ARC, Automatic Reference Counting）来管理内存，带来的后果和在 Objective-C 中使用的情况类似，需要手动使用弱引用来解决循环引用问题。</p>
+<p>如果对 <code>ARC</code> 不了解，只需要知道的是，每一个<em>引用类型</em>实例都有一个引用计数与之关联，这个引用计数用来记录这个对象实例正在被变量或常量引用的总次数。当引用计数变为 <code>0</code> 时，实例将会被析构，实例占有的内存和资源都将变得重新可用。</p>
+<p>当有两个实例通过某种形式互相引用时，就会形成循环引用（比如：两个类实例都有一个属性指向对方的类实例；双向链表中两个相邻的节点实例等…）, 由于两个实例的引用计数都一直大于 <code>0</code>， 循环引用将会阻止这些实例的析构。</p>
+<p>为了解决这个问题，和其他一些有类似问题的语言一样， 在 <code>Swift</code> 中，<em>弱引用</em> 的概念被提了出来，弱引用不会被 <code>ARC</code> 计算，也就是说，当一个弱引用指向一个引用类型实例时，引用计数不会增加。</p>
+<p>弱引用不会阻止实例的析构, 只需要记住的是，在任何情况下，弱引用都不会拥有它指向的对象。在正式的场景中不是什么大问题，但是在我们处理这类引用的时候，需要意识到这一点。</p>
+<p>在 Swift 中有 2 种 <em>弱</em> 引用形式，<code>unowned</code> 和 <code>weak</code>。</p>
+<p>虽然它们的作用类似，但与它们相关实例生命周期的假设会略有不同，并且具有不同的性能特征。</p>
+<p>为了举例说明循环引用，这里不使用大家期望看到的类之间的循环引用，而使用闭包的上下文案例，这在 <code>Objective-C</code> 日常开发中处理循环引用时经常会遇到的情况。和类的循环引用类似，通过创建一个强引用指向外部实例，或捕获它，阻止它析构。</p>
+<p>在 <code>Objective-C</code> ，按照标准的做法，定义一个弱引用指向闭包外部的实例，然后在闭包内部定义强引用指向这个实例，在闭包执行期间使用它。当然，有必要在使用前检查引用的有效性。</p>
+<p>为了更方便的处理循环引用，<code>Swift</code> 引入了一个新的概念，用于简化和更加明显地表达在闭包内部外部变量的捕获：<em>捕获列表（capture list）</em>。使用捕获列表，可以在函数的头部定义和指定那些需要用在内部的外部变量，并且指定引用类型(译者注：这里是指 <code>unowned</code> 和 <code>weak</code>）。</p>
+<p>接下来举一些例子，在各种情况下捕获变量的表现。</p>
+<p>当不使用捕获列表时，闭包将会创建一个外部变量的强引用：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> i1 = <span class="number">1</span>, i2 = <span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> fStrong = &#123;</span><br><span class="line">    i1 += <span class="number">1</span></span><br><span class="line">    i2 += <span class="number">2</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">fStrong()</span><br><span class="line"><span class="built_in">print</span>(i1,i2) <span class="comment">//Prints 2 and 3</span></span><br></pre></td></tr></table></figure>
+<p>闭包内部对变量的修改将会改变外部原始变量的值，这与预期是一致的。</p>
+<p>使用捕获列表，闭包内部会创建一个新的可用常量。如果没有指定常量修饰符，闭包将会简单地拷贝原始值到新的变量中，对于值类型和引用类型都是一样的。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> fCopy = &#123; [i1] <span class="keyword">in</span></span><br><span class="line">    <span class="built_in">print</span>(i1,i2)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">fStrong()</span><br><span class="line"><span class="built_in">print</span>(i1,i2) <span class="comment">//打印结果是 2 和 3  </span></span><br><span class="line"></span><br><span class="line">fCopy()  <span class="comment">//打印结果是 1 和 3</span></span><br></pre></td></tr></table></figure>
+<p>在上面的例子中，在调用 <code>fStrong</code> 之前定义函数 <code>fCopy</code> ,在该函数定义的时候，私有常量已经被创建了。正如你所看到的，当调用第二个函数时候，仍然打印 <code>i1</code> 的原始值。</p>
+<p>对于外部引用类型的变量，在捕获列表中指定 <code>weak</code> 或 <code>unowned</code>，这个常量将会被初始化为一个弱引用，指向原始值，这种指定的捕获方式就是用来处理循环引用的方式。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">aClass</span></span>&#123;</span><br><span class="line">    <span class="keyword">var</span> value = <span class="number">1</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> c1 = aClass()</span><br><span class="line"><span class="keyword">var</span> c2 = aClass()</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> fSpec = &#123; [<span class="keyword">unowned</span> c1, <span class="keyword">weak</span> c2] <span class="keyword">in</span></span><br><span class="line">    c1.value += <span class="number">1</span></span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">let</span> c2 = c2 &#123;</span><br><span class="line">        c2.value += <span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">fSpec()</span><br><span class="line"><span class="built_in">print</span>(c1.value,c2.value) <span class="comment">//Prints 2 and 2</span></span><br></pre></td></tr></table></figure>
+<p>两个 <code>aClass</code> 捕获实例的不同的定义方式，决定了它们在闭包中不同的使用方式。</p>
+<p>unowned 引用使用的场景是，原始实例永远不会为 <em>nil</em>，闭包可以直接使用它，并且直接定义为显式解包可选值。当原始实例被析构后，在闭包中使用这个捕获值将导致崩溃。</p>
+<p>如果捕获原始实例在使用过程中可能为 <em>nil</em> ，必须将引用声明为 <code>weak</code>， 并且在使用之前验证这个引用的有效性。</p>
+<p><a name="the_question_unowned_or_weak"></a></p>
+<h3 id="问题来了-unowened-还是-weak"><a href="#问题来了-unowened-还是-weak" class="headerlink" title="问题来了: unowened 还是 weak?"></a>问题来了: unowened 还是 weak?</h3><p>在实际使用中如何选择这两种弱引用类型呢？</p>
+<p>这个问题的答案可以简单由原始对象和引用它的闭包的<strong>生命周期来解释</strong>。</p>
+<p><img src="https://www.uraimo.com/imgs/unownedbig.png" alt></p>
+<p>有两个可能出现的场景：</p>
+<ul>
+<li><p>闭包和捕获对象的生命周期相同，所以对象可以被访问，也就意味着闭包也可以被访问。外部对象和闭包有相同的生命周期(比如：对象和它的父对象的简单返回引用）。在这种情况下，你应该把引用定义为 <strong>unowned</strong>。</p>
+<p>一个经典的案例是: <code>[unowned self]</code>, 主要用在闭包中，这种闭包主要在他们的父节点上下文中做一些事情，没有在其他地方被引用或传递，不能作用在父节点之外。</p>
+</li>
+</ul>
+<ul>
+<li><p>闭包的生命周期和捕获对象的生命周期相互独立，当对象不能再使用时，闭包依然能够被引用。这种情况下，你应该把引用定义为 <code>weak</code>，并且在使用它之前验证一下它是否为 <code>nil</code>（请不要对它进行强制解包).</p>
+<p>一个经典的案例是: <code>[weak delegate = self.delegate!]</code>，可以在某些使用闭包的场景中看到，闭包使用的是完全无关（生命周期独立）的代理对象。</p>
+</li>
+</ul>
+<p>当无法确认两个对象之间生命周期的关系时，是否不应该去冒险选择一个无效 <code>unowned</code> 引用？而是保守选择 <code>weak</code> 引用是一个更好的选择？</p>
+<p>答案是否定的，不仅仅是因为对象生命周期了解是一件必要的事情，而且这两个修饰符在性能特性上也有很大的不同。</p>
+<p>弱引用最常见的实现是，每次一个新的引用生成时，都会把每个弱引用和它指向的对象信息存储到一个附加表中。</p>
+<p>当没有任何强引用指向一个对象时，<code>Swift</code> 运行时会启动析构过程，但是在这之前，运行时会把所有相关的弱引用置为 <em>nil</em> 。弱引用的这种实现方式我们称之为”零和弱引用”。</p>
+<p>这种实现有实际的开销，考虑到需要额外实现的数据结构，需要确保在并发访问情况下，对这个全局引用结构所有操作的正确性。一旦析构过程开始了，在任何环境中，都不允许访问弱引用所指向的对象了。</p>
+<p>弱引用（包括 <code>unowned</code> 和一些变体的 <code>weak</code>)在 Swift 使用了更简单和快速的实现机制。</p>
+<p><code>Swift</code> 中的每个对象保持了两个引用计数器，一个是强引用计数器，用来决定 <code>ARC</code> 什么时候可以安全地析构这个对象，另外一个附加的弱引用计数器，用来计算创建了多少个指向这个对象的 <code>unowned</code> 或者 <code>weak</code> 引用，当这个计数器为零时，这个对象将被 <em>析构</em> 。</p>
+<p>需要重点理解的是，只有等到所有 <code>unowned</code> 引用被释放后，这个对象才会被真正地析构，然后对象将会保持未解析可访问状态，当析构发生后，对象的内容才会被回收。</p>
+<p>每当 <code>unowned</code> 引用被定义时，对应的 <code>unowned</code> 引用计数会进行原子级别地增加(使用<a href="http://llvm.org/docs/Atomics.html#libcalls-atomic" target="_blank" rel="noopener">原子gcc/llvm操作</a>，进行一系列快速且线程安全的基本操作，例如：增加，减少，比较，交换等)，以保证线程安全。在增加计数之前，会检查强引用计数以确保对象是有效的。</p>
+<p>试图访问一个无效的对象，将会导致错误的断言，你的应用在运行时中会报错(这就是为什么这里的 <code>unownd</code> 实现方式叫做 <code>unowned(safe)</code> 实现)</p>
+<p>为了更好的优化，应用编译时带有 <code>-OFast</code>，<code>unowned</code> 引用不会去验证引用对象的有效性，<code>unowned</code> 引用的行为就会像 <code>Objective-C</code> 中的 <code>__unsafe_unretained</code> 一样。如果引用对象无效，<code>unowned</code> 引用将会指向已经释放垃圾内存（这种实现称之 <code>unowned(unsafe)</code>）。</p>
+<p>当一个 <code>unowned</code> 引用被释放后，如果这时没有其他强引用或 <code>unowned</code> 引用指向这个对象，那么最终这个对象将被析构。这就是为什么一个引用对象不能在强引用计数器等于零的情况下，被析构的原因，所有的引用计数器必须能够被访问用来验证 <code>unowned</code> 引用和强引用数量。</p>
+<p>Swift 的 <code>weak</code> 引用添加了附加层，间接地把 <code>unowned</code> 引用包裹到了一个可选容器里面，在指向的对象析构之后变成空的情况下，这样处理会更加的清晰。但是需要付出的代价是，附加的机制需要正确地处理可选值。</p>
+<p>考虑到以上因素，在对象关系生命周期允许的情况下，<strong>优先选择</strong>使用 <code>unowned</code> 引用。但是这不是此故事的结局，接下来比较一下两者性能<sup><a href="#1">1</a></sup>上的差别。</p>
+<p><a name="performance_a_look_under_the_hood"></a></p>
+<h3 id="性能：深度探索"><a href="#性能：深度探索" class="headerlink" title="性能：深度探索"></a>性能：深度探索</h3><p>在查看 <code>Swift</code> 项目源码验证之前，需要理解 <code>ARC</code> 如何管理这两种引用类型，并且还需要解释 <code>swiftc</code>，<code>LLVM</code> 和 <code>SIL</code> 的相关知识。</p>
+<p>接下来试着简要介绍本文所需要的必备知识点，如果想了解更多，将在最后的脚注中找到一些有用的链接。</p>
+<p>使用一个图来解释 <em>swiftc</em> 整个编译过程的包含的模块：</p>
+<p><img src="https://www.uraimo.com/imgs/swiftc.png" alt></p>
+<p><code>Swiftc</code> 和 <em>clang</em> 一样构建在 LLVM 上，遵循 <em>clang</em> 编译器相似的编译流程。</p>
+<p>在编译过程的第一部分，使用一个特定语言前端进行管理，<code>swift</code> 源代码被解释生成一个抽象语法树(AST)表达<sup><a href="#2">2</a></sup>，然后抽象语法树的结果从语义角度进行分析，找出语义错误。</p>
+<p>在这个点上，对于其他的基于 LLVM 的编译器来讲，在通过一个附加步骤对源代码进行静态分析后（必要时可以显示错误和警告），接着 <em>IRGen</em> 模块 会把 <code>AST</code> 的内容会转换成一个轻量的和底层的机器无关的表示，我们称之为 <a href="http://llvm.org/docs/LangRef.html" target="_blank" rel="noopener">LLVM IR</a>(<code>LLVM</code> 中间表示)。</p>
+<p>尽管两个模块都需要做一些相同检查，但是这两个模块是区分开的，在两个模块之间也存在许多重复的代码。</p>
+<p><code>IR</code> 是一种<a href="https://en.wikipedia.org/wiki/Static_single_assignment_form" target="_blank" rel="noopener">静态单赋值形式</a>（<code>SSA-form</code>）一致语言，可以看做注入了 <code>LLVM</code> 的虚拟机下的 <code>RISC</code> 类型<a href="https://idea.popcount.org/2013-07-24-ir-is-better-than-assembly/" target="_blank" rel="noopener">汇编语言</a>。基于 <code>SSA</code> 将简化接下来的编译过程，从语言前端提供的中间表达会在 <code>IR</code> 进行多重优化。</p>
+<p>需要重点注意的是，<code>IR</code> 其中一个特点是，它具有三种不同的形式：内存表达（内部使用），序列化位代码形式（你已经知道的<a href="https://developer.apple.com/library/tvos/documentation/IDEs/Conceptual/AppDistributionGuide/AppThinning/AppThinning.html" target="_blank" rel="noopener">位代码形式</a>）和可读形式。</p>
+<p>最后一种形式非常有用，用来验证 <code>IR</code> 代码的最终结构，这个结构将会传入到整个过程中的最后一步，将会从机器独立的 <code>IR</code> 代码转换成平台相关的表达(比如：x86，ARM 等等)。最后一步将被 <code>LLVM</code> 平台后端执行。</p>
+<p>那么 <code>swiftc</code> 和其他基于 <code>LLVM</code> 的编译器有什么不同呢？</p>
+<p><code>swiftc</code> 和其他编译器从结构形式上的差别主要体现在一个附加组件，这个附加组件是 <em>SILGen</em> ，在 <em>IRGen</em> 之前，执行代码的监测和优化，生成一个高级的中间表达，我们称之为 <em>SIL</em> （Swift Intermediate Language，Swift 中间语言），最后 SIL 将会转换成 LLVM IR。这一步加强了在单个软件模块上所有具体语言的检查，并且简化了 <em>IRGen</em>。</p>
+<p>从 <code>AST</code> 到 <code>IR</code> 的转换分为两个步骤。<em>SILGen</em> 把 <code>AST</code> 源代码转换为原始 <code>SIL</code> ，然后编译器进行 <code>Swift</code> 语法检查（需要时打印错误或者警告信息），优化有效的原始 <code>SIL</code> ，通过一些步骤最后生成标准化 <code>SIL</code> 。如上面的示意图显示那样，标准化 <code>SIL</code> 的最后转化为 <code>LLVM IR</code>。</p>
+<p>再次强调，<code>SIL</code> 是一个 <code>SSA</code> 类型语言，使用附加的结构扩展了 <code>Swift</code> 的语法。它依赖 <code>Swift</code> 的类型系统，并且能理解 <code>Swift</code> 的定义，但是需要重点记住的是，当编译一个手写的 <code>SIL</code> 源码（是的，可以手动写 <code>SIL</code> 然后编译它）时，高阶的 <code>Swift</code> 代码或者函数内容将被编译器忽略。</p>
+<p>在接下来的章节，我们将分析一个标准化 <code>SIL</code> 的案例，来理解 <code>unowned</code> 和 <code>weak</code> 引用如何被编译器处理。一个包含捕获列表的基本闭包的例子，查看这个例子生成的 <code>SIL</code> 代码，可以看到被编译器添加的所有 <code>ARC</code> 相关的函数调用。</p>
+<blockquote>
+<p>从 <a href="https://github.com/uraimo/Swift-Playgrounds" target="_blank" rel="noopener">GitHub</a> 或者 <a href="https://www.uraimo.com/archives/2016-10-27-UnownedWeakPlayground.playground.zip" target="_blank" rel="noopener">zipped</a> 获取本文相关的 Playground 代码。然后从<a href="https://www.uraimo.com/archives/closure.zip" target="_blank" rel="noopener">这里</a>获取闭包案例和 <code>SIL</code> ，<code>SILGen</code> 以及 <code>LLVM IR</code> 的输出。</p>
+</blockquote>
+<p><a name="deconstructing_capture_lists_handling"></a></p>
+<h4 id="捕获列表处理解析"><a href="#捕获列表处理解析" class="headerlink" title="捕获列表处理解析"></a>捕获列表处理解析</h4><p>接下来看看一个简单的 <code>Swift</code> 的例子，定义两个类变量，然后在一个闭包中对他们进行弱引用的捕获：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">aClass</span></span>&#123;</span><br><span class="line">    <span class="keyword">var</span> value = <span class="number">1</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> c1 = aClass()</span><br><span class="line"><span class="keyword">var</span> c2 = aClass()</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> fSpec = &#123; </span><br><span class="line">    [<span class="keyword">unowned</span> c1, <span class="keyword">weak</span> c2] <span class="keyword">in</span></span><br><span class="line">    c1.value = <span class="number">42</span></span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">let</span> c2o = c2 &#123;</span><br><span class="line">        c2o.value = <span class="number">42</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">fSpec()</span><br></pre></td></tr></table></figure>
+<p>通过 <code>xcrun swiftc -emit-sil sample.swift</code> 编译 swift 源代码，生成标准化 SIL 代码。原始SIL 可以使用 <code>-emit-silgen</code> 选项来生成。</p>
+<p>运行以上命令以后，会发现 swiftc 产生了许多代码。通过查看 swiftc 输出代码的片段，学习一下基本的 SIL 指令，理解整个结构。</p>
+<p>在下面代码中需要的地方添加了一些多行注释（编译器也生成了一些单行注释），希望这些注释已经足够说清楚发生了什么：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">  此文件包含典型 SIL 代码</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">sil_stage canonical             </span><br><span class="line"></span><br><span class="line"><span class="comment">/* </span></span><br><span class="line"><span class="comment">  只有在 SIL 内部使用的特殊的导入</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">import</span> Builtin                  </span><br><span class="line"><span class="keyword">import</span> Swift</span><br><span class="line"><span class="keyword">import</span> SwiftShims</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">	三个全局变量的定义，包括 c1，c2 和 闭包 fSpec。</span></span><br><span class="line"><span class="comment">  	@_Tv4clos2c1CS_6aClass是变量的符号，$aClass 是它的类型（类型前缀为$)。</span></span><br><span class="line"><span class="comment">  	变量名在这里看起来很乱，但是在后面的代码中将变得更加可读。</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="comment">// c1</span></span><br><span class="line">sil_global hidden @_Tv4sample2c1CS_6aClass : $aClass</span><br><span class="line"></span><br><span class="line"><span class="comment">// c2</span></span><br><span class="line">sil_global hidden @_Tv4sample2c2CS_6aClass : $aClass</span><br><span class="line"></span><br><span class="line"><span class="comment">// fSpec</span></span><br><span class="line">sil_global hidden @_Tv4sample5fSpecFT_T_ : $@callee_owned () -&gt; ()</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">  层次作用域定义表示原始代码的位置。</span></span><br><span class="line"><span class="comment">  每个 SIL 指示将会指向它生成的 `sil_scope`。</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">sil_scope <span class="number">1</span> &#123;  parent @main : $<span class="meta">@convention</span>(<span class="built_in">c</span>) (<span class="type">Int32</span>, <span class="type">UnsafeMutablePointer</span>&lt;<span class="type">Optional</span>&lt;<span class="type">UnsafeMutablePointer</span>&lt;<span class="type">Int8</span>&gt;&gt;&gt;) -&gt; <span class="type">Int32</span> &#125;</span><br><span class="line">sil_scope <span class="number">2</span> &#123; loc <span class="string">"sample.swift"</span>:<span class="number">14</span>:<span class="number">1</span> parent <span class="number">1</span> &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">	自动生成的 @main 函数包含了我们原始全部作用域的代码。</span></span><br><span class="line"><span class="comment"> 	这里沿用了熟悉的 c main() 函数结构，接收参数个数和参数数组两个输入，这个函数遵循 c 调用约定。</span></span><br><span class="line"><span class="comment">  	这个函数包含了需要调用闭包的指令。</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="comment">// main</span></span><br><span class="line">sil @main : $<span class="meta">@convention</span>(<span class="built_in">c</span>) (<span class="type">Int32</span>, <span class="type">UnsafeMutablePointer</span>&lt;<span class="type">Optional</span>&lt;<span class="type">UnsafeMutablePointer</span>&lt;<span class="type">Int8</span>&gt;&gt;&gt;) -&gt; <span class="type">Int32</span> &#123;</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">  入口定义头部为 % 符号，后面跟随一个数字 id。</span></span><br><span class="line"><span class="comment">  每当一个新的入口定义时（或者函数开头定义函数参数），编译器在入口行尾根据它的值（叫做 users）添加一个注释。</span></span><br><span class="line"><span class="comment">  对于其他指令，需要提供 id 号。</span></span><br><span class="line"><span class="comment">  在这里，入口 0 将被用来计算入口 4 的内容，入口 1 将被用来创建入口 10 的值。</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="comment">// %0                                             // user: %4</span></span><br><span class="line"><span class="comment">// %1                                             // user: %10</span></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">  每一个函数被分解成一系列的基本指令块，每一个指令块结束于一个终止指令（一个分支或者一个返回）。</span></span><br><span class="line"><span class="comment">  这一系列的指令块表示函数所有可能的执行路径。</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">bb0(%<span class="number">0</span> : $<span class="type">Int32</span>, %<span class="number">1</span> : $<span class="type">UnsafeMutablePointer</span>&lt;<span class="type">Optional</span>&lt;<span class="type">UnsafeMutablePointer</span>&lt;<span class="type">Int8</span>&gt;&gt;&gt;):</span><br><span class="line">...</span><br><span class="line">  <span class="comment">/*</span></span><br><span class="line"><span class="comment">    每一个 SIL 指令都包含一个引用，指向源代码的位置，包括指令具体从源代码中哪个地方来，属于哪一个作用域。</span></span><br><span class="line"><span class="comment">    在后面分析具体的方法会看到这些内容。</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  unowned_retain %<span class="number">27</span> : $@sil_unowned aClass, loc <span class="string">"sample.swift"</span>:<span class="number">9</span>:<span class="number">14</span>, scope <span class="number">2</span> <span class="comment">// id: %28</span></span><br><span class="line">  store %<span class="number">27</span> to %<span class="number">2</span> : $*@sil_unowned aClass, loc <span class="string">"sample.swift"</span>:<span class="number">9</span>:<span class="number">14</span>, scope <span class="number">2</span> <span class="comment">// id: %29</span></span><br><span class="line">  %<span class="number">30</span> = alloc_box $@sil_weak <span class="type">Optional</span>&lt;aClass&gt;, <span class="keyword">var</span>, name <span class="string">"c2"</span>, loc <span class="string">"sample.swift"</span>:<span class="number">9</span>:<span class="number">23</span>, scope <span class="number">2</span> <span class="comment">// users: %46, %44, %43, %31</span></span><br><span class="line">  %<span class="number">31</span> = project_box %<span class="number">30</span> : $@box @sil_weak <span class="type">Optional</span>&lt;aClass&gt;, loc <span class="string">"sample.swift"</span>:<span class="number">9</span>:<span class="number">23</span>, scope <span class="number">2</span> <span class="comment">// user: %35</span></span><br><span class="line">  %<span class="number">32</span> = load %<span class="number">19</span> : $*aClass, loc <span class="string">"sample.swift"</span>:<span class="number">9</span>:<span class="number">23</span>, scope <span class="number">2</span> <span class="comment">// users: %34, %33</span></span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line"><span class="comment">/* </span></span><br><span class="line"><span class="comment">  下面是一系列自动生成的`aClass`的方法，包括： init/deinit, setter/getter 和其他一些工具方法。</span></span><br><span class="line"><span class="comment">  每个方法前的注释是编译器添加的，用来说明代码的具体作用。</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">  隐藏方法只在它们模块中可见。</span></span><br><span class="line"><span class="comment">  @convention(方法名)是 Swift 中方法调用默认的约定，在尾部有一个附加的参数指向它自己。</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="comment">// aClass.__deallocating_deinit</span></span><br><span class="line">sil hidden @_TFC4clos6aClassD : $<span class="meta">@convention</span>(method) (@owned aClass) -&gt; () &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">  @guaranteed 参数表示保证在整个周期内调用此方法都有效。</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="comment">// aClass.deinit</span></span><br><span class="line">sil hidden @_TFC4clos6aClassd : $<span class="meta">@convention</span>(method) (@guaranteed aClass) -&gt; @owned <span class="type">Builtin</span>.<span class="type">NativeObject</span> &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">  [transparent] 修饰的方法是内联的小方法</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="comment">// aClass.value.getter</span></span><br><span class="line">sil hidden [transparent] @_TFC4clos6aClassg5valueSi : $<span class="meta">@convention</span>(method) (@guaranteed aClass) -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// aClass.value.setter</span></span><br><span class="line">sil hidden [transparent] @_TFC4clos6aClasss5valueSi : $<span class="meta">@convention</span>(method) (<span class="type">Int</span>, @guaranteed aClass) -&gt; () &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// aClass.value.materializeForSet</span></span><br><span class="line">sil hidden [transparent] @_TFC4clos6aClassm5valueSi : $<span class="meta">@convention</span>(method) (<span class="type">Builtin</span>.<span class="type">RawPointer</span>, @<span class="keyword">inout</span> <span class="type">Builtin</span>.<span class="type">UnsafeValueBuffer</span>, @guaranteed aClass) -&gt; (<span class="type">Builtin</span>.<span class="type">RawPointer</span>, <span class="type">Optional</span>&lt;<span class="type">Builtin</span>.<span class="type">RawPointer</span>&gt;) &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">  @owned 修饰符表示这个对象将被调用者拥有。</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="comment">// aClass.init() -&gt; aClass</span></span><br><span class="line">sil hidden @_TFC4clos6aClasscfT_S0_ : $<span class="meta">@convention</span>(method) (@owned aClass) -&gt; @owned aClass &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// aClass.__allocating_init() -&gt; aClass</span></span><br><span class="line">sil hidden @_TFC4clos6aClassCfT_S0_ : $<span class="meta">@convention</span>(method) (@thick aClass.<span class="type">Type</span>) -&gt; @owned aClass &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* </span></span><br><span class="line"><span class="comment">  接下面是闭包代码段</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="comment">// (closure #1)</span></span><br><span class="line">sil shared @_TF4closU_FT_T_ : $<span class="meta">@convention</span>(thin) (@owned @sil_unowned aClass, @owned @box @sil_weak <span class="type">Optional</span>&lt;aClass&gt;) -&gt; () &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">/* 关于闭包的 SIL 代码， 见下文 */</span></span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"><span class="comment">/* </span></span><br><span class="line"><span class="comment">  sil_vtable 定义所有关于 aClass 类的虚函数表。</span></span><br><span class="line"><span class="comment">  sil_vtable 包含了期望的所有自动生成的方法。</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">sil_vtable aClass &#123;</span><br><span class="line">  #aClass.<span class="keyword">deinit</span>!deallocator: _TFC4clos6aClassD	<span class="comment">// aClass.__deallocating_deinit</span></span><br><span class="line">  #aClass.value!getter.<span class="number">1</span>: _TFC4clos6aClassg5valueSi	<span class="comment">// aClass.value.getter</span></span><br><span class="line">  #aClass.value!setter.<span class="number">1</span>: _TFC4clos6aClasss5valueSi	<span class="comment">// aClass.value.setter</span></span><br><span class="line">  #aClass.value!materializeForSet.<span class="number">1</span>: _TFC4clos6aClassm5valueSi	<span class="comment">// aClass.value.materializeForSet</span></span><br><span class="line">  #aClass.<span class="keyword">init</span>!initializer.<span class="number">1</span>: _TFC4clos6aClasscfT_S0_	<span class="comment">// aClass.init() -&gt; aClass</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在回到主函数，看看两个类实例如何被获取到，并如何传递给调用他们的闭包。</p>
+<p>在这里，所有标识都被重新整理，使得代码片段更加可读。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// main</span></span><br><span class="line">sil @main : $<span class="meta">@convention</span>(<span class="built_in">c</span>) (<span class="type">Int32</span>, <span class="type">UnsafeMutablePointer</span>&lt;<span class="type">Optional</span>&lt;<span class="type">UnsafeMutablePointer</span>&lt;<span class="type">Int8</span>&gt;&gt;&gt;) -&gt; <span class="type">Int32</span> &#123;</span><br><span class="line"><span class="comment">// %0                                             // user: %4</span></span><br><span class="line"><span class="comment">// %1                                             // user: %10</span></span><br><span class="line">bb0(%<span class="number">0</span> : $<span class="type">Int32</span>, %<span class="number">1</span> : $<span class="type">UnsafeMutablePointer</span>&lt;<span class="type">Optional</span>&lt;<span class="type">UnsafeMutablePointer</span>&lt;<span class="type">Int8</span>&gt;&gt;&gt;):</span><br><span class="line">  ...</span><br><span class="line">  <span class="comment">/*</span></span><br><span class="line"><span class="comment">    全局变量的引用使用三个入口来放置。</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  %<span class="number">13</span> = global_addr @clos.c1 : $*aClass, loc <span class="string">"sample.swift"</span>:<span class="number">5</span>:<span class="number">5</span>, scope <span class="number">1</span> <span class="comment">// users: %26, %17</span></span><br><span class="line">  ...</span><br><span class="line">  %<span class="number">19</span> = global_addr @clos.c2 : $*aClass, loc <span class="string">"sample.swift"</span>:<span class="number">6</span>:<span class="number">5</span>, scope <span class="number">1</span> <span class="comment">// users: %32, %23</span></span><br><span class="line">  ...</span><br><span class="line">  %<span class="number">25</span> = global_addr @clos.fSpec : $*@callee_owned () -&gt; (), loc <span class="string">"sample.swift"</span>:<span class="number">8</span>:<span class="number">5</span>, scope <span class="number">1</span> <span class="comment">// users: %48, %45</span></span><br><span class="line">  <span class="comment">/*</span></span><br><span class="line"><span class="comment">    c1 是 unowned_retained 的。</span></span><br><span class="line"><span class="comment">    下面的指令增加变量的 unowned 引用计数。</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  %<span class="number">26</span> = load %<span class="number">13</span> : $*aClass, loc <span class="string">"sample.swift"</span>:<span class="number">9</span>:<span class="number">14</span>, scope <span class="number">2</span> <span class="comment">// user: %27</span></span><br><span class="line">  %<span class="number">27</span> = ref_to_unowned %<span class="number">26</span> : $aClass to $@sil_unowned aClass, loc <span class="string">"sample.swift"</span>:<span class="number">9</span>:<span class="number">14</span>, scope <span class="number">2</span> <span class="comment">// users: %47, %38, %39, %29, %28</span></span><br><span class="line">  unowned_retain %<span class="number">27</span> : $@sil_unowned aClass, loc <span class="string">"sample.swift"</span>:<span class="number">9</span>:<span class="number">14</span>, scope <span class="number">2</span> <span class="comment">// id: %28</span></span><br><span class="line">  store %<span class="number">27</span> to %<span class="number">2</span> : $*@sil_unowned aClass, loc <span class="string">"sample.swift"</span>:<span class="number">9</span>:<span class="number">14</span>, scope <span class="number">2</span> <span class="comment">// id: %29</span></span><br><span class="line">  <span class="comment">/*</span></span><br><span class="line"><span class="comment">    对 c2 的处理会更加复杂一些。</span></span><br><span class="line"><span class="comment">	alloc_box 创建了一个这个变量的引用数容器，变量将会存在这个容器的堆中。</span></span><br><span class="line"><span class="comment">    容器创建以后，将会创建一个可选变量，指向 c2，并且可选变量会存储在容器里。容器会增加所包含值的技术，正如下面看到的一样，一旦容器被迁移，可选值就会被释放。</span></span><br><span class="line"><span class="comment">    在这里，c2 的值将被存储在这个可选值中，对象将暂时strong_retained 然后释放。</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  %<span class="number">30</span> = alloc_box $@sil_weak <span class="type">Optional</span>&lt;aClass&gt;, <span class="keyword">var</span>, name <span class="string">"c2"</span>, loc <span class="string">"sample.swift"</span>:<span class="number">9</span>:<span class="number">23</span>, scope <span class="number">2</span> <span class="comment">// users: %46, %44, %43, %31</span></span><br><span class="line">  %<span class="number">31</span> = project_box %<span class="number">30</span> : $@box @sil_weak <span class="type">Optional</span>&lt;aClass&gt;, loc <span class="string">"sample.swift"</span>:<span class="number">9</span>:<span class="number">23</span>, scope <span class="number">2</span> <span class="comment">// user: %35</span></span><br><span class="line">  %<span class="number">32</span> = load %<span class="number">19</span> : $*aClass, loc <span class="string">"sample.swift"</span>:<span class="number">9</span>:<span class="number">23</span>, scope <span class="number">2</span> <span class="comment">// users: %34, %33</span></span><br><span class="line">  strong_retain %<span class="number">32</span> : $aClass, loc <span class="string">"sample.swift"</span>:<span class="number">9</span>:<span class="number">23</span>, scope <span class="number">2</span> <span class="comment">// id: %33</span></span><br><span class="line">  %<span class="number">34</span> = <span class="class"><span class="keyword">enum</span> <span class="title">$Optional</span>&lt;<span class="title">aClass</span>&gt;, #<span class="title">Optional</span>.<span class="title">some</span>!<span class="title">enumelt</span>.1, %32 : <span class="title">$aClass</span>, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":9:23, <span class="title">scope</span> 2 // <span class="title">users</span>: %36, %35</span></span><br><span class="line"><span class="class">  <span class="title">store_weak</span> %34 <span class="title">to</span> [<span class="title">initialization</span>] %31 : <span class="title">$</span>*@<span class="title">sil_weak</span> <span class="title">Optional</span>&lt;<span class="title">aClass</span>&gt;, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":9:23, <span class="title">scope</span> 2 // <span class="title">id</span>: %35</span></span><br><span class="line"><span class="class">  <span class="title">release_value</span> %34 : <span class="title">$Optional</span>&lt;<span class="title">aClass</span>&gt;, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":9:23, <span class="title">scope</span> 2 // <span class="title">id</span>: %36</span></span><br><span class="line"><span class="class">  /*</span></span><br><span class="line"><span class="class">    获取到闭包的引用。</span></span><br><span class="line"><span class="class">  */</span></span><br><span class="line"><span class="class">  // <span class="title">function_ref</span> (<span class="title">closure</span> #1)</span></span><br><span class="line"><span class="class">  %37 = <span class="title">function_ref</span> @<span class="title">sample</span>.(<span class="title">closure</span> #1) : <span class="title">$</span>@<span class="title">convention</span>(<span class="title">thin</span>) (@<span class="title">owned</span> @<span class="title">sil_unowned</span> <span class="title">aClass</span>, @<span class="title">owned</span> @<span class="title">box</span> @<span class="title">sil_weak</span> <span class="title">Optional</span>&lt;<span class="title">aClass</span>&gt;) -&gt; (), <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":8:13, <span class="title">scope</span> 2 // <span class="title">user</span>: %44</span></span><br><span class="line"><span class="class">  /*</span></span><br><span class="line"><span class="class">    <span class="title">c1</span> 将被标记为 <span class="title">tagged</span>，并且变量变为 <span class="title">unowned_retained</span>。</span></span><br><span class="line"><span class="class">  */</span></span><br><span class="line"><span class="class">  <span class="title">strong_retain_unowned</span> %27 : <span class="title">$</span>@<span class="title">sil_unowned</span> <span class="title">aClass</span>, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":8:13, <span class="title">scope</span> 2 // <span class="title">id</span>: %38</span></span><br><span class="line"><span class="class">  %39 = <span class="title">unowned_to_ref</span> %27 : <span class="title">$</span>@<span class="title">sil_unowned</span> <span class="title">aClass</span> <span class="title">to</span> <span class="title">$aClass</span>, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":8:13, <span class="title">scope</span> 2 // <span class="title">users</span>: %42, %40</span></span><br><span class="line"><span class="class">  %40 = <span class="title">ref_to_unowned</span> %39 : <span class="title">$aClass</span> <span class="title">to</span> <span class="title">$</span>@<span class="title">sil_unowned</span> <span class="title">aClass</span>, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":8:13, <span class="title">scope</span> 2 // <span class="title">users</span>: %44, %41</span></span><br><span class="line"><span class="class">  <span class="title">unowned_retain</span> %40 : <span class="title">$</span>@<span class="title">sil_unowned</span> <span class="title">aClass</span>, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":8:13, <span class="title">scope</span> 2 // <span class="title">id</span>: %41</span></span><br><span class="line"><span class="class">  <span class="title">strong_release</span> %39 : <span class="title">$aClass</span>, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":8:13, <span class="title">scope</span> 2 // <span class="title">id</span>: %42</span></span><br><span class="line"><span class="class">  /*</span></span><br><span class="line"><span class="class">    包含 <span class="title">c2</span> 的可选值容器是 <span class="title">strong_retained</span> 的。</span></span><br><span class="line"><span class="class">  */</span></span><br><span class="line"><span class="class">  <span class="title">strong_retain</span> %30 : <span class="title">$</span>@<span class="title">box</span> @<span class="title">sil_weak</span> <span class="title">Optional</span>&lt;<span class="title">aClass</span>&gt;, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":8:13, <span class="title">scope</span> 2 // <span class="title">id</span>: %43</span></span><br><span class="line"><span class="class">  /*</span></span><br><span class="line"><span class="class">    创建一个闭包对象，绑定方法到参数中。</span></span><br><span class="line"><span class="class">  */</span></span><br><span class="line"><span class="class">  %44 = <span class="title">partial_apply</span> %37(%40, %30) : <span class="title">$</span>@<span class="title">convention</span>(<span class="title">thin</span>) (@<span class="title">owned</span> @<span class="title">sil_unowned</span> <span class="title">aClass</span>, @<span class="title">owned</span> @<span class="title">box</span> @<span class="title">sil_weak</span> <span class="title">Optional</span>&lt;<span class="title">aClass</span>&gt;) -&gt; (), <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":8:13, <span class="title">scope</span> 2 // <span class="title">user</span>: %45</span></span><br><span class="line"><span class="class">  <span class="title">store</span> %44 <span class="title">to</span> %25 : <span class="title">$</span>*@<span class="title">callee_owned</span> () -&gt; (), <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":8:13, <span class="title">scope</span> 2 // <span class="title">id</span>: %45</span></span><br><span class="line"><span class="class">  /*</span></span><br><span class="line"><span class="class">    </span></span><br><span class="line"><span class="class">    对 <span class="title">c1</span> 和 <span class="title">c2</span> 的容器变量进行释放（使用 对应匹配的 *<span class="title">_release</span> 方法）。</span></span><br><span class="line"><span class="class">  */</span></span><br><span class="line"><span class="class">  <span class="title">strong_release</span> %30 : <span class="title">$</span>@<span class="title">box</span> @<span class="title">sil_weak</span> <span class="title">Optional</span>&lt;<span class="title">aClass</span>&gt;, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":14:1, <span class="title">scope</span> 2 // <span class="title">id</span>: %46</span></span><br><span class="line"><span class="class">  <span class="title">unowned_release</span> %27 : <span class="title">$</span>@<span class="title">sil_unowned</span> <span class="title">aClass</span>, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":9:14, <span class="title">scope</span> 2 // <span class="title">id</span>: %47</span></span><br><span class="line"><span class="class">  /*</span></span><br><span class="line"><span class="class">     加载原先存储的闭包对象，增加强引用然后调用它。</span></span><br><span class="line"><span class="class">  */</span></span><br><span class="line"><span class="class">   %48 = <span class="title">load</span> %25 : <span class="title">$</span>*@<span class="title">callee_owned</span> () -&gt; (), <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":17:1, <span class="title">scope</span> 2 // <span class="title">users</span>: %50, %49</span></span><br><span class="line"><span class="class">  <span class="title">strong_retain</span> %48 : <span class="title">$</span>@<span class="title">callee_owned</span> () -&gt; (), <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":17:1, <span class="title">scope</span> 2 // <span class="title">id</span>: %49</span></span><br><span class="line"><span class="class">  %50 = <span class="title">apply</span> %48() : <span class="title">$</span>@<span class="title">callee_owned</span> () -&gt; (), <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":17:7, <span class="title">scope</span> 2</span></span><br><span class="line"><span class="class">  ...</span></span><br><span class="line"><span class="class">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>闭包有一个更加复杂的结构：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">  闭包参数被标记为 @sil, 指定参数如何被计数，有一个 unowned 的 aClass 类变量 c2, 和另外一个包含 c2 的可选值容器。</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="comment">// (closure #1)</span></span><br><span class="line">sil shared @clos.fSpec: $<span class="meta">@convention</span>(thin) (@owned @sil_unowned aClass, @owned @box @sil_weak <span class="type">Optional</span>&lt;aClass&gt;) -&gt; () &#123;</span><br><span class="line"><span class="comment">// %0                                             // users: %24, %6, %5, %2</span></span><br><span class="line"><span class="comment">// %1                                             // users: %23, %3</span></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">  下面的函数包含三块，后面两块的执行依赖可选值 c2 具体的值。</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">bb0(%<span class="number">0</span> : $@sil_unowned aClass, %<span class="number">1</span> : $@box @sil_weak <span class="type">Optional</span>&lt;aClass&gt;):</span><br><span class="line">...</span><br><span class="line">  <span class="comment">/*</span></span><br><span class="line"><span class="comment">    c1 被强计数。</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  strong_retain_unowned %<span class="number">0</span> : $@sil_unowned aClass, loc <span class="string">"sample.swift"</span>:<span class="number">10</span>:<span class="number">5</span>, scope <span class="number">17</span> <span class="comment">// id: %5</span></span><br><span class="line">  %<span class="number">6</span> = unowned_to_ref %<span class="number">0</span> : $@sil_unowned aClass to $aClass, loc <span class="string">"sample.swift"</span>:<span class="number">10</span>:<span class="number">5</span>, scope <span class="number">17</span> <span class="comment">// users: %11, %10, %9</span></span><br><span class="line">  <span class="comment">/*</span></span><br><span class="line"><span class="comment">    使用内部自带包，传入一个整型字面量到整型结构中，初始化了一个值为 42 的整型值。</span></span><br><span class="line"><span class="comment">    这个值将被设置为 c1 的新值，完成以后这个变量将会被释放。</span></span><br><span class="line"><span class="comment">    在这里，我们第一次看到 class_method 指令，用于获取 vtable 中的函数引用。</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  %<span class="number">7</span> = integer_literal $<span class="type">Builtin</span>.<span class="type">Int64</span>, <span class="number">42</span>, loc <span class="string">"sample.swift"</span>:<span class="number">10</span>:<span class="number">16</span>, scope <span class="number">17</span> <span class="comment">// user: %8</span></span><br><span class="line">  %<span class="number">8</span> = <span class="class"><span class="keyword">struct</span> <span class="title">$Int</span> (%7 : <span class="title">$Builtin</span>.<span class="title">Int64</span>), <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":10:16, <span class="title">scope</span> 17 // <span class="title">user</span>: %10</span></span><br><span class="line"><span class="class">  %9 = <span class="title">class_method</span> %6 : <span class="title">$aClass</span>, #<span class="title">aClass</span>.<span class="title">value</span>!<span class="title">setter</span>.1 : (<span class="title">aClass</span>) -&gt; (<span class="title">Int</span>) -&gt; () , <span class="title">$</span>@<span class="title">convention</span>(<span class="title">method</span>) (<span class="title">Int</span>, @<span class="title">guaranteed</span> <span class="title">aClass</span>) -&gt; (), <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":10:14, <span class="title">scope</span> 17 // <span class="title">user</span>: %10</span></span><br><span class="line"><span class="class">  %10 = <span class="title">apply</span> %9(%8, %6) : <span class="title">$</span>@<span class="title">convention</span>(<span class="title">method</span>) (<span class="title">Int</span>, @<span class="title">guaranteed</span> <span class="title">aClass</span>) -&gt; (), <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":10:14, <span class="title">scope</span> 17</span></span><br><span class="line"><span class="class">  <span class="title">strong_release</span> %6 : <span class="title">$aClass</span>, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":10:16, <span class="title">scope</span> 17 // <span class="title">id</span>: %11</span></span><br><span class="line"><span class="class">  /*</span></span><br><span class="line"><span class="class">    接下来讨论 <span class="title">c2</span>。</span></span><br><span class="line"><span class="class">    获取可选值，然后根据它的内容执行接下来的分支语句。</span></span><br><span class="line"><span class="class"></span></span><br><span class="line"><span class="class">    <span class="title">If</span> <span class="title">the</span> <span class="title">optional</span> <span class="title">has</span> <span class="title">a</span> <span class="title">value</span> <span class="title">the</span> <span class="title">bb2</span> <span class="title">block</span> <span class="title">will</span> <span class="title">be</span> <span class="title">executed</span> <span class="title">before</span> <span class="title">jumping</span> </span></span><br><span class="line"><span class="class">    <span class="title">to</span> <span class="title">bb3</span>, <span class="title">if</span> <span class="title">it</span> <span class="title">doesn</span>'<span class="title">t</span> <span class="title">after</span> <span class="title">a</span> <span class="title">brief</span> <span class="title">jump</span> <span class="title">to</span> <span class="title">bb1</span>, <span class="title">the</span> <span class="title">function</span> <span class="title">will</span> <span class="title">proceed</span> <span class="title">to</span> <span class="title">bb3</span> <span class="title">releasing</span></span></span><br><span class="line"><span class="class">    <span class="title">the</span> <span class="title">retained</span> <span class="title">parameters</span>.</span></span><br><span class="line"><span class="class">    </span></span><br><span class="line"><span class="class">  */</span></span><br><span class="line"><span class="class">  %12 = <span class="title">load_weak</span> %3 : <span class="title">$</span>*@<span class="title">sil_weak</span> <span class="title">Optional</span>&lt;<span class="title">aClass</span>&gt;, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":11:18, <span class="title">scope</span> 18 // <span class="title">user</span>: %13</span></span><br><span class="line"><span class="class">  <span class="title">switch_enum</span> %12 : <span class="title">$Optional</span>&lt;<span class="title">aClass</span>&gt;, <span class="title">case</span> #<span class="title">Optional</span>.<span class="title">some</span>!<span class="title">enumelt</span>.1: <span class="title">bb2</span>, <span class="title">default</span> <span class="title">bb1</span>, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":11:18, <span class="title">scope</span> 18 // <span class="title">id</span>: %13</span></span><br><span class="line"><span class="class">  <span class="title">bb1</span>:                                              // <span class="title">Preds</span>: <span class="title">bb0</span></span></span><br><span class="line"><span class="class">  /*</span></span><br><span class="line"><span class="class">    跳转到闭包的结尾。</span></span><br><span class="line"><span class="class">  */</span></span><br><span class="line"><span class="class">  <span class="title">br</span> <span class="title">bb3</span>, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":11:18, <span class="title">scope</span> 16        // <span class="title">id</span>: %14</span></span><br><span class="line"><span class="class"></span></span><br><span class="line"><span class="class">// %15                                            // <span class="title">users</span>: %21, %20, %19, %16</span></span><br><span class="line"><span class="class"><span class="title">bb2</span>(%15 : <span class="title">$aClass</span>):                               // <span class="title">Preds</span>: <span class="title">bb0</span></span></span><br><span class="line"><span class="class">  /*</span></span><br><span class="line"><span class="class">    调用 <span class="title">aClass</span> 的 <span class="title">setter</span>，设置它的值为 42.</span></span><br><span class="line"><span class="class">  */</span></span><br><span class="line"><span class="class">  ...</span></span><br><span class="line"><span class="class">  %17 = <span class="title">integer_literal</span> <span class="title">$Builtin</span>.<span class="title">Int64</span>, 42, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":12:21, <span class="title">scope</span> 19 // <span class="title">user</span>: %18</span></span><br><span class="line"><span class="class">  %18 = <span class="title">struct</span> <span class="title">$Int</span> (%17 : <span class="title">$Builtin</span>.<span class="title">Int64</span>), <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":12:21, <span class="title">scope</span> 19 // <span class="title">user</span>: %20</span></span><br><span class="line"><span class="class">  %19 = <span class="title">class_method</span> %15 : <span class="title">$aClass</span>, #<span class="title">aClass</span>.<span class="title">value</span>!<span class="title">setter</span>.1 : (<span class="title">aClass</span>) -&gt; (<span class="title">Int</span>) -&gt; () , <span class="title">$</span>@<span class="title">convention</span>(<span class="title">method</span>) (<span class="title">Int</span>, @<span class="title">guaranteed</span> <span class="title">aClass</span>) -&gt; (), <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":12:19, <span class="title">scope</span> 19 // <span class="title">user</span>: %20</span></span><br><span class="line"><span class="class">  %20 = <span class="title">apply</span> %19(%18, %15) : <span class="title">$</span>@<span class="title">convention</span>(<span class="title">method</span>) (<span class="title">Int</span>, @<span class="title">guaranteed</span> <span class="title">aClass</span>) -&gt; (), <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":12:19, <span class="title">scope</span> 19</span></span><br><span class="line"><span class="class">  <span class="title">strong_release</span> %15 : <span class="title">$aClass</span>, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":13:5, <span class="title">scope</span> 18 // <span class="title">id</span>: %21</span></span><br><span class="line"><span class="class">  <span class="title">br</span> <span class="title">bb3</span>, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":13:5, <span class="title">scope</span> 18         // <span class="title">id</span>: %22</span></span><br><span class="line"><span class="class"></span></span><br><span class="line"><span class="class"><span class="title">bb3</span>:                                              // <span class="title">Preds</span>: <span class="title">bb1</span> <span class="title">bb2</span></span></span><br><span class="line"><span class="class">  /*</span></span><br><span class="line"><span class="class">    释放所有获取的变量然后返回。</span></span><br><span class="line"><span class="class">  */</span></span><br><span class="line"><span class="class">  <span class="title">strong_release</span> %1 : <span class="title">$</span>@<span class="title">box</span> @<span class="title">sil_weak</span> <span class="title">Optional</span>&lt;<span class="title">aClass</span>&gt;, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":14:1, <span class="title">scope</span> 17 // <span class="title">id</span>: %23</span></span><br><span class="line"><span class="class">  <span class="title">unowned_release</span> %0 : <span class="title">$</span>@<span class="title">sil_unowned</span> <span class="title">aClass</span>, <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":14:1, <span class="title">scope</span> 17 // <span class="title">id</span>: %24</span></span><br><span class="line"><span class="class">  %25 = <span class="title">tuple</span> (), <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":14:1, <span class="title">scope</span> 17 // <span class="title">user</span>: %26</span></span><br><span class="line"><span class="class">  <span class="title">return</span> %25 : <span class="title">$</span>(), <span class="title">loc</span> "<span class="title">sample</span>.<span class="title">swift</span>":14:1, <span class="title">scope</span> 17 // <span class="title">id</span>: %26</span></span><br><span class="line"><span class="class">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>在这里，忽略掉不同的 <code>ARC</code> 指令带来的性能的差异点，对不同阶段每种类型的捕获变量做一个快速的对比：</p>
+<table>
+<thead>
+<tr>
+<th>动作</th>
+<th style="text-align:center">Unowned</th>
+<th style="text-align:right">Weak</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>预先调用 #1</td>
+<td style="text-align:center">对象进行 unowned_retain 操作</td>
+<td style="text-align:right">创建一个容器，并且对象进行 strong_retain 操作。创建一个可选值，存入到容器中，然后释放可选值</td>
+</tr>
+<tr>
+<td>预先调用 #2</td>
+<td style="text-align:center">strong_retain_unowned，unowned_retain 和 strong_release</td>
+<td style="text-align:right">strong_retain</td>
+</tr>
+<tr>
+<td>闭包执行</td>
+<td style="text-align:center">strong_retain_unowned，unowned_release</td>
+<td style="text-align:right">load_weak, 打开可选值, strong_release</td>
+</tr>
+<tr>
+<td>调用之后</td>
+<td style="text-align:center">unowned_release</td>
+<td style="text-align:right">strong_release</td>
+</tr>
+</tbody>
+</table>
+<p>正如上面看到的 SIL 代码段那样，处理 weak 引用会涉及到更多的工作，因为需要处理引用需要的可选值。</p>
+<p>参照<a href="https://github.com/apple/swift/blob/master/docs/SIL.rst%22" target="_blank" rel="noopener">官方文档</a>的描述，这里对涉及到的所有 ARC 指令做一个简要的解释：</p>
+<ul>
+<li><strong>unowned_retain</strong>：<em>增加堆对象中的 unowned 引用计数。</em></li>
+<li><strong>strong_retain_unowned</strong> ：<em>断言对象的强引用计数大于 0，然后增加这个引用计数。</em></li>
+<li><strong>strong_retain</strong>：<em>增加对象的强引用计数。</em></li>
+<li><strong>load_weak</strong>：<em>不是真正的 ARC 调用，但是它将增加可选值指向对象的强引用计数。</em></li>
+<li><strong>strong_release</strong>：<em>减少对象的强引用计数。如果释放操作把对象强引用计数变为0，对象将被销毁，然后弱引用将被清除。当整个强引用计数和 unowned 引用计数都为0时，对象的内存才会被释放。</em></li>
+<li><strong>unowned_release</strong>：<em>减少对象的 unowned 引用计数。当整个强引用计数和 unowned 引用计数都为 0 时，对象的内存才会被释放。</em></li>
+</ul>
+<p>接下来深入到 <code>Swift</code> 运行时看看，这些指令都是如何被实现的，相关的代码文件有：<a href="https://github.com/apple/swift/blob/master/stdlib/public/runtime/HeapObject.cpp" target="_blank" rel="noopener">HeapObject.cpp</a>，<a href="https://github.com/apple/swift/blob/master/include/swift/Runtime/HeapObject.h" target="_blank" rel="noopener">HeapObject.h</a>，<a href="https://github.com/apple/swift/blob/master/stdlib/public/SwiftShims/RefCount.h" target="_blank" rel="noopener">RefCount.h</a> 和 <a href="https://github.com/apple/swift/blob/master/stdlib/public/runtime/Heap.cpp" target="_blank" rel="noopener">Heap.cpp</a>、 <a href="https://github.com/apple/swift/blob/master/stdlib/public/runtime/SwiftObject.mm" target="_blank" rel="noopener">SwiftObject.mm</a> 中的少量定义。容器实现可以在 <a href="https://github.com/apple/swift/blob/master/stdlib/public/runtime/MetadataImpl.h" target="_blank" rel="noopener">MetadataImpl.h</a> 找到，但是本文不展开讨论。</p>
+<p>这些文件中定义大多数的 <code>ARC</code> 方法都有三种变体，一种是对 <code>Swift</code> 对象的基础实现，另外两种实现是针对非原生 Swift 对象的：桥接对象和未知对象。后面两种变体这里不予讨论。</p>
+<p>第一个讨论指令集和 <code>unowned</code> 引用相关。</p>
+<p>在 <a href="https://github.com/apple/swift/blob/master/stdlib/public/runtime/HeapObject.cpp" target="_blank" rel="noopener">HeapObject.cpp</a> 文件中间可以看到对 <code>unowned_retain</code> 和 <code>unowned_release</code> 的实现方法：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="type">SWIFT_RT_ENTRY_VISIBILITY</span></span><br><span class="line">void swift::swift_unownedRetain(<span class="type">HeapObject</span> *object)</span><br><span class="line">    <span class="type">SWIFT_CC</span>(<span class="type">RegisterPreservingCC_IMPL</span>) &#123;</span><br><span class="line">  <span class="keyword">if</span> (!object)</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">  object-&gt;weakRefCount.increment();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">SWIFT_RT_ENTRY_VISIBILITY</span></span><br><span class="line">void swift::swift_unownedRelease(<span class="type">HeapObject</span> *object)</span><br><span class="line">    <span class="type">SWIFT_CC</span>(<span class="type">RegisterPreservingCC_IMPL</span>) &#123;</span><br><span class="line">  <span class="keyword">if</span> (!object)</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (object-&gt;weakRefCount.decrementShouldDeallocate()) &#123;</span><br><span class="line">    <span class="comment">// Only class objects can be weak-retained and weak-released.</span></span><br><span class="line">    auto metadata = object-&gt;metadata;</span><br><span class="line">    <span class="built_in">assert</span>(metadata-&gt;isClassObject());</span><br><span class="line">    auto classMetadata = static_cast&lt;const <span class="type">ClassMetadata</span>*&gt;(metadata);</span><br><span class="line">    <span class="built_in">assert</span>(classMetadata-&gt;isTypeMetadata());</span><br><span class="line">    <span class="type">SWIFT_RT_ENTRY_CALL</span>(swift_slowDealloc)</span><br><span class="line">        (object, classMetadata-&gt;getInstanceSize(),</span><br><span class="line">         classMetadata-&gt;getInstanceAlignMask());</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>swift_unownedRetain</code> 是 <code>unowned_retain</code> 的具体实现，简单地进行 <code>unowned</code> 引用计数的原子增加操作（这里定义为<code>weakRefCount</code>），<code>swift_unownedRelease</code> 更加复杂，原因之前也描述过，当没有其他 unowned 引用存在时，它需要执行对象的析构操作。</p>
+<p>但是整体来讲都不复杂，在<a href="https://github.com/apple/swift/blob/master/stdlib/public/SwiftShims/RefCount.h#L242" target="_blank" rel="noopener">这里</a>可以看到 <code>doDecrementShouldDeallocate</code> 方法，这个方法在上面代码中被一个命名类似的方法调用了。这个方法没有做太多，<code>swift_slowDealloc</code> 只是释放给定的指针。</p>
+<p>到此已经有了一个对象的 unowned 引用，另外一个指令，<code>strong_retain_unowned</code> 用来创建一个强引用：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="type">SWIFT_RT_ENTRY_VISIBILITY</span></span><br><span class="line">void swift::swift_unownedRetainStrong(<span class="type">HeapObject</span> *object)</span><br><span class="line">    <span class="type">SWIFT_CC</span>(<span class="type">RegisterPreservingCC_IMPL</span>) &#123;</span><br><span class="line">  <span class="keyword">if</span> (!object)</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  <span class="built_in">assert</span>(object-&gt;weakRefCount.getCount() &amp;&amp;</span><br><span class="line">         <span class="string">"object is not currently weakly retained"</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (! object-&gt;refCount.tryIncrement())</span><br><span class="line">    _swift_abortRetainUnowned(object);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>因为弱引用应该指向了这个对象，要使用断言来验证对象是否被弱引用，一旦断言通过，将尝试进行增加强引用计数的操作。一旦对象在进程中已经被释放，尝试将会失败。</p>
+<p>所有类似于 <code>tryIncrement</code> 通过某种形式修改引用计数的方法都放到 <a href="https://github.com/apple/swift/blob/master/stdlib/public/SwiftShims/RefCount.h" target="_blank" rel="noopener">RefCount.h</a> 中，需要使用原子操作进行这些任务。</p>
+<p>接下来讨论下 <code>weak</code> 引用的的实现，正如之前看到的那样，<code>swift_weakLoadStrong</code> 用来获取容器中可选值中强引用的对象。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="type">HeapObject</span> *swift::swift_weakLoadStrong(<span class="type">WeakReference</span> *ref) &#123;</span><br><span class="line">  <span class="keyword">if</span> (ref-&gt;<span class="type">Value</span> == (uintptr_t)nullptr) &#123;</span><br><span class="line">    <span class="keyword">return</span> nullptr;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// ref 可能被其他线程访问</span></span><br><span class="line">  auto ptr = __atomic_fetch_or(&amp;ref-&gt;<span class="type">Value</span>, <span class="type">WR_READING</span>, __ATOMIC_RELAXED);</span><br><span class="line">  <span class="keyword">while</span> (ptr &amp; <span class="type">WR_READING</span>) &#123;</span><br><span class="line">    short <span class="built_in">c</span> = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (__atomic_load_n(&amp;ref-&gt;<span class="type">Value</span>, __ATOMIC_RELAXED) &amp; <span class="type">WR_READING</span>) &#123;</span><br><span class="line">      <span class="keyword">if</span> (++<span class="built_in">c</span> == <span class="type">WR_SPINLIMIT</span>) &#123;</span><br><span class="line">        std::this_thread::yield();</span><br><span class="line">        <span class="built_in">c</span> -= <span class="number">1</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    ptr = __atomic_fetch_or(&amp;ref-&gt;<span class="type">Value</span>, <span class="type">WR_READING</span>, __ATOMIC_RELAXED);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  auto object = (<span class="type">HeapObject</span>*)(ptr &amp; ~<span class="type">WR_NATIVE</span>);</span><br><span class="line">  <span class="keyword">if</span> (object == nullptr) &#123;</span><br><span class="line">    __atomic_store_n(&amp;ref-&gt;<span class="type">Value</span>, (uintptr_t)nullptr, __ATOMIC_RELAXED);</span><br><span class="line">    <span class="keyword">return</span> nullptr;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (object-&gt;refCount.isDeallocating()) &#123;</span><br><span class="line">    __atomic_store_n(&amp;ref-&gt;<span class="type">Value</span>, (uintptr_t)nullptr, __ATOMIC_RELAXED);</span><br><span class="line">    <span class="type">SWIFT_RT_ENTRY_CALL</span>(swift_unownedRelease)(object);</span><br><span class="line">    <span class="keyword">return</span> nullptr;</span><br><span class="line">  &#125;</span><br><span class="line">  auto result = swift_tryRetain(object);</span><br><span class="line">  __atomic_store_n(&amp;ref-&gt;<span class="type">Value</span>, ptr, __ATOMIC_RELAXED);</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这个实现中，获取一个强引用需要<a href="https://github.com/apple/swift/pull/1454" target="_blank" rel="noopener">更多复杂同步操作</a>，在多线程竞争严重的情况下，会带来性能损耗。</p>
+<p>在这里第一次出现的 <code>WeakReference</code> 对象，是一个简单的结构体，包含一个整型值字段指向目标对象，目标对象是使用 <code>HeapObject</code> 类来承载的每一个运行时的 Swift 对象。 </p>
+<p>在 weak 引用询问当前线程设置的 <code>WR_READING</code> 标识之后，从  <code>WeakReference</code>  容器中获取 Swift 对象，如果对象不再有效，或者在等待获取资源时，它变成可以进行析构，当前的引用会被设置为 <em>null</em>。</p>
+<p>如果对象依然有效，获取对象的尝试将会成功。</p>
+<p>因此，从这个角度来讲，对 weak 引用的常规操作性能比 unowned 引用的更低（但是主要的问题还是在可选值操作上面）。</p>
+<p><a name="conclusion"></a></p>
+<h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>保守的使用 weak 引用是否明智呢？答案是否定的，无论是从性能的角度还是代码清晰的角度而言。</p>
+<p>使用正确的捕获修饰符类型，明确的表明代码中的生命周期特性，当其他人或者你自己在读你的代码时不容易误解。</p>
+<p><a name="footnotes"></a></p>
+<h3 id="脚注"><a href="#脚注" class="headerlink" title="脚注"></a>脚注</h3><p><a name="1"></a><br>1、<em>苹果第一次讨论 weak/unowned 争议可以查看<a href="https://devforums.apple.com/message/987086#987086" target="_blank" rel="noopener">这里</a>，之后在 twitter 上 Joe Groff 对此也进行了讨论，并且被 Michael Tsai <a href="http://mjtsai.com/blog/2015/11/24/how-swift-implements-unowned-and-weak-references/" target="_blank" rel="noopener">总结成文</a>。<br>这篇文章从意图角度出发，提供了完整并且可操作的解释。</em></p>
+<p><a name="2"></a><br>2、<em>从<a href="https://en.wikipedia.org/wiki/Abstract_syntax_tree" target="_blank" rel="noopener">维基百科</a>中可以找到关于 AST 的解释，还可以从 Slava Pestov 的<a href="https://medium.com/@slavapestov/the-secret-life-of-types-in-swift-ff83c3c000a5#.jyxx86n2x" target="_blank" rel="noopener">这篇文章</a>中看到关于 Swift 编译器中如何实现 AST 的一些细节。</em></p>
+<p><a name="3"></a><br>3、<em>关于 SIL 的更多信息，请查看详尽的<a href="https://github.com/apple/swift/blob/master/docs/SIL.rst" target="_blank" rel="noopener">官方 SIL 指南</a>，还有 2015 LLVM 开发者会议的<a href="https://www.youtube.com/watch?v=Ntj8ab-5cvE" target="_blank" rel="noopener">视频</a>。Lex Chou 写的 SIL 快速指南可以点击这里<a href="https://github.com/lexchou/swallow/tree/master/docs/en/sil-3-instruction-references" target="_blank" rel="noopener">查看</a>。 </em></p>
+<p><a name="4"></a><br>4、<em>查看在 Swift 中如何进行名称粉碎（name mangling）的细节，请查看 Lex Chou 的<a href="https://github.com/lexchou/swallow/tree/master/docs/en/sil-1-mangling" target="_blank" rel="noopener">这篇文章</a>。</em></p>
+<p><a name="5"></a><br>5、<em>Mike Ash 在他的 Friday Q&amp;A 中的<a href="https://www.mikeash.com/pyblog/friday-qa-2015-12-11-swift-weak-references.html" target="_blank" rel="noopener">一篇文章</a>中讨论了如何实现 weak 引用的一种实践方法，这种方法与目前 Swift 的方法对比起来有一些过时，但是其中的解释依然值得参考。</em></p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/uraimo/">uraimo</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2017/05/16/unowned-or-weak-lifetime-and-performance/" data-title="Unowned 还是 Weak？生命周期和性能对比 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2017/05/18/change-color-status-bar-tutorial/" title="改变状态栏的颜色">
+  <strong>上一篇</strong><br>
+  <span>
+  改变状态栏的颜色</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2017/05/11/face-detection-core-image/" title="在 iOS 上用 Core Image 实现人脸检测">
+ <strong>下一篇</strong><br> 
+ <span>在 iOS 上用 Core Image 实现人脸检测
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2017/05/16/unowned-or-weak-lifetime-and-performance/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#基础知识"><span class="toc-number">1.</span> <span class="toc-text">基础知识</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#问题来了-unowened-还是-weak"><span class="toc-number">2.</span> <span class="toc-text">问题来了: unowened 还是 weak?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#性能：深度探索"><span class="toc-number">3.</span> <span class="toc-text">性能：深度探索</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#捕获列表处理解析"><span class="toc-number">3.1.</span> <span class="toc-text">捕获列表处理解析</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#结论"><span class="toc-number">4.</span> <span class="toc-text">结论</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#脚注"><span class="toc-number">5.</span> <span class="toc-text">脚注</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2019 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftUI 重磅教程专属优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/H9aEpi">使用 SwiftGG 优惠码，半价基础上再减 20 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

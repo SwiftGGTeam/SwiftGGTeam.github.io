@@ -1,0 +1,1032 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>保护 Equatable 的实现 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Ole Begemann，原文链接，原文日期：2017-03-08译者：Cwift；校对：walkingway；定稿：CMB   假设你有一个结构体： struct Person &amp;#123;    var name: String&amp;#125; 并且让其遵守 Equatable： extension Person: Equatable &amp;#123;    static func ==(lh">
+<meta name="keywords" content="Swift 进阶">
+<meta property="og:type" content="article">
+<meta property="og:title" content="保护 Equatable 的实现">
+<meta property="og:url" content="https://swift.gg/2017/03/28/dump-as-equatable-safeguard/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Ole Begemann，原文链接，原文日期：2017-03-08译者：Cwift；校对：walkingway；定稿：CMB   假设你有一个结构体： struct Person &amp;#123;    var name: String&amp;#125; 并且让其遵守 Equatable： extension Person: Equatable &amp;#123;    static func ==(lh">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://oleb.net/media/xcode-assertion-equatable-dump-1270px.png">
+<meta property="og:updated_time" content="2019-08-18T15:28:48.234Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="保护 Equatable 的实现">
+<meta name="twitter:description" content="作者：Ole Begemann，原文链接，原文日期：2017-03-08译者：Cwift；校对：walkingway；定稿：CMB   假设你有一个结构体： struct Person &amp;#123;    var name: String&amp;#125; 并且让其遵守 Equatable： extension Person: Equatable &amp;#123;    static func ==(lh">
+<meta name="twitter:image" content="https://oleb.net/media/xcode-assertion-equatable-dump-1270px.png">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2017/03/28/dump-as-equatable-safeguard/" target="_blank" title="保护 Equatable 的实现" itemprop="url">保护 Equatable 的实现</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2017-03-28T00:00:00.000Z" itemprop="datePublished">2017-03-28</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Ole Begemann，<a href="https://oleb.net/blog/2017/03/dump-as-equatable-safeguard/" target="_blank" rel="noopener">原文链接</a>，原文日期：2017-03-08<br>译者：<a href="http://weibo.com/277195544" target="_blank" rel="noopener">Cwift</a>；校对：<a href="http://chengway.in/" target="_blank" rel="noopener">walkingway</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>假设你有一个结构体：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Person</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> name: <span class="type">String</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>并且让其遵守 <a href="https://developer.apple.com/reference/swift/equatable" target="_blank" rel="noopener">Equatable</a>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Person</span>: <span class="title">Equatable</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> ==<span class="params">(lhs: Person, rhs: Person)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> lhs.name == rhs.name</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>实际的效果满足预期：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="type">Person</span>(name: <span class="string">"Lisa"</span>) == <span class="type">Person</span>(name: <span class="string">"Lisa"</span>) <span class="comment">// → true</span></span><br><span class="line"><span class="type">Person</span>(name: <span class="string">"Lisa"</span>) == <span class="type">Person</span>(name: <span class="string">"Bart"</span>) <span class="comment">// → false</span></span><br></pre></td></tr></table></figure>
+<a id="more"></a>
+<h2 id="Equatable-的一致性是脆弱的"><a href="#Equatable-的一致性是脆弱的" class="headerlink" title="Equatable 的一致性是脆弱的"></a>Equatable 的一致性是脆弱的</h2><p>不幸的是，同我在 <a href="https://oleb.net/blog/2017/03/enums-equatable-exhaustiveness/" target="_blank" rel="noopener">上一篇文章</a> 中讲到的枚举的例子一样，这种方式实现的 Equatable 的一致性是非常脆弱的：每次向结构体中添加属性时，你都必须记得去更新 <a href="https://developer.apple.com/reference/swift/equatable/1539854" target="_blank" rel="noopener">== 函数</a>的实现。如果忘记的话，Equatable 的一致性就会被打破，这个 bug 多久会被发现取决于测试的质量 —— 这里编译器无法提供任何帮助。</p>
+<p>例如，向该结构体中增加另一个字段：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Person</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> name: <span class="type">String</span></span><br><span class="line">    <span class="keyword">var</span> city: <span class="type">String</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>由于 Equatable 的实现没有改变，两个名字相同的人就会被判定为相等 —— 根本没有考虑 city 属性：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> lisaSimpson = <span class="type">Person</span>(name: <span class="string">"Lisa"</span>, city: <span class="string">"Springfield"</span>)</span><br><span class="line"><span class="keyword">let</span> lisaStansfield = <span class="type">Person</span>(name: <span class="string">"Lisa"</span>, city: <span class="string">"Dublin"</span>)</span><br><span class="line">lisaSimpson == lisaStansfield <span class="comment">// → true!!!</span></span><br></pre></td></tr></table></figure>
+<p>更糟糕的是，<a href="https://oleb.net/blog/2017/03/enums-equatable-exhaustiveness/" target="_blank" rel="noopener">与枚举的示例不同</a>，没有简单的方法来确保 == 函数避免出现这样的错误。除了 switch 语句，编译器没有其他针对上下文的穷尽性检查。（假设对类型进行判等的一般性规则是检查类型的所有存储属性是否相等，那么可以设想一下在未来当 == 的实现中没用使用对象的所有存储属性时（如果实践证明这确实是一个重要的错误来源），编译器应该发出警告。不过现在还没有这种机制。）</p>
+<h2 id="使用-dump-声明相等性"><a href="#使用-dump-声明相等性" class="headerlink" title="使用 dump 声明相等性"></a>使用 dump 声明相等性</h2><p>目前我使用标准库中的 <a href="https://developer.apple.com/reference/swift/1641218-dump" target="_blank" rel="noopener">dump</a>（转储）函数实现保护。dump 非常有趣，因为它使用 Swift 的反射功能，用一个字符串类型存储值或者对象中的所有存储字段。通常由 dump 展示出的值或者对象的内部情况要比其自身的 description 或者 debugDescription 更详细。dump 的输出如下所示：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="built_in">dump</span>(lisaSimpson)</span><br><span class="line"><span class="comment">// ▿ Person</span></span><br><span class="line"><span class="comment">//   - name: "Lisa"</span></span><br><span class="line"><span class="comment">//   - city: "Springfield"</span></span><br></pre></td></tr></table></figure>
+<p>下面的函数断言它的两个参数具有相同的 dump 输出：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> 断言两个表达式具有相同的 `dump` 输出。</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> - 注意：与标准库中的 `assert` 类似，该断言只在 Playground 文件以及 `-Onone` 模式的 Build 中才有效果。</span></span><br><span class="line"><span class="comment"> 在开启优化后的 Build 中不起作用。</span></span><br><span class="line"><span class="comment"> - 可参考：`dump(_:to:name:indent:maxDepth:maxItems)`</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">assertDumpsEqual</span>&lt;T&gt;<span class="params">(<span class="number">_</span> lhs: @autoclosure <span class="params">()</span></span></span> -&gt; <span class="type">T</span>,</span><br><span class="line">    <span class="number">_</span> rhs: <span class="meta">@autoclosure</span> () -&gt; <span class="type">T</span>,</span><br><span class="line">    file: <span class="type">StaticString</span> = #file, line: <span class="type">UInt</span> = #line) &#123;</span><br><span class="line">    <span class="built_in">assert</span>(<span class="type">String</span>(dumping: lhs()) == <span class="type">String</span>(dumping: rhs()),</span><br><span class="line">           <span class="string">"Expected dumps to be equal."</span>,</span><br><span class="line">           file: file, line: line)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">String</span> </span>&#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     使用给定值的 `dump` 输出创建一个字符串</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">init</span>&lt;<span class="type">T</span>&gt;(dumping x: <span class="type">T</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.<span class="keyword">init</span>()</span><br><span class="line">        <span class="built_in">dump</span>(x, to: &amp;<span class="keyword">self</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>更新于 2017 年 3 月 9 日：</strong> 非常感谢 Tim Vermeulen 提供的这个<a href="https://twitter.com/tim_vermeulen/status/839651813884309505" target="_blank" rel="noopener">函数版本</a>。它比我的原始版本简单得多，旧版本我保存在了文章末尾的附录中。</p>
+<h2 id="保护-函数"><a href="#保护-函数" class="headerlink" title="保护 == 函数"></a>保护 == 函数</h2><p>现在你必须在 == 函数中调用 assertDumpsEqual：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Person</span>: <span class="title">Equatable</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> ==<span class="params">(lhs: Person, rhs: Person)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="comment">// 错误！没有包含 city 属性。</span></span><br><span class="line">        <span class="keyword">let</span> areEqual = lhs.name == rhs.name</span><br><span class="line">        <span class="comment">//保护：相等的值必须有相同的 dump</span></span><br><span class="line">        <span class="keyword">if</span> areEqual &#123;</span><br><span class="line">            assertDumpsEqual(lhs, rhs)</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> areEqual</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从现在开始，如果你判断相等的两个值具有不同的 dump 输出，程序会陷入运行时陷阱：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">lisaSimpson == lisaStansfield</span><br><span class="line"><span class="comment">// Crash: assertion failed: Expected dumps to be equal.</span></span><br></pre></td></tr></table></figure>
+<p><img src="https://oleb.net/media/xcode-assertion-equatable-dump-1270px.png" alt></p>
+<p>当你忘记在 == 函数中包含 city 属性时，这个方案可以让你立即注意到这个问题。当然它不是 100% 安全的：编译期检查明显是更优秀的方案，而且你依旧必须要记得在 == 函数中调用 assertDumpsEqual 函数 —— 不过在每个类型中你只需调用一次，而不用为每个属性都添加一次方法调用。</p>
+<p><strong>2017年3月9日更新：</strong>使用该模式的话，== 函数的样式始终相同：测试值是否相等，如果为 true 则执行基于 dump 的断言，最后返回测试的结果。Tim Vermeulen <a href="https://twitter.com/tim_vermeulen/status/839651813884309505" target="_blank" rel="noopener">建议</a>创建一个<a href="https://gist.github.com/timvermeulen/afd4a6aa4eb1cfc39fa8496673dc24af" target="_blank" rel="noopener">实现了该模式的协议</a>，并将实际的判等测试作为自定义的参数。这是一种有趣的替换，为你节省了一些样板代码，代价是隐藏了具体的实现。</p>
+<h2 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h2><p>这个方案的最大缺点可能是 dump 在判等时不是一个完全可靠的方案。它应该可以很好地避免<a href="https://en.wikipedia.org/wiki/False_positives_and_false_negatives#False_negative_error" target="_blank" rel="noopener">漏报</a>，但有时你可能会遇到一些<a href="https://en.wikipedia.org/wiki/False_positives_and_false_negatives#False_positive_error" target="_blank" rel="noopener">误报</a>，即实际上相等但是 dump 的输出不同的值。误报的主要对象是 NSObject 的子类，这类对象是否相等不基于对象的标识，而是基于包含内存地址的 description（这是默认设置）。</p>
+<p>我查看了一些标准库中的 Swift 类型以及 Apple 原生框架中的类，这些类型都遵守了 Equatable 协议，它们与 dump 的用法配合的很好。但是你必须注意在使用自定义的 NSObject 子类时需要重写 description。</p>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>或许你可以使用 linter、静态分析工具、像 <a href="https://github.com/krzysztofzablocki/Sourcery" target="_blank" rel="noopener">Sourcery</a> 这样的代码生成工具或者其他的什么方法来保护 Equatable 的实现，避免回顾代码。不过，我不认为目前有任何代码分析工具能深入到本文所讨论的问题。我提出的这个并不完美的方案可能会帮你捕获一些 bug，直到你遇到更好用的工具。</p>
+<h2 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h2><h3 id="典型的-Swift-和-Objective-C-类型的-dump-输出示例"><a href="#典型的-Swift-和-Objective-C-类型的-dump-输出示例" class="headerlink" title="典型的 Swift 和 Objective-C 类型的 dump 输出示例"></a>典型的 Swift 和 Objective-C 类型的 dump 输出示例</h3><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="built_in">dump</span>([<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>])</span><br><span class="line"><span class="comment">// ▿ 3 elements</span></span><br><span class="line"><span class="comment">//   - 1</span></span><br><span class="line"><span class="comment">//   - 2</span></span><br><span class="line"><span class="comment">//   - 3</span></span><br><span class="line"><span class="built_in">dump</span>(<span class="number">1</span>..&lt;<span class="number">10</span>)</span><br><span class="line"><span class="comment">// ▿ CountableRange(1..&lt;10)</span></span><br><span class="line"><span class="comment">//   - lowerBound: 1</span></span><br><span class="line"><span class="comment">//   - upperBound: 10</span></span><br><span class="line"><span class="built_in">dump</span>([<span class="string">"key"</span>: <span class="string">"value"</span>])</span><br><span class="line"><span class="comment">// ▿ 1 key/value pair</span></span><br><span class="line"><span class="comment">//   ▿ (2 elements)</span></span><br><span class="line"><span class="comment">//     - .0: "key"</span></span><br><span class="line"><span class="comment">//     - .1: "value"</span></span><br><span class="line"><span class="built_in">dump</span>(<span class="string">"Lisa"</span> <span class="keyword">as</span> <span class="type">String?</span>)</span><br><span class="line"><span class="comment">// ▿ Optional("Lisa")</span></span><br><span class="line"><span class="comment">//   - some: "Lisa"</span></span><br><span class="line"><span class="built_in">dump</span>(<span class="type">Date</span>())</span><br><span class="line"><span class="comment">// ▿ 2017-03-08 14:08:27 +0000</span></span><br><span class="line"><span class="comment">//   - timeIntervalSinceReferenceDate: 510674907.82620001</span></span><br><span class="line"><span class="built_in">dump</span>([<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>] <span class="keyword">as</span> <span class="type">NSArray</span>)</span><br><span class="line"><span class="comment">// ▿ 3 elements #0</span></span><br><span class="line"><span class="comment">//   - 1 #1</span></span><br><span class="line"><span class="comment">//     - super: NSNumber</span></span><br><span class="line"><span class="comment">//       - super: NSValue</span></span><br><span class="line"><span class="comment">//         - super: NSObject</span></span><br><span class="line"><span class="comment">//   - 2 #2</span></span><br><span class="line"><span class="comment">//     - super: NSNumber</span></span><br><span class="line"><span class="comment">//       - super: NSValue</span></span><br><span class="line"><span class="comment">//         - super: NSObject</span></span><br><span class="line"><span class="comment">//   - 3 #3</span></span><br><span class="line"><span class="comment">//     - super: NSNumber</span></span><br><span class="line"><span class="comment">//       - super: NSValue</span></span><br><span class="line"><span class="comment">//         - super: NSObject</span></span><br><span class="line"><span class="built_in">dump</span>(<span class="string">"Hello"</span> <span class="keyword">as</span> <span class="type">NSString</span>)</span><br><span class="line"><span class="comment">// - Hello #0</span></span><br><span class="line"><span class="comment">//   - super: NSMutableString</span></span><br><span class="line"><span class="comment">//     - super: NSString</span></span><br><span class="line"><span class="comment">//       - super: NSObject</span></span><br><span class="line"><span class="built_in">dump</span>(<span class="type">UIColor</span>.red)</span><br><span class="line"><span class="comment">// - UIExtendedSRGBColorSpace 1 0 0 1 #0</span></span><br><span class="line"><span class="comment">//   - super: UIDeviceRGBColor</span></span><br><span class="line"><span class="comment">//     - super: UIColor</span></span><br><span class="line"><span class="comment">//       - super: NSObject</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//  UIFont 对象的 dump 输出包含了内存地址，</span></span><br><span class="line"><span class="comment">// 但是 UIFont 在内部共享这些对象，所以</span></span><br><span class="line"><span class="comment">// 不会出问题。</span></span><br><span class="line"><span class="keyword">let</span> f1 = <span class="type">UIFont</span>(name: <span class="string">"Helvetica"</span>, size: <span class="number">12</span>)!</span><br><span class="line"><span class="keyword">let</span> f2 = <span class="type">UIFont</span>(name: <span class="string">"Helvetica"</span>, size: <span class="number">12</span>)!</span><br><span class="line">f1 == f2 <span class="comment">// → true</span></span><br><span class="line"><span class="built_in">dump</span>(f1)</span><br><span class="line"><span class="comment">// - &lt;UICTFont: 0x7ff5e6102e60&gt; font-family: "Helvetica"; font-weight: normal; font-style: normal; font-size: 12.00pt #0</span></span><br><span class="line"><span class="comment">//   - super: UIFont</span></span><br><span class="line"><span class="comment">//     - super: NSObject</span></span><br><span class="line"><span class="built_in">dump</span>(f2)</span><br><span class="line"><span class="comment">// - &lt;UICTFont: 0x7ff5e6102e60&gt; font-family: "Helvetica"; font-weight: normal; font-style: normal; font-size: 12.00pt #0</span></span><br><span class="line"><span class="comment">//   - super: UIFont</span></span><br><span class="line"><span class="comment">//     - super: NSObject</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Swift 中的类的 dump 输出不会包含内存地址：</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">A</span> </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> value: <span class="type">Int</span></span><br><span class="line">    <span class="keyword">init</span>(value: <span class="type">Int</span>) &#123; <span class="keyword">self</span>.value = value &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">dump</span>(<span class="type">A</span>(value: <span class="number">42</span>))</span><br><span class="line"><span class="comment">// ▿ A #0</span></span><br><span class="line"><span class="comment">//   - value: 42</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// NSObject 的子类会包含内存地址</span></span><br><span class="line"><span class="comment">//因此会出问题：</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">B</span>: <span class="title">NSObject</span> </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> value: <span class="type">Int</span></span><br><span class="line">    <span class="keyword">init</span>(value: <span class="type">Int</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.value = value</span><br><span class="line">        <span class="keyword">super</span>.<span class="keyword">init</span>()</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> ==<span class="params">(lhs: B, rhs: B)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> lhs.value == rhs.value</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">dump</span>(<span class="type">B</span>(value: <span class="number">42</span>))</span><br><span class="line"><span class="comment">// ▿ &lt;__lldb_expr_26.B: 0x101012160&gt; #0</span></span><br><span class="line"><span class="comment">//   - super: NSObject</span></span><br><span class="line"><span class="comment">//   - value: 42</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 修正: 重写 `description`:</span></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">B</span> </span>&#123;</span><br><span class="line">    <span class="keyword">override</span> <span class="keyword">open</span> <span class="keyword">var</span> description: <span class="type">String</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">"B: \(value)"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">dump</span>(<span class="type">B</span>(value: <span class="number">42</span>))</span><br><span class="line"><span class="comment">// ▿ B: 42 #0</span></span><br><span class="line"><span class="comment">//   - super: NSObject</span></span><br><span class="line"><span class="comment">//   - value: 42</span></span><br></pre></td></tr></table></figure>
+<h3 id="发布版本中的零开销断言"><a href="#发布版本中的零开销断言" class="headerlink" title="发布版本中的零开销断言"></a>发布版本中的零开销断言</h3><p>在 Swift 中，assert 只应该用在 Debug 版本中（在 Release 版本中使用 <a href="https://developer.apple.com/reference/swift/1540960-precondition" target="_blank" rel="noopener">precondition</a> 一类的语句会造成 trap）。assertDumpsEqual 的功能实现依托于标准库中的 assert 函数。为了能正常使用该函数，在调用 assert 的前后都不应执行任何工作。assert 可以接受一个大开销的表达式：assert 使用了一个标记为 <a href="https://developer.apple.com/library/prerelease/content/documentation/Swift/Conceptual/Swift_Programming_Language/Closures.html#//apple_ref/doc/uid/TP40014097-CH11-ID543" target="_blank" rel="noopener">@autoclosure</a> 的属性作为参数，以确保在调用时不会立即执行大开销的表达式。</p>
+<p>正文所示的 assertDumpsEqual 的版本（<a href="https://gist.github.com/timvermeulen/afd4a6aa4eb1cfc39fa8496673dc24af" target="_blank" rel="noopener">由 Tim Vermeulen 编写</a>）的优势是在自定义的 String 构造器中创建 dump （大开销的操作）。这是我的原始版本，在函数内创建 dump：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> 断言两个表达式具有相同的 `dump` 输出。</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> - 注意： 该断言只在定义了 `DEBUG`</span></span><br><span class="line"><span class="comment">  条件编译符时才有效。否则该函数不执行任何操作。注意 在 Playground 中和 -Onone</span></span><br><span class="line"><span class="comment">  模式下的 Build 不会自动设置 `DEBUG` 标志位。</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">assertDumpsEqual</span>&lt;T&gt;<span class="params">(<span class="number">_</span> lhs: @autoclosure <span class="params">()</span></span></span> -&gt; <span class="type">T</span>,</span><br><span class="line">    <span class="number">_</span> rhs: <span class="meta">@autoclosure</span> () -&gt; <span class="type">T</span>,</span><br><span class="line">    file: <span class="type">StaticString</span> = #file, line: <span class="type">UInt</span> = #line) &#123;</span><br><span class="line">    #<span class="keyword">if</span> <span class="type">DEBUG</span></span><br><span class="line">        <span class="keyword">var</span> <span class="keyword">left</span> = <span class="string">""</span>, <span class="keyword">right</span> = <span class="string">""</span></span><br><span class="line">        <span class="built_in">dump</span>(lhs(), to: &amp;<span class="keyword">left</span>)</span><br><span class="line">        <span class="built_in">dump</span>(rhs(), to: &amp;<span class="keyword">right</span>)</span><br><span class="line">        <span class="built_in">assert</span>(<span class="keyword">left</span> == <span class="keyword">right</span>,</span><br><span class="line">            <span class="string">"Expected dumps to be equal.\nlhs: \(left)\nrhs:\(right)"</span>,</span><br><span class="line">            file: file, line: line)</span><br><span class="line">    #endif</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>除非设置了 DEBUG 条件编译符，否则不能编译 <a href="https://developer.apple.com/library/prerelease/content/documentation/Swift/Conceptual/Swift_Programming_Language/Statements.html#//apple_ref/doc/uid/TP40014097-CH33-ID538" target="_blank" rel="noopener">#if DEBUG</a> 块中的整个函数体。DEBUG 标志位在进行未优化的 Build 时总是默认设置的，依靠它就可以满足上述目的了。不幸的是，Xcode 不会为 Playground 自动设置标志位，使用 Swift Package Manager 的 Debug Build 默认情况下也不会设置该标志位（在  SwiftPM 中你可以使用 swift build -Xswiftc “-D” -Xswiftc “DEBUG” 命令手动设置该标志位）。标准库中的 <a href="https://developer.apple.com/reference/swift/1541112-assert" target="_blank" rel="noopener">assert</a> 更加聪明。它将所有未优化的 Build 过程（包括 Playground）视作有价值的。不过，<a href="https://github.com/apple/swift/blob/master/stdlib/public/core/Assert.swift#L40-L53" target="_blank" rel="noopener">assert 识别未优化的 Build 的功能</a>在 stdlib 之外是不可用的，这就解释了为什么应该将整个大开销的计算过程都放在 assert 中执行。</p>
+<p>在我看到 Tim 提出的简化方案之前，我自己的实现方法是将生成和比较 dump 信息的代码放到一个局部的闭包之中，之后在传递给 assert 的时候再“调用”该闭包。因为 assert 的参数也是一个 @autoclosure 类型的，所以闭包中的代码实际只在 assert 内部执行（也就意味着只会在未优化的 Build 中执行）。我的方案看起来像这样：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">assertDumpsEqual</span>&lt;T&gt;<span class="params">(<span class="number">_</span> lhs: @autoclosure <span class="params">()</span></span></span> -&gt; <span class="type">T</span>,</span><br><span class="line">    <span class="number">_</span> rhs: <span class="meta">@autoclosure</span> () -&gt; <span class="type">T</span>,</span><br><span class="line">    file: <span class="type">StaticString</span> = #file, line: <span class="type">UInt</span> = #line) &#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">areDumpsEqual</span><span class="params">()</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">var</span> <span class="keyword">left</span> = <span class="string">""</span>, <span class="keyword">right</span> = <span class="string">""</span></span><br><span class="line">        <span class="comment">// Error: Declaration closing over non-escaping</span></span><br><span class="line">        <span class="comment">// parameter may allow it to escape</span></span><br><span class="line">        <span class="built_in">dump</span>(lhs(), to: &amp;<span class="keyword">left</span>)</span><br><span class="line">        <span class="comment">// Error: Declaration closing over non-escaping</span></span><br><span class="line">        <span class="comment">// parameter may allow it to escape</span></span><br><span class="line">        <span class="built_in">dump</span>(rhs(), to: &amp;<span class="keyword">right</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">left</span> == <span class="keyword">right</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">assert</span>(areDumpsEqual(), <span class="string">"Expected dumps to be equal."</span>,</span><br><span class="line">           file: file, line: line)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然而，上面的代码会发生编译错误。编译器不允许我们捕获闭包中的 lhs 和 rhs 参数，因为它们是 <a href="https://oleb.net/blog/2016/10/optional-non-escaping-closures/" target="_blank" rel="noopener">non-escaping</a>（非逃逸）的。在我们的例子中，闭包实际上并不会从作用域中逃逸，但是编译器无法验证这一点。为了解决该问题，可以（1）使用 @escaping 标注 assertDumpsEqual 的参数，或者（2）使用 <a href="https://developer.apple.com/reference/swift/2827967-withoutactuallyescaping" target="_blank" rel="noopener">withoutActuallyEscaping</a> 函数（<a href="https://github.com/apple/swift/blob/master/CHANGELOG.md#swift-31" target="_blank" rel="noopener">Swift 3.1 的新特性</a>）来修改编译器的规则。现在该函数看起来像下面这样：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">/// - 注意： 使用 `withoutActuallyEscaping` 要求 Swift 3.1。</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">assertDumpsEqual</span>&lt;T&gt;<span class="params">(<span class="number">_</span> lhs: @autoclosure <span class="params">()</span></span></span> -&gt; <span class="type">T</span>,</span><br><span class="line">    <span class="number">_</span> rhs: <span class="meta">@autoclosure</span> () -&gt; <span class="type">T</span>,</span><br><span class="line">    file: <span class="type">StaticString</span> = #file, line: <span class="type">UInt</span> = #line) &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 嵌套函数是为了解决 Bug SR-4188: `withoutActuallyEscaping`</span></span><br><span class="line">    <span class="comment">// 不能接受 `@autoclosure` 参数。 https://bugs.swift.org/browse/SR-4188</span></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">assertDumpsEqualImpl</span><span class="params">(lhs: <span class="params">()</span></span></span> -&gt; <span class="type">T</span>, rhs: () -&gt; <span class="type">T</span>) &#123;</span><br><span class="line">        withoutActuallyEscaping(lhs) &#123; escapableL <span class="keyword">in</span></span><br><span class="line">            withoutActuallyEscaping(rhs) &#123; escapableR <span class="keyword">in</span></span><br><span class="line">                <span class="function"><span class="keyword">func</span> <span class="title">areDumpsEqual</span><span class="params">()</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">                    <span class="keyword">var</span> <span class="keyword">left</span> = <span class="string">""</span>, <span class="keyword">right</span> = <span class="string">""</span></span><br><span class="line">                    <span class="built_in">dump</span>(escapableL(), to: &amp;<span class="keyword">left</span>)</span><br><span class="line">                    <span class="built_in">dump</span>(escapableR(), to: &amp;<span class="keyword">right</span>)</span><br><span class="line">                    <span class="keyword">return</span> <span class="keyword">left</span> == <span class="keyword">right</span></span><br><span class="line">                &#125;</span><br><span class="line">                <span class="built_in">assert</span>(areDumpsEqual(), <span class="string">"Expected dumps to be equal."</span>,</span><br><span class="line">                       file: file, line: line)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    assertDumpsEqualImpl(lhs: lhs, rhs: rhs)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>（嵌套函数是<a href="https://bugs.swift.org/browse/SR-4188" target="_blank" rel="noopener">解决以下 Bug 的一种方案</a>：withoutActuallyEscaping 目前不支持 autoclosure 形式的参数。）</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Ole-Begemann/">Ole Begemann</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2017/03/28/dump-as-equatable-safeguard/" data-title="保护 Equatable 的实现 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2017/03/29/that-one-optional-property/" title="一个可选型的属性">
+  <strong>上一篇</strong><br>
+  <span>
+  一个可选型的属性</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2017/03/27/promises-in-swift/" title="Swift 中的 Promise">
+ <strong>下一篇</strong><br> 
+ <span>Swift 中的 Promise
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2017/03/28/dump-as-equatable-safeguard/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Equatable-的一致性是脆弱的"><span class="toc-number">1.</span> <span class="toc-text">Equatable 的一致性是脆弱的</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用-dump-声明相等性"><span class="toc-number">2.</span> <span class="toc-text">使用 dump 声明相等性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#保护-函数"><span class="toc-number">3.</span> <span class="toc-text">保护 == 函数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#缺点"><span class="toc-number">4.</span> <span class="toc-text">缺点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结论"><span class="toc-number">5.</span> <span class="toc-text">结论</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#附录"><span class="toc-number">6.</span> <span class="toc-text">附录</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#典型的-Swift-和-Objective-C-类型的-dump-输出示例"><span class="toc-number">6.1.</span> <span class="toc-text">典型的 Swift 和 Objective-C 类型的 dump 输出示例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#发布版本中的零开销断言"><span class="toc-number">6.2.</span> <span class="toc-text">发布版本中的零开销断言</span></a></li></ol></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2019 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftUI 重磅教程专属优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/H9aEpi">使用 SwiftGG 优惠码，半价基础上再减 20 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

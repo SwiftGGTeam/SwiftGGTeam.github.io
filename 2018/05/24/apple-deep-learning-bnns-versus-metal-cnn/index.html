@@ -1,0 +1,1209 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>了解苹果深度学习框架 BNNS 和 MPSCNN | 苹果的深度学习框架：BNNS 和 MPSCNN 的对比 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="深度学习,BNNS,MPSCNN,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="在这篇文章中，我们将针对 BNNS 和 MPSCNN 进行对比来显示出这两者的差异">
+<meta name="keywords" content="深度学习,BNNS,MPSCNN">
+<meta property="og:type" content="article">
+<meta property="og:title" content="苹果的深度学习框架：BNNS 和 MPSCNN 的对比">
+<meta property="og:url" content="https://swift.gg/2018/05/24/apple-deep-learning-bnns-versus-metal-cnn/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="在这篇文章中，我们将针对 BNNS 和 MPSCNN 进行对比来显示出这两者的差异">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://swift.gg/img/articles/apple-deep-learning-bnns-versus-metal-cnn/Cat2Probability@2x.png1527128648.556878">
+<meta property="og:image" content="https://swift.gg/img/articles/apple-deep-learning-bnns-versus-metal-cnn/InterleavedPlanar@2x.png1527128648.7662659">
+<meta property="og:image" content="https://swift.gg/img/articles/apple-deep-learning-bnns-versus-metal-cnn/ConvNet@2x.png1527128648.814062">
+<meta property="og:image" content="https://swift.gg/img/articles/apple-deep-learning-bnns-versus-metal-cnn/Screenshot@2x.png1527128648.8787365">
+<meta property="og:updated_time" content="2019-08-18T15:28:48.238Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="苹果的深度学习框架：BNNS 和 MPSCNN 的对比">
+<meta name="twitter:description" content="在这篇文章中，我们将针对 BNNS 和 MPSCNN 进行对比来显示出这两者的差异">
+<meta name="twitter:image" content="https://swift.gg/img/articles/apple-deep-learning-bnns-versus-metal-cnn/Cat2Probability@2x.png1527128648.556878">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2018/05/24/apple-deep-learning-bnns-versus-metal-cnn/" target="_blank" title="苹果的深度学习框架：BNNS 和 MPSCNN 的对比" itemprop="url">苹果的深度学习框架：BNNS 和 MPSCNN 的对比</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2018-05-24T00:00:00.000Z" itemprop="datePublished">2018-05-24</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：MATTHIJS HOLLEMANS，<a href="http://machinethink.net/blog/apple-deep-learning-bnns-versus-metal-cnn/" target="_blank" rel="noopener">原文链接</a>，原文日期：2017-02-07<br>译者：<a href="undefined">TonyHan</a>；校对：<a href="http://www.desgard.com/" target="_blank" rel="noopener">冬瓜</a>，<a href="https://weibo.com/1743643682/profile?topnav=1&amp;wvr=6" target="_blank" rel="noopener">liberalism</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>从 iOS 10 开始，苹果在 iOS 平台上引入了两个深度学习的框架：BNNS 和 MPSCNN。</p>
+<ul>
+<li><p>BNNS：全称为香蕉（bananas，译者注：此处开玩笑），Basic Neural Network Subroutines，是 <a href="https://developer.apple.com/reference/accelerate" target="_blank" rel="noopener">Accelerate  框架</a>的一部分。这个框架能够充分利用 CPU 的快速矢量指令，并提供一系列的数学函数。</p>
+</li>
+<li><p>MPSCNN 是 <a href="https://developer.apple.com/metal/" target="_blank" rel="noopener">Metal Performance Shaders</a> 的一部分。Metal Performance Shaders 是一个经过优化过的计算内核框架，并且可以运行在 GPU （而不是 CPU）上。</p>
+</li>
+</ul>
+<p>所以，作为 iOS 开发者，有了两个用于做深度学习的框架，它们有很多类似的地方。</p>
+<p>应该选择哪个呢？</p>
+<p>在这篇文章中，我们将针对 BNNS 和 MPSCNN 进行对比来显示出这两者的差异。而且我们会对这两个 API 进行速度测试，来看下谁更快一些。</p>
+<a id="more"></a>
+<h2 id="为什么要优先使用-BNNS-或-MPSCNN-？"><a href="#为什么要优先使用-BNNS-或-MPSCNN-？" class="headerlink" title="为什么要优先使用 BNNS 或 MPSCNN ？"></a>为什么要优先使用 BNNS 或 MPSCNN ？</h2><p>我们首先讨论这两个框架的作用。</p>
+<p>目前 BNNS 和 MPSCNN 在<strong>卷积神经网络</strong>领域中用于<strong>变分推断</strong>。</p>
+<p>与类似的 <a href="https://tensorflow.org/" target="_blank" rel="noopener">TensorFlow</a>（使用此方案可以通过构建一个计算图，从头开始建立你的神经网络）相比，BNNS 和 MPSCNN 提供更高级的 API，不需要担心你的数学。</p>
+<p>这也有一个缺点：BNNS 和 MPSCNN 的功能远远少于其他框架，如 TensorFlow。它们更容易上手，但同时限制了所能做的深度学习的种类。</p>
+<p>苹果的深度学习框架只是为了一个目的：通过网络层级<strong>尽可能快地传递数据</strong>。</p>
+<h4 id="一切都与层级有关"><a href="#一切都与层级有关" class="headerlink" title="一切都与层级有关"></a>一切都与层级有关</h4><p>你可以将神经网络想象为数据流经的管道。管道中的不同阶段便是网络<strong>层级</strong>。这些层级以不同的方式转换你的数据。同时深度学习，我们可以使用多达 10 层甚至 100 层的神经网络。</p>
+<p><img src="/img/articles/apple-deep-learning-bnns-versus-metal-cnn/Cat2Probability@2x.png1527128648.556878" alt="Cat2Probability"></p>
+<p>层级有不同的种类。BNNS 和 MPSCNN 提供的有：卷积层（convolutional layer）、池化层（pooling layer）、全连接层（Fully Connected Layer）和规范化层（normalization layer）。</p>
+<p>在 BNNS 和 MPSCNN 中，<strong>层级是主要的建构单元</strong>。你可以创建层级对象，将数据放入层级中，然后再从层级中读出结果。顺便说一句，BNNS 称它们为“过滤器”，而不是层级：数据以一种形式进入过滤器并以另一种形式从过滤器出来。</p>
+<p>为了说明层级作为建构单元的思想，下面描述了数据如何通过一个简单的神经网络在 BNNS 中流动：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 为中间结果和最终结果分配内存。</span></span><br><span class="line"><span class="keyword">var</span> tempBuffer1: [<span class="type">Float</span>] = . . .</span><br><span class="line"><span class="keyword">var</span> tempBuffer2: [<span class="type">Float</span>] = . . .</span><br><span class="line"><span class="keyword">var</span> results: [<span class="type">Float</span>] = . . .</span><br><span class="line"></span><br><span class="line"><span class="comment">// 对输入的数据（比如说一张图片）应用第一层级。</span></span><br><span class="line"><span class="type">BNNSFilterApply</span>(convLayer, inputData, &amp;tempBuffer1)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 对第一层级的输出应用第二层级。</span></span><br><span class="line"><span class="type">BNNSFilterApply</span>(poolLayer, tempBuffer1, &amp;tempBuffer2)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 应用第三和最后的层级。结果通常是概率分布。</span></span><br><span class="line"><span class="type">BNNSFilterApply</span>(fcLayer, tempBuffer2, &amp;results)</span><br></pre></td></tr></table></figure>
+<p>要使用 BNNS 和 MPSCNN 构建神经网络，只需要设置层级并向它们发送数据。框架负责处理层级<em>内</em>发生的事情，但你需要做的是连接层级。</p>
+<p>不幸的是，这可能有点无聊。例如，通过加载一个<a href="http://caffe.berkeleyvision.org/model_zoo.html" target="_blank" rel="noopener">提前训练好的 caffemodel 文件</a>来获取一个完整配置的“神经网络”是行不通的。你必须手写代码，仔细地创建层级并进行配置来复制出网络的设计。这样就很容易犯错。</p>
+<h4 id="BNNS-和-MPSCNN-不做训练"><a href="#BNNS-和-MPSCNN-不做训练" class="headerlink" title="BNNS 和 MPSCNN 不做训练"></a>BNNS 和 MPSCNN 不做训练</h4><p>在你使用神经网络之前，你必须先<strong>训练</strong>它。训练需要大量的数据和耐心——至少几个小时，甚至几天或几周，取决于你可以投入多少计算能力。你肯定不想在手机上进行训练（这可能会使手机着火）。</p>
+<p>当得到一个训练网络，便可以用来进行<strong>预测</strong>。这被称为“推断”。训练本应需要使用重型计算机，但在现代的手机上进行推断是完全可能的。</p>
+<p>这正是 BNNS 和 MPSCNN 设计的目的。</p>
+<h4 id="仅限卷积网络"><a href="#仅限卷积网络" class="headerlink" title="仅限卷积网络"></a>仅限卷积网络</h4><p>但是这两个 API 都有限制。目前，BNNS 和 MPSCNN 仅支持一种深度学习：卷积神经网络（CNN）。CNN 的主要应用场景是<strong>机器视觉</strong>任务。例如，你可以使用 CNN 来<a href="http://machinethink.net/blog/convolutional-neural-networks-on-the-iphone-with-vggnet/" target="_blank" rel="noopener">描述给定照片中的对象</a>。</p>
+<p>虽然 CNN 很牛逼，但在 BNNS 或 MPSCNN 中无法支持其他深度学习架构（例如递归神经网络）。</p>
+<p>然而，已经提供的建构单元（卷积层，池化层和全连接层）高效并且为构建更复杂的神经网络提供了<strong>良好的基础</strong>，即便你必须手工编写一些代码来填补 API 中的空白。</p>
+<ul>
+<li>备注：Metal Performance Shaders 框架还附带有用于在 GPU 上进行快速矩阵乘法的计算内核。同时，Accelerate 框架包含用于在 CPU 上执行相同操作的 BLAS 库。所以，即使 BNNS 或 MPSCNN 不包含你所需的深层学习架构的所有层级类型，你也可以借助这些矩阵例程来推出自己的层级类型。而且，如果有必要的话，你可以用 Metal Shading Language 编写你自己的 GPU 代码。</li>
+</ul>
+<h2 id="不同之处"><a href="#不同之处" class="headerlink" title="不同之处"></a>不同之处</h2><p>假如它们的功能一致，那为何 Apple 要给我们两个 API？</p>
+<p>很简单：BNNS 运行在 CPU 上，MPSCNN 运行在 GPU 上。有时使用 CPU 速度更快，有时使用 GPU 更快。</p>
+<ul>
+<li>“等一下…难道 GPU 不是高度并行的计算怪物么？难道我们不应该一直在 GPU 上运行我们的深层神经网络吗？！”</li>
+</ul>
+<p>并没有。对于培训，你一定希望通过 GPU 来进行大规模并行计算（即使只是一个许多 GPU 的集群）但推论时，使用枯燥的旧的 2 或 4 核 CPU 可能会更快。</p>
+<p>下面我将详细讨论的速度差异，但首先让我们来看看这两个 API 是有哪些不同。</p>
+<ul>
+<li>备注：Metal Performance Shaders 框架仅适用于 iOS 和 tvOS，不适用于 Mac。BNNS 也适用于 macOS 10.12 及更高版本。如果你想要保证 iOS 和 MacOS 之间的深度学习代码的可移植性，BNNS 是你唯一的选择（或使用第三方框架）。</li>
+</ul>
+<h4 id="它是-Swifty-的么"><a href="#它是-Swifty-的么" class="headerlink" title="它是 Swifty 的么?"></a>它是 Swifty 的么?</h4><p>BNNS 实际上是一个基于 C 的 API。如果你使用 Objective-C 是可以的，但 Swift 使用它有点麻烦。相反，MPSCNN 更兼容 Swift。</p>
+<p>不过，你必须接受这些 API 比所谓的 UIKit 更低级的事实。Swift 并没有将所有的东西都抽象成简单的类型。你经常需要使用 Swift 的 <code>UnsafeRawPointer</code> 指针来处理原始字节。</p>
+<p>Swift 也没有一个原生的 <strong>16 位浮点类型</strong>，但是 BNNS 和 MPSCNN 在使用这样的半精度浮点数时才是最高效的。你将不得不使用 Accelerate 框架在常规类型和半精度浮点数之间进行转换。</p>
+<p>从理论上讲，当使用 MPSCNN 时，你不必自己编写任何 GPU 代码，但实际上我发现某些预处理步骤——如从每个图像像素中减去平均 RGB 值，使用 Metal Shading Language（基于 C++ 实现） 中的定制的计算内核是最容易实现的。</p>
+<p>所以，即使你在 Swift 中使用这两个框架，也要准备好用这两个 API 来进行一些底层级别的 Hacking 行为。</p>
+<h4 id="激活函数"><a href="#激活函数" class="headerlink" title="激活函数"></a>激活函数</h4><p>随着数据在神经网络中从一层流向下一层，数据在每层都会以某种方式被转换。层级应用了激活函数，来作为此转换的一部分。没有这些激活函数，神经网络将无法学习非常有趣的事情。</p>
+<p>激活函数有很多选择，BNNS 和 MPSCNN 都支持最常用的功能：</p>
+<ul>
+<li>修正线性单元（ReLU）和带泄漏修改线性单元（Leaky ReLU）</li>
+<li>逻辑函数（logistic sigmoid）</li>
+<li>双曲正切函数（<em>tanh</em>）和 扩展双曲正切函数（scaled <em>tanh</em>）</li>
+<li>绝对值</li>
+<li>恒等函数（the identity function），它传递数据而不改变数据</li>
+<li>线性（只在 MPSCNN 上）</li>
+</ul>
+<p>你会认为这与 API 一样简单，但是奇怪的是，与 MPSCNN 相比，BNNS 有一个不同的定义这些激活函数的方式。</p>
+<p>例如，BNNS 定义了两种类型，<code>BNNSActivationFunctionRectifiedLinear</code> 和 <code>BNNSActivationFunctionLeakyRectifiedLinear</code>，但在 MPSCNN 中，只有一种 <code>MPSCNNNeuronReLU</code> 类型，使用 <code>alpha</code> 参数来标记是否为带泄漏的修正线性单元（Leaky ReLU）。同样的还有双曲正切函数（tanh）和 扩展双曲正切函数（scaled tanh）。</p>
+<p>可以肯定地说，MPSCNN 采用比 BNNS 更灵活和可定制的方法。整个 API 层面都是如此。</p>
+<p>例如：MPSCNN 允许您通过继承 <code>MPSCNNNeuron</code> 并编写一些 GPU 代码来创建自己的激活函数。使用 BNNS 就无法实现，因为没有用于定制的激活函数的 API；只提供了枚举。如果你想要的激活函数不在列表中，那么使用 BNNS 就会掉进大坑。</p>
+<ul>
+<li><p>17年2月10号更新：以上内容有点误导，所以我应该澄清下。由于 BNNS 在 CPU 上运行，你可以简单地获取层级的输出并根据你的喜好进行修改。如果你需要一种特殊的激活函数，你可以在 Swift 中自己实现（最好使用 Accelerate 框架）并在进入下一层之前将其应用于上一层的输出。所以 BNNS 在这方面的能力不亚于 Metal。</p>
+</li>
+<li><p>17年6月29日更新：关于 <code>MPSCNNNeuron</code> 子类的澄清：如果你这样做，实际上并不能使用 <code>MPSCNNConvolution</code> 的子类。这是因为 MPS 在 GPU 内核中执行激活函数时使用了一个技巧，但这只适用于 Apple 自己的 MPSCNNNeuron 子类，不适用于你自己创建的任何子类。</p>
+</li>
+</ul>
+<p>事实上，在 MPSCNN 中，<em>一切</em>都是 <code>MPSCNNKernel</code> 的一个子类。这意味着你可以单独使用一个激活函数，如 <code>MPSCNNNeuronLinear</code>，就像它是一个单独的层级一样。在预处理步骤中，这对以常量进行缩放数据是很有用的。（顺便说一句，BNNS 没有类似于“线性”的激活函数。）</p>
+<ul>
+<li>备注：在我看来，感觉就像 BNNS 和 MPSCNN 是由 Apple 内部不同的团体创建的。它们有非常相似的功能，但它们的 API 之间有一些奇怪的差异。我不在 Apple 公司工作，所以我不知道这些差异存在的原因。也许是出于技术或性能的原因。但是你应该知道 BNNS 和 MPSCNN 不是“热插拔”的。如果你想要知道在 CPU 或 GPU 上进行推理时哪种方法最快，你将不得不实现两次深度学习网络。</li>
+</ul>
+<h4 id="层级类型"><a href="#层级类型" class="headerlink" title="层级类型"></a>层级类型</h4><p>我之前提到深层神经网络是由不同类型的层级组成的：</p>
+<ul>
+<li>卷积（Convolutional）</li>
+<li>池化（Pooling），最大值和平均值</li>
+<li>完全连接（Fully-connected）</li>
+</ul>
+<p>BNNS 和 MPSCNN 都实现了这三种层级类型，但是每种 API 的实现方式都有细微差别。</p>
+<p>例如，BNNS 可以在池化层中使用激活函数，但是 MPSCNN 不行。但是，在 MPSCNN 中，你可以将激活函数添加到池化层后面作为单独的一层，所以最终这两个 API 能实现相同的功能，但是它们实现的路径不同。</p>
+<p>在 MPSCNN 中，完全连接层被视为卷积的一个特例，而在 BNNS 中，它被实现为矩阵向量乘法。实践中并不会有差别，但是这表明这两个框架采取了不同的方法来解决同样的问题。</p>
+<p>我觉得对于开发者来说，<strong>MPSCNN 使用起来更方便</strong>。</p>
+<p>当对图像使用卷积时，除非添加“填充”像素，否则输出图像会缩小一些。使用 MPSCNN，就不必担心这一点：你只需告诉它，希望输入和输出图像有多大。使用 BNNS 你就必须自己计算填充量。像这样的细节让 MPSCNN 成为更易用的 API。</p>
+<p>除了基础层级，MPSCNN 还提供以下层级：</p>
+<ul>
+<li>归一化（特征归一化、跨通道归一化（弱化）、局部对比度归一化）</li>
+<li>Softmax，也称为归一化指数函数</li>
+<li>对数 Softmax，即使用 Softmax 函数并配合 log 似然代价函数</li>
+<li>激活函数层</li>
+</ul>
+<p>这些额外的层级类型无法在 BNNS 中找到。</p>
+<p>对于规范化层来说，这可能不是什么大问题，因为我觉得它们并不常见，但 softmax 是大多数卷积网络在某些时候需要做的事情（通常在最后）。</p>
+<p>softmax 函数将神经网络的输出转化为概率分布：“我 95％ 肯定这张照片是一只猫，但只有 5％ 确定它是一只 <code>Pokémon</code> 。”</p>
+<p>在 BNNS 中没有提供 softmax 是有点奇怪的。在 Accelerate 框架中使用 vDSP 函数来写代码实现并不难，但是也不是很方便。</p>
+<h4 id="学习参数"><a href="#学习参数" class="headerlink" title="学习参数"></a>学习参数</h4><p>训练神经网络时，训练过程会调整一组数字来表示网络正在学习什么。这些数字被称为<strong>学习参数</strong>。</p>
+<p>学习参数由所谓的权重和偏差值组成，这些值只是一些浮点数。当你向神经网络发送数据时，各层级实际上将你的数据乘以这些权重，添加偏差值，然后再应用激活函数。</p>
+<p>创建层级时，需要为每个层级指定权重和偏差值。这两个 API 只需要一个原始指针指向浮点值的缓冲区。需要由你来确保这些数字以正确的方式组织。如果这里操作错误，神经网络将会输出垃圾数据。</p>
+<p>你可能猜到了：BNNS 和 MPSCNN 为权重使用不同的内存分配。😅</p>
+<p>对于 MPSCNN 权重数组看起来像这样：</p>
+<p><code>weights[ outputChannel ][ kernelY ][ kernelX ][ inputChannel ]</code></p>
+<p>但是对于 BNNS 来说，顺序是不同的：</p>
+<p><code>weights[ outputChannel ][ inputChannel ][ kernelY ][ kernelX ]</code></p>
+<p>我认为 MPSCNN 将输入通道放在最后的原因是，这样可以很好地映射到存储数据的 <code>MTLTexture</code>s 中的 RGBA 像素。但是对于 BNNS 所使用的 CPU 矢量指令，将输入通道视为单独的内存块会更高效。</p>
+<p>这种差异对于开发者来说不是一个大问题，但是当你导入训练好的模型时你需要<strong>知道权重的内存分配</strong>。</p>
+<p>备注：你可能需要编写一个转换脚本来导出培训工具中的数据，例如 TensorFlow 或 Caffe，并将其转换为 BNNS 或 MPSCNN 预期的格式。这两个 API 都不能读取这些工具所保存的模型，它们只接受原始的浮点值的缓冲数据。</p>
+<p>MPSCNN 总是复制权重和偏差值，并将它们作为 16 位浮点内部存储。由于你必须将它们作为单精度浮点数提供，因此这有效地将你的学习参数的精度减半。</p>
+<p>BNNS 在这里比较开放一些：它可以让你选择你想要存储学习参数的格式，也可以让你选择不复制。</p>
+<p>将权重加载到网络中仅仅在创建网络时的 App 启动时起到重要作用。但是，如果你有大量的权重，你仍然需要认真对待。我的 <a href="http://machinethink.net/blog/convolutional-neural-networks-on-the-iphone-with-vggnet/" target="_blank" rel="noopener">VGGNet implementation</a> 不能在 iPhone 6 上工作，因为 App 试图一次性将所有权重加载到 MPSCNN 时导致内存不足。（可以先创建大的层级，然后是再创建较小的层级。）</p>
+<h4 id="输入数据"><a href="#输入数据" class="headerlink" title="输入数据"></a>输入数据</h4><p>一旦你创建了所有的层级对象，你终于可以开始使用神经网络进行推断啦！</p>
+<p>正如你所看到的，BNNS 或 MPSCNN 都没有真正的“神经网络”的概念，他们只能看到每个层级。你需要逐个将数据放入这些层级中的每一层。</p>
+<p>作为神经网络的用户，你关心的数据是进入第一层（例如一张图片）的输入和从最后一层出来的输出（这张图片是猫的概率）。其他在各层之间传递的数据，只是临时的中间结果。</p>
+<p>那么你需要输入什么格式的数据？</p>
+<p>MPSCNN 要求将所有数据放置在一个特殊的 <code>MPSImage</code> 对象内，这个对象实际上是 2D 纹理的集合。如果你正在使用图片，这会非常有意义 - 但是如果你的数据不是图片，则需要将其转换为 Metal 纹理。这会消耗 CPU 的性能。（你可以使用 Accelerate 框架来解决这个问题。）</p>
+<p>备注：iOS 设备使用统一的内存模型，这意味着 CPU 和 GPU 访问相同的 RAM 芯片。与桌面计算机或服务器上的情况不同，你不需要将数据复制到 GPU。所以至少你的 iOS App 不会有这些性能消耗。</p>
+<p>另一方面，BNNS 只需要一个指向浮点值缓冲区的指针。不需要将数据加载到特定对象中。所以这似乎比使用纹理更快…是么？</p>
+<p>这样有一个重要的限制：在 BNNS 中，不同“通道”中的输入不能交错。</p>
+<p>如果你的输入是图片，那么它有三个通道：一个用于红色像素，一个用于绿色像素，另一个用于蓝色像素。问题是像 PNG 或 JPEG 这样的图像文件会作为交错的 RGBA 值被加载到内存中。BNNS 并不会接受这种情况。</p>
+<p><img src="/img/articles/apple-deep-learning-bnns-versus-metal-cnn/InterleavedPlanar@2x.png1527128648.7662659" alt></p>
+<p>目前没有办法告诉 BNNS 使用红色像素值作为通道 0，绿色像素值作为通道 1，蓝色值作为通道 2，并跳过 alpha 通道。相反，你将不得不重新排列像素数据，以便输入缓冲区的首先包含所有 R 值，然后是所有 G 值，然后是所有 B 值。</p>
+<p>我们若采取这种预处理，就会占用宝贵的计算时间。其次，也许这些限制允许 BNNS 在其层级如何执行其的计算方面做一定的优化，从而使整个事情是个净增益。但这谁也不知道。</p>
+<p>在任何情况下，如果您使用 BNNS 处理图像（CNNs主要的用途）那么你可能需要对输入数据进行一些调整以获得正确的格式。</p>
+<p>还有<strong>数据类型</strong>的问题。</p>
+<p>BNNS 和 MPSCNN 都允许你将输入数据指定为浮点值（16 位和 32 位）或整数（8、16 或 32 位）。你想将浮点数据作为网络的输入，你可能无法选择输入数据的格式。</p>
+<p>通常，当你加载 PNG 或 JPEG 图像，或者从手机相机中取出静止图像时，会得到一个 8Bit 纹理，该纹理使用无符号的 8 位整数作为像素的 RGBA 值。使用 MPSCNN 这是没有问题的：纹理会自动转换为浮点值。</p>
+<p>用 BNNS 你可以指定 <code>Int8</code> 作为图像的数据类型，但是我实践后发现是行不通的。其实也许是因为我没有投入大量的时间来研究它。由于我要重新修改输入图像的通道，于是顺便就轻松地将像素数据转换为浮点数。</p>
+<p>备注：即使 BNNS 允许你指定整数作为数据和权重的数据类型，它在内部也会将其转换为浮点数据，进行计算，然后将结果转换为整数。为了获得最好的速度，你可能想要跳过这个转换步骤，并且总是直接处理浮点数据，即使它们占用了 2 到 4 倍的内存。</p>
+<h4 id="临时数据"><a href="#临时数据" class="headerlink" title="临时数据"></a>临时数据</h4><p>在 BNNS 和 MPSCNN 中，每个层级都需要处理。你将数据放入一个层级，并从一个层级中获取数据。</p>
+<p>深层网络将会有很多层级。我们只关心最后一层的输出，而不关心所有其他层的输出。但是我们仍然需要将这些中间结果存储在某个地方，即使它们只用了一小会儿。</p>
+<p>MPSCNN 对此有一个特殊的对象，<code>MPSTemporaryImage</code>。它就像一个 <code>MPSImage</code>，但只能使用一次。写入一次数据，读取一次数据。之后，它的内存将被回收。（如果您熟悉 Metal，它们是使用 Metal 的资源堆来实现的。）</p>
+<p>你应该尽可能地使用 <code>MPSTemporaryImage</code>，因为这样可以避免大量的内存分配和释放。</p>
+<p>使用 BNNS 的话就得靠自己。你需要自己管理临时数据缓冲区。幸运的是，它非常简单：您可以分配一个或两个大数组，然后在这些层级之间重复使用它们。</p>
+<h4 id="多线程"><a href="#多线程" class="headerlink" title="多线程"></a>多线程</h4><p>你可能想要在后台线程中构建网络层级。加载学习参数的所有数据可能需要几秒钟的时间。</p>
+<p>在后台线程上执行推断也是一个好主意。</p>
+<p>使用足够深的神经网络，推断可能需要 0.1 到 0.5 秒之间的时间，这样的延迟对于用户是很明显的。</p>
+<p>使用 MPSCNN 创建一个命令队列和一个命令缓冲区，然后通知所有层级编码到命令缓冲区中，最后将工作提交给 GPU。GPU 完成后，会通过回调通知你。</p>
+<p>每项工作的编码都可以在后台线程中进行，你不需要做任何事情来进行同步。</p>
+<p>备注：在实时情况下（例如，将摄像机的实时视频帧提供给神经网络时），你希望 GPU 保持繁忙状态，并且避免 CPU 和 GPU 相互等待的情况。当 GPU 仍在处理前一帧时，CPU 应该已经编码了下一个视频帧。你需要使用 <code>MPSImage</code> 对象数组，并通过信号量保证对它们的同步访问——但说实话，如果现在的移动设备能够实时地进行深度学习，我会感到非常惊讶。</p>
+<p>BNNS 在 CPU 上工作，所以你可以在后台线程中开始工作，然后阻塞，直到 BNNS 完成。</p>
+<p>最好让 BNNS 弄清楚如何在可用的 CPU 内核上分割工作，但是有一个配置选项告诉 BNNS 有多少线程可以用来执行计算。（MPSCNN 不需要这个，它将使用尽可能多的 GPU 线程。）</p>
+<p>备注：你不应该在多个线程之间共享 MPSCNN 对象或 BNNS 对象。它们可以在单个后台线程中使用，但不能同时在使用多个线程中使用。</p>
+<h2 id="速度问题"><a href="#速度问题" class="headerlink" title="速度问题"></a>速度问题</h2><p>决定是否使用 BNNS 或 MPSCNN 是基于一个权衡：<strong>CPU 数据更快还是 GPU 更快？</strong></p>
+<p>并非所有数据都适合 GPU 处理。图像或视频是非常合适的，但像时间序列数据可能不适合。</p>
+<p>将数据加载到 GPU 中是需要花费的，因为你需要将其封装到 <code>MTLTexture</code> 对象中。一旦 GPU 完成，读取结果就需要再次从纹理对象中获取。</p>
+<p>使用基于 CPU 的 BNNS，便不会有这些开销，但是你也无法利用 GPU 的大规模并行性来进行计算。</p>
+<p>在实践中，开发人员可能会<strong>尝试两种方法，看看哪一个更快</strong>。但是，如上所示，由于 BNNS 和 MPSCNN 具有不同的 API，因此需要编写两次代码。</p>
+<p>因为我很好奇，所以我决定分别使用 BNNS 和 MPSCNN 建立一个非常基本的卷积神经网络来测量哪一个更快。</p>
+<p>我的神经网络设计大概是这样（点击图片放大）：</p>
+<p><img src="/img/articles/apple-deep-learning-bnns-versus-metal-cnn/ConvNet@2x.png1527128648.814062" alt="The convolutional neural network used for the speed test"></p>
+<p>这种网络设计可以用来分类图像。网络采用 256×256 的 RGB 图像（无 alpha 通道）作为输入，并产生一个具有 100 个 <code>浮点值</code> 的数组。输出会表示出 100 多种可能类别的对象的概率分布。</p>
+<p>实际上，神经网络需要有更多的层级才能真正有用。它最后也本该有一个 softmax 层，但是因为 BNNS 没有使用 softmax 函数，所以我把它去掉了。</p>
+<p>我实际上并没有训练这个神经网络来学习任何有用的东西，而是用合理的随机值进行初始化。这是一个没有用的神经网络。然而，它确实允许我们比较在 BNNS 和 MPSCNN 中建立相同的神经网络所需要的内容，以及每个网络运行有多快。</p>
+<p>如果你想一起实践，<a href="https://github.com/hollance/BNNS-vs-MPSCNN" target="_blank" rel="noopener">这是 GitHub 上的代码</a>。在 Xcode 中打开这个项目，并在至少有一个 A8 处理器的 iOS 10 兼容设备上运行它（它不能在模拟器上运行）。</p>
+<p><img src="/img/articles/apple-deep-learning-bnns-versus-metal-cnn/Screenshot@2x.png1527128648.8787365" alt="The speed test app"></p>
+<p>点击按钮后，App 冻结几秒钟，同时在每个神经网络上执行 100 个独立的推断。该 App 显示了创建网络需要多长时间（并不是很有趣），以及需要多长时间才能完成 100 次重复的推断。</p>
+<p>该 App 还打印出每个网络计算的结果。由于网络并没有进行训练，因此这些数字什么意义都没有，仅仅是用于调试目的。我想确保两个网络实际上计算的事情相同，从而保证测试是公平的。</p>
+<p>答案中的小差异是由于浮点四舍五入（由于 Metal 在内部使用的 16 位浮点数，我们只得到 3 位小数的精度），而且也可能是由于每个框架具体执行计算的差异而产生的。但结果足够接近。</p>
+<h4 id="App-的工作原理"><a href="#App-的工作原理" class="headerlink" title="App 的工作原理"></a>App 的工作原理</h4><p>这个 App 创建的神经网络具有 2 个卷积层、1 个 max-pooling 层，1 个 average-pooling 层和 1 个全连接层。然后，它会测量向网络发送 100 次相同图像需要多长时间。</p>
+<p>与此有关的主要源文件是 <strong>BNNSTest.swift</strong> 和 <strong>MetalTest.swift</strong>。</p>
+<p>你猜对了，<code>BNNSTest</code> 类使用 BNNS 功能创建神经网络。以下是创建第一个卷积层所需的一小段代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">inputImgDesc = <span class="type">BNNSImageStackDescriptor</span>(width: <span class="number">256</span>, height: <span class="number">256</span>, channels: <span class="number">3</span>, </span><br><span class="line">                   row_stride: <span class="number">256</span>, image_stride: <span class="number">256</span>*<span class="number">256</span>, </span><br><span class="line">                   data_type: dataType, data_scale: <span class="number">0</span>, data_bias: <span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">conv1imgDesc = <span class="type">BNNSImageStackDescriptor</span>(width: <span class="number">256</span>, height: <span class="number">256</span>, channels: <span class="number">16</span>, </span><br><span class="line">                   row_stride: <span class="number">256</span>, image_stride: <span class="number">256</span>*<span class="number">256</span>, </span><br><span class="line">                   data_type: dataType, data_scale: <span class="number">0</span>, data_bias: <span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> relu = <span class="type">BNNSActivation</span>(function: <span class="type">BNNSActivationFunctionRectifiedLinear</span>, </span><br><span class="line">                          alpha: <span class="number">0</span>, beta: <span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> conv1weightsData = <span class="type">BNNSLayerData</span>(data: conv1weights, data_type: dataType, </span><br><span class="line">                           data_scale: <span class="number">0</span>, data_bias: <span class="number">0</span>, data_table: <span class="literal">nil</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> conv1biasData = <span class="type">BNNSLayerData</span>(data: conv1bias, data_type: dataType, </span><br><span class="line">                        data_scale: <span class="number">0</span>, data_bias: <span class="number">0</span>, data_table: <span class="literal">nil</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> conv1desc = <span class="type">BNNSConvolutionLayerParameters</span>(x_stride: <span class="number">1</span>, y_stride: <span class="number">1</span>, </span><br><span class="line">                    x_padding: <span class="number">2</span>, y_padding: <span class="number">2</span>, k_width: <span class="number">5</span>, k_height: <span class="number">5</span>, </span><br><span class="line">                    in_channels: <span class="number">3</span>, out_channels: <span class="number">16</span>, </span><br><span class="line">                    weights: conv1weightsData, bias: conv1biasData, </span><br><span class="line">                    activation: relu)</span><br><span class="line"></span><br><span class="line">conv1 = <span class="type">BNNSFilterCreateConvolutionLayer</span>(&amp;inputImgDesc, &amp;conv1imgDesc, </span><br><span class="line">                                         &amp;conv1desc, &amp;filterParams)</span><br></pre></td></tr></table></figure>
+<p>使用 BNNS，你需要创建大量“描述符”助手来描述你将要使用的数据以及层级的属性和权重。其他层级也会重复此操作。现在你可以明白为什么我之前说这个会很无聊。</p>
+<p><code>MetalTest</code> 类使用 <code>MPSCNN</code>做同样的事情：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">conv1imgDesc = <span class="type">MPSImageDescriptor</span>(channelFormat: channelFormat, width: <span class="number">256</span>, </span><br><span class="line">                                  height: <span class="number">256</span>, featureChannels: <span class="number">16</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> relu = <span class="type">MPSCNNNeuronReLU</span>(device: device, a: <span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> conv1desc = <span class="type">MPSCNNConvolutionDescriptor</span>(kernelWidth: <span class="number">5</span>, kernelHeight: <span class="number">5</span>, </span><br><span class="line">                    inputFeatureChannels: <span class="number">3</span>, outputFeatureChannels: <span class="number">16</span>, </span><br><span class="line">                    neuronFilter: relu)</span><br><span class="line"></span><br><span class="line">conv1 = <span class="type">MPSCNNConvolution</span>(device: device, convolutionDescriptor: conv1desc, </span><br><span class="line">            kernelWeights: conv1weights, biasTerms: conv1bias, flags: .<span class="keyword">none</span>)</span><br></pre></td></tr></table></figure>
+<p>在这里你也可以创建各种描述符对象，但代码会短一些。</p>
+<p>你已经看到如何使用 BNNS 进行推断：你在每个层级调用一次 <code>BNNSFilterApply()</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> <span class="type">BNNSFilterApply</span>(conv1, imagePointer, &amp;temp1) != <span class="number">0</span> &#123;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"BNNSFilterApply failed on layer conv1"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="type">BNNSFilterApply</span>(pool1, temp1, &amp;temp2) != <span class="number">0</span> &#123;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"BNNSFilterApply failed on layer pool1"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="type">BNNSFilterApply</span>(conv2, temp2, &amp;temp1) != <span class="number">0</span> &#123;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"BNNSFilterApply failed on layer conv2"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="type">BNNSFilterApply</span>(pool2, temp1, &amp;temp2) != <span class="number">0</span> &#123;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"BNNSFilterApply failed on layer pool2"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="type">BNNSFilterApply</span>(fc3, temp2, &amp;results) != <span class="number">0</span> &#123;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"BNNSFilterApply failed on layer fc3"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这里，<code>imagePointer</code> 指向一个<code>浮点值</code>的 Swift 数组。同样，<code>temp1</code> 和 <code>temp2</code> 是普通的 <code>Swift</code> <code>浮点值</code>数组。我们不断重复使用这些数组来存储中间结果。网络的最终输出会写入 <code>[Float]</code> 类型的 <code>results</code> 中。一旦网络完成计算，我们可以立即读取这个数组的结果，并在我们 App 的其他地方使用它们。</p>
+<p>使用 MPSCNN 的过程是非常相似的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> commandBuffer = commandQueue.makeCommandBuffer()</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> conv1img = <span class="type">MPSTemporaryImage</span>(commandBuffer: commandBuffer, </span><br><span class="line">                                 imageDescriptor: conv1imgDesc)</span><br><span class="line">conv1.encode(commandBuffer: commandBuffer, sourceImage: inputImage, </span><br><span class="line">             destinationImage: conv1img)</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> pool1img = <span class="type">MPSTemporaryImage</span>(commandBuffer: commandBuffer, </span><br><span class="line">                                 imageDescriptor: pool1imgDesc)</span><br><span class="line">pool1.encode(commandBuffer: commandBuffer, sourceImage: conv1img, </span><br><span class="line">             destinationImage: pool1img)</span><br><span class="line">. . . </span><br><span class="line"></span><br><span class="line">fc3.encode(commandBuffer: commandBuffer, sourceImage: pool2img, </span><br><span class="line">           destinationImage: outputImage)</span><br><span class="line"></span><br><span class="line">commandBuffer.commit()</span><br></pre></td></tr></table></figure>
+<p>你创建一个 <code>MPSTemporaryImage</code> 对象来保存当前层级的结果，然后通知层级对其自身使用 <code>encode()</code> 并添加到 Metal 的命令缓冲区。这些 <code>MPSTemporaryImage</code> 对象跟我们在 <code>BNNS</code> 代码中使用的 <code>temp1</code> 和 <code>temp2</code> 的是等价的。MPSCNN 在后台管理自己的存储。</p>
+<p><code>inputImage</code> 和 <code>outputImage</code> 分别是网络的输入和输出，因此保存在持久化的 <code>MPSImage</code> 对象中。</p>
+<p>请注意，除非你在命令缓冲区上调用 <code>commit()</code>，否则 GPU 将不会执行任何操作。使用 BNNS，每次调用 <code>BNNSFilterApply()</code> 便会立即开始处理。但是 MPSCNN 中的 <code>layer.encode(...)</code> 只是创建了 GPU 命令，不会马上执行它们。在调用 <code>commit()</code> 之后，GPU 才开始处理数据，而 CPU 可以自由地处理更多东西。</p>
+<p>我们真正想要的是神经网络的输出是一个<code>浮点值</code>的数组。BNNS 已经可以处理普通的 Swift 数组，所以在此我们不需要做任何特别的事情。但是对于 MPSCNN，我们需要将输出的 <code>MPSImage</code> 对象的纹理转换成我们可以在 Swift 中使用的东西。在 App 的 <strong><code>MPSImage + Floats.swift</code></strong> 文件中包含一些辅助代码。</p>
+<p>备注：如果你使用 BNNS 的 16 位浮点数（你很可能会这样做），那么在某些时候你需要转换回 32 位浮点数。在演示的 App 中，这是在最后一个层级之前做的，而不是之后，因为完全连接层无法处理 16 位浮点数。</p>
+<h4 id="测试指标"><a href="#测试指标" class="headerlink" title="测试指标"></a>测试指标</h4><p>我想对 BNNS 和 MPSCNN 中创建的完全相同的神经网络的运行时间进行公平的比较。</p>
+<p>我没有测试将输入数据转换为正确格式所需的时间。如果输入的数据是图像，并且使用 MPSCNN，你可以将其加载到纹理中，然后就不用管了。但是 BNNS 不行：你需要首先在内存中重新排列图像数据，这可能会非常费时。</p>
+<p>然而，这实际上取决于你使用的是什么神经网络，这就是为什么我不想测量它。但是在我们的速度测试中，它确实给 BNNS 带来了轻微的优势，因为对于 BNNS 来说，获得正确形式的输入数据比较慢。</p>
+<p>对于输出数据，我测量了将其转换回 Swift 数组所需的时间。在这里，MPSCNN 比较慢，而 BNNS 根本没有成本（如果使用 32 位浮点数的话）。所以这也有利于 BNNS。</p>
+<p>然而，我认为在这种情况下的测量中包含转换是公平的，因为转换网络输出是你几乎总要做的事情。这是将 GPU 用于通用计算工作的一个缺点，因此降低了使用 GPU 所带来的性能收益。</p>
+<p>对于一个公平的测试，我想在 MPSCNN 和 BNNS 中使用 16 位浮点数。MPSCNN 在内部总是将权重存储为 <code>float16</code> 类型，所以为了保持公正，我们也应该让 BNNS 使用 16 位浮点数。缺点是 Swift 没有“半浮点”类型，所以我们即使在使用 BNNS 时，总是需要用“真实的” 32 位浮点数来回转换。</p>
+<p>备注：在 <strong>ViewController.swift</strong> 文件中有几个选项可以让你改变所测试的东西。特别是，它允许你更改学习参数的数据类型以及层级用来用于执行计算的数据类型。还有一个选项可以增大网络，这会增加所需的计算的数量，因为最初的网络很小，不一定代表真实的深度学习架构。</p>
+<h4 id="测试结果"><a href="#测试结果" class="headerlink" title="测试结果"></a>测试结果</h4><p>你准备好了吗？</p>
+<p>对于基本的 5 层卷积网络，在我的 iPhone 6s 上，使用 16 位浮点数，BNNS 比 MPSCNN 快大约 25％。</p>
+<p>所以这是CPU的胜利。</p>
+<p>然而，如果我们在每一层中通过提供更多的处理通道（改变 App 中的<code>乘数值</code>）来使网络更庞大，MPSCNN 将轻松超越 BNNS。</p>
+<p>当使用 32 位浮点数时，MPSCNN 也比 BNNS 更快。（可能是因为 MPSCNN 在内部总是使用 16 位浮点数，但 BNNS 现在有两倍的工作量。）</p>
+<p>作为一个全面的指导方针，如果发送到网络的推断需要做<strong>超过3亿次的浮点运算</strong>，那么最好切换到 MPSCNN。</p>
+<p>我以下面的方式来到这个数字：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Number of flops per layer = 2 × kernelWidth   × kernelHeight   ×</span><br><span class="line">                                inputChannels × outputChannels ×</span><br><span class="line">                                outputWidth   × outputHeight</span><br></pre></td></tr></table></figure>
+<p>然后我为每一层添加了触发器，并试验了网络的大小，来验证 MPSCNN 变得比 BNNS 更快的临界点。</p>
+<p>警告：这是一个超级不科学的实验，我的计算可能会失败。但是，如果你为深层网络做了一个后台计算，并且发现它需要 1 Gflops（每秒10亿次的浮点运算数）或更多，那么很明显 BNNS 就不行了。</p>
+<p>但请注意，这取决于许多因素：</p>
+<ul>
+<li><p>设备类型。我只在iPhone 6s上测试过。在较慢的 iPhone 6 或较快的 iPhone 7 上，性能可能会有所不同。</p>
+</li>
+<li><p>你的数据。正如我所指出的，MPSCNN 可以轻松地将图像加载到纹理中，但对于 BNNS ，你需要首先完全重新排列像素数据。你需要执行的预处理会对性能产生影响。</p>
+</li>
+<li><p>同样，为了在 Swift 中使用而对网络输出的数据进行的任何转换，都可能会减慢处理过程。</p>
+</li>
+<li><p>内存带宽。在我的 <a href="http://machinethink.net/blog/convolutional-neural-networks-on-the-iphone-with-vggnet/" target="_blank" rel="noopener">VGGNet 实现</a>中，学习参数占用大约 260 MB 的 RAM。对于每个推断，神经网络不仅需要做大量的计算，还需要访问数百万个存储单元。随时都可能遇到带宽的瓶颈。</p>
+</li>
+</ul>
+<p>我试图尽可能公平地进行测试，但是由于这两个框架中的错误和其他怪异行为，使得过程并不完美。</p>
+<p>例如，BNNS 全连接层不能接受 16 位浮点数，所以我必须先将数据转换回 32 位浮点数。由于完全连接层执行了大量的计算，如果支持这些半精度浮点数，BNNS 可能会更快。MPSCNN 的一些层级也有自己的怪异之处（详见<a href="https://github.com/hollance/BNNS-vs-MPSCNN" target="_blank" rel="noopener">源代码</a>）。</p>
+<p>备注：我没有测试批处理。这两个 API 都可以一次处理多个输入图像。这只会增加一次性向网络发送的数据量。然而，GPU 可能在这方面有优势，因为批处理可能会更好地使用 GPU 带宽。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>所以应该使用哪个 API ？这要结合实际情况。</p>
+<p>这两个 API 功能都有限，而且仍然有一些不足之处。对于较小的网络，BNNS 速度较快，但较大的网络速度较慢。BNNS 的功能也较少，你必须自己编写更多的代码。总的来说，BNNS API 比 MPSCNN 更丑陋一点，可能是因为它是一个 C API 被导入到 Swift 中。</p>
+<p>但是，BNNS 与 MPSCNN 相比有一个优势：它也能运行在 macOS 上。</p>
+<p>提示：<strong>使用16位浮点数</strong>。尽管 16 位浮点数不是 Swift 的本地类型，但它们能使 BNNS 执行得更高效，即使这意味着您必须将常规数组转换为 16 位浮点数，然后再返回。</p>
+<p>就个人而言，我可能会坚持 MPSCNN 。它更加灵活，你可以将它与 Metal Performance Shaders 的快速矩阵乘法程序和自己的计算内核结合使用。</p>
+<p><strong>最重要的是你的 App 运行得有多快，以及推断的效果如何。</strong></p>
+<p>如果你的项目紧急，需要快点，请使用 MPSCNN。但是如果你能腾出时间，那最好用这两种 API 来分别实现你的神经网络，通过对比来达到最佳速度。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/machinethink/">machinethink</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/深度学习/">深度学习</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2018/05/24/apple-deep-learning-bnns-versus-metal-cnn/" data-title="苹果的深度学习框架：BNNS 和 MPSCNN 的对比 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2018/05/28/coreml-introduction/" title="Core ML入门：构建一个简单的图像识别应用">
+  <strong>上一篇</strong><br>
+  <span>
+  Core ML入门：构建一个简单的图像识别应用</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2018/05/17/enums-and-optionals/" title="Swift 的可选型枚举">
+ <strong>下一篇</strong><br> 
+ <span>Swift 的可选型枚举
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2018/05/24/apple-deep-learning-bnns-versus-metal-cnn/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#为什么要优先使用-BNNS-或-MPSCNN-？"><span class="toc-number">1.</span> <span class="toc-text">为什么要优先使用 BNNS 或 MPSCNN ？</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#一切都与层级有关"><span class="toc-number">1.0.1.</span> <span class="toc-text">一切都与层级有关</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#BNNS-和-MPSCNN-不做训练"><span class="toc-number">1.0.2.</span> <span class="toc-text">BNNS 和 MPSCNN 不做训练</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#仅限卷积网络"><span class="toc-number">1.0.3.</span> <span class="toc-text">仅限卷积网络</span></a></li></ol></li></ol><li class="toc-item toc-level-2"><a class="toc-link" href="#不同之处"><span class="toc-number">2.</span> <span class="toc-text">不同之处</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#它是-Swifty-的么"><span class="toc-number">2.0.1.</span> <span class="toc-text">它是 Swifty 的么?</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#激活函数"><span class="toc-number">2.0.2.</span> <span class="toc-text">激活函数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#层级类型"><span class="toc-number">2.0.3.</span> <span class="toc-text">层级类型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#学习参数"><span class="toc-number">2.0.4.</span> <span class="toc-text">学习参数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#输入数据"><span class="toc-number">2.0.5.</span> <span class="toc-text">输入数据</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#临时数据"><span class="toc-number">2.0.6.</span> <span class="toc-text">临时数据</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#多线程"><span class="toc-number">2.0.7.</span> <span class="toc-text">多线程</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#速度问题"><span class="toc-number">3.</span> <span class="toc-text">速度问题</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#App-的工作原理"><span class="toc-number">3.0.1.</span> <span class="toc-text">App 的工作原理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#测试指标"><span class="toc-number">3.0.2.</span> <span class="toc-text">测试指标</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#测试结果"><span class="toc-number">3.0.3.</span> <span class="toc-text">测试结果</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2019 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftUI 重磅教程专属优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/H9aEpi">使用 SwiftGG 优惠码，半价基础上再减 20 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

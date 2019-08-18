@@ -1,0 +1,1032 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>Swift 服务端开发指南 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="服务端,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Soroush Khanlou，原文链接，原文日期：2017/6/21译者：Cwift；校对：Yousanflics；定稿：CMB   在服务端使用 Swift 时，大多数路由框架都会把路由同一个指定的闭包关联起来。比如我们在编写 Beacon  时使用的 Vapor 框架。你可以在该框架主页的测试示例中看到如下的代码：">
+<meta name="keywords" content="服务端">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Swift 服务端开发指南">
+<meta property="og:url" content="https://swift.gg/2018/04/24/server-side-commands/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Soroush Khanlou，原文链接，原文日期：2017/6/21译者：Cwift；校对：Yousanflics；定稿：CMB   在服务端使用 Swift 时，大多数路由框架都会把路由同一个指定的闭包关联起来。比如我们在编写 Beacon  时使用的 Vapor 框架。你可以在该框架主页的测试示例中看到如下的代码：">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-08-18T15:28:48.238Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Swift 服务端开发指南">
+<meta name="twitter:description" content="作者：Soroush Khanlou，原文链接，原文日期：2017/6/21译者：Cwift；校对：Yousanflics；定稿：CMB   在服务端使用 Swift 时，大多数路由框架都会把路由同一个指定的闭包关联起来。比如我们在编写 Beacon  时使用的 Vapor 框架。你可以在该框架主页的测试示例中看到如下的代码：">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2018/04/24/server-side-commands/" target="_blank" title="Swift 服务端开发指南" itemprop="url">Swift 服务端开发指南</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2018-04-24T00:00:00.000Z" itemprop="datePublished">2018-04-24</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Soroush Khanlou，<a href="http://khanlou.com/2017/06/server-side-commands" target="_blank" rel="noopener">原文链接</a>，原文日期：2017/6/21<br>译者：<a href="http://weibo.com/277195544" target="_blank" rel="noopener">Cwift</a>；校对：<a href="http://blog.yousanflics.com.cn" target="_blank" rel="noopener">Yousanflics</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>在服务端使用 Swift 时，大多数路由框架都会把路由同一个指定的闭包关联起来。比如我们在编写 <a href="http://beacon.party" target="_blank" rel="noopener">Beacon</a>  时使用的 <a href="https://vapor.codes" target="_blank" rel="noopener">Vapor</a> 框架。你可以在该框架主页的测试示例中看到如下的代码：</p>
+<a id="more"></a>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Vapor</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> droplet = <span class="keyword">try</span> <span class="type">Droplet</span>()</span><br><span class="line"></span><br><span class="line">droplet.<span class="keyword">get</span>(<span class="string">"hello"</span>) &#123; req <span class="keyword">in</span></span><br><span class="line">    <span class="keyword">return</span> <span class="string">"Hello, world."</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span> droplet.run()</span><br></pre></td></tr></table></figure>
+<p>当你运行这段代码时，访问 <code>localhost:8080/hello</code> 会展示文本 <code>Hello, world.</code> 。</p>
+<p>有时候，你想要向 <code>API</code> 的调用者返回一个特殊的 <code>HTTP</code> 代码，提示执行了一个特殊的操作。示例如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">droplet.post(<span class="string">"devices"</span>, handler: &#123; request <span class="keyword">in</span></span><br><span class="line">	<span class="keyword">let</span> apnsToken: <span class="type">String</span> = <span class="keyword">try</span> request.niceJSON.fetch(<span class="string">"apnsToken"</span>)</span><br><span class="line">	<span class="keyword">let</span> user = <span class="keyword">try</span> request.session.ensureUser()</span><br><span class="line">    </span><br><span class="line">	<span class="keyword">var</span> device = <span class="keyword">try</span> <span class="type">Device</span>(apnsToken: apnsToken, userID: user.id.unwrap())</span><br><span class="line">	<span class="keyword">try</span> device.save()</span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">try</span> device.makeJSON()</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>（我打算在之后的博客中详细介绍 <code>niceJSON</code> 的用法，不过现在请忽略它。）</p>
+<p>这是个非常好的请求，和 <code>Beacon</code> 中的代码很像。不过有一个问题：当你返回类似字符串的对象（本文的第一个示例）或者 <code>JSON</code>（本文的第二个示例）时，Vapor 会返回 <code>200</code> 的状态码。但是这是一个 <code>POST</code> 请求并且创建了一个新的 <code>Device</code> 资源，所以应该返回 <code>201 Created</code> 的 <code>HTTP</code> 状态码。所以你需要创建一个完整的 <code>Response</code> 对象：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> response = <span class="type">Response</span>(status: .created)</span><br><span class="line">response.json = <span class="keyword">try</span> device.makeJSON()</span><br><span class="line"><span class="keyword">return</span> response</span><br></pre></td></tr></table></figure>
+<p>对每个创建型的请求重复执行这样的操作很烦人。</p>
+<p>最后一点，端点（endpoints）通常会有副作用。特别是使用 Rails 编写的应用，管理和测试这些端点是非常困难的，在 Rails 社区中已经出现了许多有关的讨论了。如果注册需要发送注册邮件，那么如何布置 “桩代码” （stub）以便测试剩余的代码？这是很难做到的，如果所有逻辑都在一个复杂的函数中执行，更是难上加难。在 <code>Beacon</code> 中没有任何发送邮件的功能，但是我们的确有很多推送通知。监管这些推送的副作用是很重要的。</p>
+<p>一般来说，在每个路由中使用一个闭包的风格，已经应用在 <code>Flask</code>、<code>Sinatra</code> 和 <code>Express</code> 之类的框架中了。它们都是非常好的示例，不过真实的项目往往具有复杂的端点，依旧是把所有逻辑放在一个复杂的方法中。</p>
+<p>进一步说，Rails 风格的控制器模块很庞大，而与每个端点匹配的相关方法都使用控制器作为命名空间，这使得控制器彼此之间具有边界攻击性。我觉得我们可以做的比以上两种模式（使用闭包的风格和 Rails 风格）更好。（如果你想了解 Ruby 服务器架构，我已经从 <a href="https://github.com/trailblazer/trailblazer" target="_blank" rel="noopener">Trailblazer</a> 项目中总结了一些经验。）</p>
+<p>最基本的一点是我想要一个更好的抽象来响应传入的请求。为此，我使用了一个称之为 <code>Command</code> 的对象来封装端点需要做的工作。</p>
+<p><code>Command</code> 模式的起始部分是一个协议：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">protocol</span> <span class="title">Command</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">init</span>(request: <span class="type">Request</span>, droplet: <span class="type">Droplet</span>) <span class="keyword">throws</span></span><br><span class="line">    </span><br><span class="line">	<span class="keyword">var</span> status: <span class="type">Status</span> &#123; <span class="keyword">get</span> &#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">func</span> <span class="title">execute</span><span class="params">()</span></span> <span class="keyword">throws</span> -&gt; <span class="type">JSON</span></span><br><span class="line">	</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Command</span>: <span class="title">ResponseRepresentable</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">	<span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">makeResponse</span><span class="params">()</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Response</span> &#123;</span><br><span class="line">		<span class="keyword">let</span> response = <span class="type">Response</span>(status: <span class="keyword">self</span>.status)</span><br><span class="line">		response.json = <span class="keyword">try</span> execute()</span><br><span class="line">		<span class="keyword">return</span> response</span><br><span class="line">	&#125;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的代码是 <code>Command</code> 协议的基础外壳，后面会向其中添加更多的代码。从协议的基础部分可以了解如何使用这种模式。下面来使用新模式重写“注册设备”这个端点。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">droplet.post(<span class="string">"devices"</span>, handler: &#123; request <span class="keyword">in</span></span><br><span class="line">	<span class="keyword">return</span> <span class="type">RegisterDeviceCommand</span>(request: request, droplet: droplet)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>因为该命令遵守了 <code>ResponseRepresentable</code>，所以 Vapor 接受它作为路由的 <code>handler</code> 闭包的有效返回值。 它将自动调用 <code>Command</code> 的 <code>makeResponse()</code> 方法并且为 API 的调用者返回一个 <code>Response</code>。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">RegisterDeviceCommand</span>: <span class="title">Command</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">let</span> apnsToken: <span class="type">String</span></span><br><span class="line">	<span class="keyword">let</span> user: <span class="type">User</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">init</span>(request: <span class="type">Request</span>, droplet: <span class="type">Droplet</span>) <span class="keyword">throws</span> &#123;</span><br><span class="line">		<span class="keyword">self</span>.apnsToken = <span class="keyword">try</span> request.niceJSON.fetch(<span class="string">"apnsToken"</span>)</span><br><span class="line">		<span class="keyword">self</span>.user = <span class="keyword">try</span> request.session.ensureUser()</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">let</span> status = <span class="type">Status</span>.created</span><br><span class="line"></span><br><span class="line">	<span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">execute</span><span class="params">()</span></span> <span class="keyword">throws</span> -&gt; <span class="type">JSON</span> &#123;</span><br><span class="line">		<span class="keyword">var</span> device = <span class="keyword">try</span> <span class="type">Device</span>(apnsToken: apnsToken, userID: user.id.unwrap())</span><br><span class="line">		<span class="keyword">try</span> device.save()</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">try</span> device.makeJSON()</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>以下是该模式的一些优点：</p>
+<ol>
+<li>在服务端使用诸如 Swift 这样的新语言的主要吸引力是可以使用新的特性，比如用可选型（更针对性地说，是为了解决以前的缺陷）来保障一个请求成功完成。因为 <code>apnsToken</code> 和 <code>user</code> 的类型是非可选型的，所以如果 <code>init</code> 方法在结束时没有初始化所有的属性，则文件无法通过编译。</li>
+<li>状态码的使用方式很友好。</li>
+<li>初始化与执行分离。你可以编写一个测试，检查对象的初始化过程（例如，从请求中提取属性），该测试与检查实际的 <code>save()</code> 方法的测试是分离的。</li>
+<li>至于副作用，该模式可以轻松地把不同的 <code>Command</code> 放置到自己的文件中。</li>
+</ol>
+<p>可以向 <code>Command</code> 中添加两个更重要的组件。首先是验证。添加 <code>func validate() throws</code> 到 <code>Command</code> 协议中，编写一个默认的空实现。他也会被添加到 <code>makeResponse()</code> 方法中，在 <code>execute()</code> 方法之前执行：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">makeResponse</span><span class="params">()</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Response</span> &#123;</span><br><span class="line">	<span class="keyword">let</span> response = <span class="type">Response</span>(status: <span class="keyword">self</span>.status)</span><br><span class="line">	<span class="keyword">try</span> validate()</span><br><span class="line">	response.json = <span class="keyword">try</span> execute()</span><br><span class="line">	<span class="keyword">return</span> response</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>validate()</code> 方法的典型样式可能如下所示（来自 Beacon 的 <code>AttendEventCommand</code>）：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">validate</span><span class="params">()</span></span> <span class="keyword">throws</span> &#123;</span><br><span class="line">	<span class="keyword">if</span> attendees.<span class="built_in">contains</span>(<span class="keyword">where</span>: &#123; $<span class="number">0</span>.userID == user.id &#125;) &#123;</span><br><span class="line">		<span class="keyword">throw</span> <span class="type">ValidationError</span>(message: <span class="string">"You can't join an event you've already joined."</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> attendees.<span class="built_in">count</span> &gt;= event.attendanceLimit &#123;</span><br><span class="line">		<span class="keyword">throw</span> <span class="type">ValidationError</span>(message: <span class="string">"This event is at capacity."</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> user.id == event.organizer.id &#123;</span><br><span class="line">		<span class="keyword">throw</span> <span class="type">ValidationError</span>(message: <span class="string">"You can't join an event you're organizing."</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样的代码易于阅读，保持所有验证本地化并且非常易于测试。虽然你可以构造你自己的 <code>Request</code> 和 <code>Droplet</code> 对象，然后把它们传入 <code>Command</code> 的指定构造器，但是你完全没必要这么做。因为每个 <code>Command</code> 都是你自己的对象，所以你可以编写一个接受完备的诸如 <code>User</code> 和 <code>Event</code> 这类对象的构造器，你不需要手动构造 <code>Request</code> 对象进行测试，除非你有测试 <code>Command</code> 构造过程的特殊需求。</p>
+<p>Command 需要的最后一个组件是执行副作用的功能。副作用很简单：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">protocol</span> <span class="title">SideEffect</span> </span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">func</span> <span class="title">perform</span><span class="params">()</span></span> <span class="keyword">throws</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我在 <code>Command</code> 协议中增加了一个属性，该属性列出了 Command 执行之后需要执行的 <code>SideEffect</code> 对象。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> sideEffects: [<span class="type">SideEffect</span>] &#123; <span class="keyword">get</span> &#125;</span><br></pre></td></tr></table></figure>
+<p>最后，副作用被添加到了 <code>makeResponse()</code> 方法中：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">makeResponse</span><span class="params">()</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Response</span> &#123;</span><br><span class="line">	<span class="keyword">let</span> response = <span class="type">Response</span>(status: <span class="keyword">self</span>.status)</span><br><span class="line">	<span class="keyword">try</span> validate()</span><br><span class="line">	response.json = <span class="keyword">try</span> execute()</span><br><span class="line">	<span class="keyword">try</span> sideEffects.forEach(&#123; <span class="keyword">try</span> $<span class="number">0</span>.perform() &#125;)</span><br><span class="line">	<span class="keyword">return</span> response</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>（在代码的未来版本中，副作用可能会以异步的方式执行，即不会阻止向用户发送响应的过程，不过目前只能同步执行。）将副作用与 <code>Command</code> 的其余部分分离的主要原因是便于测试。你可以创建 <code>Command</code> 并且执行，而不必隔离副作用，因为副作用永远不会被执行。</p>
+<p><code>Command</code> 模式是一个简单的抽象，但它是可测试且正确的，坦白地说，它使用起来令人很愉悦。你可以在这个 <a href="https://gist.github.com/khanlou/133c3cf65d434ec2e66a28a519df3372" target="_blank" rel="noopener">gist</a> 中找到协议的完整定义。我不会因为 Vapor 没有包含这类的抽象而打击它：和其他服务端的框架一样，Vapor 设计简单，你可以根据个人喜好对它进行抽象。 </p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/KHANLOU/">KHANLOU</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-跨平台/">Swift 跨平台</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2018/04/24/server-side-commands/" data-title="Swift 服务端开发指南 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2018/05/02/just-controllers/" title="抛弃视图控制器，做自己的控制器">
+  <strong>上一篇</strong><br>
+  <span>
+  抛弃视图控制器，做自己的控制器</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2018/04/23/errors-on-the-server/" title="Swift 服务端错误处理">
+ <strong>下一篇</strong><br> 
+ <span>Swift 服务端错误处理
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2018/04/24/server-side-commands/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ 
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2019 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftUI 重磅教程专属优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/H9aEpi">使用 SwiftGG 优惠码，半价基础上再减 20 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

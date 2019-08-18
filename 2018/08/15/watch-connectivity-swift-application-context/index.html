@@ -1,0 +1,1059 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>Swift Watch Connectivity 使用教程 | 在 Swift 中使用 Watch Connectivity — Application Context | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swiftWatch,apple Watch,Watch Connectivity,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="本文详细讲解了如何通过 Watch Connectivity 的 Application Context 方式进行 watch 和 配对 iPhone 之间共享数据。">
+<meta name="keywords" content="swiftWatch,apple Watch,Watch Connectivity">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在 Swift 中使用 Watch Connectivity — Application Context">
+<meta property="og:url" content="https://swift.gg/2018/08/15/watch-connectivity-swift-application-context/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="本文详细讲解了如何通过 Watch Connectivity 的 Application Context 方式进行 watch 和 配对 iPhone 之间共享数据。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://swift.gg/img/articles/Watch%20Connectivity%20in%20Swift%20—%20Application%20Context/Watch-Connectivity-Application-Context.png1534304479.3475852">
+<meta property="og:updated_time" content="2019-08-18T15:28:48.242Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="在 Swift 中使用 Watch Connectivity — Application Context">
+<meta name="twitter:description" content="本文详细讲解了如何通过 Watch Connectivity 的 Application Context 方式进行 watch 和 配对 iPhone 之间共享数据。">
+<meta name="twitter:image" content="https://swift.gg/img/articles/Watch%20Connectivity%20in%20Swift%20—%20Application%20Context/Watch-Connectivity-Application-Context.png1534304479.3475852">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2018/08/15/watch-connectivity-swift-application-context/" target="_blank" title="在 Swift 中使用 Watch Connectivity — Application Context" itemprop="url">在 Swift 中使用 Watch Connectivity — Application Context</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2018-08-15T00:00:00.000Z" itemprop="datePublished">2018-08-15</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：codingexplorer，<a href="http://www.codingexplorer.com/watch-connectivity-swift-application-context/" target="_blank" rel="noopener">原文链接</a>，原文日期：2018-07-18<br>译者：<a href="http://khala-wan.com" target="_blank" rel="noopener">Khala-wan</a>；校对：<a href="http://blog.yousanflics.com.cn" target="_blank" rel="noopener">Yousanflics</a>，<a href="https://github.com/wongzigii" target="_blank" rel="noopener">wongzigii</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p><img src="/img/articles/Watch Connectivity in Swift — Application Context/Watch-Connectivity-Application-Context.png1534304479.3475852" alt></p>
+<p>在 watchOS 1 时代，<code>WatchKit Extension</code> 位于已配对的 iOS 设备上，这使得宿主 APP 和 watch 之间的数据共享变得简单。类似偏好设置这种最简单的数据，只需要通过 App Groups 功能来存取 <code>NSUserDefaults</code>。目前在手机上留存的其他扩展程序和主 app 之间共享数据仍然应该使用这种方式，例如 <code>Today View Extension</code>，但它已不再适用于 watchOS 的 app。<br>幸运的是，苹果为我们提供了新的 API 来做这件事。相比 App Groups，Watch Connectivity 拥有更强大的功能。它不仅提供了你的 Apple Watch 和与其配对 iPhone 之间连接状态的更多信息，还允许它们之间进行交互消息和 3 种方式的后台传输，这些方式分别是：</p>
+<ol>
+<li>Application Context</li>
+<li>User Info Transfer</li>
+<li>File Transfer</li>
+</ol>
+<p>我们今天先讨论第一种方式：Application Context。</p>
+<a id="more"></a>
+<h2 id="什么是-Application-Context"><a href="#什么是-Application-Context" class="headerlink" title="什么是 Application Context"></a>什么是 Application Context</h2><p>假设你有个 watch app，它有一些可以在 iOS app 端设置的设置项，比如温度的显示单位是摄氏度还是华氏度。对于这样的设置项，除非你希望在用户在设置完成之后立即使用 watch 上的 app，否则将设置项的信息通过后台传输发送到 watch 才会是比较合理的。</p>
+<p>因为它可能不是立即需要的，所以系统可能会在节省电量最多的情况下将其发送出去。你也不需要任何历史记录，因为用户可能并不关心一小时之前的设置是摄氏度。</p>
+<p>这就是 Application Context 的用武之地。它仅用于发送最新的数据。如果你将温度设置项从摄氏度改为华氏度，然后在 Application Context 发送到 watch 之前再将它（或者其他设置项）设置为不同的值，那么最新的值会覆盖之前等待发送的信息。</p>
+<p>如果你确实希望它能保存先前信息的历史记录，而且是以最省电的方式传输。那么可以使用 <code>User Info</code> 方式进行传输。它的使用方式和 Application Context 很相似，但它会将更新操作加入到一个队列中并逐一发送（而不是仅仅覆盖某些内容只发送最新的信息）。具体 <code>User Info</code> 的使用将作为以后另一篇文章的主题来讲。</p>
+<h2 id="设置-iOS-应用程序"><a href="#设置-iOS-应用程序" class="headerlink" title="设置 iOS 应用程序"></a>设置 iOS 应用程序</h2><p>我们将从一个类似于上一篇文章 <a href="http://www.codingexplorer.com/watchos-2-hello-world-app-in-swift/" target="_blank" rel="noopener">watchOS Hello World App in Swift</a> 中的 app 说起。不过在本文中，我们将在这个 iPhone app 上加入一个 <code>UISwitch</code> 控件，并通过更新 watchOS app 上的 WKInterfaceLabel 来说明 <code>UISwitch</code> 的状态。</p>
+<p>首先，在 iOS app 的 <code>viewController</code> 中，我们需要设置一些东西：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> WatchConnectivity</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ViewController</span>: <span class="title">UIViewController</span>, <span class="title">WCSessionDelegate</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">session</span><span class="params">(<span class="number">_</span> session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?)</span></span> &#123; &#125;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">sessionDidBecomeInactive</span><span class="params">(<span class="number">_</span> session: WCSession)</span></span> &#123; &#125;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">sessionDidDeactivate</span><span class="params">(<span class="number">_</span> session: WCSession)</span></span> &#123; &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">var</span> session: <span class="type">WCSession?</span></span><br><span class="line"> </span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.viewDidLoad()</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> <span class="type">WCSession</span>.isSupported() &#123;</span><br><span class="line">            session = <span class="type">WCSession</span>.<span class="keyword">default</span></span><br><span class="line">            session?.delegate = <span class="keyword">self</span></span><br><span class="line">            session?.activate()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>下面，我们最先需要导入 <code>WatchConnectivity</code> 框架。没有它，我们所做的都是无用功。接下来，为了响应来自 WCSession 的回调，我们需要将当前这个 <code>ViewController</code> 设置为 <code>WCSession</code> 的代理，为此我们需要让它遵守这个协议，所以在 <code>ViewController</code> 的父类声明后面添加 <code>WCSessionDelegate</code> 协议。</p>
+<p>下一步，我们需要实现 <code>WCSessionDelegate</code> 中的一些方法。对于当前这个 app，它们不是特别必要，但是如果想要快速在 watch app 中切换，你就需要进一步实现它们。</p>
+<p>之后，我们需要创建一个变量用于存储 <code>WCSession</code>。因为 <code>WCSession</code> 实际上是一个单例，技术上我们可以跳过这一步，但每次输入 <code>session?</code> 肯定要比 <code>WCSession.default</code> 更简短。</p>
+<p>你应该在代码运行初期对 session 进行设置。在大多数情况下，这将在程序初始化的时候来做。但由于我们是在 <code>ViewController</code> 中执行此操作，所以最早能执行的地方大概就只有 <code>viewDidLoad</code> 方法中了。一般情况下来说，你不应该在 <code>viewController</code> 中执行这个操作，因为你的 app 希望在屏幕上未加载特定 <code>viewController</code> 时就可以更新它的数据模型。为了简单起见，我在 <code>viewController</code> 中做了这个操作，这仅仅是为了展示如何使用这些 API。如果这个 <code>ViewController</code> 是唯一关心使用 <code>WCSession</code> 的东西，那就没关系。但通常情况并非如此。</p>
+<p>要设置 session，我们需要先根据 <code>WCSession</code> 的 <code>isSupport</code> 方法的返回值来检查是否支持。如果程序在 iPad 上运行的话，这一点尤为重要。目前，你无法将 iPad 与 Apple Watch 配对，因此它会返回 <code>false</code> 表示不支持在 iPad 上使用 <code>WCSession</code>。在 iPhone 上它会返回 <code>true</code>。</p>
+<p>一旦我们完成检查，就可以将 WCSession 的 defaultSession 存储在那里，接着将这个 <code>ViewController</code> 设置为它的代理并激活 session。如果我们可以在初始化程序中执行 <code>isSupported</code> 来测试是否支持，就可以把 session 用作一个常量。而这里的 session 是一个可选值是因为我们不知道程序是否会运行在 <code>iPad</code> 上，所以当支持 <code>WCSession</code> 时，session 的值为 <code>WCSession.defualt</code>，反之则为 <code>nil</code>。这样，当我们在 <code>iPad</code> 上尝试访问 session 中的属性或方法时，它们甚至不会执行，因为 session 为 <code>nil</code>。</p>
+<p>将一个 <code>UISwitch</code> 放在 Storyboard 上，并将其 <code>ValueChanged</code> 方法关联到 <code>ViewController</code> 中。<br>在方法中加入如下代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="meta">@IBAction</span> <span class="function"><span class="keyword">func</span> <span class="title">switchValueChanged</span><span class="params">(<span class="number">_</span> sender: UISwitch)</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">let</span> validSession = session &#123;</span><br><span class="line">        <span class="keyword">let</span> iPhoneAppContext = [<span class="string">"switchStatus"</span>: sender.isOn]</span><br><span class="line"> </span><br><span class="line">        <span class="keyword">do</span> &#123;</span><br><span class="line">            <span class="keyword">try</span> validSession.updateApplicationContext(iPhoneAppContext)</span><br><span class="line">        &#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">"Something went wrong"</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先检查我们是否有一个有效的 session，如果是运行在 iPad 上，那么将跳过整个代码块。 <code>Application Context</code> 是一个 Swift 字典，它以 <code>String</code> 作为 <code>key</code>，<code>AnyObject</code> 作为 <code>value</code> (<code>Dictionary&lt;String, AnyObject&gt;</code>)。 value 必须遵循属性列表的规则，并且只包含某些类型。它和 <code>NSUserDefaults</code> 具有相同的限制，所以在上一篇文章 <a href="http://www.codingexplorer.com/nsuserdefaults-a-swift-introduction/" target="_blank" rel="noopener">NSUserDefaults — A Swift Introduction</a> 中已经介绍过了具体可以使用哪些类型。尽管如此，当我们发送一个 Swift <code>Bool</code> 类型时，其将会被转换为 <code>NSNumber boolean value</code>，所以没关系。</p>
+<p>调用 <code>updateApplicationContext</code> 可能会抛出异常，所以我们需要将它包装在 <code>do-block</code> 中并通过 <code>try</code> 来调用。如果出现异常，我们只是在控制台上打印了一些信息，你还可以设置任何你需要的东西，比如你可能需要让用户知道发生了错误，那就可以显示一个 UIAlerController，同样，如果有必要可以加入异常的清理或恢复代码。这就是为了发送 <code>Application Context</code>，我们所需要的全部准备。</p>
+<h2 id="设置-watchOS-应用程序"><a href="#设置-watchOS-应用程序" class="headerlink" title="设置 watchOS 应用程序"></a>设置 watchOS 应用程序</h2><p>因为我们使用的是之前 <a href="http://www.codingexplorer.com/watchos-2-hello-world-app-in-swift/" target="_blank" rel="noopener">watchOS Hello World App in Swift</a> 文中的 Hello World App，所以部分相同的设置已经替我们完成了。跟 iPhone 类似，我们还需要做一些设置才能使用 <code>WatchConnectivity</code>。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> WatchConnectivity</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">InterfaceController</span>: <span class="title">WKInterfaceController</span>, <span class="title">WCSessionDelegate</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">session</span><span class="params">(<span class="number">_</span> session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?)</span></span> &#123; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> session = <span class="type">WCSession</span>.<span class="keyword">default</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">awake</span><span class="params">(withContext context: <span class="keyword">Any</span>?)</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.awake(withContext: context)</span><br><span class="line">        </span><br><span class="line">        session.delegate = <span class="keyword">self</span></span><br><span class="line">        session.activate()</span><br><span class="line">    &#125;</span><br><span class="line"><span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里省略掉了之前 App 中的一些无关代码，只展示与 <code>WatchConnectivity</code> 设置相关的部分。同样，我们需要导入 <code>WatchConnectivity</code> 框架，并让我们的 InterfaceController 遵守 WCSessionDelegate 协议，紧接着，我们将 session 常量初始化为 <code>WCSession</code> 的单例 <code>defaultSession</code>。</p>
+<p>与 iOS 端不同的是，这里我们将 session 声明为一个非可选值的常量。很显然，运行在不低于 <code>watchOS 2</code> 系统上的 Apple Watch 是支持 <code>Watch Connectivity</code> 的，所以我们不需要在 <code>watchOS</code> 端进行相同的测试。 并且我们在声明时就初始化了它，又没有其他平台（如iPad）需要担心，所以我们不需要它是可选的。</p>
+<p>接下来，在代码的初期，我们需要设置 session。在 InterfaceController 中 awakeWithContext 方法是个很好的地方，所以我们在这里做相关设置。和 iOS App 一样，我们设置当前类作为 session 的代理，然后激活 session。</p>
+<p>让我们写一个辅助方法来处理 Application Context 的回调，因为我们可能会多次调用它，而不是仅仅当我们收到一个新 <code>context</code> 时（你很快会看到）。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">processApplicationContext</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">let</span> iPhoneContext = session.receivedApplicationContext <span class="keyword">as</span>? [<span class="type">String</span> : <span class="type">Bool</span>] &#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> iPhoneContext[<span class="string">"switchStatus"</span>] == <span class="literal">true</span> &#123;</span><br><span class="line">            displayLabel.setText(<span class="string">"Switch On"</span>)</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            displayLabel.setText(<span class="string">"Switch Off"</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>WCSession</code> 有 2 个与 <code>Application Context</code> 相关的属性，<code>applicationContext</code> 和 <code>receivedApplicationContext</code>。它们的不同之处是：</p>
+<ul>
+<li>applicationContext - 此设备最近一次<strong>发送</strong>的 <code>Application Context</code>。</li>
+<li>receivedApplicationContext - 此设备最近一次<strong>接收</strong>的 <code>Application Context</code>。</li>
+</ul>
+<p>现在，把它俩放到一起来看，至少接收到的看起来很明显。但在我第一次涉及这个时（不记得 WWDC 中 Watch Connectivity的介绍视频的全部内容？），我认为 applicationContext 是从最近的发送或接收来更新的，因为我认为它们是一致的 <code>context</code>。然而我大错特错，我花了一段时间才意识到它们是分开的。我当然能看出来原因，因为我们可能每次都会发送不一样的数据，就像从 Watch 的角度来看，applicationContext 就是 iPhone 端需要的 Watch 相关 <code>context</code>，而 receivedApplicationContext 则是 Watch 端需要的 iPhone 相关 <code>context</code>。无论哪种方式，请记住它们是不同的两个东西，并根据实际情况选择你所需要的那个。</p>
+<p>所以在这个方法中，我们首先尝试将 <code>receivedApplicationContext</code> 由 <code>[String: AnyObject]</code> 类型的字典转换为我们需要的 <code>[String: Bool]</code> 类型。如果转换成功，则再根据字典中布尔值的状态将 displayLabel 的 text 值设置为 “Switch On” 或 “Switch Off”。</p>
+<p>当我们实际接收到一个新的  Application context 时，该 InterfaceController 将会收到我们 WCSession 对象的代理回调来通知我们这个信息，我们将在那里调用这个辅助方法。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">session</span><span class="params">(<span class="number">_</span> session: WCSession, didReceiveApplicationContext applicationContext: [String : <span class="keyword">Any</span>])</span></span> &#123;</span><br><span class="line">    <span class="type">DispatchQueue</span>.main.async() &#123;</span><br><span class="line">        <span class="keyword">self</span>.processApplicationContext()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在，你大概看到了 <code>didReceiveApplicationContext</code> 方法的入参带有它接收到的 <code>Application Context</code> 副本。它存储在上面提到的 <code>receivedApplicationContext</code> 属性中。所以我们并不需要它来调用辅助方法, 因此这个方法不需要传入任何行参。</p>
+<blockquote>
+<p>译者注：<br>其实对于辅助方法 <code>processApplicationContext</code> 来说，增加行参 context 反而更 <strong>函数式</strong>，也更 <strong>Swift</strong>。 通过增加一个 context 的入参，可以让方法内部实现和外部依赖解耦，更加方便我们对它进行单元测试。</p>
+</blockquote>
+<p>那么，调用 <code>dispatch_async</code> 是为了做什么呢？好吧，这些代理回调不在主线程上。你永远不应该在除主线程以外的任何线程更新 iOS 或 watchOS 中的 UI。而我们的辅助方法除了从 <code>receivedApplicationContext</code> 中读取信息之外，主要目的是用来更新 UI 元素。因此，我们要通过 <code>dispatch_async</code> 方法返回主线程来调用该方法。调用 <code>dispatch_async</code> 需要 2 个参数，首先是派发队列（对于主线程，我们通过 <code>dispatch_get_main_queue</code> 方法获取），其次是一个闭包来告诉它需要做什么操作，这里我们只是告诉它去调用辅助方法。</p>
+<p>所以，为什么我们要在辅助方法里这样做，而不是直接在回调方法里面直接处理呢？好吧，当你实际接收到一个新的 <code>Application Context</code> 时，会回调 <code>didReceiveApplicationContext</code> 代理方法。当 <code>WCSession</code> 在关闭时接收到新的 <code>ApplicationContext</code> 会调用 activateSession 方法，在那不久之后也会回调到 <code>didReceiveApplicationContext</code> 方法。在这种情况下，我使用此 ApplicationContext 作为该信息的后备存储。我不确定这是不是一个好的主意，但是对于一个简单的 app 来说，这是合理的， 因为 <code>label</code> 的重点是显示 iPhone 上的 <code>UISwitch</code> 是开启还是关闭。</p>
+<p>那么，当我们的 app 完成加载之后想使用最后一次接收到的值，但是 app 在关闭期间又没有收到新的 <code>context</code>，这种情况该怎么办？我们在视图生命周期的早期设置 label，所以现在 <code>awakeWithContext</code> 看起来应该是这样：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">awake</span><span class="params">(withContext context: <span class="keyword">Any</span>?)</span></span> &#123;</span><br><span class="line">    <span class="keyword">super</span>.awake(withContext: context)</span><br><span class="line"> </span><br><span class="line">    processApplicationContext()</span><br><span class="line"> </span><br><span class="line">    session.delegate = <span class="keyword">self</span></span><br><span class="line">    session.activate()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>由于 awakeWithContext 肯定在主线程上，我们不需要 <code>dispatch_async</code>。 因此这就是它仅用于在 didReceiveApplicationContext 回调中来调用辅助方法而不是在辅助方法内部使用的原因。</p>
+<p>此时 iOS App 并没有保留该 <code>UISwitch</code> 的状态，所以在启动时保持它们的同步并不那么重要，对于一个有价值的 app 来说，我们应该将 UISwitch 的状态存储在某个地方。比如可以在 iPhone 端使用 WCSession 的 ApplicationContext 属性。（请记住，applicationContext 是从设备<strong>发送</strong>过来的最后一个 <code>context</code>），但如果是在iPad上运行呢？你可以将它存储在 <code>NSUserDefaults</code>，或者其他许多地方，但这些不在如何使用 WatchConnectivity 的讨论范畴内。具体你可以在早期的 <a href="http://www.codingexplorer.com/nsuserdefaults-a-swift-introduction/" target="_blank" rel="noopener">NSUserDefaults — A Swift Introduction</a> 文章中了解到。</p>
+<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><p>以下是该项目的完整代码：</p>
+<h3 id="ViewController-swift"><a href="#ViewController-swift" class="headerlink" title="ViewController.swift"></a>ViewController.swift</h3><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> UIKit</span><br><span class="line"><span class="keyword">import</span> WatchConnectivity</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ViewController</span>: <span class="title">UIViewController</span>, <span class="title">WCSessionDelegate</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">session</span><span class="params">(<span class="number">_</span> session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?)</span></span> &#123; &#125;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">sessionDidBecomeInactive</span><span class="params">(<span class="number">_</span> session: WCSession)</span></span> &#123; &#125;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">sessionDidDeactivate</span><span class="params">(<span class="number">_</span> session: WCSession)</span></span> &#123; &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">var</span> theSwitch: <span class="type">UISwitch!</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">var</span> session: <span class="type">WCSession?</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.viewDidLoad()</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> <span class="type">WCSession</span>.isSupported() &#123;</span><br><span class="line">            session = <span class="type">WCSession</span>.<span class="keyword">default</span></span><br><span class="line">            session?.delegate = <span class="keyword">self</span></span><br><span class="line">            session?.activate()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">processApplicationContext</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">let</span> iPhoneContext = session?.applicationContext <span class="keyword">as</span>? [<span class="type">String</span> : <span class="type">Bool</span>] &#123;</span><br><span class="line">            <span class="keyword">if</span> iPhoneContext[<span class="string">"switchStatus"</span>] == <span class="literal">true</span> &#123;</span><br><span class="line">                theSwitch.isOn = <span class="literal">true</span></span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                theSwitch.isOn = <span class="literal">false</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@IBAction</span> <span class="function"><span class="keyword">func</span> <span class="title">switchValueChanged</span><span class="params">(<span class="number">_</span> sender: UISwitch)</span></span> &#123;</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">let</span> validSession = session &#123;</span><br><span class="line">            <span class="keyword">let</span> iPhoneAppContext = [<span class="string">"switchStatus"</span>: sender.isOn]</span><br><span class="line"></span><br><span class="line">            <span class="keyword">do</span> &#123;</span><br><span class="line">                <span class="keyword">try</span> validSession.updateApplicationContext(iPhoneAppContext)</span><br><span class="line">            &#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">"Something went wrong"</span>)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="InterfaceController-swift"><a href="#InterfaceController-swift" class="headerlink" title="InterfaceController.swift"></a>InterfaceController.swift</h3><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> WatchKit</span><br><span class="line"><span class="keyword">import</span> WatchConnectivity</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">InterfaceController</span>: <span class="title">WKInterfaceController</span>, <span class="title">WCSessionDelegate</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">session</span><span class="params">(<span class="number">_</span> session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?)</span></span> &#123; &#125;</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">var</span> displayLabel: <span class="type">WKInterfaceLabel!</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> session = <span class="type">WCSession</span>.<span class="keyword">default</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">awake</span><span class="params">(withContext context: <span class="keyword">Any</span>?)</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.awake(withContext: context)</span><br><span class="line">        </span><br><span class="line">        processApplicationContext()</span><br><span class="line">        </span><br><span class="line">        session.delegate = <span class="keyword">self</span></span><br><span class="line">        session.activate()</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@IBAction</span> <span class="function"><span class="keyword">func</span> <span class="title">buttonTapped</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="comment">//displayLabel.setText("Hello World!")</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">session</span><span class="params">(<span class="number">_</span> session: WCSession, didReceiveApplicationContext applicationContext: [String : <span class="keyword">Any</span>])</span></span> &#123;</span><br><span class="line">        <span class="type">DispatchQueue</span>.main.async() &#123;</span><br><span class="line">            <span class="keyword">self</span>.processApplicationContext()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">processApplicationContext</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">let</span> iPhoneContext = session.receivedApplicationContext <span class="keyword">as</span>? [<span class="type">String</span> : <span class="type">Bool</span>] &#123;</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">if</span> iPhoneContext[<span class="string">"switchStatus"</span>] == <span class="literal">true</span> &#123;</span><br><span class="line">                displayLabel.setText(<span class="string">"Switch On"</span>)</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                displayLabel.setText(<span class="string">"Switch Off"</span>)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>请记住，这些代码来自 Hello World App，但是我们没有用到 watchOS App 上的 button。所以我只是注释了原始功能的代码。</p>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>以上就是如何使用 Watch Connectivity 的 Application Context 方式进行后台传输的教程。向手机端回传数据也是完全相同的，因为它们具有同样的代理回调和属性。虽然在那种情况下，你可能还需要根据实际情况检查是否存在与该设备配对的 Apple Watch 或者 Watch 上是否安装了对应的 app。</p>
+<p>正如我之前提到的，在 <code>ViewController / InterfaceController</code> 中执行所有代码可能不是最好的主意，但这只是为了简单地展示如何使用 API​​。我个人非常喜欢在自己的 <code>Watch Connectivity manager</code> 实例中执行这些操作。所以我强烈建议你阅读 Natasha The Robot 的文章 <a href="https://www.natashatherobot.com/watchconnectivity-say-hello-to-wcsession/" target="_blank" rel="noopener">WatchConnectivity: Say Hello to WCSession</a>，并关联他的 <a href="https://gist.github.com/NatashaTheRobot/6bcbe79afd7e9572edf6" target="_blank" rel="noopener">GitHub Gist</a>。这将对你使用 WatchConnectivity 很有帮助。</p>
+<p>我希望本文能对你有所帮助。如果有帮到你，请不要犹豫，在 Twitter 或者你选择的社交媒体上分享这篇文章，每个分享对我都是帮助。当然，如果你有任何疑问，请随时通过<a href="http://www.codingexplorer.com/contact/" target="_blank" rel="noopener">联系页面</a>或 Twitter <a href="https://twitter.com/CodingExplorer" target="_blank" rel="noopener">@CodingExplorer</a> 与我联系，我会看看我能做些什么。谢谢！</p>
+<h2 id="来源"><a href="#来源" class="headerlink" title="来源"></a>来源</h2><ul>
+<li><a href="https://itunes.apple.com/us/book/swift-programming-language/id881256329?mt=11&amp;uo=4&amp;at=10lJ3x&amp;ct=blog-SwiftOperatorOverloading" target="_blank" rel="noopener">The Swift Programming Language – Apple Inc.</a></li>
+<li><a href="https://medium.com/swift-programming/facets-of-swift-part-5-custom-operators-1080bc78ccc" target="_blank" rel="noopener">Facets of Swift, Part 5: Custom Operators — Swift Programming — Medium</a></li>
+<li><a href="http://www.kristinathai.com/watchos-2-tutorial-using-application-context-to-transfer-data-watch-connectivity-2/" target="_blank" rel="noopener">watchOS 2 Tutorial: Using application context to transfer data (Watch    Connectivity #2)</a> by <a href="https://twitter.com/kristinathai" target="_blank" rel="noopener">Kristina Thai</a></li>
+<li><a href="https://www.natashatherobot.com/watchconnectivity-application-context/" target="_blank" rel="noopener">WatchConnectivity: Sharing The Latest Data via Application Context</a> by   <a href="https://twitter.com/natashatherobot" target="_blank" rel="noopener">Natasha The Robot</a></li>
+</ul>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/codingexplorer/">codingexplorer</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/教程/">教程</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2018/08/15/watch-connectivity-swift-application-context/" data-title="在 Swift 中使用 Watch Connectivity — Application Context | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2018/08/21/blockchain-introduction/" title="构建第一个 Swift 区块链应用">
+  <strong>上一篇</strong><br>
+  <span>
+  构建第一个 Swift 区块链应用</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2018/08/09/swift-4-strings/" title="Swift 4 中的字符串">
+ <strong>下一篇</strong><br> 
+ <span>Swift 4 中的字符串
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2018/08/15/watch-connectivity-swift-application-context/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是-Application-Context"><span class="toc-number">1.</span> <span class="toc-text">什么是 Application Context</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#设置-iOS-应用程序"><span class="toc-number">2.</span> <span class="toc-text">设置 iOS 应用程序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#设置-watchOS-应用程序"><span class="toc-number">3.</span> <span class="toc-text">设置 watchOS 应用程序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#代码"><span class="toc-number">4.</span> <span class="toc-text">代码</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ViewController-swift"><span class="toc-number">4.1.</span> <span class="toc-text">ViewController.swift</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#InterfaceController-swift"><span class="toc-number">4.2.</span> <span class="toc-text">InterfaceController.swift</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结论"><span class="toc-number">5.</span> <span class="toc-text">结论</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#来源"><span class="toc-number">6.</span> <span class="toc-text">来源</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2019 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftUI 重磅教程专属优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/H9aEpi">使用 SwiftGG 优惠码，半价基础上再减 20 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
