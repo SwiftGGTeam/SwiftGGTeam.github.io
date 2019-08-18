@@ -1,0 +1,1039 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>Swift 中的 Promise | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Soroush Khanlou，原文链接，原文日期：2016-08-01译者：Cwift；校对：walkingway；定稿：CMB   Promise 是一种链接异步任务的方式。通常来说，异步任务会在异步操作完成时执行回调闭包（有时候要准备两个闭包，一个代表成功，一个代表失败）。要执行多个异步操作，必须将第二个异步操作放在第一个异步操作的完成闭包中执行： APIClient.fetchCu">
+<meta name="keywords" content="Swift 进阶">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Swift 中的 Promise">
+<meta property="og:url" content="https://swift.gg/2017/03/27/promises-in-swift/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Soroush Khanlou，原文链接，原文日期：2016-08-01译者：Cwift；校对：walkingway；定稿：CMB   Promise 是一种链接异步任务的方式。通常来说，异步任务会在异步操作完成时执行回调闭包（有时候要准备两个闭包，一个代表成功，一个代表失败）。要执行多个异步操作，必须将第二个异步操作放在第一个异步操作的完成闭包中执行： APIClient.fetchCu">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-08-18T22:21:36.071Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Swift 中的 Promise">
+<meta name="twitter:description" content="作者：Soroush Khanlou，原文链接，原文日期：2016-08-01译者：Cwift；校对：walkingway；定稿：CMB   Promise 是一种链接异步任务的方式。通常来说，异步任务会在异步操作完成时执行回调闭包（有时候要准备两个闭包，一个代表成功，一个代表失败）。要执行多个异步操作，必须将第二个异步操作放在第一个异步操作的完成闭包中执行： APIClient.fetchCu">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2017/03/27/promises-in-swift/" target="_blank" title="Swift 中的 Promise" itemprop="url">Swift 中的 Promise</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2017-03-27T00:00:00.000Z" itemprop="datePublished">2017-03-27</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Soroush Khanlou，<a href="http://khanlou.com/2016/08/promises-in-swift/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-08-01<br>译者：<a href="http://weibo.com/277195544" target="_blank" rel="noopener">Cwift</a>；校对：<a href="http://chengway.in/" target="_blank" rel="noopener">walkingway</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>Promise 是一种链接异步任务的方式。通常来说，异步任务会在异步操作完成时执行回调闭包（有时候要准备两个闭包，一个代表成功，一个代表失败）。要执行多个异步操作，必须将第二个异步操作放在第一个异步操作的完成闭包中执行：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="type">APIClient</span>.fetchCurrentUser(success: &#123; currentUser <span class="keyword">in</span></span><br><span class="line">	<span class="type">APIClient</span>.fetchFollowers(user: currentUser, success: &#123; followers <span class="keyword">in</span></span><br><span class="line">		<span class="comment">//现在你得到了一个 followers 数组</span></span><br><span class="line">	&#125;, failure: &#123; error <span class="keyword">in</span></span><br><span class="line">		<span class="comment">// 错误处理</span></span><br><span class="line">	&#125;)</span><br><span class="line">&#125;, failure: &#123; error <span class="keyword">in</span></span><br><span class="line">	<span class="comment">// 错误处理</span></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p><strong>Promise</strong> 的作用是格式化完成闭包，简化链式异步调用的形式。如果系统能够分辨成功和失败，那么组合这些异步操作就变得容易很多。比如，编写具有下列功能的可重用代码：</p>
+<ul>
+<li>使用尾闭包执行一系列依赖关系的异步操作</li>
+<li>通过一个完成闭包同时执行多个独立的异步操作</li>
+<li>多个异步操作竞争，返回第一个完成的值</li>
+<li>重试异步操作</li>
+<li>为异步操作设置超时时间</li>
+</ul>
+<a id="more"></a>
+<p>上面的代码转换为 Promise 样式如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="type">APIClient</span>.fetchCurrentUser().then(&#123; currentUser <span class="keyword">in</span></span><br><span class="line">	<span class="keyword">return</span> <span class="type">APIClient</span>.fetchFollowers(user: currentUser)</span><br><span class="line">&#125;).then(&#123; followers <span class="keyword">in</span></span><br><span class="line">	<span class="comment">// you now have an array of followers</span></span><br><span class="line">)&#125;.onFailure(&#123; error <span class="keyword">in</span></span><br><span class="line">	<span class="comment">// hooray, a single failure block!</span></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>（你可能注意到了，Promise 是将嵌套/缩进样式的代码变成一个层级的代码：Promise 是一个 <a href="http://khanlou.com/2015/09/what-the-heck-is-a-monad/" target="_blank" rel="noopener">monad</a>。）</p>
+<p>Promise 在 JavaScript 社区中反响热烈。因为 Node.js 的设计中包含了非常多异步操作，即便是简单的任务也需要用到链式的异步回调。即便只有三、四个这样的操作，代码会变得笨重。Promise 终结了提心吊胆写回调的日子，Promise 已经写进了 JavaScript ES6 的规范。<a href="http://www.mattgreer.org/articles/promises-in-wicked-detail/" target="_blank" rel="noopener">这篇博客</a>介绍了 JavaScript Promise 的运作机制。</p>
+<p>JavaScript Promise 实现的一个亮点是它有一个非常明确的规范，称为 A+，你可以在 <a href="https://www.promisejs.org" target="_blank" rel="noopener">promisejs.org</a> 查看详情。这意味着依赖 JavaScript 的弱类型系统，多个 Promise 的实现可以融合，彼此之间可以互相操作。只要你的 Promise 中的 <code>then</code> 函数定义符合规范，它就可以和其他库中的 Promise 连接。这太棒了。</p>
+<p>当我在编写 <a href="https://backchannel.io" target="_blank" rel="noopener">Backchannel</a>（一个 Node 项目） 的 API 时，我逐渐爱上了 Promise。A+ 规范有一个非常好的 API，不使用 monad 中那个命名简单且易于理解的 <code>then</code> 方法（在  A+ 规范中被重构为 <code>flatMap</code> 和 <code>map</code>）。不过这个 API 不适合每个人（我完全能理解你为什么更喜欢显性的功能名称），但我真的很喜欢它，并开始在 Swift 中实现一个类似的库。</p>
+<p>你可以在 <a href="https://github.com/khanlou/Promise" target="_blank" rel="noopener">Github</a> 上找个这个库。编写的过程很具有启发性，我想分享一些学习过程中的人生经验。</p>
+<h2 id="魔幻的枚举"><a href="#魔幻的枚举" class="headerlink" title="魔幻的枚举"></a>魔幻的枚举</h2><p>没错，大家都知道。枚举非常棒。因为 Promise 本质上是状态机，所以枚举用在这里非常合适。<a href="https://www.promisejs.org/implementing/" target="_blank" rel="noopener">JavaScript Promise 实现的参考</a>如下所示：</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> PENDING = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">var</span> FULFILLED = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">var</span> REJECTED = <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Promise</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="comment">// 保存 PENDING, FULFILLED 或者 REJECTED 的状态</span></span><br><span class="line">  <span class="keyword">var</span> state = PENDING;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 当出现 FULFILLED 或 REJECTED 状态时保存值或者错误</span></span><br><span class="line"><span class="keyword">var</span> value = <span class="literal">null</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">//保存被 .then 或者 .done 函数触发的成功 &amp; 失败的处理操作</span></span><br><span class="line">  <span class="keyword">var</span> handlers = [];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我想找不到比 Swift 的枚举实现更完美的例子了。以下是 Swift 中的实现：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">State</span>&lt;<span class="title">Value</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">case</span> pending</span><br><span class="line">    <span class="keyword">case</span> fulfilled(value: <span class="type">Value</span>)</span><br><span class="line">    <span class="keyword">case</span> rejected(error: <span class="type">ErrorType</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">Promise</span>&lt;<span class="title">Value</span>&gt; </span>&#123;    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> state: <span class="type">State</span>&lt;<span class="type">Value</span>&gt;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> callbacks: [<span class="type">Callback</span>&lt;<span class="type">Value</span>&gt;] = []</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>译者注：原文的 case 名为首字母大写，根据当前版本改为了首字母小写。</p>
+</blockquote>
+<p>外部数据依赖于 Promise 的具体状态，所以被封装到对应 case 的关联值中。当 Promise 处于 <code>.pending</code> 状态时，任何外部数据都没有意义，枚举在类型系统中表达出的语义是不可思议的。</p>
+<p>我唯一要批判的是泛型不能被嵌套进其他类型中，并且这个缺陷在 <a href="https://bugs.swift.org/browse/SR-985" target="_blank" rel="noopener">Swift 3 中不会更改</a>。</p>
+<h2 id="类型系统很不错"><a href="#类型系统很不错" class="headerlink" title="类型系统很不错"></a>类型系统很不错</h2><p>创建一个新的 JavaScript Promise 时，可以使用便捷构造器：</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> promise = <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span>(<span class="params">resolve, reject</span>) </span>&#123;</span><br><span class="line">	someAsyncRequest(<span class="function"><span class="keyword">function</span>(<span class="params">error, result</span>) </span>&#123;</span><br><span class="line">		<span class="keyword">if</span> (error) &#123;</span><br><span class="line">			reject(error);</span><br><span class="line">		&#125;</span><br><span class="line">		resolve(result);</span><br><span class="line">	&#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>你传入了一个包含两个其他函数的函数，主要有两个功能：第一个函数参数对应 Promise 操作成功的情况，第二个对应了失败的情况。这两个函数的顺序很重要。因为 JavaScript 不是类型安全的，如果你在上面的第一行代码中写错了顺序，写成了 <code>reject, resolve</code>（我不想承认我也经常这么写），你很容易就向 <code>resolve</code> 函数中引入了错误。另一方面，Swift 是类型安全的，这意味着 <code>reject</code> 函数的类型是 <code>(ErrorType) -&gt; Void)</code>，该函数不会被成功的结果所接受。所以妈妈再也不用担心我会弄乱 <code>reject</code> 和 <code>resolve</code> 函数的顺序了。</p>
+<h2 id="太多的类型可能会令人沮丧"><a href="#太多的类型可能会令人沮丧" class="headerlink" title="太多的类型可能会令人沮丧"></a>太多的类型可能会令人沮丧</h2><p>我的 <code>Promise</code> 的类型中使用了泛型 <code>Value</code>，这是它的内部值类型。意味着你可以通过类型推断而不用指定具体的类型。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> promise = <span class="type">Promise</span>(value: <span class="string">"initialValue"</span>) <span class="comment">// a fulfilled Promise&lt;String&gt;</span></span><br></pre></td></tr></table></figure>
+<p>因为 Promise 经常被链式调用，依靠类型推断来确定类型将会特别有用。必须向链中的每个步骤添加明确的类型是件令人沮丧的事，最终的样式也不是很有 Swift 的风格。</p>
+<p>我的第一个解决方案是对 <code>Error</code> 也使用泛型。这种严格性使得每次创建一个已经履行的 Promise 都需要指定错误的类型。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> promise = <span class="type">Promise</span>&lt;<span class="type">String</span>, <span class="type">APIError</span>&gt;(value: <span class="string">"initialValue"</span>)</span><br></pre></td></tr></table></figure>
+<p>这使得一行简单的代码增加了很多不必要的包袱，所以我删除了指定错误类型的功能。</p>
+<p>不幸的是，删除显式的错误类型意味着我不得不失去一个小小的类型系统的优势。假设你使用了一个叫 <code>NoError</code> 的空枚举，它有效地表达出 Promise 不能失败的语义。因为空的枚举不能被初始化，所以 Promise 不能进入到 rejected 的状态，这是个心痛的损失，但我认为这是值得的，因为这样在其他上下文中使用 Promise 变得更简单。我希望能在实践中使用这个类，以便深入体会并思考不设置错误类型否是个明智的决定。</p>
+<p>补充一点，Swift 的泛型宣言包含 <a href="https://github.com/apple/swift/blob/c39da37525255d3bc141038ff567b4aca57d316e/docs/GenericsManifesto.md#default-generic-arguments" target="_blank" rel="noopener">“默认的泛型参数”</a>，这是解决当前问题的好办法：你可以指定它默认遵守协议 <code>ErrorType</code>（译者注：Swift 3.0 以后已经改为 Error 了），如果有人传入具体的类型，该类型必须遵守该协议。</p>
+<h2 id="函数式编程中的方法难以理解"><a href="#函数式编程中的方法难以理解" class="headerlink" title="函数式编程中的方法难以理解"></a>函数式编程中的方法难以理解</h2><p>Promise 的类型是一个 monad，也就是说你可以对它调用 <code>flatMap</code>。传递给 <code>flatMap</code> 的函数会返回一个新的 Promise，返回的 Promise 的状态将成为该调用链的状态。</p>
+<p>不过，<code>flatMap</code> 的函数名是绝对不能忽视的。它无法使用一种易读的方式表达函数中发生的事情。这是我喜欢 A+ 规范的 Promise API 的原因之一。JavaScript 中的 <code>then</code> 函数被重载为 <code>flatMap</code> 函数（为调用链返回一个新的 Promise）和 <code>map</code> 函数（为调用链中的下一个 Promise 返回一个新值）。<code>then</code> 只意味着“下一步做这件事”，而不知道下一件事情的工作原理。</p>
+<h2 id="测试是个好习惯"><a href="#测试是个好习惯" class="headerlink" title="测试是个好习惯"></a>测试是个好习惯</h2><p>一旦我写了一个类的基本实现，我会写几个测试。我积累了一些 XCTest 中的 <code>expectationWithDescription</code> 和 <code>waitForExpectationsWithTimeout</code> 的经验，这两个 API 非常好用。</p>
+<p>和 <a href="http://khanlou.com/2016/04/horse_cookbooks/" target="_blank" rel="noopener">cookbook 项目</a>类似，对 Promise 类进行全方位的测试很有必要。和往常一样，编写测试时需要一些前期准备工作，但这些成本完全值得。当我重构和清理这段代码时，测试捕获了非常多错误。Promise 的实现是非常脆弱的，代码执行顺序的微小细节都会微妙地改变类的行为。使用测试套件是个证实重构前后一致性的好办法。</p>
+<h2 id="线程很棘手"><a href="#线程很棘手" class="headerlink" title="线程很棘手"></a>线程很棘手</h2><p>因为 Promise 的本命是处理线程和异步，所以 Promise 需要是一个线程安全的类。为了使线程安全，它的实例变量需要从同一个队列中访问。这比我预期的要困难的多。即便我已经胸有成竹了，依旧有好几个地方搞砸了。</p>
+<p>其中有两项测试尤其的脆弱，每运行 5-10 次，测试组件就会失败。不稳定的测试是最脆弱的，你想象一下，一个宇宙射线，在正确的时刻击中了你电脑的 RAM ，导致测试失败。</p>
+<p>其中一个不稳定的测试导致了一个 <code>EXC_BAD_ACCESS</code>，这非常令人困惑，因为我无法想象如何用 Swift 的方式访问坏内存。我花费了一些时间，终于得到了一份日志消息，表明这是一个线程问题。我在不同的线程中向同一个数组中添加数据。我更正了访问实例变量的代码，以便能够正确使用派发队列的代码，现在不稳定测试变的可靠了。</p>
+<p>你可以在 <a href="https://github.com/khanlou/Promise" target="_blank" rel="noopener">Github</a> 上找到对应的代码。我还没有把它打造成一个带有 <code>public</code> 声明和 podspec 的完整库，我想要先在一个真正的 app 中使用它，观察一下情况。</p>
+<p>Promise 看上去复杂又神奇，它的实现流程几乎都依赖于 <code>then</code> 函数的实现。一旦我得到一个可运行的实现版本，我就可以编写测试去反对它，这些测试促使我慢慢重构代码，找到副作用引起的 bug。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/KHANLOU/">KHANLOU</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2017/03/27/promises-in-swift/" data-title="Swift 中的 Promise | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2017/03/28/dump-as-equatable-safeguard/" title="保护 Equatable 的实现">
+  <strong>上一篇</strong><br>
+  <span>
+  保护 Equatable 的实现</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2017/03/20/custom-controls-3d-touch-confirm/" title="自定义控件：利用 3D Touch 确认 Button 操作">
+ <strong>下一篇</strong><br> 
+ <span>自定义控件：利用 3D Touch 确认 Button 操作
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2017/03/27/promises-in-swift/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#魔幻的枚举"><span class="toc-number">1.</span> <span class="toc-text">魔幻的枚举</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#类型系统很不错"><span class="toc-number">2.</span> <span class="toc-text">类型系统很不错</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#太多的类型可能会令人沮丧"><span class="toc-number">3.</span> <span class="toc-text">太多的类型可能会令人沮丧</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#函数式编程中的方法难以理解"><span class="toc-number">4.</span> <span class="toc-text">函数式编程中的方法难以理解</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试是个好习惯"><span class="toc-number">5.</span> <span class="toc-text">测试是个好习惯</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#线程很棘手"><span class="toc-number">6.</span> <span class="toc-text">线程很棘手</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2019 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftUI 重磅教程专属优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/H9aEpi">使用 SwiftGG 优惠码，半价基础上再减 20 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

@@ -1,0 +1,1061 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>语法的集合？协议可没那么简单 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Ole Begemann，原文链接，原文日期：2016-12-30译者：Cwift；校对：walkingway；定稿：CMB   本周在 Swift 进化 板块，有一个有趣的（且争论很久的）讨论。 有人建议在 Swift 标准库中添加一个名为 DefaultConstructible 的协议，其唯一的要求是提供一个无参数的构造器： protocol DefaultConstructible">
+<meta name="keywords" content="Swift 进阶">
+<meta property="og:type" content="article">
+<meta property="og:title" content="语法的集合？协议可没那么简单">
+<meta property="og:url" content="https://swift.gg/2017/03/10/protocols-have-semantics/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Ole Begemann，原文链接，原文日期：2016-12-30译者：Cwift；校对：walkingway；定稿：CMB   本周在 Swift 进化 板块，有一个有趣的（且争论很久的）讨论。 有人建议在 Swift 标准库中添加一个名为 DefaultConstructible 的协议，其唯一的要求是提供一个无参数的构造器： protocol DefaultConstructible">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-08-18T22:21:36.067Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="语法的集合？协议可没那么简单">
+<meta name="twitter:description" content="作者：Ole Begemann，原文链接，原文日期：2016-12-30译者：Cwift；校对：walkingway；定稿：CMB   本周在 Swift 进化 板块，有一个有趣的（且争论很久的）讨论。 有人建议在 Swift 标准库中添加一个名为 DefaultConstructible 的协议，其唯一的要求是提供一个无参数的构造器： protocol DefaultConstructible">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2017/03/10/protocols-have-semantics/" target="_blank" title="语法的集合？协议可没那么简单" itemprop="url">语法的集合？协议可没那么简单</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2017-03-10T00:00:00.000Z" itemprop="datePublished">2017-03-10</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Ole Begemann，<a href="https://oleb.net/blog/2016/12/protocols-have-semantics/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-12-30<br>译者：<a href="http://weibo.com/277195544" target="_blank" rel="noopener">Cwift</a>；校对：<a href="http://chengway.in/" target="_blank" rel="noopener">walkingway</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>本周在 <a href="https://lists.swift.org/mailman/listinfo/swift-evolution" target="_blank" rel="noopener">Swift 进化</a> 板块，有一个有趣的（且争论很久的）讨论。 有人建议在 Swift 标准库中<a href="https://lists.swift.org/pipermail/swift-evolution/Week-of-Mon-20161219/029639.html" target="_blank" rel="noopener">添加一个名为 DefaultConstructible 的协议</a>，其唯一的要求是提供一个无参数的构造器：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">DefaultConstructible</span> </span>&#123;</span><br><span class="line">    <span class="keyword">init</span>()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>换个说法，用协议的方式规范以下概念：你可以创建某种类型的“默认”值，或者说当没有附加信息时也能得到一个遵守协议的实例。</p>
+<p>有一些人，比如 <a href="https://github.com/xwu" target="_blank" rel="noopener">Xiaodi Wu</a> 和 <a href="https://github.com/dabrahams" target="_blank" rel="noopener">Dave Abrahams</a>，提出了一些非常好的论据来反对这个观点。在这里我再次重复一次这些观点，因为我觉得相比这个具体的话题，他们所讨论的内容有着更加广泛的意义。</p>
+<a id="more"></a>
+<h2 id="语义是协议的重要部分"><a href="#语义是协议的重要部分" class="headerlink" title="语义是协议的重要部分"></a>语义是协议的重要部分</h2><p>第一点是协议不仅仅只是语法的集合。协议的语义与其提供的接口一样重要。<br><a href="https://lists.swift.org/pipermail/swift-evolution/Week-of-Mon-20161219/029655.html" target="_blank" rel="noopener">Xiaodi Wu</a>：</p>
+<blockquote>
+<p>在 Swift 中，协议不仅仅确保特定的拼写，而且还确保特定的语义。</p>
+</blockquote>
+<p><a href="https://lists.swift.org/pipermail/swift-evolution/Week-of-Mon-20161219/029661.html" target="_blank" rel="noopener">Dave Abrahams</a>：</p>
+<blockquote>
+<p>我应该补充一点，这是 <a href="https://en.wikipedia.org/wiki/Alexander_Stepanov" target="_blank" rel="noopener">Stepanov</a> 提出的编程通用的核心原则。</p>
+</blockquote>
+<p><a href="https://lists.swift.org/pipermail/swift-evolution/Week-of-Mon-20161219/029658.html" target="_blank" rel="noopener">以及</a>：</p>
+<blockquote>
+<p>协议（也称概念）不仅仅是语法的集合；如果不能给操作增加语义，那你就不能为它们编写有价值的通用算法。因此不应该使用 DefaultConstructible，类比一下，你不应该使用 “Plusable” 来表示遵守者可以进行 x + x 格式的操作。</p>
+</blockquote>
+<h2 id="Equatable-协议的语义"><a href="#Equatable-协议的语义" class="headerlink" title="Equatable 协议的语义"></a>Equatable 协议的语义</h2><p>以 <a href="http://swiftdoc.org/v3.0/protocol/Equatable/" target="_blank" rel="noopener">Equatable</a> 协议为例。它的 API 是很轻量的 —— 只有一个单一的函数：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">protocol</span> <span class="title">Equatable</span> </span>&#123;</span><br><span class="line">    <span class="comment">/// Returns a Boolean value indicating whether two values are equal.</span></span><br><span class="line">    <span class="comment">///</span></span><br><span class="line">    <span class="comment">/// Equality is the inverse of inequality. For any values `a` and `b`,</span></span><br><span class="line">    <span class="comment">/// `a == b` implies that `a != b` is `false`.</span></span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> == <span class="params">(lhs: <span class="keyword">Self</span>, rhs: <span class="keyword">Self</span>)</span></span> -&gt; <span class="type">Bool</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>不过，当你的类型遵守 Equatable 协议之后，你同时也确保了具体的实现会遵守该协议<a href="http://swiftdoc.org/v3.0/protocol/Equatable/" target="_blank" rel="noopener">在文档中</a>列出的语义。简单来说，这些语义为：</p>
+<ul>
+<li>相等意味着可替换性 —— 任何两个相等的实例都可以在基于实例值的代码中替换使用。</li>
+<li>为了保持可替换性，== 运算符应该考虑 Equatable 协议遵守者中所有<em>可见的成员</em>。这意味着，如果你编写了一个 Person 结构体，它包含 firstName 和 lastName 两个属性，那么在实现该结构体的 == 操作符时，如果你只使用 firstName 判断相等，你就违反了协议的语义。</li>
+<li>a == a 总是 true（反身性）; a == b 意味着 b == a（对称性）; a == b 和 b == c 意味着 a == c（传递性）。</li>
+<li>不等与相等是互斥的，所以如果你自定义了一个 != 操作符（不是必须的），你必须保证 a != b 隐含 !(a == b)。</li>
+</ul>
+<p>对类实例的恒等式（<a href="http://swiftdoc.org/v3.0/operator/eqeqeq/#comment-func-eqeqeq_-anyobject-rhs_-anyobject" target="_blank" rel="noopener">===</a>）来说，语义基本是同等的。实现上取决于具体类型的特点。来看看 <a href="https://twitter.com/UINT_MIN/status/816691626613448708" target="_blank" rel="noopener">Jordan Rose 的评论</a>。</p>
+<h2 id="协议应该使用有意义的语法"><a href="#协议应该使用有意义的语法" class="headerlink" title="协议应该使用有意义的语法"></a>协议应该使用有意义的语法</h2><p><a href="https://lists.swift.org/pipermail/swift-evolution/Week-of-Mon-20161219/029667.html" target="_blank" rel="noopener">Xiaodi Wu</a>：</p>
+<blockquote>
+<p>再次强调，协议不只包含语法，还有语义。一层含义是<strong>完全没有语法要求的协议也是完全符合语法规范的</strong>，比如 MyProtocolWithSpecialSemantics {}。<br>“纯语义”协议的一个典型例子是 <a href="https://developer.apple.com/reference/swift/error" target="_blank" rel="noopener">Error</a>，当你给类型添加 Error 的一致性时意味着你告知他人你打算用这个类型进行错误报告。比如：extension String: Error { }<br>稍后<br>throw “File not found”</p>
+<p>而另一层含义是<strong>类型满足了协议的所有要求之后，Swift 不能自动地使该类型遵守协议，因为编译器无法判断语义</strong>。</p>
+</blockquote>
+<p>协议的要求 —— 特别是能够进入标准库的协议的要求 —— 定义应该必要且完备，以便可以基于它们实现有价值且通用的算法。</p>
+<p>回到 DefaultConstructible 协议的话题上来，我不认为一个只保证 T() 形式的构造器却没有任何语义的协议能实现什么有趣的算法。</p>
+<h2 id="一个通用的默认值这样的想法是否有意义呢？"><a href="#一个通用的默认值这样的想法是否有意义呢？" class="headerlink" title="一个通用的默认值这样的想法是否有意义呢？"></a>一个通用的默认值这样的想法是否有意义呢？</h2><p>或者你可以自问：什么语义可以归结到这样的协议上。有价值的算法来自于一组连贯性的语义组成的约束。</p>
+<p>通用的 init() 存在的一个问题是，在没有附加上下文的情况下，不同的 T 对应的构造器 T() 的含义有着巨大的差别：</p>
+<ul>
+<li>一些类型具有直观的“空值”表示；这些类型可以很好地匹配无参数的构造器：String() 创建一个空字符串；Array()、Dictionary() 和 Set() 创建一个空的集合。</li>
+<li>数字和布尔类型的空值就没那么清晰了。为什么 Bool() 初始化为 false 而不是 true？看起来几乎是随意设定的。所有的数字类型的初始化值都是 0，直觉上你觉得是由于 0 满足了 a + 0 == a，直到你意识到其实 1 也是一个有效的选择，因为任意数字都满足 a * 1 == a。</li>
+<li>此外还有一些不是数值的对象。例如，UIView() 和 Thread() 每次调用都会创建不同的对象 —— 尽管这些对象的属性被设置成了“默认”值，但是你无法阐述“默认”的 UIView 和 Thread 对象是何种含义。</li>
+</ul>
+<p><a href="https://lists.swift.org/pipermail/swift-evolution/Week-of-Mon-20161219/029656.html" target="_blank" rel="noopener">Xiaodi Wu</a>：</p>
+<blockquote>
+<p> 据我所知，nil 格式的默认值没有太多的用处，除非你能得到有关默认值的具体信息。 我希望遇到存在默认值的情况时，你可以得到一个比 nil 更有用的默认值，这就需要提供更多有关当前类型的知识，显然一个宽泛的 DefaultConstructible 是无法提供的。</p>
+</blockquote>
+<p>所以，一些类型拥有有意义的默认值，而另一些则没有。你不能为 init() 的概念分配拥有一致性的语义 —— 除非你添加上下文。</p>
+<h2 id="RangeReplaceableCollection-的语义"><a href="#RangeReplaceableCollection-的语义" class="headerlink" title="RangeReplaceableCollection 的语义"></a>RangeReplaceableCollection 的语义</h2><p>标准库中已经有一个协议要求实现 init()，它就是：<a href="https://developer.apple.com/reference/swift/rangereplaceablecollection" target="_blank" rel="noopener">RangeReplaceableCollection</a>。同 DefaultConstructible 不同的是，在该协议的上下文中，init() 是有含义的。我们可以得知协议的遵守者是一个集合，因此 T() 代表一个“空集合”。还可以断言 T() 等价于 someCollection.removeAll()。</p>
+<p>RangeReplaceableCollection 的上下文对于语义的归属是必不可少的，上下文指示了这个要求必须在协议中定义，而不是分解成独立的协议（那些细化了 RangeReplaceableCollection 功能的新协议）。</p>
+<p><a href="https://lists.swift.org/pipermail/swift-evolution/Week-of-Mon-20161226/029706.html" target="_blank" rel="noopener">Dave Abrahams</a>：</p>
+<blockquote>
+<p>使用 DefaultConstructible 的话你不知道关于 T 的值的任何信息。你无法可靠地使用它。如果默认的构造器是一些更大型的协议（比如 RangeReplaceableCollection）的一部分，那么你就可以说：“它创建了一个空的集合” 以及 “采用默认构造器初始化的实例相当于一个实例调用了 removeAll 方法。”这并不意味着将 init() 的含义与协议脱离。<strong>正确的含义是在协议的遵守者中引入一个 init()，该无参构造器会在协议语义所影响的基础操作中担任重要的角色</strong>。<br>[…]<br>将有意义的协议分割成只有语法价值的块是有问题的。我怀疑这里有些事情搞错了。</p>
+</blockquote>
+<p><a href="https://lists.swift.org/pipermail/swift-evolution/Week-of-Mon-20161226/029729.html" target="_blank" rel="noopener">以及：</a></p>
+<blockquote>
+<p>分解实现部分是一回事，这个过程是思考 <a href="https://en.wikipedia.org/wiki/Don%27t_repeat_yourself" target="_blank" rel="noopener">DRY</a> 的好时机。只有当通用性可以抽象成某种类型的通用代码时才需要考虑分解需求。事实上，过程是反过来的 —— 需求聚合时需要创建概念（也就是协议）—— 这是<a href="https://stlab.adobe.com/wiki/index.php/Runtime_Concepts#Concept" target="_blank" rel="noopener">通用性编程过程的重要部分</a>。</p>
+</blockquote>
+<h2 id="协议的冲突（相同的语法，不同的语义）"><a href="#协议的冲突（相同的语法，不同的语义）" class="headerlink" title="协议的冲突（相同的语法，不同的语义）"></a>协议的冲突（相同的语法，不同的语义）</h2><p>另一层含义是，如果两个协议的要求具有（部分或完全）相同的语法但语义不同，那么一个类型不应该同时遵守这两个协议，因为没有办法同时满足两者的语义。<br><a href="https://lists.swift.org/pipermail/swift-evolution/Week-of-Mon-20161226/029686.html" target="_blank" rel="noopener">Xiaodi Wu</a>：</p>
+<blockquote>
+<p>事实上，我明白语义包含了大量的思考。协议应该携带语义这个概念正在被严格地遵守。所以我认为 DefaultConstructible 这个建议的确是有害的，因为它明显违背了这个重要的思想，它的语义只能由人去支持而不是由编译器去支持。</p>
+</blockquote>
+<h2 id="没有语义，协议就退化成了反射"><a href="#没有语义，协议就退化成了反射" class="headerlink" title="没有语义，协议就退化成了反射"></a>没有语义，协议就退化成了反射</h2><blockquote>
+<p>如果它走起路来像鸭子，嘎嘎的叫声像鸭子，那它可能就是一只鸭子。<br>—— <a href="https://en.wikipedia.org/wiki/Duck_typing" target="_blank" rel="noopener">鸭子类型</a>的经验法则</p>
+</blockquote>
+<p>如我们所知，鸭子式的类型推断不是 Swift 中首选的思维方式，因为一个对象具有的功能（表现为实现了特定的 API）对表达语义没有任何作用。<br><a href="https://lists.swift.org/pipermail/swift-evolution/Week-of-Mon-20161219/029677.html" target="_blank" rel="noopener">Xiaodi Wu</a> 认为通过增强 Swift 对反射机制的支持，将更好地满足 DefaultConstructible 协议的目的：</p>
+<blockquote>
+<p>在底层，如果你想要一种方法来确定一个类型中是否有 init()。个人觉得这听起来像是反射，而不是协议的一致性。</p>
+</blockquote>
+<p>（反驳的观点是：反射<a href="https://lists.swift.org/pipermail/swift-evolution/Week-of-Mon-20161226/029687.html" target="_blank" rel="noopener">不能给你编译期的安全性</a>。）</p>
+<h2 id="Swift-避免将默认的初始值设置为“零”"><a href="#Swift-避免将默认的初始值设置为“零”" class="headerlink" title="Swift 避免将默认的初始值设置为“零”"></a>Swift 避免将默认的初始值设置为“零”</h2><p>反对 DefaultConstructible 协议的第四点是它与 Swift 的策略冲突，没有将值初始化为“零”或其他的默认值。与其他许多语言相反，Swift 不会清除变量的内存 —— 编译器强制开发者使用显式的值初始化每个变量。<br>依据这种设计哲学，Swift 在处理与 DefaultConstructible 协议类似的其他语言中同样存在的算法（比如<a href="https://en.wikipedia.org/wiki/Factory_method_pattern" target="_blank" rel="noopener">工厂方法</a>）时会将构造默认初始值的职责传递给具体的方法调用者。<br><a href="https://lists.swift.org/pipermail/swift-evolution/Week-of-Mon-20161226/029773.html" target="_blank" rel="noopener">Tony Allevato 认为</a>，在 Swift 中，把构造器作为一个函数传入可以非常优雅地实现这个目的：</p>
+<blockquote>
+<p>在编程时，有几次我需要提供泛型类型 T 的实例，每当这样的情况 —— 多亏了 Swift 中的函数是一级公民并且构造器可以作为函数使用 —— 我都发现让工厂方法接受一个 ()-&gt;T 类型的参数并传入 T.init 要比传入 T 本身的约束更加清晰。<br>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Ole-Begemann/">Ole Begemann</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2017/03/10/protocols-have-semantics/" data-title="语法的集合？协议可没那么简单 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2017/03/17/enums-equatable-exhaustiveness/" title="为什么不要在枚举和 Equatable 中使用 default case？">
+  <strong>上一篇</strong><br>
+  <span>
+  为什么不要在枚举和 Equatable 中使用 default case？</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2017/03/09/structs-and-nscoding/" title="结构体与 NSCoding">
+ <strong>下一篇</strong><br> 
+ <span>结构体与 NSCoding
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2017/03/10/protocols-have-semantics/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#语义是协议的重要部分"><span class="toc-number">1.</span> <span class="toc-text">语义是协议的重要部分</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Equatable-协议的语义"><span class="toc-number">2.</span> <span class="toc-text">Equatable 协议的语义</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#协议应该使用有意义的语法"><span class="toc-number">3.</span> <span class="toc-text">协议应该使用有意义的语法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#一个通用的默认值这样的想法是否有意义呢？"><span class="toc-number">4.</span> <span class="toc-text">一个通用的默认值这样的想法是否有意义呢？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RangeReplaceableCollection-的语义"><span class="toc-number">5.</span> <span class="toc-text">RangeReplaceableCollection 的语义</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#协议的冲突（相同的语法，不同的语义）"><span class="toc-number">6.</span> <span class="toc-text">协议的冲突（相同的语法，不同的语义）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#没有语义，协议就退化成了反射"><span class="toc-number">7.</span> <span class="toc-text">没有语义，协议就退化成了反射</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Swift-避免将默认的初始值设置为“零”"><span class="toc-number">8.</span> <span class="toc-text">Swift 避免将默认的初始值设置为“零”</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2019 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftUI 重磅教程专属优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/H9aEpi">使用 SwiftGG 优惠码，半价基础上再减 20 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

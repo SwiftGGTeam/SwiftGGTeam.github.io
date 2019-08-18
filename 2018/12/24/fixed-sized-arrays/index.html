@@ -1,0 +1,1020 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>固定大小的数组 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift,array,null-terminate,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="如何在 Swift 中处理从 C 语言引入的固定大小数组">
+<meta name="keywords" content="swift,array,null-terminate">
+<meta property="og:type" content="article">
+<meta property="og:title" content="固定大小的数组">
+<meta property="og:url" content="https://swift.gg/2018/12/24/fixed-sized-arrays/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="如何在 Swift 中处理从 C 语言引入的固定大小数组">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-08-18T22:21:36.079Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="固定大小的数组">
+<meta name="twitter:description" content="如何在 Swift 中处理从 C 语言引入的固定大小数组">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+						<form class="search" method="GET" action="http://search.swift.gg/cse/search" target="_blank">
+							<label>搜索</label>
+						<input name="s" type="hidden" value="4873498141517765035"><input type="search" name="q" size="30" placeholder="搜索"><br>
+						</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2018/12/24/fixed-sized-arrays/" target="_blank" title="固定大小的数组" itemprop="url">固定大小的数组</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2018-12-24T00:00:00.000Z" itemprop="datePublished">2018-12-24</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Russ Bishop，<a href="http://www.russbishop.net/fixed-sized-arrays" target="_blank" rel="noopener">原文链接</a>，原文日期：2018-10-30<br>译者：<a href="https://github.com/zhongWJ" target="_blank" rel="noopener">zhongWJ</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>，<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a>；定稿：<a href="http://forelax.space" target="_blank" rel="noopener">Forelax</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>假设我们想要用 <code>statfs()</code> 方法来确定某个挂载点所对应的 <code>BSD</code> 设备名。例如挂载点 <code>/Volumes/MyDisk</code> 对应的 <code>BSD</code> 设备是 <code>/dev/disk6s2</code>。</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">statfs</span> <span class="title">fsinfo</span>;</span></span><br><span class="line"><span class="keyword">if</span> (statfs(path, &amp;fsinfo) != <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="comment">//错误</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<a id="more"></a>
+<p>同等的 Swift 代码如下，只不过多了个 <code>POSIX</code> 错误帮助方法：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">posix_expects_zero</span>&lt;R: BinaryInteger&gt;<span class="params">(<span class="number">_</span> f: @autoclosure <span class="params">()</span></span></span> <span class="keyword">throws</span> -&gt; <span class="type">R</span>) <span class="keyword">throws</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> returncode = <span class="keyword">try</span> f()</span><br><span class="line">    <span class="keyword">if</span> returncode != <span class="number">0</span> &#123;</span><br><span class="line">        <span class="comment">// 如果需要，请在此处替换为自定义的错误类型。</span></span><br><span class="line">        <span class="comment">// NSError 会自动帮我们通过错误码得到对应的 C 字符串错误消息。</span></span><br><span class="line">        <span class="keyword">throw</span> <span class="type">NSError</span>(</span><br><span class="line">            domain: <span class="type">NSPOSIXErrorDomain</span>,</span><br><span class="line">            code: <span class="built_in">numericCast</span>(returncode),</span><br><span class="line">            userInfo: <span class="literal">nil</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 采用默认的空初始化方法。Swift 能推断出结构体类型，</span></span><br><span class="line"><span class="comment">// 但为了表示得更清楚，这里显式指定类型</span></span><br><span class="line"><span class="keyword">var</span> fsinfo: statfs = statfs()</span><br><span class="line">statfs(path, &amp;fsinfo)</span><br></pre></td></tr></table></figure>
+<h2 id="C-的引入物"><a href="#C-的引入物" class="headerlink" title="C 的引入物"></a>C 的引入物</h2><p><code>statfs()</code> 函数在 C 语言的定义是 <code>int statfs(const char *path, struct statfs *info)</code>。<code>statfs</code> 结构体有多个字段，但我们只关注 <code>mount-from-name</code>：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">statfs</span> &#123;</span></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="keyword">char</span> f_mntfromname[MAXPATHLEN];</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>在苹果平台上 MAXPATHLEN == PATH_MAX == 1024。</p>
+<p>如果你在代码里硬编码 1024 而不是用更合适的宏，小心我的鬼魂会缠着你和你的家族十二代哦。</p>
+</blockquote>
+<p>噢哦。一个固定大小的数组。当被引入 Swift 中时，它会被当做一个有 1024 个元素的元组：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">var</span> f_mntfromname: (<span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>, <span class="type">Int8</span>)</span><br></pre></td></tr></table></figure>
+<p>这个类型不是很实用。那我们能不能做点什么呢？由于这篇博客的存在，你可能已经猜到答案是「<em>是</em>」。</p>
+<h2 id="C-字符串"><a href="#C-字符串" class="headerlink" title="C 字符串"></a>C 字符串</h2><p>这个固定大小的数组包含了 <code>char</code>。由于文档未曾提及，所以我们并不知道是否通过空字符来表示数组的终止。令人恼火的是，文档暗示在 64 位系统上，<code>f_fstypename</code> 字段是由空字符终止，但对于 mount to/from 两个字段却只字未提。这两个字段是根据被定义为 <code>PATH_MAX</code> 的 <code>MAXPATHLEN</code> 宏来定义的而不是直接根据 <code>PATH_MAX</code> 宏，而 <code>PATH_MAX</code> 宏通常暗示数组由空字符来表示终止。我们是不是应该从中得到一点启发呢？</p>
+<p>对于固定大小的数组，有一些 C API 仍然采用空终止符（所以真实的字符串长度最长可以是 <code>sizeof(array) - 1</code>），而另一些则乐意填充整个缓冲区（所以不以空字符结尾的字符串长度最长可以是 <code>sizeof(array)</code>）。这就是那种有害的绊脚石，它让你的程序看起来运行正常并通过所有测试，然后碰到某些新的 FizzyWizz 硬盘系统会有的奇怪的边界情况时，当突然碰到一个刚好由 1024 个字符组成的名称特别长的 BSD 设备时，结果就是你的程序出现了「<em>可利用内存损坏</em>」错误。</p>
+<p>这些值很有可能是空字符终止的（也可能不是），但我会告诉你如何来处理这个问题，以便在两种情况下都适用。这意味着我们再也不需要考虑这个问题，从而降低大脑负荷。在其他场景复用这个代码的人也不需要再考虑这个问题了。既然有这么大的好处，何不马上开始？</p>
+<p>偏题了，让我们回到正题……</p>
+<h2 id="部分解决方案"><a href="#部分解决方案" class="headerlink" title="部分解决方案"></a>部分解决方案</h2><p>首先我们需要计算字段的偏移量。用新的 <code>MemoryLayout.offset</code> 方法可以得到结果：<code>MemoryLayout&lt;statfs&gt;.offset(of: \Darwin.statfs.f_mntfromname)!</code>。由于结构体和函数名字相同，当我们构造关键路径时，需要提供完整的路径名（fully-qualified name），否则会得到「<em>无法确定有歧义的引用路径</em>」的错误。我们可以强制解包返回值因为我们知道关键路径有效并且字段有偏移量。</p>
+<p>将字段的内存布局偏移量加上 <code>withUnsafePointer</code> 指针就可以得到一个指向结构体字段起始内存的指针。我们可以通过这种方式创建一个字符串对象：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">return</span> <span class="built_in">withUnsafePointer</span>(to: fsinfo, &#123; (ptr) -&gt; <span class="type">String?</span> <span class="keyword">in</span></span><br><span class="line">    <span class="keyword">let</span> offset = <span class="type">MemoryLayout</span>&lt;statfs&gt;.offset(of: \<span class="type">Darwin</span>.statfs.f_mntfromname)!</span><br><span class="line">    <span class="keyword">let</span> fieldPtr = (<span class="type">UnsafeRawPointer</span>(ptr) + offset).assumingMemoryBound(to: <span class="type">UInt8</span>.<span class="keyword">self</span>)</span><br><span class="line">    <span class="keyword">if</span> fieldPtr[<span class="built_in">count</span> - <span class="number">1</span>] != <span class="number">0</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> data = <span class="type">Data</span>(bytes: <span class="type">UnsafeRawPointer</span>(fieldPtr), <span class="built_in">count</span>: <span class="built_in">count</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="type">String</span>(data: data, encoding: .utf8)</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">String</span>(cString: fieldPtr)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>我们首先快速检查了缓冲区是否是空字符结尾。如果是，就采用 C 字符串这条捷径。反之，为了便于使用 String 的长度限制构造方法，我们创建了一个 Data 实例。看起来用 <code>Data(bytesNoCopy:count:deallocator:)</code> 也行，但 <code>String(data:encoding:)</code> 初始化方法并不保证拷贝 Data 底层的缓冲区，<code>Data</code> 的构造过程也同样如此。虽然这种情况极少见，我们还是谨慎为好。（假如目前的方法会导致性能问题，我可能会花时间调研其他方案。）</p>
+<p>有一种可能情况是，先写入由空字符终止的较短的字符串到缓冲区，剩余的部分则是被垃圾数据填充。由于 Swift 在初始化结构体时会强制清除内存，所以只有当内核拷贝垃圾数据到这块地址时，上述情况才可能发生。我们可以忽略这种情况，因为内核会尽量避免泄漏内核内存到用户空间，否则我们就只能用更耗时的方式了。（将这些字节转换为字符串的方式数不胜数，我这里就不一一列举了。）</p>
+<p>现在我们来实现 <code>statfs</code> 的扩展：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">statfs</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> mntfromname: <span class="type">String?</span> &#123;</span><br><span class="line">        <span class="keyword">mutating</span> <span class="keyword">get</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="built_in">withUnsafePointer</span>(to: fsinfo, &#123; (ptr) -&gt; <span class="type">String?</span> <span class="keyword">in</span></span><br><span class="line">                <span class="keyword">let</span> offset = <span class="type">MemoryLayout</span>&lt;statfs&gt;.offset(of: \<span class="type">Darwin</span>.statfs.f_mntfromname)!</span><br><span class="line">                <span class="keyword">let</span> fieldPtr = (<span class="type">UnsafeRawPointer</span>(ptr) + offset).assumingMemoryBound(to: <span class="type">UInt8</span>.<span class="keyword">self</span>)</span><br><span class="line">                <span class="keyword">let</span> <span class="built_in">count</span> = <span class="type">Int</span>(<span class="type">MAXPATHLEN</span>)</span><br><span class="line">                <span class="keyword">if</span> fieldPtr[<span class="built_in">count</span> - <span class="number">1</span>] != <span class="number">0</span> &#123;</span><br><span class="line">                    <span class="keyword">let</span> data = <span class="type">Data</span>(bytes: <span class="type">UnsafeRawPointer</span>(fieldPtr), <span class="built_in">count</span>: <span class="built_in">count</span>)</span><br><span class="line">                    <span class="keyword">return</span> <span class="type">String</span>(data: data, encoding: .utf8)</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="keyword">return</span> <span class="type">String</span>(cString: fieldPtr)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码很管用，但假如我们也想处理别的字段，例如 <code>f_mntoname</code> 呢？复制代码似乎不怎么好，所以让这段代码支持泛型，使之更加通用才对；我们只需要接受 key path 和 count 作为参数，再稍作修改就可以了：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">fixedArrayToString</span>&lt;T&gt;<span class="params">(t: T, keyPath: PartialKeyPath&lt;T&gt;, <span class="built_in">count</span>: Int)</span></span> -&gt; <span class="type">String?</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">withUnsafePointer</span>(to: t) &#123; (ptr) -&gt; <span class="type">String?</span> <span class="keyword">in</span></span><br><span class="line">        <span class="keyword">let</span> offset = <span class="type">MemoryLayout</span>&lt;<span class="type">T</span>&gt;.offset(of: keyPath)!</span><br><span class="line">        <span class="keyword">let</span> fieldPtr = (<span class="type">UnsafeRawPointer</span>(ptr) + offset).assumingMemoryBound(to: <span class="type">UInt8</span>.<span class="keyword">self</span>)</span><br><span class="line">        <span class="keyword">if</span> fieldPtr[<span class="built_in">count</span> - <span class="number">1</span>] != <span class="number">0</span> &#123;</span><br><span class="line">            <span class="keyword">let</span> data = <span class="type">Data</span>(bytes: <span class="type">UnsafeRawPointer</span>(fieldPtr), <span class="built_in">count</span>: <span class="built_in">count</span>)</span><br><span class="line">            <span class="keyword">return</span> <span class="type">String</span>(data: data, encoding: .utf8)</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="type">String</span>(cString: fieldPtr)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">statfs</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> mntfromname: <span class="type">String?</span> &#123;</span><br><span class="line">        <span class="keyword">get</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> fixedArrayToString(</span><br><span class="line">                t: <span class="keyword">self</span>,</span><br><span class="line">                keyPath: \<span class="type">Darwin</span>.statfs.f_mntfromname,</span><br><span class="line">                <span class="built_in">count</span>: <span class="type">Int</span>(<span class="type">MAXPATHLEN</span>))</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> mntonname: <span class="type">String?</span> &#123;</span><br><span class="line">        <span class="keyword">get</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> fixedArrayToString(</span><br><span class="line">                t: <span class="keyword">self</span>,</span><br><span class="line">                keyPath: \<span class="type">Darwin</span>.statfs.f_mntonname,</span><br><span class="line">                <span class="built_in">count</span>: <span class="type">Int</span>(<span class="type">MAXPATHLEN</span>))</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>现在你知道怎么把有 N 个元素的元组变成更实用的东西了吧。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Swift/">Swift</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift/">Swift</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2018/12/24/fixed-sized-arrays/" data-title="固定大小的数组 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2018/12/27/hacking-hit-tests/" title="Hacking Hit Tests">
+  <strong>上一篇</strong><br>
+  <span>
+  Hacking Hit Tests</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2018/12/17/swift-property-observers/" title="Swift 属性观察器">
+ <strong>下一篇</strong><br> 
+ <span>Swift 属性观察器
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2018/12/24/fixed-sized-arrays/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#C-的引入物"><span class="toc-number">1.</span> <span class="toc-text">C 的引入物</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#C-字符串"><span class="toc-number">2.</span> <span class="toc-text">C 字符串</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#部分解决方案"><span class="toc-number">3.</span> <span class="toc-text">部分解决方案</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-number">4.</span> <span class="toc-text">结语</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2019 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftUI 重磅教程专属优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/H9aEpi">使用 SwiftGG 优惠码，半价基础上再减 20 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
