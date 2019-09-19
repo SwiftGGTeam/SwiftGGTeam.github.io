@@ -98,35 +98,12 @@
 <p>作者：Benedikt Terhechte，<a href="https://appventure.me/posts/2019-02-24-anonymous-tuple-structs.html" target="_blank" rel="noopener">原文链接</a>，原文日期：2019-02-24<br>译者：<a href="https://github.com/WAMaker" target="_blank" rel="noopener">WAMaker</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>，<a href="https://bignerdcoding.com/" target="_blank" rel="noopener">BigNerdCoding</a>；定稿：<a href="https://github.com/Pancf" target="_blank" rel="noopener">Pancf</a></p>
 </blockquote>
 <!--此处开始正文-->
-<p>假设你正在开发一款社交网络应用，其中包含了一个带有关注按钮和点赞按钮的用户图片展示组件。同时，为了满足单一功能原则（single responsibility principle）和视图控制器的构成，<strong>点赞</strong>和<strong>关注</strong>的实现应该另有它处。社交网络不仅有高级账户，也有企业账户，因此 <code>InteractiveUserImageController</code>（命名从来不是我的强项） 要能满足一系列的配置选项。以下是这个类一个可能的实现（为作展示，示例代码保留了不少可改进的地方）：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">InteractiveUserImageController</span>: <span class="title">UIView</span> </span>&#123;</span><br><span class="line">    <span class="comment">/// 是否需要展示高级布局</span></span><br><span class="line">    <span class="keyword">var</span> isPremium: <span class="type">Bool</span></span><br><span class="line">    <span class="comment">/// 账户类型</span></span><br><span class="line">    <span class="keyword">var</span> accountType: <span class="type">AccountType</span></span><br><span class="line">    <span class="comment">/// 点击视图是否高亮</span></span><br><span class="line">    <span class="keyword">var</span> isHighlighted: <span class="type">Bool</span></span><br><span class="line">    <span class="comment">/// 用户名</span></span><br><span class="line">    <span class="keyword">var</span> username: <span class="type">String</span></span><br><span class="line">    <span class="comment">/// 用户头像</span></span><br><span class="line">    <span class="keyword">var</span> profileImage: <span class="type">UIImage</span></span><br><span class="line">    <span class="comment">/// 当前用户是否能点赞该用户</span></span><br><span class="line">    <span class="keyword">var</span> canLike: <span class="type">Bool</span></span><br><span class="line">    <span class="comment">/// 当前用户是否能关注该用户</span></span><br><span class="line">    <span class="keyword">var</span> canFollow: <span class="type">Bool</span></span><br><span class="line">    <span class="comment">/// 大赞按钮是否能使用</span></span><br><span class="line">    <span class="keyword">var</span> bigLikeButton: <span class="type">Bool</span></span><br><span class="line">    <span class="comment">/// 针对一些内容使用特殊的背景色</span></span><br><span class="line">    <span class="keyword">var</span> alternativeBackgroundColor: <span class="type">Bool</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span>(...) &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>至此，我们就有了不少参数。随着应用体量的增长，会有更多的参数被加进类里。将这些参数通过职能进行划分和重构固然可行，但有时保持了单一功能后仍会有大量的参数存在。要如何才能更好的组织代码呢？</p>
-<h2 id="Swift-结构体结构"><a href="#Swift-结构体结构" class="headerlink" title="Swift 结构体结构"></a>Swift 结构体结构</h2><p>Swift 的 <code>struct</code> 类型在这种情况能发挥巨大的作用。依据参数的类型将它们装进<strong>一次性</strong>结构体：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">InteractiveUserImageController</span>: <span class="title">UIView</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">DisplayOptions</span> </span>&#123;</span><br><span class="line">        <span class="comment">/// 大赞按钮是否能使用</span></span><br><span class="line">        <span class="keyword">var</span> bigLikeButton: <span class="type">Bool</span></span><br><span class="line">        <span class="comment">/// 针对一些内容使用特殊的背景色</span></span><br><span class="line">        <span class="keyword">var</span> alternativeBackgroundColor: <span class="type">Bool</span></span><br><span class="line">        <span class="comment">/// 是否需要展示高级布局</span></span><br><span class="line">        <span class="keyword">var</span> isPremium: <span class="type">Bool</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">UserOptions</span> </span>&#123;</span><br><span class="line">        <span class="comment">/// 账户类型</span></span><br><span class="line">        <span class="keyword">var</span> accountType: <span class="type">AccountType</span></span><br><span class="line">        <span class="comment">/// 用户名</span></span><br><span class="line">        <span class="keyword">var</span> username: <span class="type">String</span></span><br><span class="line">        <span class="comment">/// 用户头像</span></span><br><span class="line">        <span class="keyword">var</span> profileImage: <span class="type">UIImage</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">State</span> </span>&#123;</span><br><span class="line">        <span class="comment">/// 点击视图是否高亮</span></span><br><span class="line">        <span class="keyword">var</span> isHighlighted: <span class="type">Bool</span></span><br><span class="line">        <span class="comment">/// 当前用户是否能点赞该用户</span></span><br><span class="line">        <span class="keyword">var</span> canLike: <span class="type">Bool</span></span><br><span class="line">        <span class="comment">/// 当前用户是否能关注该用户</span></span><br><span class="line">        <span class="keyword">var</span> canFollow: <span class="type">Bool</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> displayOptions = <span class="type">DisplayOptions</span>(...)</span><br><span class="line">    <span class="keyword">var</span> userOptions = <span class="type">UserOptions</span>(...)</span><br><span class="line">    <span class="keyword">var</span> state = <span class="type">State</span>(...)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span>(...) &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>正如你所见，我们把这些状态放入了独立的 <code>struct</code> 类型中。不仅让类更整洁，也便于新上手的开发者找到相关联的选项。</p>
-<p>已经是一个不错的改进了，但我们能做得更好！</p>
-<p>我们面临的问题是查找一个参数需要额外的操作。</p>
-<p>由于使用了一次性结构体类型，我们需要在某处定义它们（例如：<code>struct DisplayOptions</code>），也需要将它们实例化（例如：<code>let displayOptions = DisplayOptions(...)</code>）。大体上来说<strong>没什么问题</strong>，但在更大的类中，为确定 <code>displayOptions</code> 的类型仍旧需要一次额外的查询。然而，与 C 语言不同，像下面这样的匿名 <code>struct</code> 在 Swift 里并不存在：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> displayOptions = <span class="class"><span class="keyword">struct</span> </span>&#123;</span><br><span class="line">    <span class="comment">/// 大赞按钮是否能使用</span></span><br><span class="line">    <span class="keyword">var</span> bigLikeButton: <span class="type">Bool</span></span><br><span class="line">    <span class="comment">/// 针对一些内容使用特殊的背景色</span></span><br><span class="line">    <span class="keyword">var</span> alternativeBackgroundColor: <span class="type">Bool</span></span><br><span class="line">    <span class="comment">/// 是否需要展示高级布局</span></span><br><span class="line">    <span class="keyword">var</span> isPremium: <span class="type">Bool</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="元组-–-匿名结构体在-Swift-中的实现"><a href="#元组-–-匿名结构体在-Swift-中的实现" class="headerlink" title="元组 – 匿名结构体在 Swift 中的实现"></a>元组 – 匿名结构体在 Swift 中的实现</h2><p>实际上，Swift 中还真有这么一个类型。它就是我们的老朋友，<code>tuple</code>。自己看吧：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> displayOptions: (</span><br><span class="line">  bigLikeButton: <span class="type">Bool</span>,</span><br><span class="line">  alternativeBackgroundColor: <span class="type">Bool</span>,</span><br><span class="line">  isPremium: <span class="type">Bool</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
-<p>这里定义了一个新的类型 <code>displayOptions</code>，带有三个参数（<code>bigLikeButton</code>，<code>alternativeBackgroundColor</code>，<code>isPremium</code>），它能像前面的 <code>struct</code> 一样被访问：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">user.displayOptions.alternativeBackgroundColor = <span class="literal">true</span></span><br></pre></td></tr></table></figure>
-<p>更好的是，参数定义不需要做额外的初始化，一切都井然有序。</p>
-<h2 id="强制不可变性"><a href="#强制不可变性" class="headerlink" title="强制不可变性"></a>强制不可变性</h2><p>最后，<code>tuple</code> 既可以是 <code>可变的</code> 也可以是 <code>不可变的</code>。正如你在第一行所看到的那样：我们定义的是 <code>var displayOptions</code> 而不是 <code>var</code> 或 <code>let</code> <code>bigLikeButton</code>。<code>bigLikeButton</code> 和 <code>displayOptions</code> 一样也是 <code>var</code>。这样做的好处在于强制把静态常量（例如行高，头部高度）放入一个不同的（<code>let</code>）组。</p>
-<h2 id="添加数据"><a href="#添加数据" class="headerlink" title="添加数据"></a>添加数据</h2><p>当需要用一些值初始化参数时，你也能很好的利用这个特性，这是一个加分项：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> displayOptions = (</span><br><span class="line">  bigLikeButton: <span class="literal">true</span>,</span><br><span class="line">  alternativeBackgroundColor: <span class="literal">false</span>,</span><br><span class="line">  isPremium: <span class="literal">false</span>,</span><br><span class="line">  defaultUsername: <span class="string">"Anonymous"</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
-<p>与之前的代码类似，这里定义了一个元组的选项集，同时将它们正确进行了初始化。</p>
-<h2 id="简化"><a href="#简化" class="headerlink" title="简化"></a>简化</h2><p>相比于使用结构体而言，使用了元组的选项集能更轻易的简化代码：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UserFollowComponent</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> displayOptions = (</span><br><span class="line">        likeButton: (</span><br><span class="line">            bigButton: <span class="literal">true</span>,</span><br><span class="line">            alternativeBackgroundColor: <span class="literal">true</span></span><br><span class="line">            ),</span><br><span class="line">        imageView: (</span><br><span class="line">            highlightLineWidth: <span class="number">2.0</span>,</span><br><span class="line">            defaultColor: <span class="string">"#33854"</span></span><br><span class="line">        )</span><br><span class="line">    )</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>我希望这篇文章会对你有帮助。我大量应用这些简单的模式来让代码更具结构化。即便是只对 2 - 3 个参数做这样的处理，也能从中获益。</p>
-<blockquote>
-<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
-</blockquote>
-
+<p>假设你正在开发一款社交网络应用，其中包含了一个带有关注按钮和点赞按钮的用户图片展示组件。同时，为了满足单一功能原则（single responsibility principle）和视图控制器的构成，<strong>点赞</strong>和<strong>关注</strong>的实现应该另有它处。社交网络不仅有高级账户，也有企业账户，因此 <code>InteractiveUserImageController</code>（命名从来不是我的强项） 要能满足一系列的配置选项。以下是这个类一个可能的实现（为作展示，示例代码保留了不少可改进的地方）：<br>
         
 
-        <p class="article-more-link">
+        </p><p class="article-more-link">
+          
+            <a href="/2019/09/20/2019-02-24-anonymous-tuple-structs/#more" target="_blank">阅读全文</a>
           
        </p>
     </div>
@@ -1534,7 +1511,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -1542,7 +1519,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
 		  
 		
 		  
@@ -1602,11 +1579,11 @@
 		  
 		
 		  
-			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
 		  
 		
 		  
