@@ -1,0 +1,1017 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>用结构体和元组构建更整洁的类 | 用结构体和元组构建更整洁的类 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="tuple, struct,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="本文描述了如何巧妙利用结构体与元组来结构化类。">
+<meta name="keywords" content="tuple, struct">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用结构体和元组构建更整洁的类">
+<meta property="og:url" content="https://swift.gg/2019/09/20/2019-02-24-anonymous-tuple-structs/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="本文描述了如何巧妙利用结构体与元组来结构化类。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-09-19T22:43:34.105Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="用结构体和元组构建更整洁的类">
+<meta name="twitter:description" content="本文描述了如何巧妙利用结构体与元组来结构化类。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2019/09/20/2019-02-24-anonymous-tuple-structs/" target="_blank" title="用结构体和元组构建更整洁的类" itemprop="url">用结构体和元组构建更整洁的类</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2019-09-20T00:00:00.000Z" itemprop="datePublished">2019-09-20</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Benedikt Terhechte，<a href="https://appventure.me/posts/2019-02-24-anonymous-tuple-structs.html" target="_blank" rel="noopener">原文链接</a>，原文日期：2019-02-24<br>译者：<a href="https://github.com/WAMaker" target="_blank" rel="noopener">WAMaker</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>，<a href="https://bignerdcoding.com/" target="_blank" rel="noopener">BigNerdCoding</a>；定稿：<a href="https://github.com/Pancf" target="_blank" rel="noopener">Pancf</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>假设你正在开发一款社交网络应用，其中包含了一个带有关注按钮和点赞按钮的用户图片展示组件。同时，为了满足单一功能原则（single responsibility principle）和视图控制器的构成，<strong>点赞</strong>和<strong>关注</strong>的实现应该另有它处。社交网络不仅有高级账户，也有企业账户，因此 <code>InteractiveUserImageController</code>（命名从来不是我的强项） 要能满足一系列的配置选项。以下是这个类一个可能的实现（为作展示，示例代码保留了不少可改进的地方）：<br><a id="more"></a><br><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">InteractiveUserImageController</span>: <span class="title">UIView</span> </span>&#123;</span><br><span class="line">    <span class="comment">/// 是否需要展示高级布局</span></span><br><span class="line">    <span class="keyword">var</span> isPremium: <span class="type">Bool</span></span><br><span class="line">    <span class="comment">/// 账户类型</span></span><br><span class="line">    <span class="keyword">var</span> accountType: <span class="type">AccountType</span></span><br><span class="line">    <span class="comment">/// 点击视图是否高亮</span></span><br><span class="line">    <span class="keyword">var</span> isHighlighted: <span class="type">Bool</span></span><br><span class="line">    <span class="comment">/// 用户名</span></span><br><span class="line">    <span class="keyword">var</span> username: <span class="type">String</span></span><br><span class="line">    <span class="comment">/// 用户头像</span></span><br><span class="line">    <span class="keyword">var</span> profileImage: <span class="type">UIImage</span></span><br><span class="line">    <span class="comment">/// 当前用户是否能点赞该用户</span></span><br><span class="line">    <span class="keyword">var</span> canLike: <span class="type">Bool</span></span><br><span class="line">    <span class="comment">/// 当前用户是否能关注该用户</span></span><br><span class="line">    <span class="keyword">var</span> canFollow: <span class="type">Bool</span></span><br><span class="line">    <span class="comment">/// 大赞按钮是否能使用</span></span><br><span class="line">    <span class="keyword">var</span> bigLikeButton: <span class="type">Bool</span></span><br><span class="line">    <span class="comment">/// 针对一些内容使用特殊的背景色</span></span><br><span class="line">    <span class="keyword">var</span> alternativeBackgroundColor: <span class="type">Bool</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span>(...) &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>至此，我们就有了不少参数。随着应用体量的增长，会有更多的参数被加进类里。将这些参数通过职能进行划分和重构固然可行，但有时保持了单一功能后仍会有大量的参数存在。要如何才能更好的组织代码呢？</p>
+<h2 id="Swift-结构体结构"><a href="#Swift-结构体结构" class="headerlink" title="Swift 结构体结构"></a>Swift 结构体结构</h2><p>Swift 的 <code>struct</code> 类型在这种情况能发挥巨大的作用。依据参数的类型将它们装进<strong>一次性</strong>结构体：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">InteractiveUserImageController</span>: <span class="title">UIView</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">DisplayOptions</span> </span>&#123;</span><br><span class="line">        <span class="comment">/// 大赞按钮是否能使用</span></span><br><span class="line">        <span class="keyword">var</span> bigLikeButton: <span class="type">Bool</span></span><br><span class="line">        <span class="comment">/// 针对一些内容使用特殊的背景色</span></span><br><span class="line">        <span class="keyword">var</span> alternativeBackgroundColor: <span class="type">Bool</span></span><br><span class="line">        <span class="comment">/// 是否需要展示高级布局</span></span><br><span class="line">        <span class="keyword">var</span> isPremium: <span class="type">Bool</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">UserOptions</span> </span>&#123;</span><br><span class="line">        <span class="comment">/// 账户类型</span></span><br><span class="line">        <span class="keyword">var</span> accountType: <span class="type">AccountType</span></span><br><span class="line">        <span class="comment">/// 用户名</span></span><br><span class="line">        <span class="keyword">var</span> username: <span class="type">String</span></span><br><span class="line">        <span class="comment">/// 用户头像</span></span><br><span class="line">        <span class="keyword">var</span> profileImage: <span class="type">UIImage</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">State</span> </span>&#123;</span><br><span class="line">        <span class="comment">/// 点击视图是否高亮</span></span><br><span class="line">        <span class="keyword">var</span> isHighlighted: <span class="type">Bool</span></span><br><span class="line">        <span class="comment">/// 当前用户是否能点赞该用户</span></span><br><span class="line">        <span class="keyword">var</span> canLike: <span class="type">Bool</span></span><br><span class="line">        <span class="comment">/// 当前用户是否能关注该用户</span></span><br><span class="line">        <span class="keyword">var</span> canFollow: <span class="type">Bool</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> displayOptions = <span class="type">DisplayOptions</span>(...)</span><br><span class="line">    <span class="keyword">var</span> userOptions = <span class="type">UserOptions</span>(...)</span><br><span class="line">    <span class="keyword">var</span> state = <span class="type">State</span>(...)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span>(...) &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>正如你所见，我们把这些状态放入了独立的 <code>struct</code> 类型中。不仅让类更整洁，也便于新上手的开发者找到相关联的选项。</p>
+<p>已经是一个不错的改进了，但我们能做得更好！</p>
+<p>我们面临的问题是查找一个参数需要额外的操作。</p>
+<p>由于使用了一次性结构体类型，我们需要在某处定义它们（例如：<code>struct DisplayOptions</code>），也需要将它们实例化（例如：<code>let displayOptions = DisplayOptions(...)</code>）。大体上来说<strong>没什么问题</strong>，但在更大的类中，为确定 <code>displayOptions</code> 的类型仍旧需要一次额外的查询。然而，与 C 语言不同，像下面这样的匿名 <code>struct</code> 在 Swift 里并不存在：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> displayOptions = <span class="class"><span class="keyword">struct</span> </span>&#123;</span><br><span class="line">    <span class="comment">/// 大赞按钮是否能使用</span></span><br><span class="line">    <span class="keyword">var</span> bigLikeButton: <span class="type">Bool</span></span><br><span class="line">    <span class="comment">/// 针对一些内容使用特殊的背景色</span></span><br><span class="line">    <span class="keyword">var</span> alternativeBackgroundColor: <span class="type">Bool</span></span><br><span class="line">    <span class="comment">/// 是否需要展示高级布局</span></span><br><span class="line">    <span class="keyword">var</span> isPremium: <span class="type">Bool</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="元组-–-匿名结构体在-Swift-中的实现"><a href="#元组-–-匿名结构体在-Swift-中的实现" class="headerlink" title="元组 – 匿名结构体在 Swift 中的实现"></a>元组 – 匿名结构体在 Swift 中的实现</h2><p>实际上，Swift 中还真有这么一个类型。它就是我们的老朋友，<code>tuple</code>。自己看吧：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> displayOptions: (</span><br><span class="line">  bigLikeButton: <span class="type">Bool</span>,</span><br><span class="line">  alternativeBackgroundColor: <span class="type">Bool</span>,</span><br><span class="line">  isPremium: <span class="type">Bool</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>这里定义了一个新的类型 <code>displayOptions</code>，带有三个参数（<code>bigLikeButton</code>，<code>alternativeBackgroundColor</code>，<code>isPremium</code>），它能像前面的 <code>struct</code> 一样被访问：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">user.displayOptions.alternativeBackgroundColor = <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+<p>更好的是，参数定义不需要做额外的初始化，一切都井然有序。</p>
+<h2 id="强制不可变性"><a href="#强制不可变性" class="headerlink" title="强制不可变性"></a>强制不可变性</h2><p>最后，<code>tuple</code> 既可以是 <code>可变的</code> 也可以是 <code>不可变的</code>。正如你在第一行所看到的那样：我们定义的是 <code>var displayOptions</code> 而不是 <code>var</code> 或 <code>let</code> <code>bigLikeButton</code>。<code>bigLikeButton</code> 和 <code>displayOptions</code> 一样也是 <code>var</code>。这样做的好处在于强制把静态常量（例如行高，头部高度）放入一个不同的（<code>let</code>）组。</p>
+<h2 id="添加数据"><a href="#添加数据" class="headerlink" title="添加数据"></a>添加数据</h2><p>当需要用一些值初始化参数时，你也能很好的利用这个特性，这是一个加分项：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> displayOptions = (</span><br><span class="line">  bigLikeButton: <span class="literal">true</span>,</span><br><span class="line">  alternativeBackgroundColor: <span class="literal">false</span>,</span><br><span class="line">  isPremium: <span class="literal">false</span>,</span><br><span class="line">  defaultUsername: <span class="string">"Anonymous"</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>与之前的代码类似，这里定义了一个元组的选项集，同时将它们正确进行了初始化。</p>
+<h2 id="简化"><a href="#简化" class="headerlink" title="简化"></a>简化</h2><p>相比于使用结构体而言，使用了元组的选项集能更轻易的简化代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UserFollowComponent</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> displayOptions = (</span><br><span class="line">        likeButton: (</span><br><span class="line">            bigButton: <span class="literal">true</span>,</span><br><span class="line">            alternativeBackgroundColor: <span class="literal">true</span></span><br><span class="line">            ),</span><br><span class="line">        imageView: (</span><br><span class="line">            highlightLineWidth: <span class="number">2.0</span>,</span><br><span class="line">            defaultColor: <span class="string">"#33854"</span></span><br><span class="line">        )</span><br><span class="line">    )</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我希望这篇文章会对你有帮助。我大量应用这些简单的模式来让代码更具结构化。即便是只对 2 - 3 个参数做这样的处理，也能从中获益。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/APPVENTURE/">APPVENTURE</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift/">Swift</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2019/09/20/2019-02-24-anonymous-tuple-structs/" data-title="用结构体和元组构建更整洁的类 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2019/09/12/swiftwebui/" title="千呼万唤始出来☑️：SwiftWebUI">
+ <strong>下一篇</strong><br> 
+ <span>千呼万唤始出来☑️：SwiftWebUI
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2019/09/20/2019-02-24-anonymous-tuple-structs/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Swift-结构体结构"><span class="toc-number">1.</span> <span class="toc-text">Swift 结构体结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#元组-–-匿名结构体在-Swift-中的实现"><span class="toc-number">2.</span> <span class="toc-text">元组 – 匿名结构体在 Swift 中的实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#强制不可变性"><span class="toc-number">3.</span> <span class="toc-text">强制不可变性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#添加数据"><span class="toc-number">4.</span> <span class="toc-text">添加数据</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#简化"><span class="toc-number">5.</span> <span class="toc-text">简化</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/POP/" title="POP">POP<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/POP/SWIFT/" title="SWIFT">SWIFT<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/The-Always-Right-Institute/" title="The Always Right Institute">The Always Right Institute<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftjectivec/" title="swiftjectivec">swiftjectivec<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>107</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>14</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2019 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftUI 重磅教程专属优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/H9aEpi">使用 SwiftGG 优惠码，半价基础上再减 20 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
