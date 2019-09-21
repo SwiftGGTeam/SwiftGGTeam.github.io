@@ -21,13 +21,13 @@
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Andyy Hope，原文链接，原文日期：2016-01-24译者：jseanj；校对：saitjr；定稿：CMB   几周前，我无意发现 Guille Gonzalez  写的一篇文章，介绍了如何用协议和扩展让 UITableViewCell 的注册和重用更安全。 看完这篇文章后我非常惊叹，因为不需要依赖继承，只需要协议扩展和泛型就可以非常容易的实现自定义的行为。自从 WWDC15，我们">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="http://swiftgg-main.b0.upaiyun.com/image/uistoryboard-safer-with-enums-protocol-extensions-and-generics-1.png">
-<meta property="og:image" content="http://swiftgg-main.b0.upaiyun.com/image/uistoryboard-safer-with-enums-protocol-extensions-and-generics-2.png">
-<meta property="og:updated_time" content="2019-09-21T03:11:50.487Z">
+<meta property="og:image" content="https://miro.medium.com/max/912/1*RPGWe7qndb5kKEsPcvPF7Q.png">
+<meta property="og:image" content="https://miro.medium.com/max/1139/1*NG_YDV3--KHnzL56NIhGdQ.png">
+<meta property="og:updated_time" content="2019-09-21T03:12:38.656Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="UIStoryboard：和枚举、协议扩展、泛型一起使用更安全">
 <meta name="twitter:description" content="作者：Andyy Hope，原文链接，原文日期：2016-01-24译者：jseanj；校对：saitjr；定稿：CMB   几周前，我无意发现 Guille Gonzalez  写的一篇文章，介绍了如何用协议和扩展让 UITableViewCell 的注册和重用更安全。 看完这篇文章后我非常惊叹，因为不需要依赖继承，只需要协议扩展和泛型就可以非常容易的实现自定义的行为。自从 WWDC15，我们">
-<meta name="twitter:image" content="http://swiftgg-main.b0.upaiyun.com/image/uistoryboard-safer-with-enums-protocol-extensions-and-generics-1.png">
+<meta name="twitter:image" content="https://miro.medium.com/max/912/1*RPGWe7qndb5kKEsPcvPF7Q.png">
 
     
     <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
@@ -112,9 +112,9 @@
 <p>但是这样你会少了一个变量名，你会对经常要重用一个变量名而感到惊讶。你曾经尝试过给一个 NSObject 的子类的属性命名为 “description” 吗？这时你就知道我的意思了。如果 storyboards 使用多个字符串常量标识符的话，就会丧失一致性，如果它们定义在工程中的不同地方，也会使查找和合并它们变得更困难。</p>
 <p>定义一个全局字符串常量还有诸多坏处，但是为了继续讨论文章中要提到的精华，所以我们将会忽略这些坏处。</p>
 <h3 id="关联的-Storyboard-名称"><a href="#关联的-Storyboard-名称" class="headerlink" title="关联的 Storyboard 名称"></a>关联的 Storyboard 名称</h3><p>首要原则是你的 storyboard 应该以它包含的模块命名。例如，如果一个 storyboard 包含的控制器是关于新闻的，那么就把 storyboard 文件命名为 “News.storyboard”。</p>
-<p><img src="http://swiftgg-main.b0.upaiyun.com/image/uistoryboard-safer-with-enums-protocol-extensions-and-generics-1.png" alt></p>
+<p><img src="https://miro.medium.com/max/912/1*RPGWe7qndb5kKEsPcvPF7Q.png" alt></p>
 <h3 id="统一-Storyboard-标识符"><a href="#统一-Storyboard-标识符" class="headerlink" title="统一 Storyboard 标识符"></a>统一 Storyboard 标识符</h3><p>当你打算在你的控制器上使用 Storyboard 标识符时，通常的做法是使用类名作为标识符。比如 “ArticleViewController” 作为 ArticleViewController 的标识符。这将会减少你和同事们的负担，你和你的同事们不必再去想和记忆统一标识符或者命名规范。</p>
-<p><img src="http://swiftgg-main.b0.upaiyun.com/image/uistoryboard-safer-with-enums-protocol-extensions-and-generics-2.png" alt></p>
+<p><img src="https://miro.medium.com/max/1139/1*NG_YDV3--KHnzL56NIhGdQ.png" alt></p>
 <h3 id="枚举"><a href="#枚举" class="headerlink" title="枚举"></a>枚举</h3><p>可以考虑将枚举作为统一的、中心全局化的 UIStoryboard 字符串标识符。为了让 storyboard 实例化对象变得真正的安全，我们可以创建一个 UIStoryboard 类的扩展，其中定义了工程中不同的 storyboard 文件。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UIStoryboard</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">enum</span> <span class="title">Storyboard</span> : <span class="title">String</span> </span>&#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="type">Main</span></span><br><span class="line">        <span class="keyword">case</span> <span class="type">News</span></span><br><span class="line">        <span class="keyword">case</span> <span class="type">Gallery</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>正如你所见，所有的内容在工程中都是统一并且中心化的。实例化也更加安全，当你敲击标识符时 Xcode 也会自动补全。</p>
@@ -271,7 +271,7 @@
 		<ul>
 		
 		  
-			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>15</sup></a></li>
 		  
 		
 		  
@@ -335,11 +335,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -367,6 +367,10 @@
 		  
 		
 		  
+			<li><a href="/categories/POP/" title="POP">POP<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
 		  
 		
@@ -383,7 +387,15 @@
 		  
 		
 		  
+			<li><a href="/categories/POP/SWIFT/" title="SWIFT">SWIFT<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -392,10 +404,6 @@
 		
 		  
 			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -408,6 +416,10 @@
 		
 		  
 			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/The-Always-Right-Institute/" title="The Always Right Institute">The Always Right Institute<sup>1</sup></a></li>
 		  
 		
 		  
@@ -459,11 +471,11 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
 		  
 		
 		  
@@ -492,6 +504,10 @@
 		
 		  
 			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftjectivec/" title="swiftjectivec">swiftjectivec<sup>1</sup></a></li>
 		  
 		
 		  
@@ -536,7 +552,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>107</sup></a></li>
 			
 		
 			
@@ -544,7 +560,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>14</sup></a></li>
 			
 		
 			
@@ -560,15 +576,15 @@
 			
 		
 			
+				<li><a href="/tags/教程/" title="教程">教程<sup>7</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
 				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
 			
 		
 			

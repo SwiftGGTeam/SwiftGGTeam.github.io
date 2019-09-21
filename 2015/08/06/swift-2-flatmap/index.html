@@ -23,7 +23,7 @@
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://swift.gg/img/articles/swift-2-flatmap/Screen-Shot-2015-07-26-at-5.50.07-AM-1024x144.png1456204213.364177">
 <meta property="og:image" content="https://swift.gg/img/articles/swift-2-flatmap/Screen-Shot-2015-07-26-at-6.45.20-AM.png1456204214.9020329">
-<meta property="og:updated_time" content="2019-09-21T03:11:50.451Z">
+<meta property="og:updated_time" content="2019-09-21T03:12:38.528Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift 2.0: 理解 flatMap">
 <meta name="twitter:description" content="作者：Natasha，原文链接，原文日期：2015-07-26译者：SergioChan；校对：numbbbbb；定稿：numbbbbb   发布于 2015 年 7 月 26 日 上周我写了一篇博文，介绍如何创建一个非可选类型的有序图片数组。 我在寻找最佳解决方案时，也考虑过flatMap。但是老实说，我并不是很了解flatMap，也不知道如何使用。一位同事告诉我一种解决方案，需要用到两个fl">
@@ -111,7 +111,7 @@
 <h2 id="简单的例子"><a href="#简单的例子" class="headerlink" title="简单的例子"></a>简单的例子</h2><p>我对<code>flatMap</code>的理解十分基础，这是我最初的想法：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> nestedArray = [[<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>], [<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>]]</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> flattenedArray = nestedArray.flatMap &#123; $<span class="number">0</span> &#125;</span><br><span class="line">flattenedArray <span class="comment">// [1, 2, 3, 4, 5, 6]</span></span><br></pre></td></tr></table></figure>
 <h2 id="转换元素😡"><a href="#转换元素😡" class="headerlink" title="转换元素😡"></a>转换元素😡</h2><p>写上面的例子时，我想做一件无比简单的事情 —— 把每个元素乘以 2，就像<code>map</code>一样。但是结果是这样的：</p>
-<p><img src="/img/articles/swift-2-flatmap/Screen-Shot-2015-07-26-at-5.50.07-AM-1024x144.png1456204213.364177" alt="image"></p>
+<p><img src="https://swift.gg/img/articles/swift-2-flatmap/Screen-Shot-2015-07-26-at-5.50.07-AM-1024x144.png1456204213.364177" alt="image"></p>
 <p>无论我在<code>flatMap</code>的闭包里做什么，都没有任何作用😢。于是我四处谷歌，幸运地撞见了一篇之前就看过但是却没有认真阅读的文章：<a href="https://twitter.com/sketchyTech" target="_blank" rel="noopener">@sketchyTech</a>的博文<a href="http://sketchytech.blogspot.com/2015/06/swift-what-do-map-and-flatmap-really-do.html" target="_blank" rel="noopener">What do map() and flatMap() really do?</a>。去读一读吧，里面有很多关于<code>flatMap</code>的实用内容！</p>
 <p>下面我要介绍文章中最关键的部分：在<code>flatMap</code>中 $0 指的是数组中的数组！我竟然没想到！所以如果你想把数组中的元素全部乘以某个数字，需要再深入一层使用<code>map</code>：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> nestedArray = [[<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>], [<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>]]</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> multipliedFlattenedArray = nestedArray.flatMap &#123; $<span class="number">0</span>.<span class="built_in">map</span> &#123; $<span class="number">0</span> * <span class="number">2</span> &#125; &#125;</span><br><span class="line">multipliedFlattenedArray <span class="comment">// [2, 4, 6, 8, 10, 12]</span></span><br></pre></td></tr></table></figure>
@@ -129,7 +129,7 @@
 <p>换句话说，为了处理可选类型，<code>flatMap</code>被重载过。它会接受一个可选类型的数组并返回一个拆包过的且没有<code>nil</code>值的可选类型组成的数组。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> optionalInts: [<span class="type">Int?</span>] = [<span class="number">1</span>, <span class="number">2</span>, <span class="literal">nil</span>, <span class="number">4</span>, <span class="literal">nil</span>, <span class="number">5</span>]</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> ints = optionalInts.flatMap &#123; $<span class="number">0</span> &#125;</span><br><span class="line">ints <span class="comment">// [1, 2, 4, 5] - this is an [Int]</span></span><br></pre></td></tr></table></figure>
 <p>很棒，而且也很方便~但是这怎么和上面展开嵌套数组的例子关联起来呢？为什么要使用<code>flatMap</code>？我看过的最合理的解释是 Lars-Jørgen Kristiansen 的评论：</p>
-<p><img src="/img/articles/swift-2-flatmap/Screen-Shot-2015-07-26-at-6.45.20-AM.png1456204214.9020329" alt="image"></p>
+<p><img src="https://swift.gg/img/articles/swift-2-flatmap/Screen-Shot-2015-07-26-at-6.45.20-AM.png1456204214.9020329" alt="image"></p>
 <p>他认为<code>flatMap</code>是在处理一个容器而不是数组，这样可以更好地理解它。</p>
 <p>我只是掌握了<code>flatMap</code>的冰山一角，但我觉得这是个不错的开始。祝大家学习 Swift 2.0 快乐！</p>
 <blockquote>
@@ -224,7 +224,7 @@
 		<ul>
 		
 		  
-			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>15</sup></a></li>
 		  
 		
 		  
@@ -288,11 +288,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -320,6 +320,10 @@
 		  
 		
 		  
+			<li><a href="/categories/POP/" title="POP">POP<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
 		  
 		
@@ -336,7 +340,15 @@
 		  
 		
 		  
+			<li><a href="/categories/POP/SWIFT/" title="SWIFT">SWIFT<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -345,10 +357,6 @@
 		
 		  
 			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -361,6 +369,10 @@
 		
 		  
 			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/The-Always-Right-Institute/" title="The Always Right Institute">The Always Right Institute<sup>1</sup></a></li>
 		  
 		
 		  
@@ -412,11 +424,11 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
 		  
 		
 		  
@@ -445,6 +457,10 @@
 		
 		  
 			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftjectivec/" title="swiftjectivec">swiftjectivec<sup>1</sup></a></li>
 		  
 		
 		  
@@ -489,7 +505,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>107</sup></a></li>
 			
 		
 			
@@ -497,7 +513,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>14</sup></a></li>
 			
 		
 			
@@ -513,15 +529,15 @@
 			
 		
 			
+				<li><a href="/tags/教程/" title="教程">教程<sup>7</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
 				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
 			
 		
 			

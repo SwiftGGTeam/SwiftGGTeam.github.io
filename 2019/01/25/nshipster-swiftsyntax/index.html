@@ -23,7 +23,7 @@
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://swift.gg/img/articles/nshipster-swiftsyntax/swift-compilation-diagram-8af7d0078f72cdaa8f50430e608f15a9d4214f5772439d2fd6904bb5a8a53c60.png1548390462.3512783">
 <meta property="og:image" content="https://swift.gg/img/articles/nshipster-swiftsyntax/swiftsyntaxhightlighter-example-output-829aa64ab4bdf73a2e3070aab017e21e3db37ca0ee35079f0e89e22594806df0.png1548390462.5352607">
-<meta property="og:updated_time" content="2019-09-21T03:11:50.503Z">
+<meta property="og:updated_time" content="2019-09-21T03:12:38.516Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="SwiftSyntax">
 <meta name="twitter:description" content="作者：Mattt，原文链接，原文日期：2018-10-22译者：jojotov；校对：numbbbbb，Yousanflics，pmst；定稿：Forelax   SwiftSyntax 是一个可以分析、生成以及转换 Swift 源代码的 Swift 库。它是基于 libSyntax 库开发的，并于 2017 年 8 月 从 Swift 语言的主仓库中分离出来，单独建立了一个仓库。">
@@ -110,7 +110,7 @@
 <p>在写这篇文章时，SwiftSyntax 仍处于在开发中并进行 API 调整的阶段。不过目前你已经可以使用它对 Swift 代码进行一些编程工作。</p>
 <p>目前，<a href="https://github.com/apple/swift/tree/master/lib/Migrator" target="_blank" rel="noopener">Swift Migrator</a> 已经在使用 SwiftSyntax 了，并且在对内和对外层面上，对 SwiftSyntax 的接入也在不断地努力着。</p>
 <h2 id="SwiftSyntax-如何工作？"><a href="#SwiftSyntax-如何工作？" class="headerlink" title="SwiftSyntax 如何工作？"></a>SwiftSyntax 如何工作？</h2><p>为了明白 SwiftSyntax 如何工作，我们首先要回头看看 Swift 编译器的架构：</p>
-<p><img src="/img/articles/nshipster-swiftsyntax/swift-compilation-diagram-8af7d0078f72cdaa8f50430e608f15a9d4214f5772439d2fd6904bb5a8a53c60.png1548390462.3512783" alt></p>
+<p><img src="https://swift.gg/img/articles/nshipster-swiftsyntax/swift-compilation-diagram-8af7d0078f72cdaa8f50430e608f15a9d4214f5772439d2fd6904bb5a8a53c60.png1548390462.3512783" alt></p>
 <p>Swift 编译器的主要职责是把 Swift 代码转换为可执行的机器代码。整个过程可以划分为几个离散的步骤，一开始，<a href="https://github.com/apple/swift/tree/master/lib/Parse" target="_blank" rel="noopener">语法分析器</a> 会生成一个抽象语法树（AST）。之后，语义分析器会进行工作并生成一个通过类型检查的 AST。至此步骤，代码会降级到 <a href="https://github.com/apple/swift/blob/master/docs/SIL.rst" target="_blank" rel="noopener">Swift 中间层语言</a>；随后 SIL 会继续转换并优化自身，降级为 <a href="http://llvm.org/docs/LangRef.html" target="_blank" rel="noopener">LLVM IR</a>，并最终编译为机器代码。</p>
 <p>对于我们的讨论来说，最重要的关键点是 SwiftSyntax 的操作目标是编译过程第一步所生成的 AST。但也由于这样，SwiftSyntax 无法告知你任何关于代码的语义或类型信息。</p>
 <p>与 SwiftSyntax 相反，一些如 <a href="https://github.com/apple/swift/tree/master/tools/SourceKit" target="_blank" rel="noopener">SourceKit</a> 之类的工具，操作的目标为更容易理解的 Swift 代码。这可以帮助此类工具实现一些编辑器相关的特性，例如代码补全或者文件之间的跳转。虽然 SwiftSyntax 不能像 SourceKit 一样实现跳转或者补全的功能，但在语法层面上也有很多应用场景，例如代码格式化和语法高亮。</p>
@@ -159,7 +159,7 @@
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> SwiftSyntax</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SwiftSyntaxHighlighter</span>: <span class="title">SyntaxRewriter</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> html: <span class="type">String</span> = <span class="string">""</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">visit</span><span class="params">(<span class="number">_</span> token: TokenSyntax)</span></span> -&gt; <span class="type">Syntax</span> &#123;</span><br><span class="line">        <span class="keyword">switch</span> token.tokenKind &#123;</span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">        <span class="keyword">case</span> .floatingLiteral(<span class="keyword">let</span> string):</span><br><span class="line">            html += <span class="string">"&lt;span class=\"mf\"&gt;\(string)&lt;/span&gt;"</span></span><br><span class="line">        <span class="keyword">case</span> .integerLiteral(<span class="keyword">let</span> string):</span><br><span class="line">            <span class="keyword">if</span> string.hasPrefix(<span class="string">"0b"</span>) &#123;</span><br><span class="line">                html += <span class="string">"&lt;span class=\"mb\"&gt;\(string)&lt;/span&gt;"</span></span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> string.hasPrefix(<span class="string">"0o"</span>) &#123;</span><br><span class="line">                html += <span class="string">"&lt;span class=\"mo\"&gt;\(string)&lt;/span&gt;"</span></span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> string.hasPrefix(<span class="string">"0x"</span>) &#123;</span><br><span class="line">                html += <span class="string">"&lt;span class=\"mh\"&gt;\(string)&lt;/span&gt;"</span></span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                html += <span class="string">"&lt;span class=\"mi\"&gt;\(string)&lt;/span&gt;"</span></span><br><span class="line">            &#125;</span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> token</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>尽管 <code>SyntaxRewritere</code> 针对每一种不同类型的语法元素，都已经实现了 <code>visit(:)</code> 方法，但我发现使用一个 <code>switch</code> 语句可以更简单地处理所有工作。（在 <code>default</code> 分支中打印出无法处理的标记符，可以更好地帮助我们找到那些没有处理的情况）。这不是最优雅的实现，但鉴于我对 SwiftSyntax 不足的理解，这是个较好的开端。</p>
 <p>不管怎样，在几个小时的开发工作后，我已经可以在 Swift 大量的语法特性中，生成出比较理想的渲染过的输出。</p>
-<p><img src="/img/articles/nshipster-swiftsyntax/swiftsyntaxhightlighter-example-output-829aa64ab4bdf73a2e3070aab017e21e3db37ca0ee35079f0e89e22594806df0.png1548390462.5352607" alt></p>
+<p><img src="https://swift.gg/img/articles/nshipster-swiftsyntax/swiftsyntaxhightlighter-example-output-829aa64ab4bdf73a2e3070aab017e21e3db37ca0ee35079f0e89e22594806df0.png1548390462.5352607" alt></p>
 <p>这个项目需要一个库和命令行工具的支持。快去 <a href="https://github.com/NSHipster/SwiftSyntaxHighlighter" target="_blank" rel="noopener">尝试一下 </a>然后让我知道你的想法吧！</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
@@ -261,7 +261,7 @@
 		<ul>
 		
 		  
-			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>15</sup></a></li>
 		  
 		
 		  
@@ -325,11 +325,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -357,6 +357,10 @@
 		  
 		
 		  
+			<li><a href="/categories/POP/" title="POP">POP<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
 		  
 		
@@ -373,7 +377,15 @@
 		  
 		
 		  
+			<li><a href="/categories/POP/SWIFT/" title="SWIFT">SWIFT<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -382,10 +394,6 @@
 		
 		  
 			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -398,6 +406,10 @@
 		
 		  
 			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/The-Always-Right-Institute/" title="The Always Right Institute">The Always Right Institute<sup>1</sup></a></li>
 		  
 		
 		  
@@ -449,11 +461,11 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
 		  
 		
 		  
@@ -482,6 +494,10 @@
 		
 		  
 			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftjectivec/" title="swiftjectivec">swiftjectivec<sup>1</sup></a></li>
 		  
 		
 		  
@@ -526,7 +542,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>107</sup></a></li>
 			
 		
 			
@@ -534,7 +550,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>14</sup></a></li>
 			
 		
 			
@@ -550,15 +566,15 @@
 			
 		
 			
+				<li><a href="/tags/教程/" title="教程">教程<sup>7</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
 				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
 			
 		
 			
