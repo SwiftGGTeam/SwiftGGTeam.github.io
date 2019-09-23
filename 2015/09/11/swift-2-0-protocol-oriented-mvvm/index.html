@@ -22,7 +22,7 @@
 <meta property="og:description" content="作者：Natasha，原文链接，原文日期：2015-08-17译者：小铁匠Linus；校对：Channe；定稿：小锅   自从令人兴奋的Swift 面向协议编程 WWDC 讲座发布，我就在思考协议的用法。但是现实中，我并没有使用过它们。我仍在消化面向协议编程的含义，之后就可以在代码中用面向协议编程模式替换面向过程编程模式了。 一个庞大的案例涌上心头：MVVM ! 我之前用过 MVVM，如果你想要">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://swift.gg/img/articles/swift-2-0-protocol-oriented-mvvm/Simulator-Screen-Shot-Aug-17-2015-8.26.21-AM.png1444269944.206409">
-<meta property="og:updated_time" content="2019-09-23T04:06:39.518Z">
+<meta property="og:updated_time" content="2019-09-23T04:12:57.326Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift 2.0 中的面向协议的MVVM">
 <meta name="twitter:description" content="作者：Natasha，原文链接，原文日期：2015-08-17译者：小铁匠Linus；校对：Channe；定稿：小锅   自从令人兴奋的Swift 面向协议编程 WWDC 讲座发布，我就在思考协议的用法。但是现实中，我并没有使用过它们。我仍在消化面向协议编程的含义，之后就可以在代码中用面向协议编程模式替换面向过程编程模式了。 一个庞大的案例涌上心头：MVVM ! 我之前用过 MVVM，如果你想要">
@@ -104,7 +104,7 @@
 <p>一个庞大的案例涌上心头：<code>MVVM</code> ! 我之前用过 <code>MVVM</code>，如果你想要具体了解，可以看我之前发表的<a href="http://natashatherobot.com/swift-mvvm-optionals/" target="_blank" rel="noopener">关于 MVVM 的博客</a>。不过面向协议的内容都在本篇文章。</p>
 <a id="more"></a>
 <p>接下来我会用一个简单的例子来说明。现在有一个设置界面，其中只有一个设置：开启、关闭Minion Mode，当然你也可以推广到有许多设置的情况：</p>
-<p><img src="/img/articles/swift-2-0-protocol-oriented-mvvm/Simulator-Screen-Shot-Aug-17-2015-8.26.21-AM.png1444269944.206409" alt></p>
+<p><img src="https://swift.gg/img/articles/swift-2-0-protocol-oriented-mvvm/Simulator-Screen-Shot-Aug-17-2015-8.26.21-AM.png1444269944.206409" alt></p>
 <h2 id="视图单元格"><a href="#视图单元格" class="headerlink" title="视图单元格"></a>视图单元格</h2><p>一个拥有<code>label</code>和<code>switch</code>按钮的<code>cell</code>是很通用的。你可以把相同的 <code>cell</code> 运用在不同的地方，比如放在登录界面的 Remember Me 设置中。因此，你想让这个视图通用化。</p>
 <h3 id="复杂的配置方法"><a href="#复杂的配置方法" class="headerlink" title="复杂的配置方法"></a>复杂的配置方法</h3><p>通常，我会在 <code>cell</code> 中使用配置(<code>configure</code>)方法来追踪在应用程序不同部分的所有可能用到这个 <code>cell</code> 的设置。这个方法大概是这样的：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SwitchWithTextTableViewCell</span>: <span class="title">UITableViewCell</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">private</span> <span class="keyword">weak</span> <span class="keyword">var</span> label: <span class="type">UILabel!</span></span><br><span class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">private</span> <span class="keyword">weak</span> <span class="keyword">var</span> switchToggle: <span class="type">UISwitch!</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">typealias</span> onSwitchToggleHandlerType = (switchOn: <span class="type">Bool</span>) -&gt; <span class="type">Void</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> onSwitchToggleHandler: onSwitchToggleHandlerType?</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">awakeFromNib</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.awakeFromNib()</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">configure</span><span class="params">(withTitle title: String,</span></span></span><br><span class="line"><span class="function"><span class="params">        switchOn: Bool,</span></span></span><br><span class="line"><span class="function"><span class="params">        onSwitchToggleHandler: onSwitchToggleHandlerType? = <span class="literal">nil</span>)</span></span></span><br><span class="line">    &#123;</span><br><span class="line">        label.text = title</span><br><span class="line">        switchToggle.on = switchOn</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">self</span>.onSwitchToggleHandler = onSwitchToggleHandler</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@IBAction</span> <span class="function"><span class="keyword">func</span> <span class="title">onSwitchToggle</span><span class="params">(sender: UISwitch)</span></span> &#123;</span><br><span class="line">        onSwitchToggleHandler?(switchOn: sender.on)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -167,18 +167,18 @@
 <nav class="article-nav clearfix">
  
  <div class="prev">
- <a href="/2015/09/11/take_video_tutorial_in_ios8_with_swift/" title="iOS 8 中使用 Swift 录制视频教程">
+ <a href="/2015/09/11/swift-2-0-protocol-oriented-mvvm/" title="Swift 2.0 中的面向协议的MVVM">
   <strong>上一篇</strong><br>
   <span>
-  iOS 8 中使用 Swift 录制视频教程</span>
+  Swift 2.0 中的面向协议的MVVM</span>
 </a>
 </div>
 
 
 <div class="next">
-<a href="/2015/09/11/A-Beautiful-Solution-to-Non-Optional-UIImage-Named-in-Swift/" title="如何在 Swift 中优雅地使用 UIImage">
+<a href="/2015/09/11/understanding-enums-using-swift/" title="Swift 中枚举的使用">
  <strong>下一篇</strong><br> 
- <span>如何在 Swift 中优雅地使用 UIImage
+ <span>Swift 中枚举的使用
 </span>
 </a>
 </div>
