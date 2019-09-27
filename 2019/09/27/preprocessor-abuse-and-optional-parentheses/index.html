@@ -1,0 +1,1067 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>宏定义与可选括号 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="macro,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="Objective-C 中 C 语言宏定义扩展">
+<meta name="keywords" content="macro">
+<meta property="og:type" content="article">
+<meta property="og:title" content="宏定义与可选括号">
+<meta property="og:url" content="https://swift.gg/2019/09/27/preprocessor-abuse-and-optional-parentheses/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="Objective-C 中 C 语言宏定义扩展">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-09-27T03:52:14.655Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="宏定义与可选括号">
+<meta name="twitter:description" content="Objective-C 中 C 语言宏定义扩展">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2019/09/27/preprocessor-abuse-and-optional-parentheses/" target="_blank" title="宏定义与可选括号" itemprop="url">宏定义与可选括号</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2019-09-27T00:00:00.000Z" itemprop="datePublished">2019-09-27</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Mike Ash，<a href="https://www.mikeash.com/pyblog/friday-qa-2015-03-20-preprocessor-abuse-and-optional-parentheses.html" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-03-20<br>译者：<a href="undefined">俊东</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>，<a href="https://nemocdz.github.io/" target="_blank" rel="noopener">Nemocdz</a>；定稿：<a href="https://github.com/Pancf" target="_blank" rel="noopener">Pancf</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>前几天我遇到了一个有趣的问题：如何编写一个 C 语言预处理器的宏，删除包围实参的括号？</p>
+<p>今天的文章，将为大家分享我的解决方案。<br><a id="more"></a></p>
+<h2 id="起源"><a href="#起源" class="headerlink" title="起源"></a>起源</h2><p>C 语言预处理器是一个相当盲目的文本替换引擎，它并不理解 C 代码，更不用说 Objective-C 了。它的工作原理还算不错，可以应付大部分情况，但偶尔也会出现判断失误。</p>
+<p>这里举个典型的例子：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="built_in">XCTAssertEqualObjects</span>(someArray, @[ <span class="string">@"one"</span>, <span class="string">@"two"</span> ], <span class="string">@"Array is not as expected"</span>);</span><br></pre></td></tr></table></figure>
+<p>这会无法编译，并且会出现非常古怪的错误提示。预处理器查找分隔宏参数的逗号时，没能将数组结构 <code>@ [...]</code> 中的东西理解为一个单一的元素。结果代码尝试比较 <code>someArray</code> 和 <code>@[@&quot;one&quot;</code>。断言失败消息 <code>@&quot;two&quot;]</code> 和 <code>@&quot;Array is not as expected&quot;</code> 是另外的实参。这些半成品部分用于 <code>XCTAssertEqualObjects</code> 的宏扩展中，生成的代码当然错得离谱。</p>
+<p>要解决这个问题也很容易：添加括号就行。预编译器不能识别 <code>[]</code>，但它<em>确实</em>知道 <code>()</code> 并且能够理解应该忽略里面的逗号。下面的代码就能正常运行：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="built_in">XCTAssertEqualObjects</span>(someArray, (@[ <span class="string">@"one"</span>, <span class="string">@"two"</span> ]), <span class="string">@"Array is not as expected"</span>);</span><br></pre></td></tr></table></figure>
+<p>在 C 语言的许多场景下，你添加多余的括号也不会有任何区别。宏扩展开之后，生成的代码虽然在数组文字周围有括号，但没有异常。你可以写搞笑的多层括号表达式，编译器会愉快地帮你解析到最里面一层：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="built_in">NSLog</span>(<span class="string">@"%d"</span>,((((((((((<span class="number">42</span>)))))))))));</span><br></pre></td></tr></table></figure>
+<p>甚至将 <code>NSLog</code> 这样处理也行：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">((((((((((<span class="built_in">NSLog</span>))))))))))(<span class="string">@"%d"</span>,<span class="number">42</span>);</span><br></pre></td></tr></table></figure>
+<p>在 C 中有一个地方你不能随意添加括号：类型（types）。例如：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="keyword">int</span> f(<span class="keyword">void</span>); <span class="comment">// 合法</span></span><br><span class="line">(<span class="keyword">int</span>) f(<span class="keyword">void</span>); <span class="comment">// 不合法</span></span><br></pre></td></tr></table></figure>
+<p>什么时候会发生这种情况呢？这种情况并不常见，但如果你有一个使用类型的宏，并且类型包含的逗号不在括号内，则会出现这种情况。宏可以做很多事情，当一个类型遵循多个协议时，在 Objective-C 中可能出现一些类型带有未加括号的逗号;当使用带有多个模板参数的模板化类型时，在 C++ 中也可能出现。举个例子，这有一个简单的宏，创建从字典中提供静态类型值的 <code>getter</code>：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#define GETTER(type,name) \</span></span><br><span class="line">	- (type)name &#123; \</span><br><span class="line">		<span class="keyword">return</span> [_dictionary objectForKey: @<span class="meta">#name]; \</span></span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<p>你能这样使用它：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">SomeClass</span> </span>&#123;</span><br><span class="line">	<span class="built_in">NSDictionary</span> *_dictionary;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">GETTER(<span class="built_in">NSView</span> *,view)</span><br><span class="line">GETTER(<span class="built_in">NSString</span> *,name)</span><br><span class="line">GETTER(<span class="keyword">id</span>&lt;<span class="built_in">NSCopying</span>&gt;,someCopyableThing)</span><br></pre></td></tr></table></figure>
+<p>到目前为止没问题。现在假设我们想要创建一个遵循<em>两个</em>协议的类型：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">GETTER(<span class="keyword">id</span>&lt;<span class="built_in">NSCopying</span>,<span class="built_in">NSCoding</span>&gt;,someCopyableAndCodeableThing)</span><br></pre></td></tr></table></figure>
+<p>哎呀！宏不起作用了。而且添加括号也无济于事：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">GETTER((<span class="keyword">id</span>&lt;<span class="built_in">NSCopying</span>,<span class="built_in">NSCoding</span>&gt;),someCopyableAndCodeableThing)</span><br></pre></td></tr></table></figure>
+<p>这会产生非法代码。这时我们需要一个删除可选括号的 UNPAREN 宏。将 <code>GETTER</code> 宏重写：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#define GETTER(type,name) \</span><br><span class="line">	- (UNPAREN(type))name &#123; \</span><br><span class="line">		return [_dictionary objectForKey: @#name]; \</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<p>我们该怎么做呢？</p>
+<h2 id="必须的括号"><a href="#必须的括号" class="headerlink" title="必须的括号"></a>必须的括号</h2><p>删除括号很容易：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#define UNPAREN(...) __VA_ARGS__</span></span><br><span class="line"><span class="meta">#define GETTER(type,name) \</span></span><br><span class="line">	- (UNPAREN type)name &#123; \</span><br><span class="line">		<span class="keyword">return</span> [_dictionary objectForKey: @<span class="meta">#name]; \</span></span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<p>虽然看上去很扯，但这的确能运行。预编译器将 <code>type</code> 扩展为 <code>(id &lt;NSCopying，NSCoding&gt;)</code>，生成 <code>UNPAREN (id&lt;NSCopying, NSCoding&gt;)</code>。然后它会将 <code>UNPAREN</code> 宏扩展为 <code>id &lt;NSCopying，NSCoding&gt;</code>。括号，消失！</p>
+<p>但是，之前使用的 <code>GETTER</code> 失败了。例如，<code>GETTER(NSView *，view)</code> 在宏扩展中生成 <code>UNPAREN NSView *</code>。不会进一步扩展就直接提供给编译器。结果自然会报编译器错误，因为 <code>UNPAREN NSView *</code> 是无法编译的。这虽然可以通过编写 <code>GETTER((NSView *)，view)</code> 来解决，但是被迫添加这些括号很烦人。这样的结果可不是我们想要的。</p>
+<h2 id="宏不能被重载"><a href="#宏不能被重载" class="headerlink" title="宏不能被重载"></a>宏不能被重载</h2><p>我立刻想到了如何摆脱剩余的 <code>UNPAREN</code>。当你想要一个标识符消失时，你可以使用一个空的 <code>#define</code>，如下所示：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#define UNPAREN</span></span><br></pre></td></tr></table></figure>
+<p>有了这个，<code>a UNPAREN b</code> 的序列变为 <code>a b</code>。完美解决问题！但是，如果已经存在带参数的另一个定义，则预处理器会拒绝此操作。即使预处理器可能选择其中一个，它也不会同时存在两种形式。如果可行的话，这能有效解决我们的问题，但可惜的是并不允许：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#define UNPAREN(...) __VA_ARGS__</span></span><br><span class="line"><span class="meta">#define UNPAREN</span></span><br><span class="line"><span class="meta">#define GETTER(type,name) \</span></span><br><span class="line">	- (UNPAREN type)name &#123; \</span><br><span class="line">		<span class="keyword">return</span> [_dictionary objectForKey: @<span class="meta">#name]; \</span></span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<p>这无法通过预处理器，它会由于 <code>UNPAREN</code> 的重复 <code>#define</code> 而报错。不过，它引导我们走上了成功的道路。现在的瓶颈是怎么找出一种方法来实现相同的效果，而不会使两个宏具有相同的名称。</p>
+<h2 id="关键"><a href="#关键" class="headerlink" title="关键"></a>关键</h2><p>最终目标是让 <code>UNPAREN(x)</code> 和 <code>UNPAREN((x))</code> 结果都是 <code>x</code>。朝着这个目标迈出的第一步是制作一些宏，其中传递 <code>x</code> 和 <code>(x)</code> 产生相同的输出，即使它并不确定 <code>x</code> 是什么。这可以通过将宏名称放在宏扩展中来实现，如下所示：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#define EXTRACT(...) EXTRACT __VA_ARGS__</span></span><br></pre></td></tr></table></figure>
+<p>现在如果你写 <code>EXTRACT(x)</code>，结果是 <code>EXTRACT x</code>。当然，如果你写 <code>EXTRACT x</code>，结果也是 <code>EXTRACT x</code>，就像没有宏扩展的情况。这仍然给我们留下一个 <code>EXTRACT</code>。虽然不能用 <code>#define</code> 直接解决，但这已经进步了。</p>
+<h2 id="标识符粘合"><a href="#标识符粘合" class="headerlink" title="标识符粘合"></a>标识符粘合</h2><p>预处理器有一个操作符 <code>##</code>，它将两个标识符粘合在一起。例如，<code>a ## b</code> 变为 <code>ab</code>。这可以用于从片段构造标识符，但也可以用于调用宏。例如：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#define AA 1</span></span><br><span class="line"><span class="meta">#define AB 2</span></span><br><span class="line"><span class="meta">#define A(x) A ## x</span></span><br></pre></td></tr></table></figure>
+<p>从这里可以看到，<code>A(A)</code> 产生 <code>1</code>，<code>A(B)</code> 产生 <code>2</code>。</p>
+<p>让我们将这个运算符与上面的 <code>EXTRACT</code> 宏结合起来，尝试生成一个 <code>UNPAREN</code> 宏。由于 <code>EXTRACT(...)</code> 使用前缀 <code>EXTRACT</code> 生成实参，因此我们可以使用标识符粘合来生成以 <code>EXTRACT</code> 结尾的其他标记。如果我们 <code>#define</code> 那个新标记为空，那就搞定了。</p>
+<p>这是一个以 <code>EXTRACT</code> 结尾的宏，它不会产生任何结果：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#define NOTHING_EXTRACT</span></span><br></pre></td></tr></table></figure>
+<p>这是对 <code>UNPAREN</code> 宏的尝试，它将所有内容放在一起：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#define UNPAREN(x) NOTHING_ ## EXTRACT x</span></span><br></pre></td></tr></table></figure>
+<p>不幸的是，这并不能实现我们的目标。问题在操作顺序上。如果我们写 <code>UNPAREN((int))</code>，我们将会得到：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">UNPAREN((<span class="keyword">int</span>))</span><br><span class="line">NOTHING_ <span class="meta">## EXTRACT (int)</span></span><br><span class="line">NOTHING_EXTRACT (<span class="keyword">int</span>)</span><br><span class="line">(<span class="keyword">int</span>)</span><br></pre></td></tr></table></figure>
+<p>标示符粘合太早起作用，<code>EXTRACT</code> 宏永远不会有机会扩展开。</p>
+<p>可以使用间接的方式强制预处理器用不同的顺序判断事件。我们可以制作一个 <code>PASTE</code> 宏，而不是直接使用 <code>##</code>：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#define PASTE(x,...) x ## __VA_ARGS__</span></span><br></pre></td></tr></table></figure>
+<p>然后我们将根据它编写 <code>UNPAREN</code>：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#define UNPAREN(x)  PASTE(NOTHING_,EXTRACT x)</span></span><br></pre></td></tr></table></figure>
+<p>这<em>仍然</em>不起作用。情况如下：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">UNPAREN((<span class="keyword">int</span>))</span><br><span class="line">PASTE(NOTHING_,EXTRACT (<span class="keyword">int</span>))</span><br><span class="line">NOTHING_ <span class="meta">## EXTRACT (int)</span></span><br><span class="line">NOTHING_EXTRACT (<span class="keyword">int</span>)</span><br><span class="line">(<span class="keyword">int</span>)</span><br></pre></td></tr></table></figure>
+<p>但更接近我们的目标了。序列 <code>EXTRACT(int)</code> 显然没有触发标示符粘合操作符。我们必须让预处理器在它看到 <code>##</code> 之前解析它。可以通过另一种方式间接强制解析它。让我们定义一个只包装 <code>PASTE</code> 的 <code>EVALUATING_PASTE</code> 宏：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#define EVALUATING_PASTE(x,...) PASTE(x,__VA_ARGS__)</span></span><br></pre></td></tr></table></figure>
+<p>现在让我们用<em>它</em>写 <code>UNPAREN</code>：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#define UNPAREN(x) EVALUATING_PASTE(NOTHING_,EXTRACT x)</span></span><br></pre></td></tr></table></figure>
+<p>这是展开之后：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">UNPAREN((<span class="keyword">int</span>))</span><br><span class="line">EVALUATING_PASTE(NOTHING_,EXTRACT (<span class="keyword">int</span>))</span><br><span class="line">PASTE(NOTHING_,EXTRACT <span class="keyword">int</span>)</span><br><span class="line">NOTHING_ <span class="meta">## EXTRACT int</span></span><br><span class="line">NOTHING_EXTRACT <span class="keyword">int</span></span><br><span class="line"><span class="keyword">int</span></span><br></pre></td></tr></table></figure>
+<p>即使没有额外加括号也能正常运行，因为额外的赋值并没有影响：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">UNPAREN(<span class="keyword">int</span>)</span><br><span class="line">EVALUATING_PASTE(NOTHING_,EXTRACT <span class="keyword">int</span>)</span><br><span class="line">PASTE(NOTHING_,EXTRACT <span class="keyword">int</span>)</span><br><span class="line">NOTHING_ <span class="meta">## EXTRACT int</span></span><br><span class="line">NOTHING_EXTRACT <span class="keyword">int</span></span><br><span class="line"><span class="keyword">int</span></span><br></pre></td></tr></table></figure>
+<p>成功了！我们现在编写 <code>GETTER</code> 时可以不需要围绕类型的括号了：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#define GETTER(type,name) \</span></span><br><span class="line">	- (UNPAREN(type))name &#123; \</span><br><span class="line">		<span class="keyword">return</span> [_dictionary objectForKey: @<span class="meta">#name]; \</span></span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="奖励宏"><a href="#奖励宏" class="headerlink" title="奖励宏"></a>奖励宏</h2><p>在选择一些宏来证明这个结构时，我构建了一个很好的 <code>dispatch_once</code> 宏来制作延迟初始化的常量。实现如下：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#define ONCE(type,name,...) \</span></span><br><span class="line">	UNPAREN(type) name() &#123; \</span><br><span class="line">		<span class="keyword">static</span> UNPAREN(type) static_ <span class="meta">## name; \</span></span><br><span class="line">		<span class="keyword">static</span> <span class="built_in">dispatch_once_t</span> predicate; \</span><br><span class="line">		<span class="built_in">dispatch_once</span>(&amp;predicate,^&#123; \</span><br><span class="line">			static_ <span class="meta">## name = (&#123; __VA_ARGS__; &#125;); \</span></span><br><span class="line">		&#125;); \</span><br><span class="line">		<span class="keyword">return</span> static_ <span class="meta">## name; \</span></span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<p>使用案例：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">ONCE(<span class="built_in">NSSet</span> *,AllowedFileTypes,[<span class="built_in">NSSet</span> setWithArray:@[ <span class="string">@"mp3"</span>,<span class="string">@"m4a"</span>,<span class="string">@"aiff"</span> ]])</span><br></pre></td></tr></table></figure>
+<p>然后，你可以调用 <code>AllowedFileTypes()</code> 来获取集合，并根据需要高效创建集合。如果类型不巧包括括号，添加括号就能运行。</p>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>仅仅写这个宏，我就发现了很多艰涩的知识。我希望接触这些知识也不会影响你的思维。请谨慎使用这些知识。</p>
+<p>今天就这样。以后还会有更多令人兴奋的探索，可能比这还要再不可思议。在此之前，如果你对此主题有任何建议，请发送给 <a href="mike@mikeash.com">我们</a>！</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Mike-Ash/">Mike Ash</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/iOS/">iOS</a><a href="/tags/macro/">macro</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2019/09/27/preprocessor-abuse-and-optional-parentheses/" data-title="宏定义与可选括号 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2019/09/23/swift-import/" title="Swift Import 声明">
+ <strong>下一篇</strong><br> 
+ <span>Swift Import 声明
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2019/09/27/preprocessor-abuse-and-optional-parentheses/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#起源"><span class="toc-number">1.</span> <span class="toc-text">起源</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#必须的括号"><span class="toc-number">2.</span> <span class="toc-text">必须的括号</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#宏不能被重载"><span class="toc-number">3.</span> <span class="toc-text">宏不能被重载</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#关键"><span class="toc-number">4.</span> <span class="toc-text">关键</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#标识符粘合"><span class="toc-number">5.</span> <span class="toc-text">标识符粘合</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#奖励宏"><span class="toc-number">6.</span> <span class="toc-text">奖励宏</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结论"><span class="toc-number">7.</span> <span class="toc-text">结论</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/POP/" title="POP">POP<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/POP/SWIFT/" title="SWIFT">SWIFT<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/The-Always-Right-Institute/" title="The Always Right Institute">The Always Right Institute<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftjectivec/" title="swiftjectivec">swiftjectivec<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>108</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>14</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>9</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2019 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftUI 重磅教程专属优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/H9aEpi">使用 SwiftGG 优惠码，半价基础上再减 20 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
