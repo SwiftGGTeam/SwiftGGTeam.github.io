@@ -104,108 +104,11 @@
 <p><img src="https://nshipster.com/assets/xcconfig-project-build-settings--light-f7043782f0b56d637bec89eefa0d37939b38ef33f55c293e326d3fecbc06df49.png" alt></p>
 <p>幸运的是，有一个更好的办法，不必点击迷宫般的 tab 和箭头，就可以管理所有的配置。</p>
 <p>这一周，我们将向你展示如何在 Xcode 之外，通过修改基于文本的 <code>xcconfig</code> 文件，让你的项目更加紧凑、易懂、强大。</p>
-<hr>
-<p><a href="https://help.apple.com/xcode/mac/8.3/#/dev745c5c974" target="_blank" rel="noopener">Xcode Build 配置文件</a>，即大家所熟知的 <code>xcconfig</code> 文件，允许我们在不使用 Xcode 的情况下声明和管理 APP 的 Build Setting。它们是纯文本，这意味着它们对代码管理系统更加友好，而且可以被任意编辑器修改。</p>
-<p>从根本上说，每个配置文件都由一系列键值对组成，其语法如下:</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;#BUILD_SETTING_NAME#&gt; = &lt;#value#&gt;</span><br></pre></td></tr></table></figure>
-<p>例如，你可以使用下面这样的 <code>SWIFT_VERSION</code> Build Setting，指定项目的 Swift 语言版本：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">SWIFT_VERSION = 5.0</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>根据 <a href="http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap08.html#tag_08" target="_blank" rel="noopener"><abbr title="Portable Operating System Interface">POSIX</abbr> 标准</a>，环境变量的名字由全大写字母、数字和下划线（<code>_</code>）组成 —— 经典例子就是 <code>SCREAMING_SNAKE_CASE</code> 🐍🗯。</p>
-</blockquote>
-<hr>
-<p>乍一看，<code>xcconfig</code> 文件与 <code>.env</code> 文件有惊人的相似之处，它们的语法都很简单，都以换行分隔。但是，Xcode Build 配置文件的内容比表面上看到的要多。<em>看哪!</em></p>
-<h3 id="保留现有值"><a href="#保留现有值" class="headerlink" title="保留现有值"></a>保留现有值</h3><p>要追加新内容，而不是替换现有定义时，可以像这样使用 <code>$(inherited)</code> 变量:</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;#BUILD_SETTING_NAME#&gt; = $(inherited)&lt;#additional value#&gt;</span><br></pre></td></tr></table></figure>
-<p>这么做通常是为了搭建一些值的列表，比如编译器的 framework 头文件的搜索路径(<code>FRAMEWORK_SEARCH_PATHS</code>):</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">FRAMEWORK_SEARCH_PATHS = $(inherited) $(PROJECT_DIR)</span><br></pre></td></tr></table></figure>
-<p>Xcode 按下面的顺序对 <code>inherited</code> 进行赋值（优先级从低到高）：</p>
-<ul>
-<li>平台默认值（Platform Defaults）</li>
-<li>Xcode 项目文件的 Build Setting（Xcode Project File Build Settings）</li>
-<li>Xcode 项目的 xcconfig 文件（xcconfig File for the Xcode Project）</li>
-<li>Active Target 的 Build Setting（Active Target Build Settings）</li>
-<li>Active Target 的 xcconfig 文件（xcconfig File for the Active Target）</li>
-</ul>
-<blockquote>
-<p>空格用于分隔字符串和路径列表中的项。指定包含空格的项时，必须用引号(<code>&quot;</code>)括起来。</p>
-</blockquote>
-<h3 id="引用其他值"><a href="#引用其他值" class="headerlink" title="引用其他值"></a>引用其他值</h3><p>你可以按照下面的语法，通过其他设置的名字引用它们的值：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;#BUILD_SETTING_NAME#&gt; = $(&lt;#ANOTHER_BUILD_SETTING_NAME#&gt;)</span><br></pre></td></tr></table></figure>
-<p>这种引用既可以用于根据现有值定义新变量，也可以用于以内联方式动态构建新值。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">OBJROOT = $(SYMROOT)</span><br><span class="line">CONFIGURATION_BUILD_DIR = $(BUILD_DIR)/$(CONFIGURATION)-$(PLATFORM_NAME)</span><br></pre></td></tr></table></figure>
-<h3 id="条件约束"><a href="#条件约束" class="headerlink" title="条件约束"></a>条件约束</h3><p>使用以下语法，你可以按 SDK（<code>sdk</code>）、架构（<code>arch</code>）和 / 或配置（<code>config</code>）对 Build Setting 进行条件约束：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;#BUILD_SETTING_NAME#&gt;[sdk=&lt;#sdk#&gt;] = &lt;#value for specified sdk#&gt;</span><br><span class="line">&lt;#BUILD_SETTING_NAME#&gt;[arch=&lt;#architecture#&gt;] = &lt;#value for specified architecture#&gt;</span><br><span class="line">&lt;#BUILD_SETTING_NAME#&gt;[config=&lt;#configuration#&gt;] = &lt;#value for specified configuration#&gt;</span><br></pre></td></tr></table></figure>
-<p>如果需要在同一 Build Setting 的多个定义之间进行选择，编译器将根据条件约束进行解析。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;#BUILD_SETTING_NAME#&gt;[sdk=&lt;#sdk#&gt;][arch=&lt;#architecture#&gt;] = &lt;#value for specified sdk and architectures#&gt;</span><br><span class="line">&lt;#BUILD_SETTING_NAME#&gt;[sdk=*][arch=&lt;#architecture#&gt;] = &lt;#value for all other sdks with specified architecture#&gt;</span><br></pre></td></tr></table></figure>
-<p>例如，你可以使用下面这条 Build Setting 指定仅编译 active architecture，从而提升本地 Build 的速度。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">ONLY_ACTIVE_ARCH[config=Debug][sdk=*][arch=*] = YES</span><br></pre></td></tr></table></figure>
-<h3 id="引用其他配置文件中的设置"><a href="#引用其他配置文件中的设置" class="headerlink" title="引用其他配置文件中的设置"></a>引用其他配置文件中的设置</h3><p>跟 <code>C</code> 语言的 <code>#include</code> 指令一样，Build 配置文件也可以使用这种语法来引用其他配置文件中的设置。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#include &quot;&lt;#path/to/File.xcconfig#&gt;&quot;</span><br></pre></td></tr></table></figure>
-<p>正如我们将在本文后面看到的，你可以利用这一点，以非常强大的方式搭建起 Build Setting 的级联列表。</p>
-<blockquote>
-<p>正常来说，当遇到一个无法解析的 <code>#include</code> 指令时，编译器会报错。但是 <code>xcconfig</code> 文件同时也支持 <code>#include?</code> 指令，在该指令下，若文件无法找到，编译器不会报错。</p>
-</blockquote>
-<blockquote>
-<p>根据文件是否存在而改变编译时行为的情况并不多；毕竟，Build 最好是可预见的。但是你可以把它用在可选的开发工具上，比如 <a href="https://revealapp.com/" target="_blank" rel="noopener">Reveal</a> 需要以下的配置：</p>
-</blockquote>
-<blockquote>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&gt; # Reveal.xcconfig</span><br><span class="line">&gt; OTHER_LDFLAGS = $(inherited) -weak_framework RevealServer</span><br><span class="line">&gt; FRAMEWORK_SEARCH_PATHS = $(inherited) /Applications/Reveal.app/Contents/SharedSupport/iOS-Libraries</span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure>
-</blockquote>
-<h2 id="创建-Build-配置文件"><a href="#创建-Build-配置文件" class="headerlink" title="创建 Build 配置文件"></a>创建 Build 配置文件</h2><p>要创建 Build 配置文件，请选择 “File &gt; New File…” 菜单项（<kbd>⌘</kbd><kbd>N</kbd>），下拉到 “Other” 部分，选中 Configuration Settings File 模板。将它保存到你的项目目录，并确保它在你期望的 target 上。</p>
-<p><img src="https://nshipster.com/assets/xcconfig-new-file--light-1569134f8ecaeaee6640f28e544443da0136ff72b00f9343126147934ac134d4.png" alt></p>
-<p>创建好 <code>xcconfig</code> 文件后，你就可以将它分配给对应 target 的一个或多个 Build 配置。</p>
-<p><img src="https://nshipster.com/assets/xcconfig-project-configurations--light-a82440e27f27e3b139ab51c7317780c6b4a017dfcc56532972da5d521f1f0988.png" alt></p>
-<hr>
-<p>现在我们已经介绍了 Xcode Build 配置文件使用的基础知识，那么让我们来看几个示例，看看如何使用它们来管理 development、stage 和 production 环境。</p>
-<hr>
-<h2 id="为内部版本提供自定义的-APP-名称和图标"><a href="#为内部版本提供自定义的-APP-名称和图标" class="headerlink" title="为内部版本提供自定义的 APP 名称和图标"></a>为内部版本提供自定义的 APP 名称和图标</h2><p>开发 iOS 应用程序时，通常需要在模拟器和测试设备上安装各种内部版本（同时也会安装应用程序商店的最新版本，以供参考）。</p>
-<p>使用 <code>xcconfig</code> 文件，你可以轻松地为每个配置分配一个不同的名称和 APP 图标。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">// Development.xcconfig</span><br><span class="line">PRODUCT_NAME = $(inherited) α</span><br><span class="line">ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon-Alpha</span><br><span class="line"></span><br><span class="line">---</span><br><span class="line"></span><br><span class="line">// Staging.xcconfig</span><br><span class="line">PRODUCT_NAME = $(inherited) β</span><br><span class="line">ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon-Beta</span><br></pre></td></tr></table></figure>
-<h2 id="管理不同环境下的常量"><a href="#管理不同环境下的常量" class="headerlink" title="管理不同环境下的常量"></a>管理不同环境下的常量</h2><p>如果你的后端开发人员也遵循前面提到的 <a href="https://12factor.net/config" target="_blank" rel="noopener">12 Factor App</a> 理论，那么他们将为 development、stage 和 production 环境提供单独的接口。</p>
-<p>iOS 上最常见的环境管理方式可能就是使用条件编译语句 + <code>DEBUG</code> 这样的 Build Setting 了。</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"></span><br><span class="line">#<span class="keyword">if</span> <span class="type">DEBUG</span></span><br><span class="line"><span class="keyword">let</span> apiBaseURL = <span class="type">URL</span>(string: <span class="string">"https://api.example.dev"</span>)!</span><br><span class="line"><span class="keyword">let</span> apiKey = <span class="string">"9e053b0285394378cf3259ed86cd7504"</span></span><br><span class="line">#<span class="keyword">else</span></span><br><span class="line"><span class="keyword">let</span> apiBaseURL = <span class="type">URL</span>(string: <span class="string">"https://api.example.com"</span>)!</span><br><span class="line"><span class="keyword">let</span> apiKey = <span class="string">"4571047960318d233d64028363dfa771"</span></span><br><span class="line">#endif</span><br></pre></td></tr></table></figure>
-<p>这只是完成了任务，但是与代码 / 配置分离的标准相冲突。</p>
-<p>另一个方案是将这些与环境相关的值放到它们该待的地方 —— <code>xcconfig</code> 文件中。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">// Development.xcconfig</span><br><span class="line">API_BASE_URL = api.example.dev</span><br><span class="line">API_KEY = 9e053b0285394378cf3259ed86cd7504</span><br><span class="line"></span><br><span class="line">---</span><br><span class="line"></span><br><span class="line">// Production.xcconfig</span><br><span class="line">API_BASE_URL = api.example.com</span><br><span class="line">API_KEY = 4571047960318d233d64028363dfa771</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>不幸的是，<code>xcconfig</code> 将所有 <code>//</code> 都当成注释分隔符，不管它们是否包括在引号中。如果你用反斜线 <code>\/\/</code> 进行转义，那么这些反斜线也将被直接展示出现，使用时必须从结果中移除。在指定每个环境的 URL 常量时，这尤其不方便。</p>
-</blockquote>
-<blockquote>
-<p>如果不想处理这种麻烦的事情，你可以在 <code>xcconfig</code> 中忽略 scheme，然后在代码中添加 <code>https://</code>。<em>（你是在使用 https……对吧？）</em></p>
-</blockquote>
-<p>然而，要以编程方式获取这些值，我们还需要一个额外的步骤:</p>
-<h3 id="在-Swift-中访问-Build-Setting"><a href="#在-Swift-中访问-Build-Setting" class="headerlink" title="在 Swift 中访问 Build Setting"></a>在 Swift 中访问 Build Setting</h3><p>由 Xcode 项目文件、<code>xcconfig</code> 文件和环境变量定义的 Build Setting 只在 Build 时可用。当你运行一个已经编译的 APP 时，所有相关的上下文都是不可见的。<em>（谢天谢地！）</em></p>
-<p>但是等一下——你不记得之前在其他 tab 中看到过一些 Build Setting 吗？Info，是吗？</p>
-<p>实际上，Info tab 只是 target 的 <code>Info.plist</code> 文件的一个马甲。Build 时，这个 <code>Info.plist</code> 文件会根据 Build Setting 的配置进行编译，然后复制到最终 APP 的 <a href="https://nshipster.com/bundles-and-packages/" target="_blank" rel="noopener">bundle</a> 中。因此，添加 <code>$(API_BASE_URL)</code> 和 <code>$(API_KEY)</code> 的引用后，你可以通过 Foundation <code>Bundle</code> API 的 <code>infoDictionary</code> 属性访问这些值。完美！</p>
-<p><img src="https://nshipster.com/assets/xcconfig-project-info-plist--light-5561d8abf4dca9722875ff1f62b5975c3361f5ea3dfd584b655f3da7d3ceb94b.png" alt></p>
-<p>按照这种方法，我们可以做如下工作：</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">Configuration</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">value</span>&lt;T&gt;<span class="params">(<span class="keyword">for</span> key: String)</span></span> -&gt; <span class="type">T</span> &#123;</span><br><span class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> value = <span class="type">Bundle</span>.main.infoDictionary?[key] <span class="keyword">as</span>? <span class="type">T</span> <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="built_in">fatalError</span>(<span class="string">"Invalid or missing Info.plist key: \(key)"</span>)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> value</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">API</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">var</span> baseURL: <span class="type">URL</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">URL</span>(string: <span class="string">"https://"</span> + <span class="type">Configuration</span>.value(<span class="keyword">for</span>: <span class="string">"API_BASE_URL"</span>))!</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">var</span> key: <span class="type">String</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">Configuration</span>.value(<span class="keyword">for</span>: <span class="string">"API_KEY"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>从调用的角度考虑，我们发现这种方法与我们的最佳实践完美地在结合一起 —— 没有出现一个硬编码的常量!</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> url = <span class="type">URL</span>(string: path, relativeTo: <span class="type">API</span>.baseURL)!</span><br><span class="line"><span class="keyword">var</span> request = <span class="type">URLRequest</span>(url: url)</span><br><span class="line">request.httpMethod = method</span><br><span class="line">request.addValue(<span class="type">API</span>.key, forHTTPHeaderField: <span class="string">"X-API-KEY"</span>)</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>不要把私密的东西写在代码中。相反，应该将它们安全地存储在密码管理器或类似的东西中。</p>
-</blockquote>
-<blockquote>
-<p>为了防止你的私密被泄漏到 GitHub 上，请将下列配置添加到你的 <code>.gitignore</code> 文件中（根据需要）：</p>
-</blockquote>
-<blockquote>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&gt; # .gitignore</span><br><span class="line">&gt; Development.xcconfig</span><br><span class="line">&gt; Staging.xcconfig</span><br><span class="line">&gt; Production.xcconfig</span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure>
-</blockquote>
-<blockquote>
-<p>一些开发人员喜欢使用包含了所需 key 的占位符文件（例如 Development.sample.xcconfig）代替这些文件。拉取代码时，开发人员再将该文件复制到非占位符位置，并相应地填充它。</p>
-</blockquote>
-<hr>
-<hr>
-<p>Xcode 项目是庞大、脆弱的和不透明的。它们是团队成员合作时摩擦的来源，也常常是工作的累赘。</p>
-<p>幸运的是，<code>xcconfig</code> 文件很好地解决了这些痛点。将配置从 Xcode 移到 <code>xcconfig</code> 文件带来了很多好处，可以让你的项目与 Xcode 的细节保持一定距离，不受苹果公司的掣肘。</p>
-<blockquote>
-<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
-</blockquote>
-
         
 
         <p class="article-more-link">
+          
+            <a href="/2019/10/25/nshipster-xcconfig/#more" target="_blank">阅读全文</a>
           
        </p>
     </div>
@@ -1552,11 +1455,11 @@
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
@@ -1612,11 +1515,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>16</sup></a></li>
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>16</sup></a></li>
 		  
 		
 		  
@@ -1684,11 +1587,11 @@
 		  
 		
 		  
-			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
 		  
 		
 		  
