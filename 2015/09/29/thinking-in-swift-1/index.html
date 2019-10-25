@@ -22,7 +22,7 @@
 <meta property="og:description" content="作者：Olivier Halligon，原文链接，原文日期：2015-09-06译者：ray16897188；校对：shanks；定稿：千叶知风   我常看见 Swift 的新手尝试着把它们的 ObjC 代码翻译成 Swift。但是开始用 Swift 写代码的时候最难的事情并不是语法，而是思维方式的转变，去用那些 ObjC 里并没有的 Swift 新概念。">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://swift.gg/img/articles/thinking-in-swift-1/the-cake-is-a-lie.png1444269942.805689">
-<meta property="og:updated_time" content="2019-10-18T03:17:46.605Z">
+<meta property="og:updated_time" content="2019-10-25T00:33:55.026Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift 编程思想，第一部分：拯救小马">
 <meta name="twitter:description" content="作者：Olivier Halligon，原文链接，原文日期：2015-09-06译者：ray16897188；校对：shanks；定稿：千叶知风   我常看见 Swift 的新手尝试着把它们的 ObjC 代码翻译成 Swift。但是开始用 Swift 写代码的时候最难的事情并不是语法，而是思维方式的转变，去用那些 ObjC 里并没有的 Swift 新概念。">
@@ -136,7 +136,7 @@
 <p>当类型能被推断出来的时候，我们再用此代码把这些变量类型去掉来消除冗余 - 比如简单的用<code>let items = NSMutableArray()</code> - 并利用<code>guard</code>语句再确保我们的json确实是一个<code>NSDictionary</code>对象的数组。最后，我们用一个更”Swift化”的返回类型<code>[ListItem]</code>替换掉ObjC的<code>NSArray</code>：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ListItem</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> icon: <span class="type">UIImage?</span></span><br><span class="line">    <span class="keyword">var</span> title: <span class="type">String</span> = <span class="string">""</span></span><br><span class="line">    <span class="keyword">var</span> url: <span class="type">NSURL!</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">listItemsFromJSONData</span><span class="params">(jsonData: NSData?)</span></span> -&gt; [<span class="type">ListItem</span>] &#123;</span><br><span class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> nonNilJsonData = jsonData,</span><br><span class="line">            <span class="keyword">let</span> json = <span class="keyword">try</span>? <span class="type">NSJSONSerialization</span>.<span class="type">JSONObjectWithData</span>(nonNilJsonData, options: []),</span><br><span class="line">            <span class="keyword">let</span> jsonItems = json <span class="keyword">as</span>? <span class="type">Array</span>&lt;<span class="type">NSDictionary</span>&gt;</span><br><span class="line">            <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">// If we failed to unserialize the JSON</span></span><br><span class="line">                <span class="comment">// or that JSON wasn't an Array of NSDictionaries,</span></span><br><span class="line">                <span class="comment">// then bail early with an empty array</span></span><br><span class="line">                <span class="keyword">return</span> []</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">var</span> items = [<span class="type">ListItem</span>]()</span><br><span class="line">        <span class="keyword">for</span> itemDesc <span class="keyword">in</span> jsonItems &#123;</span><br><span class="line">            <span class="keyword">let</span> item = <span class="type">ListItem</span>()</span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">let</span> icon = itemDesc[<span class="string">"icon"</span>] <span class="keyword">as</span>? <span class="type">String</span> &#123;</span><br><span class="line">                item.icon = <span class="type">UIImage</span>(named: icon)</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">let</span> title = itemDesc[<span class="string">"title"</span>] <span class="keyword">as</span>? <span class="type">String</span> &#123;</span><br><span class="line">                item.title = title</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">let</span> urlString = itemDesc[<span class="string">"url"</span>] <span class="keyword">as</span>? <span class="type">String</span>, <span class="keyword">let</span> url = <span class="type">NSURL</span>(string: urlString) &#123;</span><br><span class="line">                item.url = url</span><br><span class="line">            &#125;</span><br><span class="line">            items.append(item)</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> items</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><code>guard</code>语句真心很赞，因为它在函数的开始部分就把代码专注于检查输入是否有效，然后在代码剩下的部分中你就不用再为这些检查操心了。如果输入并非所想，我们就尽早跳出，帮助我们专注在那些我们期望的事情上。</p>
-<h2 id="Swift难道不应该比ObjC更简洁么？"><a href="#Swift难道不应该比ObjC更简洁么？" class="headerlink" title="Swift难道不应该比ObjC更简洁么？"></a>Swift难道不应该比ObjC更简洁么？</h2><p><img src="https://swift.gg/img/articles/thinking-in-swift-1/the-cake-is-a-lie.png1444269942.805689" alt="诱人的蛋糕子虚乌有！"></p>
+<h2 id="Swift难道不应该比ObjC更简洁么？"><a href="#Swift难道不应该比ObjC更简洁么？" class="headerlink" title="Swift难道不应该比ObjC更简洁么？"></a>Swift难道不应该比ObjC更简洁么？</h2><p><img src="/img/articles/thinking-in-swift-1/the-cake-is-a-lie.png1444269942.805689" alt="诱人的蛋糕子虚乌有！"></p>
 <p>嗯好吧，这代码好像是比它的 ObjC 版本更复杂。但是别愁，在即将到来的本文第二部分中我们会把它大幅度简化。</p>
 <p>但更重要的是，这段代码比它 ObjC 的版本更加安全。实际上 ObjC 的代码<strong>更短只是因为我们忘了去执行一大堆的安全测试</strong>。即使我们的 ObjC 代码看起来蛮正常，<strong>它还是会在一些情况中立即崩溃</strong>，比如我们给它一个无效的 JSON，或者一个并不是由 string 类型的 dictionary的 array 构造出来的东西（比如创建 JSON 的那个人觉得”icon”这个 key 值对应的就是一个用来提示该条目是否有图标的 Boolean，而不是一个<code>String</code>…）。<strong>在ObjC中我们仅仅是忘了去处理这些用例</strong>，因为 ObjC 没有引导我们去考虑这些情况，而 Swift 会迫使我们去考虑。</p>
 <p>所以 ObjC 代码当然更短：因为我们就是忘了去处理所有这些事情。如果你去不防止自己程序崩溃的话，把代码写的更短是很轻松的。开车的时候不留意路上的障碍当然轻松，但你就是这样把小马给撞死的。</p>
@@ -316,7 +316,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>9</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
 		  
 		
 		  
@@ -324,11 +324,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>38</sup></a></li>
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>38</sup></a></li>
 		  
 		
 		  
@@ -372,11 +372,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>15</sup></a></li>
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>16</sup></a></li>
 		  
 		
 		  
@@ -533,7 +533,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift/" title="Swift">Swift<sup>109</sup></a></li>
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>110</sup></a></li>
 			
 		
 			
@@ -549,15 +549,15 @@
 			
 		
 			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>9</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
 			
 		
 			
 				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
 			
 		
 			
@@ -577,15 +577,11 @@
 			
 		
 			
-				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
 			
 		
 			
@@ -602,6 +598,10 @@
 		
 			
 				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
 			
 		
 		</ul>
