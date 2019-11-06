@@ -22,15 +22,13 @@
 <meta property="og:description" content="作者：Jason Newell，原文链接，原文日期：2015-03-04译者：小铁匠Linus；校对：shanks；定稿：numbbbbb    本文代码是基于 Xcode 6.2 写的。  在上集中，我们已经构建了一个简单的待办列表应用（to-do list app），这个应用可以在待办项过期时通过本地通知提醒用户。现在，我们要在之前的基础上添加以下功能：应用图标角标上显示过期待办项的数量、通">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://swift.gg/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-4-2015-10.31.14-PM.png1444269937.440762">
-<meta property="og:image" content="https://swift.gg/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-4-2015-11.51.25-PM.png1444269937.731704">
-<meta property="og:image" content="https://swift.gg/img/articles/local-notifications-in-ios-8-with-swift-part-2/Screen-Shot-2015-02-04-at-11.38.14-PM.png1444269938.072636">
 <meta property="og:image" content="https://swift.gg/img/articles/local-notifications-in-ios-8-with-swift-part-2/Screen-Shot-2015-02-04-at-11.38.14-PM.png1444269938.072636">
 <meta property="og:image" content="https://swift.gg/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-6-2015-12.43.34-AM.png1444269938.316587">
 <meta property="og:image" content="https://swift.gg/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-6-2015-12.43.37-AM.png1444269938.705509">
 <meta property="og:image" content="https://swift.gg/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-6-2015-12.41.20-AM.png1444269939.116427">
 <meta property="og:image" content="https://swift.gg/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-6-2015-12.06.33-AM.png1444269939.455359">
 <meta property="og:image" content="https://swift.gg/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-6-2015-1.25.36-AM.png1444269939.847281">
-<meta property="og:updated_time" content="2019-11-01T01:32:47.951Z">
+<meta property="og:updated_time" content="2019-11-06T00:00:49.630Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="如何在 iOS 8 中使用 Swift 实现本地通知（下）">
 <meta name="twitter:description" content="作者：Jason Newell，原文链接，原文日期：2015-03-04译者：小铁匠Linus；校对：shanks；定稿：numbbbbb    本文代码是基于 Xcode 6.2 写的。  在上集中，我们已经构建了一个简单的待办列表应用（to-do list app），这个应用可以在待办项过期时通过本地通知提醒用户。现在，我们要在之前的基础上添加以下功能：应用图标角标上显示过期待办项的数量、通">
@@ -116,15 +114,12 @@
 <a id="more"></a>
 <h2 id="为应用图标添加角标（Badge）"><a href="#为应用图标添加角标（Badge）" class="headerlink" title="为应用图标添加角标（Badge）"></a>为应用图标添加角标（Badge）</h2><p>值得注意的是，我们不通过本地通知也可以为应用图标添加角标。AppDelegate 中的 applicationWillResignActive: 方法是可以实现这个功能的。在用户返回主屏幕的时候，看到应用图标时候，会触发这个方法。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">applicationWillResignActive</span><span class="params">(application: UIApplication)</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> todoItems: [<span class="type">TodoItem</span>] = <span class="type">TodoList</span>.sharedInstance.allItems()</span><br><span class="line">  <span class="keyword">var</span> overdueItems = todoItems.<span class="built_in">filter</span>(&#123; (todoItem) -&gt; <span class="type">Bool</span> <span class="keyword">in</span></span><br><span class="line">    <span class="keyword">return</span> todoItem.deadline.compare(<span class="type">NSDate</span>()) != .<span class="type">OrderedDescending</span></span><br><span class="line">  &#125;)</span><br><span class="line">  <span class="type">UIApplication</span>.sharedApplication().applicationIconBadgeNumber = overdueItems.<span class="built_in">count</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<div style="max-width:300px;"><br><img src="/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-4-2015-10.31.14-PM.png1444269937.440762" alt><img src="/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-4-2015-11.51.25-PM.png1444269937.731704" alt><br></div>
-
+<p><img src="https://swift.gg/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-4-2015-10.31.14-PM.png1444269937.440762" alt></p>
 <p>虽然可行，但是并不能在待办项过期时自动更新角标的值。因为我们不能简单的在通知触发的时候增加角标的值，因此，我们可以为本地通知预设一个“applicationIconBadgeNumber”的属性值。接下来，我们在 TodoList 中写一个为每个通知设置相关角标值的方法。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">setBadgeNumbers</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> notifications = <span class="type">UIApplication</span>.sharedApplication().scheduledLocalNotifications <span class="keyword">as</span>! [<span class="type">UILocalNotification</span>]</span><br><span class="line">  <span class="keyword">var</span> todoItems: [<span class="type">TodoItem</span>] = <span class="keyword">self</span>.allItems()</span><br><span class="line">  <span class="keyword">for</span> notification <span class="keyword">in</span> notifications &#123;</span><br><span class="line">    <span class="keyword">var</span> overdueItems = todoItems.<span class="built_in">filter</span>(&#123; (todoItem) -&gt; <span class="type">Bool</span> <span class="keyword">in</span></span><br><span class="line">      <span class="keyword">return</span> (todoItem.deadline.compare(notification.fireDate!) != .<span class="type">OrderedDescending</span>)</span><br><span class="line">    &#125;)</span><br><span class="line">    <span class="type">UIApplication</span>.sharedApplication().cancelLocalNotification(notification) </span><br><span class="line">    notification.applicationIconBadgeNumber = overdueItems.<span class="built_in">count</span></span><br><span class="line">    <span class="type">UIApplication</span>.sharedApplication().scheduleLocalNotification(notification)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>虽然没有办法去更新已经计划好时间的通知，但是可以通过删除当前通知然后重新设置的方式来达到同样的效果。</p>
 <p><code>applicationIconBadgeNumber</code>这个属性可以接受的最大值是 2,147,483,647（<code>NSIntegerMax</code>），超过 5 位数的数字就会在图标上被截断，如图所示。而且，设置为零或负数是不会产生效果的。</p>
-<div style="max-width:300px;"><br><img src="/img/articles/local-notifications-in-ios-8-with-swift-part-2/Screen-Shot-2015-02-04-at-11.38.14-PM.png1444269938.072636" alt><img src="/img/articles/local-notifications-in-ios-8-with-swift-part-2/Screen-Shot-2015-02-04-at-11.38.14-PM.png1444269938.072636" alt><br></div>
-
-
+<p><img src="https://swift.gg/img/articles/local-notifications-in-ios-8-with-swift-part-2/Screen-Shot-2015-02-04-at-11.38.14-PM.png1444269938.072636" alt></p>
 <p>我们只是需要在待办列表发生变化的时候调用这个方法。将下面这段代码添加到 TodoList 中的<code>addItem:</code>和<code>removeItem:</code>两个方法之后。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">self</span>.setBadgeNumbers()</span><br></pre></td></tr></table></figure>
 <p>这样，当一个通知被触发的时候，角标的值会被自动更新。</p>
@@ -132,13 +127,13 @@
 <p>不幸的是，在我们的应用中，只能在<code>repeatInterval</code>和<code>applicationIconBadgeNumber</code>中选择一个。角标值会在每次通知被触发的时候更新。较旧的通知可能会被新的通知终结，而且恰好新的通知是重复的通知（一个重复的通知只会被计算一次），即导致角标的值会比预计的小。我们可以设置两个通知，一个是重复的通知会显示提醒和播放提示音，另一个是非重复的通知会更新角标值，会发现测试的结果角标值只有预想的一半。</p>
 <p>重复通知的最大局限是重复的间隔（repeatInterval）不接受自定义值。你必须提供一个<code>NSCalendarUnit</code>值，例如<code>HourCalendarUnit</code>或<code>DayCalendarUnit</code>。假如，如果你希望设置的通知每 30 分钟触发一次，那么可以通过设置两个通知（两者之间间隔 30 分钟，并都以一小时重复触发）来解决。当然了，如果你希望是每 31 分钟触发一次，那就没办法了。</p>
 <h2 id="后台执行通知动作"><a href="#后台执行通知动作" class="headerlink" title="后台执行通知动作"></a>后台执行通知动作</h2><p>iOS 8 引进了一个很有用的新特性：通知动作（notification actions），它可以让通知由用户来触发，甚至用户没有打开应用都可以触发。让我们来实现这个功能吧：从通知横幅上直接完成或等会提醒待办项。</p>
-<div style="max-width:300px;"><br><img src="/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-6-2015-12.43.34-AM.png1444269938.316587" alt><img src="/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-6-2015-12.43.37-AM.png1444269938.705509" alt><br></div>
-
+<p><img src="https://swift.gg/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-6-2015-12.43.34-AM.png1444269938.316587" alt></p>
+<p><img src="https://swift.gg/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-6-2015-12.43.37-AM.png1444269938.705509" alt></p>
 <p><code>AppDelegate</code>文件里可以这样写：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">application</span><span class="params">(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">  <span class="keyword">let</span> completeAction = <span class="type">UIMutableUserNotificationAction</span>()</span><br><span class="line">  completeAction.identifier = <span class="string">"COMPLETE_TODO"</span></span><br><span class="line">  completeAction.title = <span class="string">"Complete"</span></span><br><span class="line">  completeAction.activationMode = .<span class="type">Background</span></span><br><span class="line">  completeAction.authenticationRequired = <span class="literal">false</span></span><br><span class="line">  completeAction.destructive = <span class="literal">true</span></span><br><span class="line">  <span class="keyword">let</span> remindAction = <span class="type">UIMutableUserNotificationAction</span>()</span><br><span class="line">  remindAction.identifier = <span class="string">"REMIND"</span></span><br><span class="line">  remindAction.title = <span class="string">"Remind in 30 minutes"</span></span><br><span class="line">  remindAction.activationMode = .<span class="type">Background</span></span><br><span class="line">  remindAction.destructive = fal  </span><br><span class="line">  <span class="keyword">let</span> todoCategory = <span class="type">UIMutableUserNotificationCategory</span>()</span><br><span class="line">  todoCategory.identifier = <span class="string">"TODO_CATEGORY"</span></span><br><span class="line">  todoCategory.setActions([remindAction, completeAction], forContext: .<span class="type">Default</span>)</span><br><span class="line">  todoCategory.setActions([completeAction, remindAction], forContext: .<span class="type">Minimal</span>)</span><br><span class="line">  application.registerUserNotificationSettings(<span class="type">UIUserNotificationSettings</span>(forTypes: .<span class="type">Alert</span> | .<span class="type">Badge</span> | .<span class="type">Sou</span>  categories: <span class="type">NSSet</span>(array: [todoCategory])))</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>值得注意的是，上面的代码中我们调用了<code>todoCategory.setActions()</code>两次，分别设置了动作上下文（action contexts）。如果通知是以横幅（banner）的形式显示，那么通知动作会以迷你形式（minimal context）显示出来。如果通知是以（默认的）提示（alert） 形式显示，通知动作会显示至少 4 个操作。如下图。</p>
-<div style="max-width:300px;"><br><img src="/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-6-2015-12.41.20-AM.png1444269939.116427" alt><img src="/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-6-2015-12.06.33-AM.png1444269939.455359" alt><br></div>
-
+<p><img src="https://swift.gg/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-6-2015-12.41.20-AM.png1444269939.116427" alt></p>
+<p><img src="https://swift.gg/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-6-2015-12.06.33-AM.png1444269939.455359" alt></p>
 <p>我们传递到<code>setActions:</code>方法里的通知动作的顺序会一一对应的呈现在 UI 里，但是很奇怪的是，迷你形式里通知动作的顺序是以从右向左排列的方式显示的。</p>
 <p>下面的代码是为了确保通知的<code>category</code>是为 TodoList 的<code>addItem:</code>方法设置的。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">notification.category = <span class="string">"TODO_CATEGORY"</span></span><br></pre></td></tr></table></figure>
@@ -147,7 +142,8 @@
 <p>值得注意的是，我们并没有修改待办项的到期日期（或者试着取消原来的通知，虽然已经被自动删除）。现在，回到<code>AppDelegate</code>里，实现<code>actions:</code>里的处理。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">application</span><span class="params">(application: UIApplication, handleActionWithIdentifier identifier: String?, forLocalNotification notification: UILocalNotification, completionHandler: <span class="params">()</span></span></span> -&gt; <span class="type">Void</span>) &#123;</span><br><span class="line">  <span class="keyword">var</span> item = <span class="type">TodoItem</span>(deadline: notification.fireDate!, title: notification.userInfo![<span class="string">"title"</span>] <span class="keyword">as</span> <span class="type">String</span>, <span class="type">UU</span>  notification.userInfo![<span class="string">"UUID"</span>] <span class="keyword">as</span> <span class="type">String!</span>)</span><br><span class="line">  <span class="keyword">switch</span> (identifier!) &#123;</span><br><span class="line">      <span class="keyword">case</span> <span class="string">"COMPLETE_TODO"</span>:</span><br><span class="line">      <span class="type">TodoList</span>.sharedInstance.removeItem(item)</span><br><span class="line">  <span class="keyword">case</span> <span class="string">"REMIND"</span>:</span><br><span class="line">      <span class="type">TodoList</span>.sharedInstance.scheduleReminderforItem(item)</span><br><span class="line">  <span class="keyword">default</span>:</span><br><span class="line">      <span class="built_in">println</span>(<span class="string">"Error: unexpected notification action identifier!"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  completionHandler()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>终于可以试着运行这个应用了（为了测试方便，建议将<code>dateByAddingTimeInterval:</code>设置一个较小的值）。</p>
-<p><div style="max-width:300px;"><br><img src="/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-6-2015-1.25.36-AM.png1444269939.847281" alt><br></div><br>我们讨论了所有的非地理上（注：上一集讲到的用户进入和离开某个地理区域时，可以触发本地通知的功能）的 UILocalNotification 功能，现在已经有一个功能较全的待办项应用了，所以本系列教程到此结束。你可以在<a href="https://github.com/jasonbnewell/LocalNotificationTutorials/tree/part2_simplified" target="_blank" rel="noopener">这里</a>下载工程的源代码。</p>
+<p><img src="https://swift.gg/img/articles/local-notifications-in-ios-8-with-swift-part-2/iOS-Simulator-Screen-Shot-Feb-6-2015-1.25.36-AM.png1444269939.847281" alt></p>
+<p>我们讨论了所有的非地理上（注：上一集讲到的用户进入和离开某个地理区域时，可以触发本地通知的功能）的 UILocalNotification 功能，现在已经有一个功能较全的待办项应用了，所以本系列教程到此结束。你可以在<a href="https://github.com/jasonbnewell/LocalNotificationTutorials/tree/part2_simplified" target="_blank" rel="noopener">这里</a>下载工程的源代码。</p>
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
 </blockquote>
@@ -316,11 +312,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
 		  
 		
 		  
@@ -376,7 +372,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -388,7 +384,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -448,11 +444,19 @@
 		  
 		
 		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
@@ -460,7 +464,7 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/khanlou/" title="khanlou">khanlou<sup>1</sup></a></li>
 		  
 		
 		  
@@ -537,7 +541,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift/" title="Swift">Swift<sup>110</sup></a></li>
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>111</sup></a></li>
 			
 		
 			
@@ -557,15 +561,15 @@
 			
 		
 			
-				<li><a href="/tags/教程/" title="教程">教程<sup>7</sup></a></li>
-			
-		
-			
 				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
 			
 		
 			
 				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>7</sup></a></li>
 			
 		
 			
@@ -589,7 +593,7 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
 			
 		
 			
@@ -597,11 +601,11 @@
 			
 		
 			
-				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/iOS/" title="iOS">iOS<sup>3</sup></a></li>
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
 			
 		
 			
