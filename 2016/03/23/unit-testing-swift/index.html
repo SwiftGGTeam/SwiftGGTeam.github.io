@@ -26,7 +26,7 @@
 <meta property="og:image" content="https://swift.gg/img/articles/unit-testing-swift/12401458696018.1332314">
 <meta property="og:image" content="https://swift.gg/img/articles/unit-testing-swift/12401458696018.2352629">
 <meta property="og:image" content="https://swift.gg/img/articles/unit-testing-swift/12401458696018.3580859">
-<meta property="og:updated_time" content="2019-11-19T01:47:55.745Z">
+<meta property="og:updated_time" content="2020-04-11T01:47:35.881Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Xcode7 中用 Swift 做单元测试">
 <meta name="twitter:description" content="Xcode7 和 Swift 都支持单元测试，那么想知道具体如何在 Xcode7 中用 Swift 做单元测试呢，来看看本文吧。">
@@ -101,7 +101,7 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Maxime Defauw，<a href="http://www.appcoda.com/unit-testing-swift/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-02-29<br>译者：ray；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>；定稿：way</p>
+<p>作者：Maxime Defauw，<a href="http://www.appcoda.com/unit-testing-swift/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-02-29<br>译者：<a href="undefined">ray</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>；定稿：<a href="undefined">way</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>每个 iOS 程序员都要时不时的为他们的 app 做 debug。除非你是那种超级大牛，否则你肯定体验过查了无数个小时的 bug 最后才发现那仅仅是个简单的语法错误时那种油然而生的绝望感。或者更糟：你根本就没发现那些 bug。无论你是编程新手，还是开发过很多 app 的老司机，例行的写写单元测试会让你的代码更可靠，更安全，更容易 debug！</p>
@@ -113,9 +113,9 @@
 <p>有 5 个 IBOutlets：每一个都对应了屏幕上一个 UIElement，除 title（标题）之外，还有 2 个 slider 对应 2 个 IBActions。每个 IBAction 的方法名都精确描述了其用途及将要执行的操作。当一个 slider 值改变时，其对应着的百分比或数字的值也会随之改变。</p>
 <p>还有两个简单的函数 “updateLabels()” 和 “percentage()” 做了符合期待的事情：当一个 slider 改变时第一个函数更新 label，第二个函数获取两个浮点数并返回百分比的计算结果。</p>
 <p>在模拟器中运行 app。刚开始一切看起来都很正常。但当你开始改变数字时就会发现计算结果有问题。为找到 bug，我们将代码分割成不同的单元，然后分别做测试，看看每个是否都如期运行。这不会解决 bug，但能缩小你的查找范围。</p>
-<p><img src="https://swift.gg/img/articles/unit-testing-swift/12401458696016.8096743" alt></p>
+<p><img src="/img/articles/unit-testing-swift/12401458696016.8096743" alt></p>
 <p>我创建项目的时候，默认情况下会勾选创建一个 test 文件的选项（如果你想要手动加一个的话，在 iOS Source 下面选择 select File &gt; New &gt; File &gt; Unit Test Case Class）。我们的例子中 test 文件已经被 Xcode 自动创建出来，可以在项目导航栏中 “PercentageCalculatorTests” 文件夹中找到它。</p>
-<p><img src="https://swift.gg/img/articles/unit-testing-swift/12401458696017.9022791" alt></p>
+<p><img src="/img/articles/unit-testing-swift/12401458696017.9022791" alt></p>
 <p>在 <code>PercentageCalculatorTests.swift</code> 文件中，<code>PercentageCalculatorTests</code> 类里面已经为我们创建好了 4 个方法。其中 2 个是测试方法（test methods）的例子，你可以删掉它们（它俩都以 <code>test</code> 关键字开头，并且它们左边的竖条中都有个方块形图标，名字也都以 “…Example” 结尾，所以你可以通过这些辨识出来它们是测试方法）。另外两个方法，<code>setUp()</code> 和 <code>tearDown()</code> 是特殊的样板方法（boilerplate methods），它们分别在每个测试方法被执行之前，和每个测试方法被执行之后被执行。</p>
 <h2 id="开始写单元测试吧"><a href="#开始写单元测试吧" class="headerlink" title="开始写单元测试吧"></a>开始写单元测试吧</h2><p>现在是时候写你的第一个单元测试函数了！本教程我们只测试 <code>ViewController</code> 类，需要在 <code>PercentageCalculatorTests</code> 中添加一个它的实例。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">PercentageCalculatorTests</span>: <span class="title">XCTestCase</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> vc: <span class="type">ViewController!</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">setUp</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.setUp()</span><br><span class="line">        <span class="comment">// 这里写setup的代码。本class里每个测试函数被调用之前该方法都会被先调用。</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">tearDown</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="comment">// 这里写teardown的代码。本class里每个测试函数被调用之后该方法都会被调用。</span></span><br><span class="line">        <span class="keyword">super</span>.tearDown()</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -125,12 +125,12 @@
 <p>现在你应该记得所有的测试方法的名字都要以 <code>test</code> 关键字开头，否则 Xcode 不会识别。添加一个新的 <code>testPercentageCalculator()</code> 测试方法，来验证一下 <code>ViewController</code> 中的 <code>percentage()</code> 工作是否正常。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">testPercentageCalculator</span><span class="params">()</span></span> &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>单元测试中你要去检查某段代码是否如你所愿的那样工作。待测试的代码段一般都只有几行，典型情况是你只需要测试一个方法或者一个函数。单元测试是这样去做的：你给某个代码单元一个输入值，让这个值过一遍这段代码，然后检查一下输出的值是否和预期的一样。</p>
-<p><img src="https://swift.gg/img/articles/unit-testing-swift/12401458696018.1332314" alt></p>
+<p><img src="/img/articles/unit-testing-swift/12401458696018.1332314" alt></p>
 <p>与“我们期望的那个值”做比较的这部分由 <code>XCTAssert</code> 函数来处理。最简单的 <code>XCTAssert</code> 函数是<code>XCTAssert(expression: BooleanType)</code>。这个函数要求一个布尔表达式（类似于 <code>5&gt;3</code>，<code>8.90 == 8.90</code>或者 <code>true</code> 这种），随后如果表达式为真则让测试通过，否则认为测试失败。</p>
 <p>尝试一下！首先给 <code>testPercentageCalculator()</code> 方法加添加下面一行。然后把光标移到方法名左边侧栏的那个方块图标上，停下光标之后方块图标变成了一个执行光标，点击一下就开始了测试。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">testPercentageCalculator</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="type">XCTAssert</span>(<span class="literal">true</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>如果一切顺利，则测试通过，方法左边会出现一个绿色检测标。</p>
-<p><img src="https://swift.gg/img/articles/unit-testing-swift/12401458696018.2352629" alt></p>
+<p><img src="/img/articles/unit-testing-swift/12401458696018.2352629" alt></p>
 <h3 id="验证百分比计算"><a href="#验证百分比计算" class="headerlink" title="验证百分比计算"></a>验证百分比计算</h3><p>现在来真的：测试 <code>percentage()</code> 方法！用 <code>ViewController</code> 的一个实例 - <code>vc</code> 属性来调用这个方法。给这个方法两个浮点数，比如 50 和 50，然后把结果存储到常量 <code>p</code> 中。这个例子中 <code>p</code> 应该是 25（50 的 50% 是 25）。然后用 <code>XCTAssert(p == 25)</code> 检测一下是不是这样，执行测试方法。把 <code>testPercentageCalculator()</code> 改成这样：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">testPercentageCalculator</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="comment">// 应该是25</span></span><br><span class="line">        <span class="keyword">let</span> p = vc.percentage(<span class="number">50</span>, <span class="number">50</span>)</span><br><span class="line">        <span class="type">XCTAssert</span>(p == <span class="number">25</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>测试成功了，这意味着 <code>ViewController</code> 的 <code>percentage()</code> 函数工作正常，我们应该在其他的地方继续寻找 bug。也许 bug 在 <code>updateLabels()</code> 里面？</p>
@@ -143,7 +143,7 @@
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">testLabelValuesShowedProperly</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">let</span> <span class="number">_</span> = vc.view</span><br><span class="line">        vc.updateLabels(<span class="type">Float</span>(<span class="number">80.0</span>), <span class="type">Float</span>(<span class="number">50.0</span>), <span class="type">Float</span>(<span class="number">40.0</span>))</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// labels应该显示80, 50 and 40</span></span><br><span class="line">        <span class="type">XCTAssert</span>(vc.numberLabel.text == <span class="string">"80.0"</span>, <span class="string">"numberLabel doesn't show the right text"</span>)</span><br><span class="line">        <span class="type">XCTAssert</span>(vc.percentageLabel.text == <span class="string">"50.0%"</span>, <span class="string">"percentageLabel doesn't show the right text"</span>)</span><br><span class="line">        <span class="type">XCTAssert</span>(vc.resultLabel.text == <span class="string">"40.0"</span>, <span class="string">"resultLabel doesn't show the right text"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>注意到下划线（_）忽略了常量的名字。因为我们实际上并不需要用到这个 view。加下划线就是告诉编译器“你假装访问一下这个 view，把相应的方法触发就行。”</p>
 <p>执行测试。（如果想一并执行我们test类的所有测试，你还可以点击 “class PercentageCalculatorTests” 旁边的那个方块）。</p>
-<p><img src="https://swift.gg/img/articles/unit-testing-swift/12401458696018.3580859" alt></p>
+<p><img src="/img/articles/unit-testing-swift/12401458696018.3580859" alt></p>
 <p>###我们来修Bug</p>
 <p>如你所见，测试失败了！我们给 XCTAssert 方法传入的错误细节消息帮助我们快速识别出引起 bug 的可能原因。这次测试告诉我们 resultsLabel 没有显示出正确的文本，所以我们进到 ViewController 里看看对这些 label 的 text 值是在那里被设置的。仔细看了 <code>ViewController.swift</code> 的 <code>updateLabels()</code> 代码之后，我们发现了 bug 的原因：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">self</span>.resultLabel.text = <span class="string">"\(rV + 10)"</span></span><br></pre></td></tr></table></figure>
@@ -254,7 +254,7 @@
 		<ul>
 		
 		  
-			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>15</sup></a></li>
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
 		  
 		
 		  
@@ -262,7 +262,7 @@
 		  
 		
 		  
-			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>45</sup></a></li>
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
 		  
 		
 		  
@@ -278,7 +278,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>26</sup></a></li>
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
 		  
 		
 		  
@@ -314,11 +314,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>16</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Miscellaneous/" title="Miscellaneous">Miscellaneous<sup>1</sup></a></li>
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
 		  
 		
 		  
@@ -326,7 +322,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
 		  
 		
 		  
@@ -338,7 +334,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>38</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
 		  
 		
 		  
@@ -354,10 +350,6 @@
 		  
 		
 		  
-			<li><a href="/categories/POP/" title="POP">POP<sup>1</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
 		  
 		
@@ -370,11 +362,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>8</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/POP/SWIFT/" title="SWIFT">SWIFT<sup>1</sup></a></li>
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
 		  
 		
 		  
@@ -382,19 +370,15 @@
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>16</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -407,10 +391,6 @@
 		
 		  
 			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/The-Always-Right-Institute/" title="The Always Right Institute">The Always Right Institute<sup>1</sup></a></li>
 		  
 		
 		  
@@ -458,15 +438,7 @@
 		  
 		
 		  
-			<li><a href="/categories/khanlou/iOS/" title="iOS">iOS<sup>1</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
@@ -474,7 +446,7 @@
 		  
 		
 		  
-			<li><a href="/categories/khanlou/" title="khanlou">khanlou<sup>1</sup></a></li>
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
@@ -503,10 +475,6 @@
 		
 		  
 			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/swiftjectivec/" title="swiftjectivec">swiftjectivec<sup>2</sup></a></li>
 		  
 		
 		  
@@ -551,7 +519,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift/" title="Swift">Swift<sup>111</sup></a></li>
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
 			
 		
 			
@@ -559,7 +527,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>14</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
 			
 		
 			
@@ -567,15 +535,7 @@
 			
 		
 			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/教程/" title="教程">教程<sup>8</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
 			
 		
 			
@@ -583,11 +543,15 @@
 			
 		
 			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
 			
 		
 			
@@ -595,11 +559,7 @@
 			
 		
 			
-				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -607,7 +567,15 @@
 			
 		
 			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
 			
 		
 			
@@ -813,7 +781,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2019 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2020 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

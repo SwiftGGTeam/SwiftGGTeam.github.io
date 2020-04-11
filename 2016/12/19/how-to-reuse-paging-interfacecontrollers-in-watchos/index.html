@@ -23,9 +23,9 @@
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://www.natashatherobot.com/wp-content/uploads/Screen-Shot-2016-09-26-at-6.17.07-PM-1024x408.png">
 <meta property="og:image" content="https://www.natashatherobot.com/wp-content/uploads/Screen-Shot-2016-09-26-at-6.26.41-PM-1024x293.png">
-<meta property="og:image" content="https://www.natashatherobot.com/wp-content/uploads/FoodItemInterfaceController_swift_%E2%80%94_Edited-1024x206.png">
-<meta property="og:image" content="https://www.natashatherobot.com/wp-content/uploads/Interface_storyboard_%E2%80%94_Edited-1-1024x362.png">
-<meta property="og:updated_time" content="2019-11-19T01:47:55.805Z">
+<meta property="og:image" content="https://www.natashatherobot.com/wp-content/uploads/FoodItemInterfaceController_swift_—_Edited-1024x206.png">
+<meta property="og:image" content="https://www.natashatherobot.com/wp-content/uploads/Interface_storyboard_—_Edited-1-1024x362.png">
+<meta property="og:updated_time" content="2020-04-11T01:47:35.893Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="如何重用 watchOS 的 Paging Interface Controller">
 <meta name="twitter:description" content="众所周知 watchOS 的复用性不是很好，但是如果你“不择手段”也是能解决的，本文就来介绍了怎么重用 watchOS 的 Paging Interface Controller。">
@@ -116,9 +116,9 @@
 <h2 id="Storyboard"><a href="#Storyboard" class="headerlink" title="Storyboard"></a>Storyboard</h2><p>下一步则是创建用于重用的 Interface Controller，就叫 <strong>FoodItemInterfaceController</strong> 吧，然后将它设置为 Storyboard 中每个 Interface Controller 的类：</p>
 <p><img src="https://www.natashatherobot.com/wp-content/uploads/Screen-Shot-2016-09-26-at-6.26.41-PM-1024x293.png" alt></p>
 <p>然后，将 image 和 label 与 FoodItemInterfaceController 中的 IBOutlet 进行关联：</p>
-<p><img src="https://www.natashatherobot.com/wp-content/uploads/FoodItemInterfaceController_swift_%E2%80%94_Edited-1024x206.png" alt></p>
+<p><img src="https://www.natashatherobot.com/wp-content/uploads/FoodItemInterfaceController_swift_—_Edited-1024x206.png" alt></p>
 <p>最后，在 storyboard 中，给每一个 Interface Controller 一个唯一标识：</p>
-<p><img src="https://www.natashatherobot.com/wp-content/uploads/Interface_storyboard_%E2%80%94_Edited-1-1024x362.png" alt></p>
+<p><img src="https://www.natashatherobot.com/wp-content/uploads/Interface_storyboard_—_Edited-1-1024x362.png" alt></p>
 <h2 id="Interface-Controller"><a href="#Interface-Controller" class="headerlink" title="Interface Controller"></a>Interface Controller</h2><p>现在，就到了最恶心的部分了… 在加载第一个 Interface Controller 时，你需要用点小技巧，使其加载其他的 controller。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> WatchKit</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">FoodItemInterfaceController</span>: <span class="title">WKInterfaceController</span> </span>&#123;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">var</span> image: <span class="type">WKInterfaceImage!</span></span><br><span class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">var</span> label: <span class="type">WKInterfaceLabel!</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 记录是否是第一次加载</span></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">var</span> first = <span class="literal">true</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">awake</span><span class="params">(withContext context: <span class="keyword">Any</span>?)</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.awake(withContext: context)</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 如果是第一次加载</span></span><br><span class="line">        <span class="keyword">if</span> <span class="type">FoodItemInterfaceController</span>.first &#123;</span><br><span class="line">            <span class="comment">// 根据三个数据模型，重载三个 controller</span></span><br><span class="line">            <span class="comment">// Names 数组是 storyboard 中的 identifier</span></span><br><span class="line">            <span class="comment">// Context 即数据模型</span></span><br><span class="line">            <span class="keyword">if</span> <span class="type">FoodItemInterfaceController</span>.first &#123;</span><br><span class="line">            <span class="type">WKInterfaceController</span>.reloadRootControllers(</span><br><span class="line">                withNames: [<span class="string">"FoodItem1"</span>, <span class="string">"FoodItem2"</span>, <span class="string">"FoodItem3"</span>],</span><br><span class="line">                contexts: <span class="type">FoodItem</span>.foodItems)</span><br><span class="line">            <span class="type">FoodItemInterfaceController</span>.first = <span class="literal">false</span></span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 数据模型是通过 context 传到这个方法中的</span></span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">let</span> foodItem = context <span class="keyword">as</span>? <span class="type">FoodItem</span> &#123;</span><br><span class="line">            <span class="comment">// 给 image 和 label 赋值</span></span><br><span class="line">            image.setImage(<span class="type">UIImage</span>(named: foodItem.imageName))</span><br><span class="line">            label.setText(foodItem.title)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>首先，这种方式会比硬编码 Interface Controller 的方式要慢，因为在第一次加载 Interface Controller 时，它需要去重新载入所有东西。但至少，这样代码集中啊！</p>
@@ -225,7 +225,7 @@
 		<ul>
 		
 		  
-			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>15</sup></a></li>
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
 		  
 		
 		  
@@ -233,7 +233,7 @@
 		  
 		
 		  
-			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>45</sup></a></li>
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
 		  
 		
 		  
@@ -249,7 +249,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>26</sup></a></li>
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
 		  
 		
 		  
@@ -285,11 +285,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>16</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Miscellaneous/" title="Miscellaneous">Miscellaneous<sup>1</sup></a></li>
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
 		  
 		
 		  
@@ -297,7 +293,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
 		  
 		
 		  
@@ -309,7 +305,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>38</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
 		  
 		
 		  
@@ -325,10 +321,6 @@
 		  
 		
 		  
-			<li><a href="/categories/POP/" title="POP">POP<sup>1</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
 		  
 		
@@ -341,11 +333,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>8</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/POP/SWIFT/" title="SWIFT">SWIFT<sup>1</sup></a></li>
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
 		  
 		
 		  
@@ -353,19 +341,15 @@
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>16</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -378,10 +362,6 @@
 		
 		  
 			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/The-Always-Right-Institute/" title="The Always Right Institute">The Always Right Institute<sup>1</sup></a></li>
 		  
 		
 		  
@@ -429,15 +409,7 @@
 		  
 		
 		  
-			<li><a href="/categories/khanlou/iOS/" title="iOS">iOS<sup>1</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
@@ -445,7 +417,7 @@
 		  
 		
 		  
-			<li><a href="/categories/khanlou/" title="khanlou">khanlou<sup>1</sup></a></li>
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
@@ -474,10 +446,6 @@
 		
 		  
 			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/swiftjectivec/" title="swiftjectivec">swiftjectivec<sup>2</sup></a></li>
 		  
 		
 		  
@@ -522,7 +490,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift/" title="Swift">Swift<sup>111</sup></a></li>
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
 			
 		
 			
@@ -530,7 +498,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>14</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
 			
 		
 			
@@ -538,15 +506,7 @@
 			
 		
 			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/教程/" title="教程">教程<sup>8</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
 			
 		
 			
@@ -554,11 +514,15 @@
 			
 		
 			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
 			
 		
 			
@@ -566,11 +530,7 @@
 			
 		
 			
-				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -578,7 +538,15 @@
 			
 		
 			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
 			
 		
 			
@@ -784,7 +752,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2019 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2020 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		
