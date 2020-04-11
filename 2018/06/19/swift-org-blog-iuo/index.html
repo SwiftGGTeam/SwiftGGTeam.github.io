@@ -25,7 +25,7 @@
 <meta property="og:image" content="https://swift.gg/img/articles/swift-org-blog-iuo/40166527-52d1029a-59f1-11e8-94f2-44d9dc1660ce.png1529377151.9917665">
 <meta property="og:image" content="https://swift.gg/img/articles/swift-org-blog-iuo/40213466-2dd070ba-5a88-11e8-888a-0ca5066f4d36.png1529377152.1436236">
 <meta property="og:image" content="https://swift.gg/img/articles/swift-org-blog-iuo/40213471-336db9ba-5a88-11e8-9b8e-11287e1bfccd.png1529377152.292037">
-<meta property="og:updated_time" content="2020-04-11T01:47:35.901Z">
+<meta property="og:updated_time" content="2020-04-11T03:00:33.153Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="重新实现可选类型的隐式解包">
 <meta name="twitter:description" content="重新实现隐式解包的原因，会碰到问题。">
@@ -100,7 +100,7 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Mark Lacey，<a href="https://swift.org/blog/iuo/" target="_blank" rel="noopener">原文链接</a>，原文日期：2018-04-26<br>译者：<a href="https://github.com/dzyding" target="_blank" rel="noopener">灰s</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>，<a href="undefined"> mmoaay</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+<p>作者：Mark Lacey，<a href="https://swift.org/blog/iuo/" target="_blank" rel="noopener">原文链接</a>，原文日期：2018-04-26<br>译者：<a href="https://github.com/dzyding" target="_blank" rel="noopener">灰s</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>， mmoaay；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>今年早些时候，Swift 编译器实现了一种新的可选类型隐式解包 (IUOs)，在最近的 Swift <a href="https://swift.org/download/#snapshots" target="_blank" rel="noopener">测试版本</a> 中开放使用。它实现了 <a href="https://github.com/apple/swift-evolution/blob/master/proposals/0054-abolish-iuo.md" target="_blank" rel="noopener"> SE-0054 - Abolish ImplicitlyUnwrappedOptional Type</a>。对于 Swift 来说，这是一次重大的改变，消除了类型检测中的一些矛盾，并且阐明了处理这些值的规则，使语义保持一致且易于推理。更多信息可以阅读这条提案的 <a href="https://github.com/apple/swift-evolution/blob/master/proposals/0054-abolish-iuo.md#motivation" target="_blank" rel="noopener">动机</a>。</p>
@@ -113,7 +113,7 @@
 <p>这种思维模型与新的实现相匹配。现在，任何地方你申明了 <code>T!</code> ，编译器都会将它看做 <code>T?</code> 类型，然后在申明的内部表示中添加一个标签使得类型检测器知道当需要的时候可以对它进行隐式解包。  </p>
 <p>这一变化最明显的结果就是对于申明为 <code>T!</code> 的变量，你将看到关于 <code>T?</code> 的诊断而不是 <code>T!</code>。 在诊断中看到 <code>T?</code> 而不是 <code>T!</code> 可能需要一点时间去适应它，但是拥抱这一新的思维模型将会一直帮助你。</p>
 <p><strong>为了便于理解，译者自己做了配图，展示新旧 Swift 的区别：</strong>  </p>
-<p><img src="/img/articles/swift-org-blog-iuo/40166397-082f067e-59f1-11e8-931a-3d3d0cb892eb.png1529377151.6054707" alt="old"><br><img src="/img/articles/swift-org-blog-iuo/40166527-52d1029a-59f1-11e8-94f2-44d9dc1660ce.png1529377151.9917665" alt="new"></p>
+<p><img src="https://swift.gg/img/articles/swift-org-blog-iuo/40166397-082f067e-59f1-11e8-931a-3d3d0cb892eb.png1529377151.6054707" alt="old"><br><img src="https://swift.gg/img/articles/swift-org-blog-iuo/40166527-52d1029a-59f1-11e8-94f2-44d9dc1660ce.png1529377151.9917665" alt="new"></p>
 <h2 id="源代码兼容性"><a href="#源代码兼容性" class="headerlink" title="源代码兼容性"></a>源代码兼容性</h2><h3 id="强制转换为-T"><a href="#强制转换为-T" class="headerlink" title="强制转换为 T!"></a>强制转换为 <code>T!</code></h3><p>按照 SE-0054 提案，<code>as T!</code> 这样的强制转换已经不再被允许。</p>
 <p>在 Swift 4.1 中，这种形式的强制转换会显示一个弃用警告。多数情况下，使用 <code>as T?</code> 来替代 <code>as T!</code> 或者直接移除该强制转换即可编译成功。</p>
 <p>如果这两种方法都不管用，新的实现中也有对应的特殊处理。具体来说，如果遇到 <code>x as T!</code>，编辑器首先会尝试 <code>x as T?</code>。如果失败，编辑器会用 <code>(x as T?)!</code> 来进行强制解包。</p>
@@ -127,7 +127,7 @@
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> fn: (<span class="type">Int!</span>) -&gt; <span class="type">Int!</span> = ...   <span class="comment">// error: not a function declaration!</span></span><br></pre></td></tr></table></figure>
 <p>这里 Swift 4.1 显示了弃用警告，但是仍然默认了隐式解包的行为。在近期测试版本的新实现中，编译器会将 <code>!</code> 视为 <code>?</code>，同时在诊断信息中告诉你发生了什么，以及这种用法会被废弃。  </p>
 <p><strong>译者配图：</strong>  </p>
-<p><img src="/img/articles/swift-org-blog-iuo/40213466-2dd070ba-5a88-11e8-888a-0ca5066f4d36.png1529377152.1436236" alt="old-2"><br><img src="/img/articles/swift-org-blog-iuo/40213471-336db9ba-5a88-11e8-9b8e-11287e1bfccd.png1529377152.292037" alt="new-2"></p>
+<p><img src="https://swift.gg/img/articles/swift-org-blog-iuo/40213466-2dd070ba-5a88-11e8-888a-0ca5066f4d36.png1529377152.1436236" alt="old-2"><br><img src="https://swift.gg/img/articles/swift-org-blog-iuo/40213471-336db9ba-5a88-11e8-9b8e-11287e1bfccd.png1529377152.292037" alt="new-2"></p>
 <h3 id="隐式解包可选类型的-map-方法"><a href="#隐式解包可选类型的-map-方法" class="headerlink" title="隐式解包可选类型的 map 方法"></a>隐式解包可选类型的 map 方法</h3><p>以前的代码是这样的：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">C</span> </span>&#123;&#125;</span><br><span class="line"><span class="keyword">let</span> values: [<span class="type">Any</span>]! = [<span class="type">C</span>()]</span><br><span class="line"><span class="keyword">let</span> transformed = values.<span class="built_in">map</span> &#123; $<span class="number">0</span> <span class="keyword">as</span>! <span class="type">C</span> &#125;</span><br></pre></td></tr></table></figure>
 <p>上面的代码会对 <code>values</code> 强制解包，然后对数组调用 <code>map(_:)</code> 方法。即使你在 <code>ImplicitlyUnwrappedOptional</code> 的扩展中定义了 <code>map(_:)</code> 方法也无法覆盖默认方法，因为它并不会像你想的那样，在 <code>ImplicitlyUnwrappedOptional</code> 中执行方法查找。  </p>
@@ -276,7 +276,7 @@
 		<ul>
 		
 		  
-			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>16</sup></a></li>
 		  
 		
 		  
@@ -284,7 +284,7 @@
 		  
 		
 		  
-			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>45</sup></a></li>
 		  
 		
 		  
@@ -300,7 +300,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>26</sup></a></li>
 		  
 		
 		  
@@ -336,7 +336,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Miscellaneous/" title="Miscellaneous">Miscellaneous<sup>1</sup></a></li>
 		  
 		
 		  
@@ -344,7 +348,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
 		  
 		
 		  
@@ -356,7 +360,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>38</sup></a></li>
 		  
 		
 		  
@@ -372,6 +376,10 @@
 		  
 		
 		  
+			<li><a href="/categories/POP/" title="POP">POP<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
 		  
 		
@@ -384,7 +392,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/POP/SWIFT/" title="SWIFT">SWIFT<sup>1</sup></a></li>
 		  
 		
 		  
@@ -396,11 +408,15 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>16</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -413,6 +429,10 @@
 		
 		  
 			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/The-Always-Right-Institute/" title="The Always Right Institute">The Always Right Institute<sup>1</sup></a></li>
 		  
 		
 		  
@@ -456,6 +476,10 @@
 		  
 		
 		  
+			<li><a href="/categories/khanlou/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
 		  
 		
@@ -464,11 +488,15 @@
 		  
 		
 		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/khanlou/" title="khanlou">khanlou<sup>1</sup></a></li>
 		  
 		
 		  
@@ -497,6 +525,10 @@
 		
 		  
 			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftjectivec/" title="swiftjectivec">swiftjectivec<sup>2</sup></a></li>
 		  
 		
 		  
@@ -541,7 +573,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>112</sup></a></li>
 			
 		
 			
@@ -549,7 +581,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>14</sup></a></li>
 			
 		
 			
@@ -557,11 +589,11 @@
 			
 		
 			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/教程/" title="教程">教程<sup>8</sup></a></li>
 			
 		
 			
@@ -569,15 +601,11 @@
 			
 		
 			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
 			
 		
 			
@@ -585,7 +613,11 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>4</sup></a></li>
 			
 		
 			
@@ -593,11 +625,11 @@
 			
 		
 			
-				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
 			
 		
 			

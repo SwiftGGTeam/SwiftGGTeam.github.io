@@ -22,7 +22,7 @@
 <meta property="og:description" content="作者：Ole Begemann，原文链接，原文日期：2015-06-22译者：小锅；校对：shanks；定稿：shanks    更新:   2015-06-25增加关于传递另一个（可以捕获外部变量的）闭包到 userInfo 参数的备注。  2015-07-01针对 Xcode 7 beta 2 更新从 CGPathElement 创建一个 PathElement 类型的代码。   几年前，我">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://swift.gg/img/articles/c-callbacks-in-swift/uibezierpath-example.png1447203254.48282">
-<meta property="og:updated_time" content="2020-04-11T01:47:35.869Z">
+<meta property="og:updated_time" content="2020-04-11T03:00:33.109Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="在 Swift 2.0 当中使用 C 语言回调">
 <meta name="twitter:description" content="作者：Ole Begemann，原文链接，原文日期：2015-06-22译者：小锅；校对：shanks；定稿：shanks    更新:   2015-06-25增加关于传递另一个（可以捕获外部变量的）闭包到 userInfo 参数的备注。  2015-07-01针对 Xcode 7 beta 2 更新从 CGPathElement 创建一个 PathElement 类型的代码。   几年前，我">
@@ -138,7 +138,7 @@
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UIBezierPath</span> : <span class="title">CustomDebugStringConvertible</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">var</span> debugDescription: <span class="type">String</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> cgPath = <span class="keyword">self</span>.<span class="type">CGPath</span>;</span><br><span class="line">        <span class="keyword">let</span> bounds = <span class="type">CGPathGetPathBoundingBox</span>(cgPath);</span><br><span class="line">        <span class="keyword">let</span> controlPointBounds = <span class="type">CGPathGetBoundingBox</span>(cgPath);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">let</span> description = <span class="string">"\(self.dynamicType)\n"</span></span><br><span class="line">            + <span class="string">"    Bounds: \(bounds)\n"</span></span><br><span class="line">            + <span class="string">"    Control Point Bounds: \(controlPointBounds)"</span></span><br><span class="line">            + elements.<span class="built_in">reduce</span>(<span class="string">""</span>, combine: &#123; (acc, element) <span class="keyword">in</span></span><br><span class="line">                acc + <span class="string">"\n    \(String(reflecting: element))"</span></span><br><span class="line">            &#125;)</span><br><span class="line">        <span class="keyword">return</span> description</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>现在用一个示例 path 来进行一下试验：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> path = <span class="type">UIBezierPath</span>()</span><br><span class="line">path.moveToPoint(<span class="type">CGPoint</span>(x: <span class="number">0</span>, y: <span class="number">0</span>))</span><br><span class="line">path.addLineToPoint(<span class="type">CGPoint</span>(x: <span class="number">100</span>, y: <span class="number">0</span>))</span><br><span class="line">path.addLineToPoint(<span class="type">CGPoint</span>(x: <span class="number">50</span>, y: <span class="number">100</span>))</span><br><span class="line">path.closePath()</span><br><span class="line">path.moveToPoint(<span class="type">CGPoint</span>(x: <span class="number">0</span>, y: <span class="number">100</span>))</span><br><span class="line">path.addQuadCurveToPoint(<span class="type">CGPoint</span>(x: <span class="number">100</span>, y: <span class="number">100</span>),</span><br><span class="line">    controlPoint: <span class="type">CGPoint</span>(x: <span class="number">50</span>, y: <span class="number">200</span>))</span><br><span class="line">path.closePath()</span><br><span class="line">path.moveToPoint(<span class="type">CGPoint</span>(x: <span class="number">100</span>, y: <span class="number">0</span>))</span><br><span class="line">path.addCurveToPoint(<span class="type">CGPoint</span>(x: <span class="number">200</span>, y: <span class="number">0</span>),</span><br><span class="line">    controlPoint1: <span class="type">CGPoint</span>(x: <span class="number">125</span>, y: <span class="number">100</span>),</span><br><span class="line">    controlPoint2: <span class="type">CGPoint</span>(x: <span class="number">175</span>, y: -<span class="number">100</span>))</span><br><span class="line">path.closePath()</span><br></pre></td></tr></table></figure>
-<p><img src="/img/articles/c-callbacks-in-swift/uibezierpath-example.png1447203254.48282" alt="The example path"></p>
+<p><img src="https://swift.gg/img/articles/c-callbacks-in-swift/uibezierpath-example.png1447203254.48282" alt="The example path"></p>
 <p>也可以迭代 path 中的每一个元素，然后打印出每个元素的描述(description)字符串：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> element <span class="keyword">in</span> path &#123;</span><br><span class="line">    <span class="built_in">debugPrint</span>(element)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* Output:</span></span><br><span class="line"><span class="comment">0.0 0.0 moveto</span></span><br><span class="line"><span class="comment">100.0 0.0 lineto</span></span><br><span class="line"><span class="comment">50.0 100.0 lineto</span></span><br><span class="line"><span class="comment">closepath</span></span><br><span class="line"><span class="comment">0.0 100.0 moveto</span></span><br><span class="line"><span class="comment">50.0 200.0 100.0 100.0 quadcurveto</span></span><br><span class="line"><span class="comment">closepath</span></span><br><span class="line"><span class="comment">100.0 0.0 moveto</span></span><br><span class="line"><span class="comment">125.0 100.0 175.0 -100.0 200.0 0.0 curveto</span></span><br><span class="line"><span class="comment">closepath</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
 <p>或者，我们也可以计算 path 中的闭合路径(closepath)的个数：</p>
@@ -244,7 +244,7 @@
 		<ul>
 		
 		  
-			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>16</sup></a></li>
 		  
 		
 		  
@@ -252,7 +252,7 @@
 		  
 		
 		  
-			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>45</sup></a></li>
 		  
 		
 		  
@@ -268,7 +268,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>26</sup></a></li>
 		  
 		
 		  
@@ -304,7 +304,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Miscellaneous/" title="Miscellaneous">Miscellaneous<sup>1</sup></a></li>
 		  
 		
 		  
@@ -312,7 +316,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
 		  
 		
 		  
@@ -324,7 +328,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>38</sup></a></li>
 		  
 		
 		  
@@ -340,6 +344,10 @@
 		  
 		
 		  
+			<li><a href="/categories/POP/" title="POP">POP<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
 		  
 		
@@ -352,7 +360,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/POP/SWIFT/" title="SWIFT">SWIFT<sup>1</sup></a></li>
 		  
 		
 		  
@@ -364,11 +376,15 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>16</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -381,6 +397,10 @@
 		
 		  
 			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/The-Always-Right-Institute/" title="The Always Right Institute">The Always Right Institute<sup>1</sup></a></li>
 		  
 		
 		  
@@ -424,6 +444,10 @@
 		  
 		
 		  
+			<li><a href="/categories/khanlou/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
 		  
 		
@@ -432,11 +456,15 @@
 		  
 		
 		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/khanlou/" title="khanlou">khanlou<sup>1</sup></a></li>
 		  
 		
 		  
@@ -465,6 +493,10 @@
 		
 		  
 			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftjectivec/" title="swiftjectivec">swiftjectivec<sup>2</sup></a></li>
 		  
 		
 		  
@@ -509,7 +541,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>112</sup></a></li>
 			
 		
 			
@@ -517,7 +549,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>14</sup></a></li>
 			
 		
 			
@@ -525,11 +557,11 @@
 			
 		
 			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/教程/" title="教程">教程<sup>8</sup></a></li>
 			
 		
 			
@@ -537,15 +569,11 @@
 			
 		
 			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
 			
 		
 			
@@ -553,7 +581,11 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>4</sup></a></li>
 			
 		
 			
@@ -561,11 +593,11 @@
 			
 		
 			
-				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
 			
 		
 			
