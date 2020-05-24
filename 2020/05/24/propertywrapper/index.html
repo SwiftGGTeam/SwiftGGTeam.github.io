@@ -1,0 +1,1199 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>属性修饰器 | 属性修饰器 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="新特性,修饰器,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="Swift 属性修饰器要让 SwiftUI 成为可能还有很长的路要走，但他们在塑造整个语言的未来方面可能发挥着更重要的作用。">
+<meta name="keywords" content="新特性,修饰器">
+<meta property="og:type" content="article">
+<meta property="og:title" content="属性修饰器">
+<meta property="og:url" content="https://swift.gg/2020/05/24/propertywrapper/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="Swift 属性修饰器要让 SwiftUI 成为可能还有很长的路要走，但他们在塑造整个语言的未来方面可能发挥着更重要的作用。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-05-24T13:06:47.630Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="属性修饰器">
+<meta name="twitter:description" content="Swift 属性修饰器要让 SwiftUI 成为可能还有很长的路要走，但他们在塑造整个语言的未来方面可能发挥着更重要的作用。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2020/05/24/propertywrapper/" target="_blank" title="属性修饰器" itemprop="url">属性修饰器</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2020-05-24T00:00:00.000Z" itemprop="datePublished">2020-05-24</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Mattt，<a href="https://nshipster.com/propertywrapper/" target="_blank" rel="noopener">原文链接</a>，原文日期：2019-06-24<br>译者：ericchuhong；校对：Desgard，<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>，<a href="http://www.sketchk.xyz" target="_blank" rel="noopener">SketchK</a>；定稿：<a href="https://github.com/Pancf" target="_blank" rel="noopener">Pancf</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>几年前，我们 <a href="https://nshipster.com/at-compiler-directives/" target="_blank" rel="noopener">会说</a> “at 符号”（<code>@</code>）——以及方括号和可笑的长方法名称——是 Objective-C 的特性，正如括号之于 <a href="https://en.wikipedia.org/wiki/Lisp_%28programming_language%29" target="_blank" rel="noopener">Lisp</a> 或者标点之于 <a href="https://nshipster.com/assets/qbert-fe44c1a26bd163d2dfafa5334c7bfa7957c3c243cd0c19591f494a9cea9302dc.png" target="_blank" rel="noopener">Perl</a>。</p>
+<p>然后 Swift 来了，并用它来结束这些古怪小 🥨 图案一样的字形。或者说我们本以为会这样。</p>
+<a id="more"></a>
+<p>一开始，Swift 中的 <code>@</code> 只用在和 Objective-C 的混编中：<code>@IBAction</code>、<code>@NSCopying</code>、<code>@UIApplicationMain</code>等等。但之后 Swift 扩展出了越来越多的带有 <code>@</code> 前缀的 <a href="https://docs.swift.org/swift-book/ReferenceManual/Attributes.html" target="_blank" rel="noopener">属性</a>。</p>
+<p>我们在 <a href="https://nshipster.com/wwdc-2019/" target="_blank" rel="noopener">WWDC 2019</a> 上第一次看到了 Swift 5.1 和 SwiftUI 的同时公布。并且随着每一张“令人兴奋”的幻灯片出现了一个个前所未有的属性：<code>@State</code>、<code>@Binding</code>、<code>@EnvironmentObject</code>……</p>
+<p>我们看到了Swift的未来，它充满了 <code>@</code> 符号。</p>
+<hr>
+<p>等 SwiftUI 逐步成熟起来，我们才会深入介绍它。</p>
+<p>本周，我们想仔细看看 SwiftUI 的一个关键语言特性——可能会对 Swift 5.1 之前版本产生最大影响的东西：<em>属性修饰器</em></p>
+<hr>
+<h2 id="关于-属性-代理-修饰器"><a href="#关于-属性-代理-修饰器" class="headerlink" title="关于 属性 代理 ++修饰器++"></a>关于 属性 <del>代理</del> ++修饰器++</h2><p>属性修饰器是在 2019 年 3 月第一次 <a href="https://forums.swift.org/t/pitch-property-delegates/21895" target="_blank" rel="noopener">在 Swift 论坛首次出现</a>——SwiftUI 公布的前一个月。</p>
+<p>在开始的时候，Swift 核心团队成员 Douglas Gregor 将它作为用户常用功能特性的一个统称（当时称为 <em>“属性代理”</em>），像有 <code>lazy</code> 关键字之类的。</p>
+<p>懒惰是程序员的美德，这种普遍适用的功能是周到设计决策的特征，这让 Swift 成为一种很好用的语言。当一个属性被声明为 <code>lazy</code> 时，它推迟初始化其默认值，直到第一次访问才进行初始化。例如，你可以自己尝试实现这样的功能，使用一个私有属性，它需通过计算后才行被访问。而单单一个 <code>lazy</code> 关键字就可以让所有这些都变得没有必要。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> &lt;#<span class="title">Structure</span>#&gt; </span>&#123;</span><br><span class="line">    <span class="comment">// 使用 lazy 关键字进行属性延迟初始化</span></span><br><span class="line">    <span class="built_in">lazy</span> <span class="keyword">var</span> deferred = &lt;#...#&gt;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 没有 lazy 关键字的等效行为</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> _deferred: &lt;#<span class="type">Type</span>#&gt;?</span><br><span class="line">    <span class="keyword">var</span> deferred: &lt;#<span class="type">Type</span>#&gt; &#123;</span><br><span class="line">        <span class="keyword">get</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">let</span> value = _deferred &#123; <span class="keyword">return</span> value &#125;</span><br><span class="line">            <span class="keyword">let</span> initialValue = &lt;#...#&gt;</span><br><span class="line">            _deferred = initialValue</span><br><span class="line">            <span class="keyword">return</span> initialValue</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">set</span> &#123;</span><br><span class="line">            _deferred = newValue</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><a href="https://github.com/apple/swift-evolution/blob/master/proposals/0258-property-wrappers.md" target="_blank" rel="noopener">SE-0258: 属性修饰器</a> 目前正在进行第三次审核（预定于昨天结束，就在发布的时候）, 并且承诺开放像 <code>lazy</code> 这样的功能，以便库作者可以自己实现类似的功能。</p>
+<p>由于这个提案在其设计和实现上的阐述非常出色，我们这里就不做更多的解释了。我们不妨把重点放在别处，一起来看看这个功能为 Swift 带来了哪些新的可能——而且，在这个过程中，我们可以更好了解如何在项目使用这个新功能。</p>
+<p>所以，供你参考，以下是新 <code>@propertyWrapper</code> 属性的四个潜在用例：</p>
+<ul>
+<li><a href="#constraining-values">约束值</a></li>
+<li><a href="#transforming-values-on-property-assignment">转换属性赋值时的值</a></li>
+<li><a href="#changing-synthesized-equality-and-comparison-semantics">改变生成的等式和比较语义</a></li>
+<li><a href="#auditing-property-access">审查属性访问</a></li>
+</ul>
+<hr>
+<p><a name="constraining-values"></a></p>
+<h2 id="约束值"><a href="#约束值" class="headerlink" title="约束值"></a>约束值</h2><p>SE-0258 提供了大量实用案例，包括了 <code>@Lazy</code>，<code>@Atomic</code>，<code>@ThreadSpecific</code> 和 <code>@Box</code>。但最让我们兴奋的是那个关于 <code>@Constrained</code> 的属性修饰器。</p>
+<p>Swift 标准库提供了 <a href="https://en.wikipedia.org/wiki/IEEE_754" target="_blank" rel="noopener">精确</a>、高性能的浮点数类型，并且你可以拥有任何想要的精度——只要它是 <a href="https://developer.apple.com/documentation/swift/float" target="_blank" rel="noopener">32</a> 或 <a href="https://developer.apple.com/documentation/swift/double" target="_blank" rel="noopener">64</a>（或 <a href="https://developer.apple.com/documentation/swift/float80" target="_blank" rel="noopener">80</a>）位长度。</p>
+<p>如果你想要实现自定义浮点数类型，而且有强制要求有效值范围，这从 <a href="https://github.com/apple/swift-evolution/blob/master/proposals/0067-floating-point-protocols.md" target="_blank" rel="noopener">Swift 3</a> 开始已经成为可能。但是这样做需要遵循错综复杂的协议要求：</p>
+<svg xmlns="http://www.w3.org/2000/svg" font-size="14" viewbox="0 0 808 592" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" fill="none"><br/>    <defs><br/>      <marker id="triangle" markerheight="8" markerwidth="8" orient="auto" refx="4" refy="2" viewbox="0 0 8 4"><br/>        <polygon fill="black" points="0,0 0,4 8,2 0,0"/><br/>      </marker><br/>      <marker id="clear_triangle" markerheight="10" markerwidth="10" orient="auto" refx="1" refy="7" viewbox="0 0 20 14"><br/>        <polygon fill="none" points="2,2 2,12 18,7 2,2" stroke="black" stroke-width="2"/><br/>      </marker><br/>      <marker id="circle" markerheight="5" markerwidth="5" orient="auto" refx="10" refy="10" viewbox="0 0 20 20"><br/>        <circle cx="10" cy="10" fill="black" r="8"/><br/>      </marker><br/>      <marker id="square" markerheight="5" markerwidth="5" orient="auto" refx="10" refy="10" viewbox="0 0 20 20"><br/>        <rect fill="black" width="20" height="20" viewbox="0 0 20 20" x="0" y="0"/><br/>      </marker><br/>      <marker id="open_circle" markerheight="10" markerwidth="10" orient="auto" refx="10" refy="10" viewbox="0 0 20 20"><br/>        <circle cx="10" cy="10" fill="white" r="4" stroke="black" stroke-width="2"/><br/>      </marker><br/>      <marker id="big_open_circle" markerheight="20" markerwidth="20" orient="auto" refx="20" refy="20" viewbox="0 0 40 40"><br/>        <circle cx="20" cy="20" fill="white" r="6" stroke="black" stroke-width="2"/><br/>      </marker><br/>    </defs><br/>    <style><br>      text{stroke: none; fill: currentColor;}<br>      polygon{fill:currentColor;}<br>    </style><br/>    <g><br/>      <line x1="12" x2="12" y1="104" y2="520"/><br/>      <line marker-end="url(#triangle)" x1="12" x2="60" y1="104" y2="104"/><br/>      <line x1="12" x2="36" y1="520" y2="520"/><br/>      <line x1="36" x2="36" y1="460" y2="520"/><br/>      <line x1="36" x2="36" y1="520" y2="580"/><br/>      <path d="M 36 580 A 4 4 0 0 0 40 584" fill="none"/><br/>      <path d="M 40 456 A 4 4 0 0 0 36 460" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="40" x2="56" y1="456" y2="456"/><br/>    </g><br/>    <g><br/>      <line x1="40" x2="56" y1="584" y2="584"/><br/>    </g><br/>    <g><br/>      <line x1="44" x2="44" y1="168" y2="312"/><br/>      <line marker-end="url(#triangle)" x1="44" x2="60" y1="168" y2="168"/><br/>      <line x1="44" x2="84" y1="312" y2="312"/><br/>    </g><br/>    <g><br/>      <line x1="68" x2="68" y1="88" y2="120"/><br/>      <line x1="68" x2="308" y1="88" y2="88"/><br/>      <line x1="68" x2="308" y1="120" y2="120"/><br/>      <line x1="308" x2="308" y1="88" y2="120"/><br/>    </g><br/>    <g><br/>      <line x1="68" x2="68" y1="152" y2="184"/><br/>      <line x1="68" x2="308" y1="152" y2="152"/><br/>      <line x1="68" x2="308" y1="184" y2="184"/><br/>      <line x1="308" x2="308" y1="152" y2="184"/><br/>    </g><br/>    <g><br/>      <line x1="72" x2="74" y1="496" y2="500"/><br/>      <path d="M 72 480 A 16 16 0 0 0 72 496" fill="none"/><br/>      <path d="M 74 500 A 8 8 0 0 0 80 504" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="74" x2="72" y1="476" y2="480"/><br/>      <path d="M 80 472 A 8 8 0 0 0 74 476" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="80" x2="136" y1="472" y2="472"/><br/>      <path d="M 142 476 A 8 8 0 0 0 136 472" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="80" x2="136" y1="504" y2="504"/><br/>      <path d="M 136 504 A 8 8 0 0 0 142 500" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="84" x2="84" y1="296" y2="328"/><br/>      <line x1="84" x2="260" y1="296" y2="296"/><br/>      <line x1="84" x2="260" y1="328" y2="328"/><br/>      <line x1="260" x2="260" y1="296" y2="328"/><br/>    </g><br/>    <g><br/>      <line x1="84" x2="84" y1="392" y2="424"/><br/>      <line x1="84" x2="260" y1="392" y2="392"/><br/>      <line x1="84" x2="260" y1="424" y2="424"/><br/>      <line x1="260" x2="260" y1="392" y2="424"/><br/>    </g><br/>    <g><br/>      <line x1="128" x2="130" y1="560" y2="564"/><br/>      <path d="M 128 544 A 16 16 0 0 0 128 560" fill="none"/><br/>      <path d="M 130 564 A 8 8 0 0 0 136 568" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="130" x2="128" y1="540" y2="544"/><br/>      <path d="M 136 536 A 8 8 0 0 0 130 540" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="136" x2="208" y1="536" y2="536"/><br/>      <path d="M 214 540 A 8 8 0 0 0 208 536" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="136" x2="208" y1="568" y2="568"/><br/>      <path d="M 208 568 A 8 8 0 0 0 214 564" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="142" x2="144" y1="476" y2="480"/><br/>      <path d="M 144 496 A 16 16 0 0 0 144 480" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="142" x2="144" y1="500" y2="496"/><br/>    </g><br/>    <g><br/>      <line x1="172" x2="172" y1="248" y2="288"/><br/>      <line marker-end="url(#triangle)" x1="172" x2="244" y1="248" y2="248"/><br/>    </g><br/>    <g><br/>      <line marker-end="url(#triangle)" x1="172" x2="172" y1="352" y2="340"/><br/>      <line x1="172" x2="172" y1="352" y2="384"/><br/>    </g><br/>    <g><br/>      <line x1="200" x2="202" y1="496" y2="500"/><br/>      <path d="M 200 480 A 16 16 0 0 0 200 496" fill="none"/><br/>      <path d="M 202 500 A 8 8 0 0 0 208 504" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="202" x2="200" y1="476" y2="480"/><br/>      <path d="M 208 472 A 8 8 0 0 0 202 476" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="208" x2="272" y1="472" y2="472"/><br/>      <path d="M 278 476 A 8 8 0 0 0 272 472" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="208" x2="272" y1="504" y2="504"/><br/>      <path d="M 272 504 A 8 8 0 0 0 278 500" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="214" x2="216" y1="540" y2="544"/><br/>      <path d="M 216 560 A 16 16 0 0 0 216 544" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="214" x2="216" y1="564" y2="560"/><br/>    </g><br/>    <g><br/>      <line x1="252" x2="252" y1="232" y2="264"/><br/>      <line x1="252" x2="428" y1="232" y2="232"/><br/>      <line x1="252" x2="428" y1="264" y2="264"/><br/>      <line x1="428" x2="428" y1="232" y2="264"/><br/>    </g><br/>    <g><br/>      <line x1="278" x2="280" y1="476" y2="480"/><br/>      <path d="M 280 496 A 16 16 0 0 0 280 480" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="278" x2="280" y1="500" y2="496"/><br/>    </g><br/>    <g><br/>      <line x1="308" x2="308" y1="472" y2="504"/><br/>      <line x1="308" x2="484" y1="472" y2="472"/><br/>      <line x1="308" x2="484" y1="504" y2="504"/><br/>      <line x1="484" x2="484" y1="472" y2="504"/><br/>    </g><br/>    <g><br/>      <line marker-end="url(#triangle)" x1="320" x2="316" y1="104" y2="104"/><br/>      <line x1="320" x2="428" y1="104" y2="104"/><br/>      <line x1="428" x2="428" y1="104" y2="160"/><br/>    </g><br/>    <g><br/>      <line x1="340" x2="340" y1="184" y2="224"/><br/>      <line marker-end="url(#triangle)" x1="340" x2="396" y1="184" y2="184"/><br/>    </g><br/>    <g><br/>      <line marker-end="url(#triangle)" x1="340" x2="340" y1="288" y2="276"/><br/>      <line x1="340" x2="340" y1="288" y2="464"/><br/>    </g><br/>    <g><br/>      <line x1="376" x2="378" y1="576" y2="580"/><br/>      <path d="M 376 560 A 16 16 0 0 0 376 576" fill="none"/><br/>      <path d="M 378 580 A 8 8 0 0 0 384 584" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="378" x2="376" y1="556" y2="560"/><br/>      <path d="M 384 552 A 8 8 0 0 0 378 556" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="380" x2="380" y1="376" y2="464"/><br/>      <line x1="380" x2="476" y1="376" y2="376"/><br/>      <line x1="476" x2="476" y1="352" y2="376"/><br/>    </g><br/>    <g><br/>      <line x1="384" x2="424" y1="552" y2="552"/><br/>      <path d="M 430 556 A 8 8 0 0 0 424 552" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="384" x2="424" y1="584" y2="584"/><br/>      <path d="M 424 584 A 8 8 0 0 0 430 580" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="404" x2="404" y1="168" y2="200"/><br/>      <line x1="404" x2="580" y1="168" y2="168"/><br/>      <line x1="404" x2="580" y1="200" y2="200"/><br/>      <line x1="580" x2="580" y1="168" y2="200"/><br/>    </g><br/>    <g><br/>      <line x1="412" x2="412" y1="24" y2="56"/><br/>      <line x1="412" x2="580" y1="24" y2="24"/><br/>      <line x1="412" x2="580" y1="56" y2="56"/><br/>      <line x1="580" x2="580" y1="24" y2="56"/><br/>    </g><br/>    <g><br/>      <line x1="430" x2="432" y1="556" y2="560"/><br/>      <path d="M 432 576 A 16 16 0 0 0 432 560" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="430" x2="432" y1="580" y2="576"/><br/>    </g><br/>    <g><br/>      <line x1="440" x2="516" y1="568" y2="568"/><br/>      <line marker-start="url(#open_circle)" x1="516" x2="516" y1="440" y2="568"/><br/>    </g><br/>    <g><br/>      <line x1="452" x2="452" y1="296" y2="328"/><br/>      <line x1="452" x2="628" y1="296" y2="296"/><br/>      <line x1="452" x2="628" y1="328" y2="328"/><br/>      <line x1="628" x2="628" y1="296" y2="328"/><br/>    </g><br/>    <g><br/>      <line x1="452" x2="452" y1="392" y2="424"/><br/>      <line x1="452" x2="628" y1="392" y2="392"/><br/>      <line x1="452" x2="628" y1="424" y2="424"/><br/>      <line x1="628" x2="628" y1="392" y2="424"/><br/>    </g><br/>    <g><br/>      <line marker-end="url(#triangle)" x1="476" x2="476" y1="352" y2="340"/><br/>    </g><br/>    <g><br/>      <line marker-end="url(#triangle)" x1="492" x2="492" y1="80" y2="68"/><br/>      <line x1="492" x2="492" y1="80" y2="160"/><br/>    </g><br/>    <g><br/>      <line marker-end="url(#triangle)" x1="492" x2="492" y1="224" y2="212"/><br/>      <line x1="492" x2="492" y1="224" y2="288"/><br/>    </g><br/>    <g><br/>      <line marker-end="url(#triangle)" x1="532" x2="532" y1="352" y2="340"/><br/>      <line x1="532" x2="532" y1="352" y2="384"/><br/>    </g><br/>    <g><br/>      <line x1="548" x2="616" y1="568" y2="568"/><br/>      <line marker-start="url(#open_circle)" x1="548" x2="548" y1="440" y2="568"/><br/>    </g><br/>    <g><br/>      <line x1="556" x2="556" y1="88" y2="120"/><br/>      <line x1="556" x2="732" y1="88" y2="88"/><br/>      <line x1="556" x2="732" y1="120" y2="120"/><br/>      <line x1="732" x2="732" y1="88" y2="120"/><br/>    </g><br/>    <g><br/>      <line x1="556" x2="556" y1="232" y2="264"/><br/>      <line x1="556" x2="732" y1="232" y2="232"/><br/>      <line x1="556" x2="732" y1="264" y2="264"/><br/>      <line x1="732" x2="732" y1="232" y2="264"/><br/>    </g><br/>    <g><br/>      <line x1="580" x2="620" y1="184" y2="184"/><br/>      <line x1="620" x2="620" y1="144" y2="184"/><br/>    </g><br/>    <g><br/>      <line x1="580" x2="580" y1="472" y2="504"/><br/>      <line x1="580" x2="756" y1="472" y2="472"/><br/>      <line x1="580" x2="756" y1="504" y2="504"/><br/>      <line x1="756" x2="756" y1="472" y2="504"/><br/>    </g><br/>    <g><br/>      <line marker-end="url(#triangle)" x1="588" x2="588" y1="352" y2="340"/><br/>      <line x1="588" x2="588" y1="352" y2="376"/><br/>      <line x1="588" x2="700" y1="376" y2="376"/><br/>      <line x1="700" x2="700" y1="376" y2="464"/><br/>    </g><br/>    <g><br/>      <line marker-end="url(#triangle)" x1="620" x2="620" y1="144" y2="132"/><br/>    </g><br/>    <g><br/>      <line x1="624" x2="626" y1="576" y2="580"/><br/>      <path d="M 624 560 A 16 16 0 0 0 624 576" fill="none"/><br/>      <path d="M 626 580 A 8 8 0 0 0 632 584" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="626" x2="624" y1="556" y2="560"/><br/>      <path d="M 632 552 A 8 8 0 0 0 626 556" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="628" x2="676" y1="312" y2="312"/><br/>      <line x1="676" x2="676" y1="288" y2="312"/><br/>    </g><br/>    <g><br/>      <line x1="632" x2="696" y1="552" y2="552"/><br/>      <path d="M 702 556 A 8 8 0 0 0 696 552" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="632" x2="696" y1="584" y2="584"/><br/>      <path d="M 696 584 A 8 8 0 0 0 702 580" fill="none"/><br/>    </g><br/>    <g><br/>      <line marker-end="url(#triangle)" x1="676" x2="676" y1="144" y2="132"/><br/>      <line x1="676" x2="676" y1="144" y2="224"/><br/>    </g><br/>    <g><br/>      <line marker-end="url(#triangle)" x1="676" x2="676" y1="288" y2="276"/><br/>    </g><br/>    <g><br/>      <line x1="702" x2="704" y1="556" y2="560"/><br/>      <path d="M 704 576 A 16 16 0 0 0 704 560" fill="none"/><br/>    </g><br/>    <g><br/>      <line x1="702" x2="704" y1="580" y2="576"/><br/>    </g><br/>    <g><br/>      <text x="81" y="108">ExpressibleByIntegerLiteral</text><br/>    </g><br/>    <g><br/>      <text x="81" y="492">Float</text><br/>    </g><br/>    <g><br/>      <text x="89" y="172">ExpressibleByFloatLiteral</text><br/>    </g><br/>    <g><br/>      <text x="97" y="316">BinaryFloatingPoint</text><br/>    </g><br/>    <g><br/>      <text x="121" y="412">FloatingPoint</text><br/>    </g><br/>    <g><br/>      <text x="137" y="556">Float80</text><br/>    </g><br/>    <g><br/>      <text x="209" y="492">Double</text><br/>    </g><br/>    <g><br/>      <text x="289" y="252">SignedNumeric</text><br/>    </g><br/>    <g><br/>      <text x="345" y="492">SignedInteger</text><br/>    </g><br/>    <g><br/>      <text x="385" y="572">Int</text><br/>    </g><br/>    <g><br/>      <text x="425" y="44">AdditiveArithmetic</text><br/>    </g><br/>    <g><br/>      <text x="465" y="188">Numeric</text><br/>    </g><br/>    <g><br/>      <text x="473" y="412">FixedWidthInteger</text><br/>    </g><br/>    <g><br/>      <text x="489" y="316">BinaryInteger</text><br/>    </g><br/>    <g><br/>      <text x="601" y="252">Comparable</text><br/>    </g><br/>    <g><br/>      <text x="609" y="108">Equatable</text><br/>    </g><br/>    <g><br/>      <text x="609" y="492">UnsignedInteger</text><br/>    </g><br/>    <g><br/>      <text x="641" y="572">UInt</text><br/>    </g><br/>    <g><br/>      <line marker-start="url(#open_circle)" x1="108" x2="108" y1="440" y2="464"/><br/>    </g><br/>    <g><br/>      <line marker-start="url(#open_circle)" x1="172" x2="172" y1="440" y2="528"/><br/>    </g><br/>    <g><br/>      <line marker-start="url(#open_circle)" x1="236" x2="236" y1="440" y2="464"/><br/>    </g><br/>    <g><br/>      <line marker-start="url(#open_circle)" x1="404" x2="404" y1="520" y2="544"/><br/>    </g><br/>    <g><br/>      <line marker-start="url(#open_circle)" x1="660" x2="660" y1="520" y2="544"/><br/>    </g><br/> </svg>
+
+<p>来自：<a href="https://flight.school/books/numbers/" target="_blank" rel="noopener">航空学院的 Swift 数字指引</a></p>
+<p>要把这么多协议实现下来工作量可不小，并且对于大多数用例，通常需要大量的工作来验证。</p>
+<p>幸好，属性修饰器提供了一种将标准数字类型参数化的方式，同时又大大减少工作量。</p>
+<h3 id="实现一个限制值范围的属性修饰器"><a href="#实现一个限制值范围的属性修饰器" class="headerlink" title="实现一个限制值范围的属性修饰器"></a>实现一个限制值范围的属性修饰器</h3><p>思考下面的 <code>Clamping</code> 结构。作为一个属性修饰器（由 <code>@propertyWrapper</code> 属性表示），它会自动在规定的范围内“限制”越界的值。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">@propertyWrapper</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Clamping</span>&lt;<span class="title">Value</span>: <span class="title">Comparable</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> value: <span class="type">Value</span></span><br><span class="line">    <span class="keyword">let</span> range: <span class="type">ClosedRange</span>&lt;<span class="type">Value</span>&gt;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span>(initialValue value: <span class="type">Value</span>, <span class="number">_</span> range: <span class="type">ClosedRange</span>&lt;<span class="type">Value</span>&gt;) &#123;</span><br><span class="line">        <span class="built_in">precondition</span>(range.<span class="built_in">contains</span>(value))</span><br><span class="line">        <span class="keyword">self</span>.value = value</span><br><span class="line">        <span class="keyword">self</span>.range = range</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> wrappedValue: <span class="type">Value</span> &#123;</span><br><span class="line">        <span class="keyword">get</span> &#123; value &#125;</span><br><span class="line">        <span class="keyword">set</span> &#123; value = <span class="built_in">min</span>(<span class="built_in">max</span>(range.lowerBound, newValue), range.upperBound) &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>你可以使用 <code>@Clamping</code> 保证属性在转成模型 <a href="https://en.wikipedia.org/wiki/PH" target="_blank" rel="noopener">化学溶液中的酸度</a> 的过程中，处于 0-14 的常规范围内。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    @<span class="type">Clamping</span>(<span class="number">0</span>...<span class="number">14</span>) <span class="keyword">var</span> pH: <span class="type">Double</span> = <span class="number">7.0</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> carbonicAcid = <span class="type">Solution</span>(pH: <span class="number">4.68</span>) <span class="comment">// 在标准情况下为 1 mM</span></span><br></pre></td></tr></table></figure>
+<p>如果尝试将 pH 值设定在限制的范围之外，将得到最接近的边界值（最小值或者最大值）来代替。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> superDuperAcid = <span class="type">Solution</span>(pH: -<span class="number">1</span>)</span><br><span class="line">superDuperAcid.pH <span class="comment">// 0</span></span><br></pre></td></tr></table></figure>
+<p>你可以在其他属性修饰器的实现中使用属性修饰器。例如，这个 <code>UnitInterval</code> 属性修饰起器委托给 <code>@Clamping</code>，把值约束在 0 和 1 之间，包括 0 和 1。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">@propertyWrapper</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">UnitInterval</span>&lt;<span class="title">Value</span>: <span class="title">FloatingPoint</span>&gt; </span>&#123;</span><br><span class="line">    @<span class="type">Clamping</span>(<span class="number">0</span>...<span class="number">1</span>)</span><br><span class="line">    <span class="keyword">var</span> wrappedValue: <span class="type">Value</span> = .zero</span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span>(initialValue value: <span class="type">Value</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.wrappedValue = value</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>再比如，你可以使用 <code>@UnitInterval</code> 属性修饰器定义一个 <code>RGB</code> 的类型，用来表示红色、绿色、蓝色的百分比强度。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RGB</span> </span>&#123;</span><br><span class="line">    @<span class="type">UnitInterval</span> <span class="keyword">var</span> red: <span class="type">Double</span></span><br><span class="line">    @<span class="type">UnitInterval</span> <span class="keyword">var</span> green: <span class="type">Double</span></span><br><span class="line">    @<span class="type">UnitInterval</span> <span class="keyword">var</span> blue: <span class="type">Double</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> cornflowerBlue = <span class="type">RGB</span>(red: <span class="number">0.392</span>, green: <span class="number">0.584</span>, blue: <span class="number">0.929</span>)</span><br></pre></td></tr></table></figure>
+<h4 id="举一反三"><a href="#举一反三" class="headerlink" title="举一反三"></a>举一反三</h4><ul>
+<li>实现一个 <code>@Positive</code>/<code>@NonNegative</code> 属性装饰器，将无符号整数赋值成有符号整数类型。</li>
+<li>实现一个 <code>@NonZero</code> 属性装饰器，使得一个数值要么大于，要么小于 <code>0</code>。</li>
+<li><code>@Validated</code> 或者 <code>@Whitelisted</code>/<code>@Blacklisted</code> 属性装饰器，约束了什么样的值可以被赋值。</li>
+</ul>
+<p><a name="transforming-values-on-property-assignment"></a></p>
+<h2 id="转换属性赋值时的值"><a href="#转换属性赋值时的值" class="headerlink" title="转换属性赋值时的值"></a>转换属性赋值时的值</h2><p>从用户接收文本输入是应用开发者经常头疼的问题。从无聊的字符串编码到恶意的文本字段注入攻击，开发者有太多事情需要注意。但在开发者面对的的问题中，最难以捉摸和令人困扰的是接收用户生成的内容，而且这些内容开头和结尾都带有空格。</p>
+<p>在内容开头有一个单独的空格，可以让 URL 无效，也可以混淆日期解析器，还可能造成差一错误（off-by-one error）：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"></span><br><span class="line"><span class="type">URL</span>(string: <span class="string">" https://nshipster.com"</span>) <span class="comment">// nil (!)</span></span><br><span class="line"></span><br><span class="line"><span class="type">ISO8601DateFormatter</span>().date(from: <span class="string">" 2019-06-24"</span>) <span class="comment">// nil (!)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> words = <span class="string">" Hello, world!"</span>.components(separatedBy: .whitespaces)</span><br><span class="line">words.<span class="built_in">count</span> <span class="comment">// 3 (!)</span></span><br></pre></td></tr></table></figure>
+<p>说到用户输入，客户端经常以没留意做理由，然后把所有东西 <em>原原本本</em> 发送给服务器。<code>¯\_(ツ)_/¯</code>。</p>
+<p>当然我不是在倡导客户端应该为此负责更多处理工作，这种情况就涉及到了 Swift 属性修饰器另外一个引人注目的用例。</p>
+<hr>
+<p>Foundation 框架将 <code>trimmingCharacters(in:)</code> 方法桥接到了 Swift 的字符串中，除了一些其他作用以外，它提供了便利的方式来裁剪掉 <code>String</code> 值首位两端的空格。虽然可以通过调用这个方法来保证数据健全，但是还不够便利。如果你也有过类似的经历，你肯定会想知道有没有更好的方案。</p>
+<p>或许你找到了一种较为通用的方法，通过 <code>willSet</code> 属性回调来寻解脱……唯一让人不能满意的是，这个方法无法改变已经发生的事情。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Post</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> title: <span class="type">String</span> &#123;</span><br><span class="line">        <span class="keyword">willSet</span> &#123;</span><br><span class="line">            title = newValue.trimmingCharacters(<span class="keyword">in</span>: .whitespacesAndNewlines)</span><br><span class="line">            <span class="comment">/* ⚠️ 尝试在它自己的 willSet 中存储属性 'title'，该属性将会被新值覆盖*/</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从上面看，你可能想到可以用 <code>didSet</code>，作为解决问题的康庄大道……不过我想你马上就会想起来 Swift 里的一条规定，即 <code>didSet</code> 在属性初始化赋值时是不会被调用的。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Post</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> title: <span class="type">String</span> &#123;</span><br><span class="line">        <span class="comment">// 😓 初始化期间未调用</span></span><br><span class="line">        <span class="keyword">didSet</span> &#123;</span><br><span class="line">            <span class="keyword">self</span>.title = title.trimmingCharacters(<span class="keyword">in</span>: .whitespacesAndNewlines)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>在属性自己的 <code>didSet</code> 回调方法里面，很幸运不会再次触发回调，所以你不必担心意料之外的递归调用。</p>
+</blockquote>
+<p>在你的坚持不懈下，你很可能用尽了一切办法……但回过头来，你发现其实并没有什么方法能够既满足人因工程学的标准，又满足性能方面的要求</p>
+<p>如果你对此深有体会，那么恭喜你，你在这方面的探索可以到此为止了，因为属性装饰器将是这个问题的终极解决方案。</p>
+<h3 id="实现为字符串值裁截空格的属性修饰器"><a href="#实现为字符串值裁截空格的属性修饰器" class="headerlink" title="实现为字符串值裁截空格的属性修饰器"></a>实现为字符串值裁截空格的属性修饰器</h3><p>看下下面的 <code>Trimmed</code> 结构体，它从输入的字符串裁截了空格和换行。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"></span><br><span class="line">@propertyWrapper</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Trimmed</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span>(<span class="keyword">set</span>) <span class="keyword">var</span> value: <span class="type">String</span> = <span class="string">""</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> wrappedValue: <span class="type">String</span> &#123;</span><br><span class="line">        <span class="keyword">get</span> &#123; value &#125;</span><br><span class="line">        <span class="keyword">set</span> &#123; value = newValue.trimmingCharacters(<span class="keyword">in</span>: .whitespacesAndNewlines) &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span>(initialValue: <span class="type">String</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.wrappedValue = initialValue</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>下面的代码为 <code>Post</code> 结构中每个 <code>String</code> 属性标记了 <code>@Trimmed</code> ，通过这种方式，任何赋值给 <code>title</code> 或 <code>body</code> 的字符串值——无论是在初始化期间还是通过属性访问后——都将自动删除其开头或结尾的空格。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Post</span> </span>&#123;</span><br><span class="line">    @<span class="type">Trimmed</span> <span class="keyword">var</span> title: <span class="type">String</span></span><br><span class="line">    @<span class="type">Trimmed</span> <span class="keyword">var</span> body: <span class="type">String</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> quine = <span class="type">Post</span>(title: <span class="string">"  Swift Property Wrappers  "</span>, body: <span class="string">"&lt;#...#&gt;"</span>)</span><br><span class="line">quine.title <span class="comment">// "Swift Property Wrappers" (no leading or trailing spaces!)</span></span><br><span class="line"></span><br><span class="line">quine.title = <span class="string">"      @propertyWrapper     "</span></span><br><span class="line">quine.title <span class="comment">// "@propertyWrapper" (still no leading or trailing spaces!)</span></span><br></pre></td></tr></table></figure>
+<h4 id="举一反三-1"><a href="#举一反三-1" class="headerlink" title="举一反三"></a>举一反三</h4><ul>
+<li>实现一个 <code>@Transformed</code> 属性修饰器，它允许对输入的字符串进行 <a href="https://developer.apple.com/documentation/foundation/nsstring/1407787-applyingtransform" target="_blank" rel="noopener">ICU 转换</a>。</li>
+<li>实现一个 <code>@Normalized</code> 属性修饰器，它允许一个 <code>String</code> 属性自定义它<a href="https://unicode.org/reports/tr15/#Norm_Forms" target="_blank" rel="noopener">正规形式</a></li>
+<li>实现一个 <code>@Quantized</code>/<code>@Rounded</code>/<code>@Truncated</code> 属性修饰器，它会把数值转换到一种特定的精度（例如：向上舍入到最近的 ½ 精度），但是内部要关注到精确过程的中间值，防止连锁的舍入错误。</li>
+</ul>
+<p><a name="changing-synthesized-equality-and-comparison-semantics"></a></p>
+<h2 id="改变生成的等式和比较语义"><a href="#改变生成的等式和比较语义" class="headerlink" title="改变生成的等式和比较语义"></a>改变生成的等式和比较语义</h2><blockquote>
+<p>这个方式取决于遵循 synthesized 协议的实现细节，并且可能会在这个功能完成之前发生改变（尽管我们希望这个方法仍然像下面所说一样继续可用）。</p>
+</blockquote>
+<p>在 Swift 中，两个 <code>String</code> 值如果他们 <a href="https://unicode.org/reports/tr15/#Canon_Compat_Equivalence" target="_blank" rel="noopener"><em>标准等价</em></a> 就会被人认为是相等。在大多数情况下，Swift 字符串的比较方式与我们的预期一致：即两个字符串包含有相同的字符就会相等，不管它是一个合成字符，还是将这个合成字符拆解成多个字符——举个例子来说，就是“é”（<code>U+00E9 带有锐音的拉丁小写字母 E</code>）等于“e”（<code>U+0065 拉丁小写字母 E</code>）+“◌́”（<code>U+0301T 和锐音组合</code>）。</p>
+<p>但是，如果你在特殊的情况下需要不同的相等语义呢？例如字符串相等的时候 <em>不区分大小写</em>？</p>
+<p>在今天，你可以使用许多方法，利用已有的语言特性解决这个问题：</p>
+<ul>
+<li>要完成这个功能，你可以在 <code>==</code> 比较的时候用 <code>lowercased()</code> 做一次处理，但和其他手动处理方式一样，这种方式容易出现人为的错误。</li>
+<li>你可以创建一个包含 <code>String</code> 值的自定义 <code>CaseInsensitive</code> 类型。但你必须要完成很多额外的工作，才能把它打磨的像标准的 <code>String</code> 类型一样即符合人因工程学的标准，又提供完全相同的功能。</li>
+<li>虽然你可以定义一个<a href="https://nshipster.com/swift-operators/#defining-custom-operators" target="_blank" rel="noopener">自定义操作符</a> 但又有什么操作符能比 <code>==</code> 更贴近相等的含义呢。</li>
+</ul>
+<p>上面的方法并没有哪个能让人完全信服，还好在 Swift 5.1 中，属性修饰器的特性让我们拥有了一个完美的解决方案。</p>
+<blockquote>
+<p>和文章开头提到状况一样（即实现一个自定义浮点数类型），Swift 采用面向协议的方式，将完成字符串的职责代理给一系列的更细粒度的类型（narrowly-defined types）.</p>
+</blockquote>
+<p>对于好奇心强的读者，这里是一张关系图，里面展示了在 Swift 标准库中所有字符串类型之间的关系。</p>
+<p><svg xmlns="http://www.w3.org/2000/svg" class="bob" font-size="14" viewbox="0 0 920 736" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" fill="none"><br/>  <defs><br/>    <marker id="triangle" markerheight="8" markerwidth="8" orient="auto" refx="4" refy="2" viewbox="0 0 8 4"><br/>      <polygon fill="black" points="0,0 0,4 8,2 0,0"/><br/>    </marker><br/>    <marker id="clear_triangle" markerheight="10" markerwidth="10" orient="auto" refx="1" refy="7" viewbox="0 0 20 14"><br/>      <polygon fill="none" points="2,2 2,12 18,7 2,2" stroke="black" stroke-width="2"/><br/>    </marker><br/>    <marker id="circle" markerheight="5" markerwidth="5" orient="auto" refx="10" refy="10" viewbox="0 0 20 20"><br/>      <circle cx="10" cy="10" fill="black" r="8"/><br/>    </marker><br/>    <marker id="square" markerheight="5" markerwidth="5" orient="auto" refx="10" refy="10" viewbox="0 0 20 20"><br/>      <rect fill="black" width="20" height="20" viewbox="0 0 20 20" x="0" y="0"/><br/>    </marker><br/>    <marker id="open_circle" markerheight="10" markerwidth="10" orient="auto" refx="10" refy="10" viewbox="0 0 20 20"><br/>      <circle cx="10" cy="10" fill="white" r="4" stroke="black" stroke-width="2"/><br/>    </marker><br/>    <marker id="big_open_circle" markerheight="20" markerwidth="20" orient="auto" refx="20" refy="20" viewbox="0 0 40 40"><br/>      <circle cx="20" cy="20" fill="white" r="6" stroke="black" stroke-width="2"/><br/>    </marker><br/>  </defs><br/>  <style><br>    text{stroke: none; fill: currentColor;}<br>    polygon{fill:currentColor;}<br>  </style><br/>  <g><br/>    <line x1="4" x2="4" y1="232" y2="264"/><br/>    <line x1="4" x2="252" y1="232" y2="232"/><br/>    <line x1="4" x2="252" y1="264" y2="264"/><br/>    <line x1="252" x2="252" y1="232" y2="264"/><br/>  </g><br/>  <g><br/>    <line x1="132" x2="132" y1="200" y2="224"/><br/>    <line x1="132" x2="236" y1="200" y2="200"/><br/>    <line x1="236" x2="236" y1="176" y2="200"/><br/>  </g><br/>  <g><br/>    <line x1="132" x2="272" y1="536" y2="536"/><br/>    <line marker-start="url(#open_circle)" x1="132" x2="132" y1="280" y2="536"/><br/>  </g><br/>  <g><br/>    <line x1="148" x2="148" y1="360" y2="392"/><br/>    <line x1="148" x2="340" y1="360" y2="360"/><br/>    <line x1="148" x2="340" y1="392" y2="392"/><br/>    <line x1="340" x2="340" y1="360" y2="392"/><br/>  </g><br/>  <g><br/>    <line x1="148" x2="148" y1="424" y2="456"/><br/>    <line x1="148" x2="340" y1="424" y2="424"/><br/>    <line x1="148" x2="340" y1="456" y2="456"/><br/>    <line x1="340" x2="340" y1="424" y2="456"/><br/>  </g><br/>  <g><br/>    <line x1="212" x2="212" y1="120" y2="152"/><br/>    <line x1="212" x2="332" y1="120" y2="120"/><br/>    <line x1="212" x2="332" y1="152" y2="152"/><br/>    <line x1="332" x2="332" y1="120" y2="152"/><br/>  </g><br/>  <g><br/>    <line x1="220" x2="220" y1="40" y2="72"/><br/>    <line x1="220" x2="324" y1="40" y2="40"/><br/>    <line x1="220" x2="324" y1="72" y2="72"/><br/>    <line x1="324" x2="324" y1="40" y2="72"/><br/>  </g><br/>  <g><br/>    <line marker-end="url(#triangle)" x1="236" x2="236" y1="176" y2="164"/><br/>  </g><br/>  <g><br/>    <line marker-end="url(#triangle)" x1="276" x2="276" y1="96" y2="84"/><br/>    <line x1="276" x2="276" y1="96" y2="112"/><br/>  </g><br/>  <g><br/>    <line x1="276" x2="276" y1="232" y2="264"/><br/>    <line x1="276" x2="500" y1="232" y2="232"/><br/>    <line x1="276" x2="500" y1="264" y2="264"/><br/>    <line x1="500" x2="500" y1="232" y2="264"/><br/>  </g><br/>  <g><br/>    <line x1="280" x2="282" y1="544" y2="548"/><br/>    <path d="M 280 528 A 16 16 0 0 0 280 544" fill="none"/><br/>    <path d="M 282 548 A 8 8 0 0 0 288 552" fill="none"/><br/>  </g><br/>  <g><br/>    <line x1="282" x2="280" y1="524" y2="528"/><br/>    <path d="M 288 520 A 8 8 0 0 0 282 524" fill="none"/><br/>  </g><br/>  <g><br/>    <line x1="288" x2="448" y1="520" y2="520"/><br/>    <path d="M 454 524 A 8 8 0 0 0 448 520" fill="none"/><br/>  </g><br/>  <g><br/>    <line x1="288" x2="448" y1="552" y2="552"/><br/>    <path d="M 448 552 A 8 8 0 0 0 454 548" fill="none"/><br/>  </g><br/>  <g><br/>    <line marker-end="url(#triangle)" x1="308" x2="308" y1="176" y2="164"/><br/>    <line x1="308" x2="308" y1="176" y2="200"/><br/>    <line x1="308" x2="412" y1="200" y2="200"/><br/>    <line x1="412" x2="412" y1="200" y2="224"/><br/>  </g><br/>  <g><br/>    <line marker-end="url(#triangle)" x1="352" x2="348" y1="376" y2="376"/><br/>    <line x1="352" x2="364" y1="376" y2="376"/><br/>    <line x1="364" x2="364" y1="376" y2="408"/><br/>    <line x1="364" x2="364" y1="408" y2="440"/><br/>    <line x1="364" x2="396" y1="408" y2="408"/><br/>  </g><br/>  <g><br/>    <line marker-end="url(#triangle)" x1="352" x2="348" y1="440" y2="440"/><br/>    <line x1="352" x2="364" y1="440" y2="440"/><br/>  </g><br/>  <g><br/>    <line x1="372" x2="372" y1="472" y2="512"/><br/>    <line x1="372" x2="420" y1="472" y2="472"/><br/>    <line marker-start="url(#open_circle)" x1="420" x2="420" y1="440" y2="472"/><br/>  </g><br/>  <g><br/>    <line x1="372" x2="372" y1="560" y2="696"/><br/>    <line marker-end="url(#open_circle)" x1="372" x2="484" y1="696" y2="696"/><br/>  </g><br/>  <g><br/>    <line x1="396" x2="396" y1="392" y2="424"/><br/>    <line x1="396" x2="548" y1="392" y2="392"/><br/>    <line x1="396" x2="548" y1="424" y2="424"/><br/>    <line x1="548" x2="548" y1="392" y2="424"/><br/>  </g><br/>  <g><br/>    <line x1="454" x2="456" y1="524" y2="528"/><br/>    <path d="M 456 544 A 16 16 0 0 0 456 528" fill="none"/><br/>  </g><br/>  <g><br/>    <line x1="454" x2="456" y1="548" y2="544"/><br/>  </g><br/>  <g><br/>    <line marker-end="url(#triangle)" x1="468" x2="468" y1="288" y2="276"/><br/>    <line x1="468" x2="468" y1="288" y2="384"/><br/>  </g><br/>  <g><br/>    <line x1="492" x2="492" y1="520" y2="552"/><br/>    <line x1="492" x2="756" y1="520" y2="520"/><br/>    <line x1="492" x2="756" y1="552" y2="552"/><br/>    <line x1="756" x2="756" y1="520" y2="552"/><br/>  </g><br/>  <g><br/>    <line x1="492" x2="492" y1="600" y2="632"/><br/>    <line x1="492" x2="756" y1="600" y2="600"/><br/>    <line x1="492" x2="756" y1="632" y2="632"/><br/>    <line x1="756" x2="756" y1="600" y2="632"/><br/>  </g><br/>  <g><br/>    <line x1="492" x2="492" y1="680" y2="712"/><br/>    <line x1="492" x2="756" y1="680" y2="680"/><br/>    <line x1="492" x2="756" y1="712" y2="712"/><br/>    <line x1="756" x2="756" y1="680" y2="712"/><br/>  </g><br/>  <g><br/>    <line x1="508" x2="508" y1="120" y2="152"/><br/>    <line x1="508" x2="908" y1="120" y2="120"/><br/>    <line x1="508" x2="908" y1="152" y2="152"/><br/>    <line x1="908" x2="908" y1="120" y2="152"/><br/>  </g><br/>  <g><br/>    <line x1="524" x2="524" y1="296" y2="384"/><br/>    <line marker-end="url(#triangle)" x1="524" x2="548" y1="296" y2="296"/><br/>  </g><br/>  <g><br/>    <line x1="524" x2="524" y1="432" y2="472"/><br/>    <line x1="524" x2="628" y1="472" y2="472"/><br/>    <line marker-end="url(#triangle)" x1="628" x2="628" y1="472" y2="508"/><br/>  </g><br/>  <g><br/>    <line x1="548" x2="596" y1="408" y2="408"/><br/>    <line x1="596" x2="596" y1="376" y2="408"/><br/>    <line marker-end="url(#triangle)" x1="596" x2="636" y1="376" y2="376"/><br/>    <line x1="596" x2="596" y1="408" y2="440"/><br/>    <line marker-end="url(#triangle)" x1="596" x2="636" y1="440" y2="440"/><br/>  </g><br/>  <g><br/>    <line x1="556" x2="556" y1="40" y2="72"/><br/>    <line x1="556" x2="860" y1="40" y2="40"/><br/>    <line x1="556" x2="860" y1="72" y2="72"/><br/>    <line x1="860" x2="860" y1="40" y2="72"/><br/>  </g><br/>  <g><br/>    <line x1="556" x2="556" y1="280" y2="312"/><br/>    <line x1="556" x2="868" y1="280" y2="280"/><br/>    <line x1="556" x2="868" y1="312" y2="312"/><br/>    <line x1="868" x2="868" y1="280" y2="312"/><br/>  </g><br/>  <g><br/>    <line x1="580" x2="580" y1="200" y2="232"/><br/>    <line x1="580" x2="844" y1="200" y2="200"/><br/>    <line x1="580" x2="844" y1="232" y2="232"/><br/>    <line x1="844" x2="844" y1="200" y2="232"/><br/>  </g><br/>  <g><br/>    <line marker-end="url(#triangle)" x1="628" x2="628" y1="560" y2="588"/><br/>  </g><br/>  <g><br/>    <line marker-end="url(#triangle)" x1="628" x2="628" y1="656" y2="644"/><br/>    <line x1="628" x2="628" y1="656" y2="672"/><br/>  </g><br/>  <g><br/>    <line x1="644" x2="644" y1="360" y2="392"/><br/>    <line x1="644" x2="748" y1="360" y2="360"/><br/>    <line x1="644" x2="748" y1="392" y2="392"/><br/>    <line x1="748" x2="748" y1="360" y2="392"/><br/>  </g><br/>  <g><br/>    <line x1="644" x2="644" y1="424" y2="456"/><br/>    <line x1="644" x2="748" y1="424" y2="424"/><br/>    <line x1="644" x2="748" y1="456" y2="456"/><br/>    <line x1="748" x2="748" y1="424" y2="456"/><br/>  </g><br/>  <g><br/>    <line marker-end="url(#triangle)" x1="708" x2="708" y1="96" y2="84"/><br/>    <line x1="708" x2="708" y1="96" y2="112"/><br/>  </g><br/>  <g><br/>    <line marker-end="url(#triangle)" x1="708" x2="708" y1="176" y2="164"/><br/>    <line x1="708" x2="708" y1="176" y2="192"/><br/>  </g><br/>  <g><br/>    <line marker-end="url(#triangle)" x1="708" x2="708" y1="256" y2="244"/><br/>    <line x1="708" x2="708" y1="256" y2="272"/><br/>  </g><br/>  <g><br/>    <line x1="748" x2="772" y1="376" y2="376"/><br/>    <line x1="772" x2="772" y1="344" y2="376"/><br/>    <line x1="772" x2="852" y1="344" y2="344"/><br/>    <line marker-end="url(#triangle)" x1="852" x2="852" y1="344" y2="380"/><br/>  </g><br/>  <g><br/>    <line x1="748" x2="772" y1="440" y2="440"/><br/>    <line x1="772" x2="772" y1="440" y2="472"/><br/>    <line x1="772" x2="852" y1="472" y2="472"/><br/>    <line x1="852" x2="852" y1="448" y2="472"/><br/>  </g><br/>  <g><br/>    <line x1="796" x2="796" y1="392" y2="424"/><br/>    <line x1="796" x2="908" y1="392" y2="392"/><br/>    <line x1="796" x2="908" y1="424" y2="424"/><br/>    <line x1="908" x2="908" y1="392" y2="424"/><br/>  </g><br/>  <g><br/>    <line marker-end="url(#triangle)" x1="852" x2="852" y1="448" y2="436"/><br/>  </g><br/>  <g><br/>    <text x="17" y="252">RangeReplaceableCollection</text><br/>  </g><br/>  <g><br/>    <text x="161" y="444">TextOutputStreamable</text><br/>  </g><br/>  <g><br/>    <text x="177" y="380">TextOutputStream</text><br/>  </g><br/>  <g><br/>    <text x="225" y="140">Collection</text><br/>  </g><br/>  <g><br/>    <text x="233" y="60">Sequence</text><br/>  </g><br/>  <g><br/>    <text x="289" y="252">BidirectionalCollection</text><br/>  </g><br/>  <g><br/>    <text x="329" y="540">String</text><br/>  </g><br/>  <g><br/>    <text x="409" y="412">StringProtocol</text><br/>  </g><br/>  <g><br/>    <text x="505" y="700">CustomDebugStringConvertible</text><br/>  </g><br/>  <g><br/>    <text x="513" y="540">LosslessStringConvertible</text><br/>  </g><br/>  <g><br/>    <text x="521" y="620">CustomStringConvertible</text><br/>  </g><br/>  <g><br/>    <text x="529" y="140"><br/>      ExpressibleByExtendedGraphemeClusterLiteral</text><br/>  </g><br/>  <g><br/>    <text x="569" y="60">ExpressibleByUnicodeScalarLiteral</text><br/>  </g><br/>  <g><br/>    <text x="577" y="300">ExpressibleByStringInterpolation</text><br/>  </g><br/>  <g><br/>    <text x="601" y="220">ExpressibleByStringLiteral</text><br/>  </g><br/>  <g><br/>    <text x="649" y="380">Comparable</text><br/>  </g><br/>  <g><br/>    <text x="657" y="444">Hashable</text><br/>  </g><br/>  <g><br/>    <text x="809" y="412">Equatable</text><br/>  </g><br/></svg><br>来自：<a href="https://flight.school/books/strings/" target="_blank" rel="noopener">航空学院的 Swift 字符串指引</a></p>
+<p>当你 <em>能够</em> 创建一个与 <code>String</code> 等价的自定义类型时，<a href="https://developer.apple.com/documentation/swift/stringprotocol" target="_blank" rel="noopener">文档</a> 却又强烈的建议不要这样做：</p>
+<blockquote>
+<p>不应该再有别的类型遵循 StringProtocol 。在标准库中应当只有 <code>String</code> 和 <code>Substring</code> 遵循它。</p>
+</blockquote>
+<h3 id="实现一个不区分大小写的属性修饰器"><a href="#实现一个不区分大小写的属性修饰器" class="headerlink" title="实现一个不区分大小写的属性修饰器"></a>实现一个不区分大小写的属性修饰器</h3><p>下面的 <code>CaseInsensitive</code> 类型实现了一个修饰 <code>String</code>/<code>SubString</code> 的属性修饰器。通过桥接 <code>NSString</code> 的 API <a href="https://developer.apple.com/documentation/foundation/nsstring/1414769-caseinsensitivecompare" target="_blank" rel="noopener"><code>caseInsensitiveCompare(_:)</code></a> ，<code>CaseInsensitive</code> 类型符合了 <code>Comparable</code> 协议（本质是通过扩展的方式实现了 <code>Equatable</code> 协议）：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"></span><br><span class="line">@propertyWrapper</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">CaseInsensitive</span>&lt;<span class="title">Value</span>: <span class="title">StringProtocol</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> wrappedValue: <span class="type">Value</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">CaseInsensitive</span>: <span class="title">Comparable</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">compare</span><span class="params">(<span class="number">_</span> other: CaseInsensitive)</span></span> -&gt; <span class="type">ComparisonResult</span> &#123;</span><br><span class="line">        wrappedValue.caseInsensitiveCompare(other.wrappedValue)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> == <span class="params">(lhs: CaseInsensitive, rhs: CaseInsensitive)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        lhs.compare(rhs) == .orderedSame</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> &lt; (lhs: CaseInsensitive, rhs: CaseInsensitive) -&gt; <span class="title">Bool</span> </span>&#123;</span><br><span class="line">        lhs.compare(rhs) == .orderedAscending</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> &gt; <span class="params">(lhs: CaseInsensitive, rhs: CaseInsensitive)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        lhs.compare(rhs) == .orderedDescending</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>虽然大于运算符（<code>&gt;</code>）<a href="https://nshipster.com/equatable-and-comparable/#comparable" target="_blank" rel="noopener">可以被自动派生</a>，我们为了优化性能应该在这里实现它，避免对底层方法 <code>caseInsensitiveCompare</code> 进行不必要的调用。</p>
+</blockquote>
+<p>构造两个只是大小写不同的字符串，并且对于标准的相等检查他们会返回 <code>false</code>，但是在用 <code>CaseInsensitive</code> 对象修饰的时候返回 <code>true</code>。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> hello: <span class="type">String</span> = <span class="string">"hello"</span></span><br><span class="line"><span class="keyword">let</span> <span class="type">HELLO</span>: <span class="type">String</span> = <span class="string">"HELLO"</span></span><br><span class="line"></span><br><span class="line">hello == <span class="type">HELLO</span> <span class="comment">// false</span></span><br><span class="line"><span class="type">CaseInsensitive</span>(wrappedValue: hello) == <span class="type">CaseInsensitive</span>(wrappedValue: <span class="type">HELLO</span>) <span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+<p>到目前为止，这个方法看起来和前文提到的方案，即创建一个包含 <code>String</code> 值的自定义 <code>CaseInsensitive</code> 类型，没什么区别。不过想要让自定义的 <code>CaseInsensitive</code> 类型变得和 <code>String</code> 一样好用，我们还需要考虑实现诸如 <code>ExpressibleByStringLiteral</code> 在内的其他协议，所以这才是漫漫长路的开始。</p>
+<p>不过属性修饰器允许我们抛开这些繁琐的工作：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Account</span>: <span class="title">Equatable</span> </span>&#123;</span><br><span class="line">    @<span class="type">CaseInsensitive</span> <span class="keyword">var</span> name: <span class="type">String</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span>(name: <span class="type">String</span>) &#123;</span><br><span class="line">        $name = <span class="type">CaseInsensitive</span>(wrappedValue: name)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> johnny = <span class="type">Account</span>(name: <span class="string">"johnny"</span>)</span><br><span class="line"><span class="keyword">let</span> <span class="type">JOHNNY</span> = <span class="type">Account</span>(name: <span class="string">"JOHNNY"</span>)</span><br><span class="line"><span class="keyword">let</span> <span class="type">Jane</span> = <span class="type">Account</span>(name: <span class="string">"Jane"</span>)</span><br><span class="line"></span><br><span class="line">johnny == <span class="type">JOHNNY</span> <span class="comment">// true</span></span><br><span class="line">johnny == <span class="type">Jane</span> <span class="comment">// false</span></span><br><span class="line"></span><br><span class="line">johnny.name == <span class="type">JOHNNY</span>.name <span class="comment">// false</span></span><br><span class="line"></span><br><span class="line">johnny.name = <span class="string">"Johnny"</span></span><br><span class="line">johnny.name <span class="comment">// "Johnny"</span></span><br></pre></td></tr></table></figure>
+<p>这里，<code>Account</code> 对象通过 <code>name</code> 属性进行了一次判等，且判等的过程中不区分字母的大小写。可是当我们去获取或设置 <code>name</code> 属性时，它又像一个 <em>真正的</em> <code>String</code> 值一样区分字母大小写了。</p>
+<p><em>这很整洁，但这里到底发生了什么？</em></p>
+<p>自 Swift 4 以后，如果某个类型里的存储属性都遵守了 <code>Equatable</code> 协议的话，那么编译器将自动为这个类型增加 <code>Equatable</code> 的能力。因为这些实现是隐式的（至少目前看起来是这样），属性修饰器是通过被封装的值进行判等的，而不是对构成属性修饰器的值判等。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 由 Swift 编译器生成</span></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Account</span>: <span class="title">Equatable</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> == <span class="params">(lhs: Account, rhs: Account)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        lhs.$name == rhs.$name</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="举一反三-2"><a href="#举一反三-2" class="headerlink" title="举一反三"></a>举一反三</h4><ul>
+<li>定义 <code>@CompatibilityEquivalence</code> 属性修饰器，当修饰 <code>String</code> 类型的属性时，带有 <code>&quot;①&quot;</code> 和 <code>&quot;1&quot;</code> 时会被认为相等。</li>
+<li>实现一个 <code>@Approximate</code> 属性修饰器，来重新定义浮点数类型的相等语义 （另见 <a href="https://github.com/apple/swift-evolution/blob/master/proposals/0259-approximately-equal.md" target="_blank" rel="noopener">SE-0259</a>）。</li>
+<li>实现一个 <code>@Ranked</code> 属性修饰器，它会带有一个函数，函数中定义了枚举值的排序；而这个排序需要符合我们通常打牌时的规则，例如牌面为 A 时，它既有可能是最大值，也可能是最小值。</li>
+</ul>
+<p><a name="auditing-property-access"></a></p>
+<h2 id="审查属性访问"><a href="#审查属性访问" class="headerlink" title="审查属性访问"></a>审查属性访问</h2><p>业务要求可能会用某些控制措施，规定谁可以访问哪些记录，或者规定一些形式表格要随着时间变换。</p>
+<p>重申一下，类似这样的功能通常不会在 iOS 端上完成；大多数业务逻辑都是在服务端完成的，许多客户端开发者并不想与这样的业务逻辑打交道。而下面的这个例子打开了一个新的视角来看待这个问题，当然这也归功于属性修饰器的功劳。</p>
+<h3 id="为属性值增加版本记录"><a href="#为属性值增加版本记录" class="headerlink" title="为属性值增加版本记录"></a>为属性值增加版本记录</h3><p>下面的 <code>Versioned</code> 结构体函数用作一个属性修饰器，拦截了输入的值，并在设置每个值的时候创建带时间戳的记录。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"></span><br><span class="line">@propertyWrapper</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Versioned</span>&lt;<span class="title">Value</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> value: <span class="type">Value</span></span><br><span class="line">    <span class="keyword">private</span>(<span class="keyword">set</span>) <span class="keyword">var</span> timestampedValues: [(<span class="type">Date</span>, <span class="type">Value</span>)] = []</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> wrappedValue: <span class="type">Value</span> &#123;</span><br><span class="line">        <span class="keyword">get</span> &#123; value &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">set</span> &#123;</span><br><span class="line">            <span class="keyword">defer</span> &#123; timestampedValues.append((<span class="type">Date</span>(), value)) &#125;</span><br><span class="line">            value = newValue</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span>(initialValue value: <span class="type">Value</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.wrappedValue = value</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>下面是 <code>ExpenseReport</code> 类，它带有一个名为 <code>state</code> 的属性并被 <code>@Versioned</code> 属性修饰期所修饰。通过这种方式，我们可以回溯每一次的操作记录。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ExpenseReport</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">enum</span> <span class="title">State</span> </span>&#123; <span class="keyword">case</span> submitted, received, approved, denied &#125;</span><br><span class="line"></span><br><span class="line">    @<span class="type">Versioned</span> <span class="keyword">var</span> state: <span class="type">State</span> = .submitted</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="举一反三-3"><a href="#举一反三-3" class="headerlink" title="举一反三"></a>举一反三</h3><ul>
+<li>实现一个 <code>@Audited</code> 属性修饰器，在每次读写属性的时候打印日志。</li>
+<li>实现一个 <code>@Decaying</code> 属性修饰器，它在每次值被读取的时候都会去除以一个设定的值。</li>
+</ul>
+<hr>
+<p>不可否认的是，这个特定的示例还是暴露了属性修饰器的一些局限性：<strong>属性无法被标记为 <code>throws</code>。</strong>当然这个问题的根源还是在 Swift 语言自身上。</p>
+<p>由于在错误处理上的能力欠缺，属性修饰器并没有什么好办法让代码完全按照你的设想执行。例如我们想让 <code>@Versioned</code> 属性修饰器支持这样一个特性，即在设置 <code>state</code> 属性时 ，当属性被设置为 <code>.denied</code> 后，就不能再被设置为 <code>.approved</code>，针对这种场景，现有的最佳方案是 <code>fatalError()</code>，但在实际的生产环境中，这可就不一定了：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ExpenseReport</span> </span>&#123;</span><br><span class="line">    @<span class="type">Versioned</span> <span class="keyword">var</span> state: <span class="type">State</span> = .submitted &#123;</span><br><span class="line">        <span class="keyword">willSet</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> newValue == .approved,</span><br><span class="line">                $state.timestampedValues.<span class="built_in">map</span> &#123; $<span class="number">0.1</span> &#125;.<span class="built_in">contains</span>(.denied)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="built_in">fatalError</span>(<span class="string">"J'Accuse!"</span>)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> tripExpenses = <span class="type">ExpenseReport</span>()</span><br><span class="line">tripExpenses.state = .denied</span><br><span class="line">tripExpenses.state = .approved <span class="comment">// Fatal error: "J'Accuse!"</span></span><br></pre></td></tr></table></figure>
+<p>属性修饰器的局限性还有不少，这里提到的只是其中一点。所以为了更理性的看待这个特性，文章剩下的篇幅将会说说它的局限性都体现在哪里。</p>
+<h2 id="局限性"><a href="#局限性" class="headerlink" title="局限性"></a>局限性</h2><blockquote>
+<p>受我目前的理解能力和想象能力所限，下面给出的观点可能比较主观，有可能并不是属性修饰器这个提议本身造成的。<br>如果你有任何好的建议或者意见，欢迎 <a href="https://twitter.com/NSHipster/" target="_blank" rel="noopener">联系我们</a> 。</p>
+</blockquote>
+<h3 id="属性不能参与错误处理"><a href="#属性不能参与错误处理" class="headerlink" title="属性不能参与错误处理"></a>属性不能参与错误处理</h3><p>属性不像函数，无法使用 <code>throws</code> 标记。</p>
+<p>关于上面提到的问题，原本就是函数与属性之间为数不多的区别之一。由于属性同时拥有获取方法（getter）和设置方法（setter），所以在这里如何进行错误处理并没有明确的最佳实践。尤其是你需要在兼顾访问控制，自定义获取方法/设置方法和回调的状态下，还写出优雅的语句。</p>
+<p>如上一节所示，可以通过下面两种方式来处理非法值问题：</p>
+<ol>
+<li>忽略它们（静默地）</li>
+<li>用 <code>fatalError()</code> 抛出崩溃。</li>
+</ol>
+<p>不论哪一种方案都不够优雅，所以如果你对这个问题有更好的解决方案，欢迎分享。</p>
+<h3 id="属性修饰器无法起别名"><a href="#属性修饰器无法起别名" class="headerlink" title="属性修饰器无法起别名"></a>属性修饰器无法起别名</h3><p>这个提议的另外一个限制就是，你不能使用属性修饰器的实例作为属性修饰器。</p>
+<p>还记得前面提到的 <code>UnitInterval</code> 么？我们可以用它来限制属性值的范围在 0 到 1 之间。所以我们是不是可以用写成下面的样子呢？：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typealias</span> <span class="type">UnitInterval</span> = <span class="type">Clamping</span>(<span class="number">0</span>...<span class="number">1</span>) <span class="comment">// ❌</span></span><br></pre></td></tr></table></figure>
+<p>可惜这样是不被允许的。同样你也不能使用属性修饰器的实例来修饰属性。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="type">UnitInterval</span> = <span class="type">Clamping</span>(<span class="number">0</span>...<span class="number">1</span>)</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Solution</span> </span>&#123; @<span class="type">UnitInterval</span> <span class="keyword">var</span> pH: <span class="type">Double</span> &#125; <span class="comment">// ❌</span></span><br></pre></td></tr></table></figure>
+<p>上面的代码说明一个问题，在实际使用过程中，我们可能会写出比预期多的重复代码。但考虑到这个问题的本质是计算机编程语言中值与类型是两种完全不同的东西引起的。所以从避免错误抽象的角度来看，这一小点的重复是完全可以忍受的。</p>
+<h3 id="属性修饰器很难组合"><a href="#属性修饰器很难组合" class="headerlink" title="属性修饰器很难组合"></a>属性修饰器很难组合</h3><p>属性修饰器的组合不是一个可交换的操作；你声明它们的顺序影响了它们的作用顺序。</p>
+<p>属性在进行 <a href="https://nshipster.com/valuetransformer/#thinking-forwards-and-backwards" target="_blank" rel="noopener">字符串字符串的 string inflection 操作</a> 和 string transforms 操作会互相影响。例如下面的属性修饰器组合，它的功能是将博客文章中的 URL “slug” 属性自动格式化，但这里的问题在于将短划线替换成空格的操作和去除空格的操作会互相影响，进而导致最终的结果发生变化。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Post</span> </span>&#123;</span><br><span class="line">    &lt;#...#&gt;</span><br><span class="line">    @<span class="type">Dasherized</span> @<span class="type">Trimmed</span> <span class="keyword">var</span> slug: <span class="type">String</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>但是，要让它先发挥作用，说起来容易做起来难！尝试组合 <code>String</code> 值的两个属性修饰器方法失败，因为最外层修饰器影响了在最内层的修饰器类型的值。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">@propertyWrapper</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Dasherized</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span>(<span class="keyword">set</span>) <span class="keyword">var</span> value: <span class="type">String</span> = <span class="string">""</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> wrappedValue: <span class="type">String</span> &#123;</span><br><span class="line">        <span class="keyword">get</span> &#123; value &#125;</span><br><span class="line">        <span class="keyword">set</span> &#123; value = newValue.replacingOccurrences(of: <span class="string">" "</span>, with: <span class="string">"-"</span>) &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span>(initialValue: <span class="type">String</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.wrappedValue = initialValue</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Post</span> </span>&#123;</span><br><span class="line">    &lt;#...#&gt;</span><br><span class="line">    @<span class="type">Dasherized</span> @<span class="type">Trimmed</span> <span class="keyword">var</span> slug: <span class="type">String</span> <span class="comment">// ⚠️ 发生内部错误.</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>目前是有一个办法实现这个特性，但并不怎么优雅。关于这个问题是会在后续的版本中进行修复，还是通过文档正式说明都需要我们耐心的等待。</p>
+<h3 id="属性修饰器不是一等依赖类型"><a href="#属性修饰器不是一等依赖类型" class="headerlink" title="属性修饰器不是一等依赖类型"></a>属性修饰器不是一等依赖类型</h3><p><em>依赖类型</em> 是由它的值定义的类型。例如，“一对后者比前者更大的整数”和“一个具有素数元素的数组”都是依赖类型，因为他们的类型定义取决与他们的值。</p>
+<p>在 Swift 的类型系统里缺少对依赖类型的支持，如果想获得相关的特性需要在运行时完成。</p>
+<p>好消息是，相比于其他语言，Swift 的属性修饰器算是第一个吃螃蟹的，不过即使这样，属性修饰器还不能算是一个完整的值依赖类型解决方案。</p>
+<p>例如，你还是不能使用属性修饰器定义一个新类型，即使属性修饰器本身没什么毛病。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typealias</span> pH = @<span class="type">Clamping</span>(<span class="number">0</span>...<span class="number">14</span>) <span class="type">Double</span> <span class="comment">// ❌</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">acidity</span><span class="params">(of: Chemical)</span></span> -&gt; pH &#123;&#125;</span><br></pre></td></tr></table></figure>
+<p>你也不能使用属性修饰器去注解集合中的键类型或值类型。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">HTTP</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">Request</span> </span>&#123;</span><br><span class="line">        <span class="keyword">var</span> headers: [@<span class="type">CaseInsensitive</span> <span class="type">String</span>: <span class="type">String</span>] <span class="comment">// ❌</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这些缺点还是可以忍受的。属性修饰器非常有用，并且弥补了语言中的重要空白。</p>
+<p>不知道属性修饰器的诞生会不会重燃大家对依赖类型的关注，当然另外一种可能是大家觉得当前的状态“也不是不能用”，也就没必要将依赖类型这个概念进一步正式化。</p>
+<h3 id="属性修饰器难以被文档化"><a href="#属性修饰器难以被文档化" class="headerlink" title="属性修饰器难以被文档化"></a>属性修饰器难以被文档化</h3><p><strong>突击测验：</strong>SwiftUI 框架提供了哪些可用的属性修饰器？</p>
+<p>去吧，看下 <a href="https://developer.apple.com/documentation/swiftui" target="_blank" rel="noopener">SwiftUI 官方文档</a>，然后试着回答。</p>
+<p>😬</p>
+<p>公平地讲，这种失败不是属性修饰器所特有的。</p>
+<p>如果你的任务是明确标准库中某个 API 都需要哪些协议响应，或是在 <code>developer.apple.com</code> 文档中明确某个运算符都支持哪些类型时，你其实就可以考虑转行了。</p>
+<p>随着 Swift 的复杂性不断增加，它的可理解性就会不断下降，我想没有比这更让人头疼了吧。</p>
+<h3 id="属性修饰器让-Swift-进一步复杂化"><a href="#属性修饰器让-Swift-进一步复杂化" class="headerlink" title="属性修饰器让 Swift 进一步复杂化"></a>属性修饰器让 Swift 进一步复杂化</h3><p>Swift 是一门比 Objective-C <em>更加</em> 复杂的语言。自 Swift 1.0 以来，这就是一条不变的真理。</p>
+<p>在 Swift 中有大量的 <code>@</code> 前缀，从 Swift 4 提出的 <a href="https://github.com/apple/swift-evolution/blob/master/proposals/0195-dynamic-member-lookup.md" target="_blank" rel="noopener"><code>@dynamicMemberLookup</code></a> 和 <a href="https://github.com/apple/swift-evolution/blob/master/proposals/0216-dynamic-callable.md" target="_blank" rel="noopener"><code>@dynamicCallable</code></a> ，到 <a href="https://github.com/tensorflow/swift" target="_blank" rel="noopener">Swift for Tensorflow</a> 里的 <a href="https://forums.swift.org/t/pre-pitch-swift-differentiable-programming-design-overview/25992" target="_blank" rel="noopener"><code>@differentiable</code> 和 <code>@memberwise</code></a>，即使有文档在手，这些东西也使得 Swift 的 API 越来越难理解。从这个角度来看，<code>@propertyWrapper</code> 无疑是加重了这个问题的严重性。</p>
+<p>我们要如何理解这一切？（这是一个客观的真是问题，不是反问。）</p>
+<hr>
+<p>好了，现在让我们总结一下这个新特性——</p>
+<p>属性修饰器能够让开发者使用到更高层级的语言特性，而这在以前是不可能的。这个提议在提高代码安全性和降低代码复杂性上有巨大的潜力，现阶段我们只是看到了它的一些基本可能性而已。</p>
+<p>然而，他们有所承诺，属性修饰器及其他语言特性与 SwiftUI 一起的首次亮相将给 Swift 带来了巨大的变化。果不其然，如他们之前承诺的一样，属性修饰器和其他的新特性随着 SwitUI 在这个夏天闪亮登场，而这一次亮相，为整个 Swift 生态环境带来了巨大的变化。</p>
+<p>或者，正如 Nataliya Patsovska 在 <a href="https://twitter.com/nataliya_bg/status/1140519869361926144" target="_blank" rel="noopener">一篇推特</a> 中所提到的:</p>
+<blockquote>
+<p>iOS API 设计简史：</p>
+<ul>
+<li>Objective C - 在名字中描述了所有语义，类型并不重要</li>
+<li>Swift 1 到 5 - 名字侧重于清晰度，基础结构体，枚举，类和协议持有语义</li>
+<li>Swift 5.1 - @wrapped \$path @yolo</li>
+</ul>
+<p>——<a href="https://twitter.com/nataliya_bg/" target="_blank" rel="noopener">@nataliya_bg</a></p>
+</blockquote>
+<p>也许我们后面回头看才能知道， Swift 5.1 是不是为我们热爱的语言树立了一个临界点或者转折点。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Swift/">Swift</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/新特性/">新特性</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2020/05/24/propertywrapper/" data-title="属性修饰器 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2020/04/11/2019-05-15-the-usefulness-of-typealiases/" title="Swift 中类型别名的用途">
+ <strong>下一篇</strong><br> 
+ <span>Swift 中类型别名的用途
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2020/05/24/propertywrapper/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#关于-属性-代理-修饰器"><span class="toc-number">1.</span> <span class="toc-text">关于 属性 代理 ++修饰器++</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#约束值"><span class="toc-number">2.</span> <span class="toc-text">约束值</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#实现一个限制值范围的属性修饰器"><span class="toc-number">2.1.</span> <span class="toc-text">实现一个限制值范围的属性修饰器</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#举一反三"><span class="toc-number">2.1.1.</span> <span class="toc-text">举一反三</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#转换属性赋值时的值"><span class="toc-number">3.</span> <span class="toc-text">转换属性赋值时的值</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#实现为字符串值裁截空格的属性修饰器"><span class="toc-number">3.1.</span> <span class="toc-text">实现为字符串值裁截空格的属性修饰器</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#举一反三-1"><span class="toc-number">3.1.1.</span> <span class="toc-text">举一反三</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#改变生成的等式和比较语义"><span class="toc-number">4.</span> <span class="toc-text">改变生成的等式和比较语义</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#实现一个不区分大小写的属性修饰器"><span class="toc-number">4.1.</span> <span class="toc-text">实现一个不区分大小写的属性修饰器</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#举一反三-2"><span class="toc-number">4.1.1.</span> <span class="toc-text">举一反三</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#审查属性访问"><span class="toc-number">5.</span> <span class="toc-text">审查属性访问</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#为属性值增加版本记录"><span class="toc-number">5.1.</span> <span class="toc-text">为属性值增加版本记录</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#举一反三-3"><span class="toc-number">5.2.</span> <span class="toc-text">举一反三</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#局限性"><span class="toc-number">6.</span> <span class="toc-text">局限性</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#属性不能参与错误处理"><span class="toc-number">6.1.</span> <span class="toc-text">属性不能参与错误处理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#属性修饰器无法起别名"><span class="toc-number">6.2.</span> <span class="toc-text">属性修饰器无法起别名</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#属性修饰器很难组合"><span class="toc-number">6.3.</span> <span class="toc-text">属性修饰器很难组合</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#属性修饰器不是一等依赖类型"><span class="toc-number">6.4.</span> <span class="toc-text">属性修饰器不是一等依赖类型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#属性修饰器难以被文档化"><span class="toc-number">6.5.</span> <span class="toc-text">属性修饰器难以被文档化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#属性修饰器让-Swift-进一步复杂化"><span class="toc-number">6.6.</span> <span class="toc-text">属性修饰器让 Swift 进一步复杂化</span></a></li></ol></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>45</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>26</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Miscellaneous/" title="Miscellaneous">Miscellaneous<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>38</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/POP/" title="POP">POP<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/POP/SWIFT/" title="SWIFT">SWIFT<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>17</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/The-Always-Right-Institute/" title="The Always Right Institute">The Always Right Institute<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou/" title="khanlou">khanlou<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftjectivec/" title="swiftjectivec">swiftjectivec<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>112</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>14</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2020 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">SwiftUI 重磅教程专属优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/H9aEpi">使用 SwiftGG 优惠码，半价基础上再减 20 元！</a></b>&nbsp;</span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
