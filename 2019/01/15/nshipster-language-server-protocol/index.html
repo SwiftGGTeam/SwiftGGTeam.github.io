@@ -21,15 +21,15 @@
 <meta property="og:site_name" content="SwiftGG">
 <meta property="og:description" content="作者：Mattt，原文链接，原文日期：2018-11-19译者：雨谨；校对：numbbbbb，pmst；定稿：Forelax   上个月，苹果公司 在 Swift.org 论坛上宣布，正在着手为 Swift 和 C 语言支持 Language Server Protocol（语言服务器协议，LSP）。  对于苹果公司而言，为所有 Swift 开发者 —— 包括非苹果平台上的 —— 提供高质量的工">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="https://swift.gg/img/articles/nshipster-language-server-protocol/lsp-languages-times-editors-b9a398af0dea85f2ad6dcf5412fbcb451a43bc90091d5e3ab3b1140da9926b3e.svg1547520866.1069534">
-<meta property="og:image" content="https://swift.gg/img/articles/nshipster-language-server-protocol/lsp-languages-plus-editors-904f780fa4a21e89b5b00bfe5fca39795dd54c1c4c67acf3f0fe095aaf09064d.svg1547520866.4280558">
-<meta property="og:image" content="https://swift.gg/img/articles/nshipster-language-server-protocol/lsp-jump-to-definition-f76ae15d897ab30706c101e7300cd299ad97f6b910ed79ce4890351c2805ae56.gif1547520866.6389997">
-<meta property="og:image" content="https://swift.gg/img/articles/nshipster-language-server-protocol/lsp-llvm-ir-34a10847cbe6519370c1b5e92def8f82b2ebde71aa2440c88880283bd5cbaf0a.svg1547520866.867885">
-<meta property="og:updated_time" content="2021-06-10T13:24:50.933Z">
+<meta property="og:image" content="https://nshipster.com/assets/lsp-languages-times-editors-b9a398af0dea85f2ad6dcf5412fbcb451a43bc90091d5e3ab3b1140da9926b3e.svg">
+<meta property="og:image" content="https://nshipster.com/assets/lsp-languages-plus-editors-904f780fa4a21e89b5b00bfe5fca39795dd54c1c4c67acf3f0fe095aaf09064d.svg">
+<meta property="og:image" content="https://nshipster.com/assets/lsp-jump-to-definition-f76ae15d897ab30706c101e7300cd299ad97f6b910ed79ce4890351c2805ae56.gif">
+<meta property="og:image" content="https://nshipster.com/assets/lsp-llvm-ir-34a10847cbe6519370c1b5e92def8f82b2ebde71aa2440c88880283bd5cbaf0a.svg">
+<meta property="og:updated_time" content="2021-06-10T13:32:31.133Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Language Server Protocol">
 <meta name="twitter:description" content="作者：Mattt，原文链接，原文日期：2018-11-19译者：雨谨；校对：numbbbbb，pmst；定稿：Forelax   上个月，苹果公司 在 Swift.org 论坛上宣布，正在着手为 Swift 和 C 语言支持 Language Server Protocol（语言服务器协议，LSP）。  对于苹果公司而言，为所有 Swift 开发者 —— 包括非苹果平台上的 —— 提供高质量的工">
-<meta name="twitter:image" content="https://swift.gg/img/articles/nshipster-language-server-protocol/lsp-languages-times-editors-b9a398af0dea85f2ad6dcf5412fbcb451a43bc90091d5e3ab3b1140da9926b3e.svg1547520866.1069534">
+<meta name="twitter:image" content="https://nshipster.com/assets/lsp-languages-times-editors-b9a398af0dea85f2ad6dcf5412fbcb451a43bc90091d5e3ab3b1140da9926b3e.svg">
 
     
     <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
@@ -116,13 +116,13 @@
 </blockquote>
 <hr>
 <p>想象这样一个矩阵，每一行表示不同的编程语言（Swift、JavaScript、Ruby、Python 等），每一列表示不同的代码编辑器（Xcode、Visual Studio、Vim、Atom 等），这样每个单元格表示特定编辑器对一种语言的支持级别。</p>
-<p><img src="/img/articles/nshipster-language-server-protocol/lsp-languages-times-editors-b9a398af0dea85f2ad6dcf5412fbcb451a43bc90091d5e3ab3b1140da9926b3e.svg1547520866.1069534" alt="lsp-languages-times-editors.svg"></p>
+<p><img src="https://nshipster.com/assets/lsp-languages-times-editors-b9a398af0dea85f2ad6dcf5412fbcb451a43bc90091d5e3ab3b1140da9926b3e.svg" alt="lsp-languages-times-editors.svg"></p>
 <p>然后，你就发现各种组合形成了一种支离破碎的兼容。有些编辑器和部分语言深度集成，但除此之外几乎什么都干不了；其他编辑器则比较通用，对很多语言都提供了基本的支持。（IDE 这个术语通常用来描述前者。)</p>
 <p>举个奇葩的例子：<em>你不用 Xcode 来开发 APP，却偏用来干其他事情。</em></p>
 <p>为了更好地支持某一特定的语言，编辑器必须编写一些集成代码（integration code）—— 要么直接写在项目里，要么通过插件。由于不同语言和编辑器的实现机制不一样，因此比方说 Vim 改进了对 Ruby 支持，但这并不能让它更好地支持 Python，也不能让 Ruby 在 Atom 上运行地更好。最终的结果是：大量精力浪费在了不同技术的兼容上。</p>
 <p>我们上面描述的情况通常被称为 <em>M × N 问题</em>，即最终的集成方案数量为编译器数量 M 与语言数量 N 的乘积。Language Server Protocol 所做的事情就是将 M × N 问题变成 <em>M + N 问题</em>。</p>
 <p>编辑器不必实现对每种语言的支持，只需支持 LSP 即可。之后，它就能同等程度地支持所有支持 LSP 的语言。</p>
-<p><img src="/img/articles/nshipster-language-server-protocol/lsp-languages-plus-editors-904f780fa4a21e89b5b00bfe5fca39795dd54c1c4c67acf3f0fe095aaf09064d.svg1547520866.4280558" alt="lsp-languages-plus-editors.svg"></p>
+<p><img src="https://nshipster.com/assets/lsp-languages-plus-editors-904f780fa4a21e89b5b00bfe5fca39795dd54c1c4c67acf3f0fe095aaf09064d.svg" alt="lsp-languages-plus-editors.svg"></p>
 <blockquote>
 <p>Tomohiro Matsuyama 在 2010 年写的 <a href="https://tkf.github.io/2013/06/04/Emacs-is-dead.html" target="_blank" rel="noopener">“Emacs は死んだ” (<em>“Emacs 已死”</em>)</a> 这篇文章就对这种问题做出了一个很好的论述。Matsuyama 描述了 Emacs 脚本语言的局限性（不支持多线程、底层 API 过少、用户基数太小），他认为编写插件的首选方法应该是与外部程序进行交互，而不是原生实现。</p>
 </blockquote>
@@ -149,7 +149,7 @@
 </ul>
 <p>每当工具中发生了什么事情，比如用户需要跳转到符号的定义，工具就会向 server 发送一个请求。server 接收到该请求，然后返回适当的响应。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Parent</span> </span>&#123;&#125;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Child</span>: <span class="title">Parent</span> </span>&#123;&#125;</span><br></pre></td></tr></table></figure>
-<p><img src="/img/articles/nshipster-language-server-protocol/lsp-jump-to-definition-f76ae15d897ab30706c101e7300cd299ad97f6b910ed79ce4890351c2805ae56.gif1547520866.6389997" alt="lsp-jump-to-definition.gif"></p>
+<p><img src="https://nshipster.com/assets/lsp-jump-to-definition-f76ae15d897ab30706c101e7300cd299ad97f6b910ed79ce4890351c2805ae56.gif" alt="lsp-jump-to-definition.gif"></p>
 <p>以下是 LSP 如何在幕后实现这种交互：</p>
 <p>首先，当用户打开 Swift 代码时，若 Swift language server 并未运行，编辑器将在一个独立进程中启动它，并执行一些额外的配置。</p>
 <p>当用户执行 “跳转到定义（jump to definition）” 指令时，编辑器向 Swift language server 发送以下请求：</p>
@@ -160,7 +160,7 @@
 <p>这种方法的美妙之处在于，编辑器完成所有这些操作时，除了 .swift 文件与 Swift 代码相关以外，对 Swift 编程语言一无所知。编辑器需要做的就是与 language server 对话并更新 UI。而且编辑器知道如何做到这一点后，就可以遵循相同的过程，与任何带有 language server 的语言所编写的代码进行交互。</p>
 <h2 id="Clang-LLVM-里的-Language-Server-Protocol"><a href="#Clang-LLVM-里的-Language-Server-Protocol" class="headerlink" title="Clang / LLVM 里的 Language Server Protocol"></a>Clang / LLVM 里的 Language Server Protocol</h2><p>如果你觉得之前的 <em>M + N</em> 图有点眼熟，那可能是因为 LLVM 也采用了同样的方法。</p>
 <p>LLVM 的核心是中间表示（intermediate representation，IR）。LLVM 所支持的语言使用 <em>编译器前端（compiler frontend）</em> 生成 IR，再使用 <em>编译器后端（compiler backend）</em> 将 IR 生成所支持平台的机器码。</p>
-<p><img src="/img/articles/nshipster-language-server-protocol/lsp-llvm-ir-34a10847cbe6519370c1b5e92def8f82b2ebde71aa2440c88880283bd5cbaf0a.svg1547520866.867885" alt="lsp-llvm-ir.svg"></p>
+<p><img src="https://nshipster.com/assets/lsp-llvm-ir-34a10847cbe6519370c1b5e92def8f82b2ebde71aa2440c88880283bd5cbaf0a.svg" alt="lsp-llvm-ir.svg"></p>
 <blockquote>
 <p>如果你想了解 Swift 代码编译的更多细节，请查看 <a href="https://nshipster.com/swiftsyntax/" target="_blank" rel="noopener">我们关于 SwiftSyntax 的文章</a>。</p>
 </blockquote>
@@ -287,7 +287,7 @@
 		<ul>
 		
 		  
-			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>16</sup></a></li>
 		  
 		
 		  
@@ -295,7 +295,7 @@
 		  
 		
 		  
-			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>45</sup></a></li>
 		  
 		
 		  
@@ -311,7 +311,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>26</sup></a></li>
 		  
 		
 		  
@@ -347,7 +347,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Miscellaneous/" title="Miscellaneous">Miscellaneous<sup>1</sup></a></li>
 		  
 		
 		  
@@ -355,7 +359,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
 		  
 		
 		  
@@ -367,7 +371,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>38</sup></a></li>
 		  
 		
 		  
@@ -383,6 +387,10 @@
 		  
 		
 		  
+			<li><a href="/categories/POP/" title="POP">POP<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
 		  
 		
@@ -395,7 +403,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/POP/SWIFT/" title="SWIFT">SWIFT<sup>1</sup></a></li>
 		  
 		
 		  
@@ -403,15 +415,19 @@
 		  
 		
 		  
-			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>17</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -424,6 +440,10 @@
 		
 		  
 			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/The-Always-Right-Institute/" title="The Always Right Institute">The Always Right Institute<sup>1</sup></a></li>
 		  
 		
 		  
@@ -467,11 +487,19 @@
 		  
 		
 		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
@@ -479,7 +507,7 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/khanlou/" title="khanlou">khanlou<sup>1</sup></a></li>
 		  
 		
 		  
@@ -508,6 +536,10 @@
 		
 		  
 			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftjectivec/" title="swiftjectivec">swiftjectivec<sup>2</sup></a></li>
 		  
 		
 		  
@@ -552,7 +584,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>112</sup></a></li>
 			
 		
 			
@@ -560,7 +592,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>14</sup></a></li>
 			
 		
 			
@@ -568,11 +600,11 @@
 			
 		
 			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/教程/" title="教程">教程<sup>8</sup></a></li>
 			
 		
 			
@@ -580,15 +612,11 @@
 			
 		
 			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
 			
 		
 			
@@ -596,7 +624,11 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>4</sup></a></li>
 			
 		
 			
@@ -604,11 +636,11 @@
 			
 		
 			
-				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
 			
 		
 			

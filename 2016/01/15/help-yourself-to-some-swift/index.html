@@ -22,7 +22,7 @@
 <meta property="og:description" content="作者：Jacob Bandes-Storch，原文链接，原文日期：2015-11-28译者：mmoaay；校对：千叶知风；定稿：shanks   做程序员有一点优势：如果工具不好用，你自己就可以对它进行优化。而 Swift 让这一点变得尤其简单，它包含的几个特性可以让你以一种自然的方式对这门语言进行扩展和自定义。 在本文中，我将分享 Swift 给我编程体验带来提升的几个例子。我希望在读了本文之">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://swift.gg/img/articles/help-yourself-to-some-swift/201512151428497511452821418.99237">
-<meta property="og:updated_time" content="2021-06-10T13:24:50.901Z">
+<meta property="og:updated_time" content="2021-06-10T13:32:31.101Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="要不要来点 Swift">
 <meta name="twitter:description" content="作者：Jacob Bandes-Storch，原文链接，原文日期：2015-11-28译者：mmoaay；校对：千叶知风；定稿：shanks   做程序员有一点优势：如果工具不好用，你自己就可以对它进行优化。而 Swift 让这一点变得尤其简单，它包含的几个特性可以让你以一种自然的方式对这门语言进行扩展和自定义。 在本文中，我将分享 Swift 给我编程体验带来提升的几个例子。我希望在读了本文之">
@@ -97,7 +97,7 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：Jacob Bandes-Storch，<a href="http://bandes-stor.ch/blog/2015/11/28/help-yourself-to-some-swift/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-11-28<br>译者：<a href="http://mmoaay.photo/" target="_blank" rel="noopener">mmoaay</a>；校对：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a></p>
+<p>作者：Jacob Bandes-Storch，<a href="http://bandes-stor.ch/blog/2015/11/28/help-yourself-to-some-swift/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-11-28<br>译者：<a href="http://www.jianshu.com/u/2d46948e84e3" target="_blank" rel="noopener">mmoaay</a>；校对：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>做程序员有一点优势：如果工具不好用，你自己就可以对它进行优化。而 Swift 让这一点变得尤其简单，它包含的几个特性可以让你以一种自然的方式对这门语言进行扩展和自定义。</p>
@@ -133,7 +133,7 @@
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 触摸开始 / 鼠标按下:</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> touchPos = touch.locationInView(container)</span><br><span class="line">objectOffset = <span class="type">CGPoint</span>(x: object.center.x - touchPos.x, y: object.center.y - touchPos.y)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 触摸移动 / 鼠标拖动:</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> touchPos = touch.locationInView(container)</span><br><span class="line">object.center = <span class="type">CGPoint</span>(x: touchPos.x + objectOffset.x, y: touchPos.y + objectOffset.y)</span><br></pre></td></tr></table></figure>
 <p>在这段代码里面我们只做了简单的加法和减法，但因为 <code>CGPoint</code> <a href="https://en.wikipedia.org/wiki/User:Giraffedata/comprised_of" target="_blank" rel="noopener">包含</a> <code>x</code> 和 <code>y</code>，所以每个表达式我们都要写两次。所以我们需要一些简化操作的函数。</p>
 <p><code>objectOffset</code> 代表触摸位置和对象位置的距离。描述这种距离最好的方式并不是 <code>CGPoint</code>，而是不那么为人所知的 <a href="https://developer.apple.com/library/ios/documentation/GraphicsImaging/Reference/CGGeometry/#//apple_ref/c/tdef/CGVector" target="_blank" rel="noopener">CGVector</a>， 它不使用 <code>x</code> 和 <code>y</code>，而是用 <code>dx</code> 和 <code>dy</code> 来表示距离或者 “deltas“。</p>
-<p><img src="/img/articles/help-yourself-to-some-swift/201512151428497511452821418.99237" alt="这里写图片描述"></p>
+<p><img src="https://swift.gg/img/articles/help-yourself-to-some-swift/201512151428497511452821418.99237" alt="这里写图片描述"></p>
 <p>所以两个点相减得到一个向量就比较符合逻辑了，这样一来我们就得到了 <code>-</code> 操作符的一个重载：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">/// - 返回: 从 `rhs` 到 `lhs`的向量。</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> -<span class="params">(lhs: CGPoint, rhs: CGPoint)</span></span> -&gt; <span class="type">CGVector</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="type">CGVector</span>(dx: lhs.x - rhs.x, dy: lhs.y - rhs.y)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>然后，相反滴，把一个向量和一个点相加得到另外一个点：</p>
@@ -286,7 +286,7 @@
 		<ul>
 		
 		  
-			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>16</sup></a></li>
 		  
 		
 		  
@@ -294,7 +294,7 @@
 		  
 		
 		  
-			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>45</sup></a></li>
 		  
 		
 		  
@@ -310,7 +310,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>26</sup></a></li>
 		  
 		
 		  
@@ -346,7 +346,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Miscellaneous/" title="Miscellaneous">Miscellaneous<sup>1</sup></a></li>
 		  
 		
 		  
@@ -354,7 +358,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
 		  
 		
 		  
@@ -366,7 +370,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>38</sup></a></li>
 		  
 		
 		  
@@ -382,6 +386,10 @@
 		  
 		
 		  
+			<li><a href="/categories/POP/" title="POP">POP<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
 		  
 		
@@ -394,7 +402,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/POP/SWIFT/" title="SWIFT">SWIFT<sup>1</sup></a></li>
 		  
 		
 		  
@@ -402,15 +414,19 @@
 		  
 		
 		  
-			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>17</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -423,6 +439,10 @@
 		
 		  
 			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/The-Always-Right-Institute/" title="The Always Right Institute">The Always Right Institute<sup>1</sup></a></li>
 		  
 		
 		  
@@ -466,11 +486,19 @@
 		  
 		
 		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
 		  
 		
 		  
@@ -478,7 +506,7 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+			<li><a href="/categories/khanlou/" title="khanlou">khanlou<sup>1</sup></a></li>
 		  
 		
 		  
@@ -507,6 +535,10 @@
 		
 		  
 			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftjectivec/" title="swiftjectivec">swiftjectivec<sup>2</sup></a></li>
 		  
 		
 		  
@@ -551,7 +583,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>112</sup></a></li>
 			
 		
 			
@@ -559,7 +591,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>14</sup></a></li>
 			
 		
 			
@@ -567,11 +599,11 @@
 			
 		
 			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+				<li><a href="/tags/教程/" title="教程">教程<sup>8</sup></a></li>
 			
 		
 			
@@ -579,15 +611,11 @@
 			
 		
 			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
 			
 		
 			
@@ -595,7 +623,11 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>4</sup></a></li>
 			
 		
 			
@@ -603,11 +635,11 @@
 			
 		
 			
-				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
 			
 		
 			
