@@ -25,7 +25,7 @@
 <meta property="og:image" content="https://swift.gg/img/articles/peek-pop-view-inside-tableviewcell/peek-pop-view-inside-tableviewcell-2.gif1460423720.6322474">
 <meta property="og:image" content="https://swift.gg/img/articles/peek-pop-view-inside-tableviewcell/peek-pop-view-inside-tableviewcell-3.gif1460423774.5112977">
 <meta property="og:image" content="https://swift.gg/img/articles/peek-pop-view-inside-tableviewcell/peekpop.jpg1460423776.2347734">
-<meta property="og:updated_time" content="2020-06-22T03:31:16.652Z">
+<meta property="og:updated_time" content="2021-06-10T13:20:47.173Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="iOS9：预览特定的 UITableViewCell 视图">
 <meta name="twitter:description" content="怎么在 iOS9 里面预览到特定的 UITableViewCell 视图呢，本文就来实际操作下如何实现。">
@@ -105,10 +105,10 @@
 <!--此处开始正文-->
 <p>在过去的几天中，我一直忙于开发 <a href="https://github.com/NatashaTheRobot/trySwiftApp" target="_blank" rel="noopener">try! Swift 会议的官方 App</a>（只剩两周半的时间了，我的天哪😱）！项目中一大亮点就是，我要实现在 app 中使用 3D Touch 来支持演讲者和展示的内容的弹窗预览（Peek &amp; Pop）。幸运的是，<a href="https://twitter.com/allonsykraken" target="_blank" rel="noopener">@allonsykraken</a>的博文<a href="http://krakendev.io/peek-pop/" target="_blank" rel="noopener">Peek &amp; Pop Spirit Guide</a>让这个任务完成起来比较简单，为 table view 主视图添加 3D Touch 仅仅花费了几分钟时间就搞定了。</p>
 <a id="more"></a>
-<center><br><img src="https://swift.gg/img/articles/peek-pop-view-inside-tableviewcell/peek-pop-view-inside-tableviewcell-1.gif1460423718.616977" alt="1.gif"><br></center>
+<center><br><img src="/img/articles/peek-pop-view-inside-tableviewcell/peek-pop-view-inside-tableviewcell-1.gif1460423718.616977" alt="1.gif"><br></center>
 
 <p>然而，在 Q&amp;A 模块中遇到了一些问题。我希望在 cell 中特定的视图上——<strong>演讲者的图片</strong>——来使用 peek &amp; pop，而不是像其他模块那样，在整个 cell 上使用。</p>
-<center><br><img src="https://swift.gg/img/articles/peek-pop-view-inside-tableviewcell/peek-pop-view-inside-tableviewcell-2.gif1460423720.6322474" alt="2.gif"><br></center>
+<center><br><img src="/img/articles/peek-pop-view-inside-tableviewcell/peek-pop-view-inside-tableviewcell-2.gif1460423720.6322474" alt="2.gif"><br></center>
 
 <p>因为这个花费了很长时间才解决，所以我想把它记录下来。（在阅读本文之前，请先阅读<a href="http://krakendev.io/peek-pop/" target="_blank" rel="noopener">Peek &amp; Pop Spirit Guide</a>）</p>
 <h2 id="问题所在"><a href="#问题所在" class="headerlink" title="问题所在"></a>问题所在</h2><p>为了能够使用 Peak &amp; Pop 功能，我们需要遵循 <strong>UIViewControllerPreviewingDelegate</strong> 协议——这个协议会告知我们用户使用 3D Touch 功能点击了哪儿，并且在这里返回相应的 ViewController 实例。</p>
@@ -121,10 +121,10 @@
 <p>下面的代码经过了一些重构，希望你能够 get 到其中的精髓！</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// QASessionsTableViewController</span></span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">QASessionsTableViewController</span>: <span class="title">UITableViewController</span> </span>&#123;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">var</span> dataSource: <span class="type">QASessionDataSourceProtocol!</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.viewDidLoad()</span><br><span class="line">        <span class="comment">// other setup here</span></span><br><span class="line"> </span><br><span class="line">        <span class="comment">// 只需要为 force touch 注册整个 table view</span></span><br><span class="line">        <span class="comment">// 不需要分别注册单个的 cell</span></span><br><span class="line">        <span class="keyword">if</span> traitCollection.forceTouchCapability == .<span class="type">Available</span> &#123;</span><br><span class="line">            registerForPreviewingWithDelegate(<span class="keyword">self</span>, sourceView: tableView)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// 代码有删减</span></span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="comment">// MARK: Force Touch on Speaker Images</span></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">QASessionsTableViewController</span>: <span class="title">UIViewControllerPreviewingDelegate</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">previewingContext</span><span class="params">(previewingContext: UIViewControllerPreviewing, viewControllerForLocation location: CGPoint)</span></span> -&gt; <span class="type">UIViewController?</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">let</span> indexPath = tableView.indexPathForRowAtPoint(location) &#123;</span><br><span class="line"> </span><br><span class="line">            <span class="keyword">let</span> cell = tableView.cellForRowAtIndexPath(indexPath) <span class="keyword">as</span>! <span class="type">QASessionTableViewCell</span></span><br><span class="line">            </span><br><span class="line">            <span class="keyword">let</span> viewsTo3DTouch = [cell.speaker1ImageView, cell.speaker2ImageView, cell.speaker3ImageView]</span><br><span class="line">            <span class="keyword">for</span> (index, view) <span class="keyword">in</span> viewsTo3DTouch.<span class="built_in">enumerate</span>() <span class="keyword">where</span> touchedView(view, location: location) &#123;</span><br><span class="line">                </span><br><span class="line">                <span class="comment">// 只将图片清晰地显示，其他内容将会变得模糊</span></span><br><span class="line">                <span class="comment">// 需要将 image view 的坐标转化为在 table view 坐标系中的坐标 </span></span><br><span class="line">                <span class="comment">// 如果你有更好的坐标转换方式，请告诉我！</span></span><br><span class="line">                <span class="keyword">let</span> viewRectInTableView = tableView.convertRect(view.frame, fromCoordinateSpace: view.superview!)</span><br><span class="line">                previewingContext.sourceRect = viewRectInTableView</span><br><span class="line">                </span><br><span class="line">                <span class="comment">// 设置需要显示的 view controller</span></span><br><span class="line">                <span class="keyword">let</span> qaSession = dataSource.qaSessions[indexPath.section]</span><br><span class="line">                <span class="keyword">let</span> speaker = qaSession.speakers[index]</span><br><span class="line">                <span class="keyword">return</span> viewControllerForSpeaker(speaker)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">previewingContext</span><span class="params">(previewingContext: UIViewControllerPreviewing, commitViewController viewControllerToCommit: UIViewController)</span></span> &#123;</span><br><span class="line">        navigationController?.pushViewController(viewControllerToCommit, animated: <span class="literal">true</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">touchedView</span><span class="params">(view: UIView, location: CGPoint)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> locationInView = view.convertPoint(location, fromView: tableView)</span><br><span class="line">        <span class="keyword">return</span> <span class="type">CGRectContainsPoint</span>(view.bounds, locationInView)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">viewControllerForSpeaker</span><span class="params">(speaker: Speaker)</span></span> -&gt; <span class="type">UIViewController</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> speakerDetailVC = <span class="type">SpeakerDetailViewController</span>()</span><br><span class="line">        speakerDetailVC.speaker = speaker</span><br><span class="line">        <span class="keyword">return</span> speakerDetailVC</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>下面是效果图——请注意，选中的图片之外的内容才会变得模糊！</p>
-<center><br><img src="https://swift.gg/img/articles/peek-pop-view-inside-tableviewcell/peek-pop-view-inside-tableviewcell-3.gif1460423774.5112977" alt="3.gif"><br></center>
+<center><br><img src="/img/articles/peek-pop-view-inside-tableviewcell/peek-pop-view-inside-tableviewcell-3.gif1460423774.5112977" alt="3.gif"><br></center>
 
 <h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>所以在某个特定的视图上使用 3D Touch 功能并非难事！一般来说，实现 3D Touch 非常简单和有趣。我强烈推荐您在 app 中添加 3D Touch 的功能。</p>
-<center><br><img src="https://swift.gg/img/articles/peek-pop-view-inside-tableviewcell/peekpop.jpg1460423776.2347734" alt="peak and pop all the things"><br></center>
+<center><br><img src="/img/articles/peek-pop-view-inside-tableviewcell/peekpop.jpg1460423776.2347734" alt="peak and pop all the things"><br></center>
 
 <blockquote>
 <p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
@@ -226,7 +226,7 @@
 		<ul>
 		
 		  
-			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>16</sup></a></li>
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
 		  
 		
 		  
@@ -234,7 +234,7 @@
 		  
 		
 		  
-			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>45</sup></a></li>
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
 		  
 		
 		  
@@ -250,7 +250,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>26</sup></a></li>
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
 		  
 		
 		  
@@ -286,11 +286,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>16</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Miscellaneous/" title="Miscellaneous">Miscellaneous<sup>1</sup></a></li>
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
 		  
 		
 		  
@@ -298,7 +294,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
 		  
 		
 		  
@@ -310,7 +306,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>38</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
 		  
 		
 		  
@@ -326,10 +322,6 @@
 		  
 		
 		  
-			<li><a href="/categories/POP/" title="POP">POP<sup>1</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
 		  
 		
@@ -342,11 +334,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>8</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/POP/SWIFT/" title="SWIFT">SWIFT<sup>1</sup></a></li>
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
 		  
 		
 		  
@@ -354,19 +342,15 @@
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>17</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
 		  
 		
 		  
@@ -379,10 +363,6 @@
 		
 		  
 			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/The-Always-Right-Institute/" title="The Always Right Institute">The Always Right Institute<sup>1</sup></a></li>
 		  
 		
 		  
@@ -430,10 +410,6 @@
 		  
 		
 		  
-			<li><a href="/categories/khanlou/iOS/" title="iOS">iOS<sup>1</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
 		  
 		
@@ -443,10 +419,6 @@
 		
 		  
 			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/khanlou/" title="khanlou">khanlou<sup>1</sup></a></li>
 		  
 		
 		  
@@ -475,10 +447,6 @@
 		
 		  
 			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/swiftjectivec/" title="swiftjectivec">swiftjectivec<sup>2</sup></a></li>
 		  
 		
 		  
@@ -523,7 +491,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift/" title="Swift">Swift<sup>112</sup></a></li>
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
 			
 		
 			
@@ -531,7 +499,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>14</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
 			
 		
 			
@@ -539,15 +507,7 @@
 			
 		
 			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/教程/" title="教程">教程<sup>8</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
 			
 		
 			
@@ -555,11 +515,15 @@
 			
 		
 			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
 			
 		
 			
@@ -567,11 +531,7 @@
 			
 		
 			
-				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -579,7 +539,15 @@
 			
 		
 			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
 			
 		
 			
@@ -785,7 +753,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2020 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2021 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		
@@ -805,7 +773,7 @@
 
 <div id="swiftweekly" style="display:none;">
   <img id="closeme" src="/img/close.png">
-  <span id="sw_slogan">SwiftUI 重磅教程专属优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/H9aEpi">使用 SwiftGG 优惠码，半价基础上再减 20 元！</a></b>&nbsp;</span>
+  <span id="sw_slogan">每天一块钱，<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://sspai.com/prime">加入少数派会员</a></b>，获取高品质数字生活科技指南</span>
   <!-- <form id="content"> -->
     <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
   <!-- </form> -->

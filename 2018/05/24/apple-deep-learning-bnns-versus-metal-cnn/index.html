@@ -25,7 +25,7 @@
 <meta property="og:image" content="https://swift.gg/img/articles/apple-deep-learning-bnns-versus-metal-cnn/InterleavedPlanar@2x.png1527128648.7662659">
 <meta property="og:image" content="https://swift.gg/img/articles/apple-deep-learning-bnns-versus-metal-cnn/ConvNet@2x.png1527128648.814062">
 <meta property="og:image" content="https://swift.gg/img/articles/apple-deep-learning-bnns-versus-metal-cnn/Screenshot@2x.png1527128648.8787365">
-<meta property="og:updated_time" content="2020-06-22T03:31:16.672Z">
+<meta property="og:updated_time" content="2021-06-10T13:20:47.193Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="苹果的深度学习框架：BNNS 和 MPSCNN 的对比">
 <meta name="twitter:description" content="在这篇文章中，我们将针对 BNNS 和 MPSCNN 进行对比来显示出这两者的差异">
@@ -100,7 +100,7 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：MATTHIJS HOLLEMANS，<a href="http://machinethink.net/blog/apple-deep-learning-bnns-versus-metal-cnn/" target="_blank" rel="noopener">原文链接</a>，原文日期：2017-02-07<br>译者：TonyHan；校对：<a href="http://www.desgard.com/" target="_blank" rel="noopener">冬瓜</a>，<a href="https://weibo.com/1743643682/profile?topnav=1&amp;wvr=6" target="_blank" rel="noopener">liberalism</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+<p>作者：MATTHIJS HOLLEMANS，<a href="http://machinethink.net/blog/apple-deep-learning-bnns-versus-metal-cnn/" target="_blank" rel="noopener">原文链接</a>，原文日期：2017-02-07<br>译者：<a href="undefined">TonyHan</a>；校对：<a href="http://www.desgard.com/" target="_blank" rel="noopener">冬瓜</a>，<a href="https://weibo.com/1743643682/profile?topnav=1&amp;wvr=6" target="_blank" rel="noopener">liberalism</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>从 iOS 10 开始，苹果在 iOS 平台上引入了两个深度学习的框架：BNNS 和 MPSCNN。</p>
@@ -120,7 +120,7 @@
 <p>这也有一个缺点：BNNS 和 MPSCNN 的功能远远少于其他框架，如 TensorFlow。它们更容易上手，但同时限制了所能做的深度学习的种类。</p>
 <p>苹果的深度学习框架只是为了一个目的：通过网络层级<strong>尽可能快地传递数据</strong>。</p>
 <h4 id="一切都与层级有关"><a href="#一切都与层级有关" class="headerlink" title="一切都与层级有关"></a>一切都与层级有关</h4><p>你可以将神经网络想象为数据流经的管道。管道中的不同阶段便是网络<strong>层级</strong>。这些层级以不同的方式转换你的数据。同时深度学习，我们可以使用多达 10 层甚至 100 层的神经网络。</p>
-<p><img src="https://swift.gg/img/articles/apple-deep-learning-bnns-versus-metal-cnn/Cat2Probability@2x.png1527128648.556878" alt="Cat2Probability"></p>
+<p><img src="/img/articles/apple-deep-learning-bnns-versus-metal-cnn/Cat2Probability@2x.png1527128648.556878" alt="Cat2Probability"></p>
 <p>层级有不同的种类。BNNS 和 MPSCNN 提供的有：卷积层（convolutional layer）、池化层（pooling layer）、全连接层（Fully Connected Layer）和规范化层（normalization layer）。</p>
 <p>在 BNNS 和 MPSCNN 中，<strong>层级是主要的建构单元</strong>。你可以创建层级对象，将数据放入层级中，然后再从层级中读出结果。顺便说一句，BNNS 称它们为“过滤器”，而不是层级：数据以一种形式进入过滤器并以另一种形式从过滤器出来。</p>
 <p>为了说明层级作为建构单元的思想，下面描述了数据如何通过一个简单的神经网络在 BNNS 中流动：</p>
@@ -220,7 +220,7 @@
 <p>另一方面，BNNS 只需要一个指向浮点值缓冲区的指针。不需要将数据加载到特定对象中。所以这似乎比使用纹理更快…是么？</p>
 <p>这样有一个重要的限制：在 BNNS 中，不同“通道”中的输入不能交错。</p>
 <p>如果你的输入是图片，那么它有三个通道：一个用于红色像素，一个用于绿色像素，另一个用于蓝色像素。问题是像 PNG 或 JPEG 这样的图像文件会作为交错的 RGBA 值被加载到内存中。BNNS 并不会接受这种情况。</p>
-<p><img src="https://swift.gg/img/articles/apple-deep-learning-bnns-versus-metal-cnn/InterleavedPlanar@2x.png1527128648.7662659" alt></p>
+<p><img src="/img/articles/apple-deep-learning-bnns-versus-metal-cnn/InterleavedPlanar@2x.png1527128648.7662659" alt></p>
 <p>目前没有办法告诉 BNNS 使用红色像素值作为通道 0，绿色像素值作为通道 1，蓝色值作为通道 2，并跳过 alpha 通道。相反，你将不得不重新排列像素数据，以便输入缓冲区的首先包含所有 R 值，然后是所有 G 值，然后是所有 B 值。</p>
 <p>我们若采取这种预处理，就会占用宝贵的计算时间。其次，也许这些限制允许 BNNS 在其层级如何执行其的计算方面做一定的优化，从而使整个事情是个净增益。但这谁也不知道。</p>
 <p>在任何情况下，如果您使用 BNNS 处理图像（CNNs主要的用途）那么你可能需要对输入数据进行一些调整以获得正确的格式。</p>
@@ -250,12 +250,12 @@
 <p>在实践中，开发人员可能会<strong>尝试两种方法，看看哪一个更快</strong>。但是，如上所示，由于 BNNS 和 MPSCNN 具有不同的 API，因此需要编写两次代码。</p>
 <p>因为我很好奇，所以我决定分别使用 BNNS 和 MPSCNN 建立一个非常基本的卷积神经网络来测量哪一个更快。</p>
 <p>我的神经网络设计大概是这样（点击图片放大）：</p>
-<p><img src="https://swift.gg/img/articles/apple-deep-learning-bnns-versus-metal-cnn/ConvNet@2x.png1527128648.814062" alt="The convolutional neural network used for the speed test"></p>
+<p><img src="/img/articles/apple-deep-learning-bnns-versus-metal-cnn/ConvNet@2x.png1527128648.814062" alt="The convolutional neural network used for the speed test"></p>
 <p>这种网络设计可以用来分类图像。网络采用 256×256 的 RGB 图像（无 alpha 通道）作为输入，并产生一个具有 100 个 <code>浮点值</code> 的数组。输出会表示出 100 多种可能类别的对象的概率分布。</p>
 <p>实际上，神经网络需要有更多的层级才能真正有用。它最后也本该有一个 softmax 层，但是因为 BNNS 没有使用 softmax 函数，所以我把它去掉了。</p>
 <p>我实际上并没有训练这个神经网络来学习任何有用的东西，而是用合理的随机值进行初始化。这是一个没有用的神经网络。然而，它确实允许我们比较在 BNNS 和 MPSCNN 中建立相同的神经网络所需要的内容，以及每个网络运行有多快。</p>
 <p>如果你想一起实践，<a href="https://github.com/hollance/BNNS-vs-MPSCNN" target="_blank" rel="noopener">这是 GitHub 上的代码</a>。在 Xcode 中打开这个项目，并在至少有一个 A8 处理器的 iOS 10 兼容设备上运行它（它不能在模拟器上运行）。</p>
-<p><img src="https://swift.gg/img/articles/apple-deep-learning-bnns-versus-metal-cnn/Screenshot@2x.png1527128648.8787365" alt="The speed test app"></p>
+<p><img src="/img/articles/apple-deep-learning-bnns-versus-metal-cnn/Screenshot@2x.png1527128648.8787365" alt="The speed test app"></p>
 <p>点击按钮后，App 冻结几秒钟，同时在每个神经网络上执行 100 个独立的推断。该 App 显示了创建网络需要多长时间（并不是很有趣），以及需要多长时间才能完成 100 次重复的推断。</p>
 <p>该 App 还打印出每个网络计算的结果。由于网络并没有进行训练，因此这些数字什么意义都没有，仅仅是用于调试目的。我想确保两个网络实际上计算的事情相同，从而保证测试是公平的。</p>
 <p>答案中的小差异是由于浮点四舍五入（由于 Metal 在内部使用的 16 位浮点数，我们只得到 3 位小数的精度），而且也可能是由于每个框架具体执行计算的差异而产生的。但结果足够接近。</p>
@@ -415,7 +415,7 @@
 		<ul>
 		
 		  
-			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>16</sup></a></li>
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
 		  
 		
 		  
@@ -423,7 +423,7 @@
 		  
 		
 		  
-			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>45</sup></a></li>
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
 		  
 		
 		  
@@ -439,7 +439,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>26</sup></a></li>
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
 		  
 		
 		  
@@ -475,11 +475,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>16</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Miscellaneous/" title="Miscellaneous">Miscellaneous<sup>1</sup></a></li>
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
 		  
 		
 		  
@@ -487,7 +483,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
 		  
 		
 		  
@@ -499,7 +495,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>38</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
 		  
 		
 		  
@@ -515,10 +511,6 @@
 		  
 		
 		  
-			<li><a href="/categories/POP/" title="POP">POP<sup>1</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
 		  
 		
@@ -531,11 +523,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>8</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/POP/SWIFT/" title="SWIFT">SWIFT<sup>1</sup></a></li>
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
 		  
 		
 		  
@@ -543,19 +531,15 @@
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>17</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
 		  
 		
 		  
@@ -568,10 +552,6 @@
 		
 		  
 			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/The-Always-Right-Institute/" title="The Always Right Institute">The Always Right Institute<sup>1</sup></a></li>
 		  
 		
 		  
@@ -619,10 +599,6 @@
 		  
 		
 		  
-			<li><a href="/categories/khanlou/iOS/" title="iOS">iOS<sup>1</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
 		  
 		
@@ -632,10 +608,6 @@
 		
 		  
 			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/khanlou/" title="khanlou">khanlou<sup>1</sup></a></li>
 		  
 		
 		  
@@ -664,10 +636,6 @@
 		
 		  
 			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/swiftjectivec/" title="swiftjectivec">swiftjectivec<sup>2</sup></a></li>
 		  
 		
 		  
@@ -712,7 +680,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift/" title="Swift">Swift<sup>112</sup></a></li>
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
 			
 		
 			
@@ -720,7 +688,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>14</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
 			
 		
 			
@@ -728,15 +696,7 @@
 			
 		
 			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/教程/" title="教程">教程<sup>8</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
 			
 		
 			
@@ -744,11 +704,15 @@
 			
 		
 			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
 			
 		
 			
@@ -756,11 +720,7 @@
 			
 		
 			
-				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>4</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
 			
 		
 			
@@ -768,7 +728,15 @@
 			
 		
 			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
 			
 		
 			
@@ -974,7 +942,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2020 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2021 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		
@@ -994,7 +962,7 @@
 
 <div id="swiftweekly" style="display:none;">
   <img id="closeme" src="/img/close.png">
-  <span id="sw_slogan">SwiftUI 重磅教程专属优惠：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://j.youzan.com/H9aEpi">使用 SwiftGG 优惠码，半价基础上再减 20 元！</a></b>&nbsp;</span>
+  <span id="sw_slogan">每天一块钱，<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://sspai.com/prime">加入少数派会员</a></b>，获取高品质数字生活科技指南</span>
   <!-- <form id="content"> -->
     <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
   <!-- </form> -->
