@@ -27,7 +27,7 @@
 <meta property="og:image" content="https://swift.gg/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.4513347">
 <meta property="og:image" content="https://swift.gg/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.6419117">
 <meta property="og:image" content="https://swift.gg/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.7265584">
-<meta property="og:updated_time" content="2021-06-10T13:32:31.101Z">
+<meta property="og:updated_time" content="2022-08-26T13:33:54.984Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="iOS 并发：从 NSOperation 和 Dispatch Queues 开始">
 <meta name="twitter:description" content="作者：hossam ghareeb，原文链接，原文日期：2015-12-09译者：ray16897188；校对：Channe；定稿：千叶知风   并发（Concurrency）在 iOS 开发中总是被看作是洪水猛兽一般。人们以为它是一个很危险的领域，很多开发者都尽量避免与其接触。更有传闻说你一定要竭尽所能的避免写任何关于多线程的代码。假如你对并发不是很了解却还去使用它的话，那么我同意：并发是很危">
@@ -94,7 +94,7 @@
         <a href="/2016/01/08/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/" target="_blank" title="iOS 并发：从 NSOperation 和 Dispatch Queues 开始" itemprop="url">iOS 并发：从 NSOperation 和 Dispatch Queues 开始</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-01-08T00:00:00.000Z" itemprop="datePublished">2016-01-08</time>
+      <time datetime="2016-01-08T06:00:00.000Z" itemprop="datePublished">2016-01-08</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -107,7 +107,7 @@
 <!--此处开始正文-->
 <p>并发（Concurrency）在 iOS 开发中总是被看作是洪水猛兽一般。人们以为它是一个很危险的领域，很多开发者都尽量避免与其接触。更有传闻说你一定要竭尽所能的避免写任何关于多线程的代码。假如你对并发不是很了解却还去使用它的话，那么我同意：并发是很危险的。只是它的危险是因为你不了解它。试想一下常人一生中体验过的危险运动和行为有多少，很多对吧？但是当掌握了之后，就会统统变成小菜一碟。并发是把双刃剑，你应该掌握并学会如何去使用它。它能帮你写出效率高、执行快、反应灵敏的 App，而与此同时，对它的滥用会无情的毁掉你的 App。这就是为什么在开始写任何关于并发的代码之前，先要想一想你为什么要用到并发、需要用到哪个（与并发有关的）API 来解决这个问题。iOS 中我们有很多能用到的 API。在此教程里我会讲到最常用的两个：<code>NSOperation</code> 和 <code>Dispatch Queues</code>（派发队列）。</p>
 <a id="more"></a>
-<p><img src="https://swift.gg/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214820.2549465" alt></p>
+<p><img src="/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214820.2549465" alt></p>
 <h2 id="我们为什么要用并发？"><a href="#我们为什么要用并发？" class="headerlink" title="我们为什么要用并发？"></a>我们为什么要用并发？</h2><p>我知道你是一个有 iOS 背景的出色开发者。然而无论你要做一个什么样的 App，你都需要了解并发，让你的 App 更快，更灵敏。我总结了一下学习和使用并发所带来的优点：</p>
 <ul>
 <li><strong>能更有效的利用 iOS 设备的硬件：</strong>现在所有的 iOS 设备都有一个多核处理器，可以让开发者并行执行多个任务。你应该好好利用这个特性，让硬件优势发挥出来。</li>
@@ -116,7 +116,7 @@
 </ul>
 <h2 id="关于并发你都需要知道些什么？"><a href="#关于并发你都需要知道些什么？" class="headerlink" title="关于并发你都需要知道些什么？"></a>关于并发你都需要知道些什么？</h2><p>在本篇教程中，我会解释为理解并发你所需要了解的一切，消除你对它的所有恐惧心理。首先我推荐你去看一下 blocks（即 Swift 中的 closures），它们在并发中会被大量使用。之后我们会聊一下 <code>Dispatch Queues</code> 和 <code>NSOperationQueues</code>。我会带你了解每个并发中的概念，概念之间的不同，以及如何使用它们。</p>
 <h2 id="第一部分：GCD（Grand-Central-Dispatch）"><a href="#第一部分：GCD（Grand-Central-Dispatch）" class="headerlink" title="第一部分：GCD（Grand Central Dispatch）"></a>第一部分：GCD（Grand Central Dispatch）</h2><p>GCD 是在系统的Unix层级中用于管理并发代码并异步执行操作时最常用的 API。GCD 提供并且管理任务的队列（queues of tasks）。先来看看什么是队列。</p>
-<h3 id="什么是队列"><a href="#什么是队列" class="headerlink" title="什么是队列"></a>什么是队列</h3><p>队列是按照先进先出（FIFO）顺序管理对象的数据结构。队列类似于电影院的售票窗口前的长队。电影票是按先到先得的顺序卖出。长队前面的人先买到票，晚来的人后买到票。计算机科学中的队列概念和这个很像，因为第一个被加到队列中的对象也是第一个要从队列中被移除的。<br><img src="https://swift.gg/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.022044" alt="Photo credit: FreeImages.com/Sigurd Decroos"></p>
+<h3 id="什么是队列"><a href="#什么是队列" class="headerlink" title="什么是队列"></a>什么是队列</h3><p>队列是按照先进先出（FIFO）顺序管理对象的数据结构。队列类似于电影院的售票窗口前的长队。电影票是按先到先得的顺序卖出。长队前面的人先买到票，晚来的人后买到票。计算机科学中的队列概念和这个很像，因为第一个被加到队列中的对象也是第一个要从队列中被移除的。<br><img src="/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.022044" alt="Photo credit: FreeImages.com/Sigurd Decroos"></p>
 <h3 id="Dispatch-Queues"><a href="#Dispatch-Queues" class="headerlink" title="Dispatch Queues"></a>Dispatch Queues</h3><p><code>Dispatch Queues</code> 是一种能够轻松执行异步和并发任务的方式。它们是队列，其中的任务是由你的 App 以 blocks（代码块）的形式提交。<code>Dispatch Queues</code> 有两种：(1)串行队列（serial queues），和(2)并发队列（concurrent queues）。在讲述两者的不同之前，你需要知道派给这两种队列的任务是在另外的线程中被执行，而不是在创建它们的那个线程中被执行。换句话说，你是在主线程中创建block并将其提交到 <code>Dispatch Queues</code> 中去。但所有这些任务（block）会在其他的线程中运行，并非主线程。</p>
 <h3 id="串行队列"><a href="#串行队列" class="headerlink" title="串行队列"></a>串行队列</h3><p>当你选择创建一个串行队列时，该队列在某一时刻只能执行一个任务。该队列中的所有任务都会彼此尊重，按序执行。然而你无需担心其他队列中的任务，意思是你依然可以通过使用多个串行队列来以并发的形式执行任务。例如你可以创建两个串行队列，每一个队列某一时刻只能执行一个任务，但是还是有最多两个任务被并发执行。</p>
 <p>用串行队列来管理一个共享资源（shared resource）再合适不过。它提供的对共享资源的访问确保是串行化的，从而防止竞态条件的发生。想象一下有个售票小摊，还有一大堆人想买电影票，那小摊的售票员就是一个共享资源。如果这个售票员必须同时为这堆人服务时就会特别混乱。为避免这个情况，买票的人会被要求去排队（串行队列），这样售票员同一时刻就可以只对一人服务。</p>
@@ -140,10 +140,10 @@
 <p>这些队列类型代表着执行优先级。带有 HIGH 的队列有最高优先级，BACKGROUND 则是最低的优先级。这样你就能基于任务的优先级来决定要用哪一个队列。还要注意这些队列也被 Apple 的 API 所使用，所以这些队列中并不只有你自己的任务。</p>
 <p>最后，你可以创建任何数量的串行或并发队列。使用并发队列的情况下，即使你可以自己创建，我还是强烈建议你使用上面那四个全局队列。</p>
 <h2 id="GCD-小抄"><a href="#GCD-小抄" class="headerlink" title="GCD 小抄"></a>GCD 小抄</h2><p>现在你应该有了一个对 <code>Dispatch Queues</code> 的基本了解。我会给你一个简单的小抄做参考。里面很简单，包含了对 GCD 你需要了解的所有信息。</p>
-<p><img src="https://swift.gg/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.2764683" alt></p>
+<p><img src="/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.2764683" alt></p>
 <p>还不错吧？现在我们来研究一个简单的示范，看看如何使用 <code>Dispatch Queues</code>。我会告诉你如何使用 <code>Dispatch Queues</code> 来优化 App 的性能，让它有更快的响应速度。</p>
 <h2 id="示例项目"><a href="#示例项目" class="headerlink" title="示例项目"></a>示例项目</h2><p>我们的初始项目很简单，它展示4个 image views，每个 image view 显示一张来自远端站点的图片。图片的请求是在主线程中完成。为了给你展示这么做对UI响应会有何影响，我还在图片下面加了一个简单的 slider。<a href="https://www.dropbox.com/s/lkiasutevec5vx0/ConcurrencyDemoStarter.zip?dl=0" target="_blank" rel="noopener">下载并运行这个初始项目</a>。点击 <strong>Start</strong> 按钮开始图片的下载，然后在图片下载的过程中拖动 slider，你会发现根本就拖不动。</p>
-<p><img src="https://swift.gg/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.4513347" alt><br>你点了 Start 按钮之后，图片就会在主线程中开始下载。显然这种方式糟糕至极，让 UI 无法响应。不幸的是时至今日还有很对的 App 依旧在主线程中执行繁重的装载任务。现在我们使用 <code>Dispatch Queues</code> 来解决这个问题。</p>
+<p><img src="/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.4513347" alt><br>你点了 Start 按钮之后，图片就会在主线程中开始下载。显然这种方式糟糕至极，让 UI 无法响应。不幸的是时至今日还有很对的 App 依旧在主线程中执行繁重的装载任务。现在我们使用 <code>Dispatch Queues</code> 来解决这个问题。</p>
 <p>首先我们使用并发队列的解决方案，随后再使用串行队列的解决方案。</p>
 <h3 id="使用-Concurrent-Dispatch-Queues"><a href="#使用-Concurrent-Dispatch-Queues" class="headerlink" title="使用 Concurrent Dispatch Queues"></a>使用 Concurrent Dispatch Queues</h3><p>现在回到 Xcode 项目的 ViewController.swift 文件中。如果你细看一下代码，就会看到点击事件的方法 <strong>didClickOnStart</strong>。这个方法负责处理图片的下载。我们现在是这样来完成该任务的：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="meta">@IBAction</span> <span class="function"><span class="keyword">func</span> <span class="title">didClickOnStart</span><span class="params">(sender: AnyObject)</span></span> &#123;</span><br><span class="line">    <span class="keyword">let</span> img1 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">0</span>])</span><br><span class="line">    <span class="keyword">self</span>.imageView1.image = img1</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> img2 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">1</span>])</span><br><span class="line">    <span class="keyword">self</span>.imageView2.image = img2</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> img3 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">2</span>])</span><br><span class="line">    <span class="keyword">self</span>.imageView3.image = img3</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> img4 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">3</span>])</span><br><span class="line">    <span class="keyword">self</span>.imageView4.image = img4</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -176,7 +176,7 @@
 </ol>
 <p>那么 <code>NSOperation</code> 的优势在哪里？</p>
 <ol>
-<li>首先它可以通过 <code>NSOperation</code> 类的 addDependency（op: NSOperation）方法获得对相依性的支持。如果你有这样的需求：即某 operation 的启动需取决于另一个 operation 的执行，那么就得用 <code>NSOperation</code>。<br><img src="https://swift.gg/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.6419117" alt></li>
+<li>首先它可以通过 <code>NSOperation</code> 类的 addDependency（op: NSOperation）方法获得对相依性的支持。如果你有这样的需求：即某 operation 的启动需取决于另一个 operation 的执行，那么就得用 <code>NSOperation</code>。<br><img src="/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.6419117" alt></li>
 <li>其次，你可将 <em>queuePriority</em> 属性设为以下值来改变执行优先级：</li>
 </ol>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">enum</span> <span class="title">NSOperationQueuePriority</span> : <span class="title">Int</span> </span>&#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="type">VeryLow</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">Low</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">Normal</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">High</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">VeryHigh</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -217,7 +217,7 @@
 <li>operation #3 已经排在队列中，等待 operation #2 的完成。因为 operation #3 是否开始取决于 operation #2 的完成与否，而 operation #2 已经被取消，operation #3 就不会被执行，从队列中被立即踢出了。</li>
 <li>没有对 operation #4 做任何相依性的设置，所以它被并发的执行了，下载了第四张图片。</li>
 </ul>
-<p><img src="https://swift.gg/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.7265584" alt></p>
+<p><img src="/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.7265584" alt></p>
 <h2 id="接下来看什么？"><a href="#接下来看什么？" class="headerlink" title="接下来看什么？"></a>接下来看什么？</h2><p>本篇教程中我为你讲解了 iOS 中并发的概念，以及你在 iOS 中该如何去使用它。我给了你一个还不错的并发入门简介，解释了 GCD，并示范了怎样去创建串行和并发队列。除此之外，我们还看了一下 NSOperationQueues。你现在应该对 GCD 和 NSOperationQueues 之间的不同有所了解了。</p>
 <p>如果想进一步了解 iOS 的并发，建议你去看一下 <a href="https://developer.apple.com/library/ios/documentation/General/Conceptual/ConcurrencyProgrammingGuide/Introduction/Introduction.html" target="_blank" rel="noopener">Apple 的并发指南</a>。</p>
 <p>你可以从 <a href="https://github.com/appcoda/NSOperation-Demo" target="_blank" rel="noopener">iOS Concurrency repository on Github</a> 这里找到此教程提到的全套源代码以作参考。</p>
@@ -322,7 +322,7 @@
 		<ul>
 		
 		  
-			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>16</sup></a></li>
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
 		  
 		
 		  
@@ -330,7 +330,7 @@
 		  
 		
 		  
-			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>45</sup></a></li>
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
 		  
 		
 		  
@@ -346,7 +346,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>26</sup></a></li>
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
 		  
 		
 		  
@@ -382,11 +382,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>16</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Miscellaneous/" title="Miscellaneous">Miscellaneous<sup>1</sup></a></li>
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
 		  
 		
 		  
@@ -394,7 +390,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
 		  
 		
 		  
@@ -402,11 +398,11 @@
 		  
 		
 		  
-			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>38</sup></a></li>
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
 		  
 		
 		  
@@ -422,10 +418,6 @@
 		  
 		
 		  
-			<li><a href="/categories/POP/" title="POP">POP<sup>1</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
 		  
 		
@@ -438,11 +430,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>8</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/POP/SWIFT/" title="SWIFT">SWIFT<sup>1</sup></a></li>
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
 		  
 		
 		  
@@ -450,19 +438,15 @@
 		  
 		
 		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>17</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Ole-Begemann/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -475,10 +459,6 @@
 		
 		  
 			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/The-Always-Right-Institute/" title="The Always Right Institute">The Always Right Institute<sup>1</sup></a></li>
 		  
 		
 		  
@@ -526,10 +506,6 @@
 		  
 		
 		  
-			<li><a href="/categories/khanlou/iOS/" title="iOS">iOS<sup>1</sup></a></li>
-		  
-		
-		  
 			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
 		  
 		
@@ -539,10 +515,6 @@
 		
 		  
 			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/khanlou/" title="khanlou">khanlou<sup>1</sup></a></li>
 		  
 		
 		  
@@ -571,10 +543,6 @@
 		
 		  
 			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/swiftjectivec/" title="swiftjectivec">swiftjectivec<sup>2</sup></a></li>
 		  
 		
 		  
@@ -619,7 +587,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift/" title="Swift">Swift<sup>112</sup></a></li>
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
 			
 		
 			
@@ -627,7 +595,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>14</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
 			
 		
 			
@@ -635,11 +603,7 @@
 			
 		
 			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/教程/" title="教程">教程<sup>8</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
 			
 		
 			
@@ -651,11 +615,11 @@
 			
 		
 			
-				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
 			
 		
 			
@@ -663,7 +627,11 @@
 			
 		
 			
-				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>4</sup></a></li>
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
 			
@@ -671,7 +639,11 @@
 			
 		
 			
-				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
 			
 		
 			
@@ -684,10 +656,6 @@
 		
 			
 				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
 			
 		
 		</ul>
@@ -881,12 +849,12 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2021 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		
 		 | 
-		<a href="http://www.miitbeian.gov.cn" target="_blank">浙ICP备14022870号-3</a>
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
 		</p>
 </div>
 <img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
@@ -901,7 +869,7 @@
 
 <div id="swiftweekly" style="display:none;">
   <img id="closeme" src="/img/close.png">
-  <span id="sw_slogan">每天一块钱，<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://sspai.com/prime">加入少数派会员</a></b>，获取高品质数字生活科技指南</span>
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
   <!-- <form id="content"> -->
     <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
   <!-- </form> -->
