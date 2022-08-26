@@ -1,0 +1,1033 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>有序数组的一种实现 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Ole Begemann，原文链接，原文日期：2017-02-08译者：四娘；校对：Cwift；定稿：CMB   在上周的 Swift Talk 里，Florian 和 Chris 编写了一个有序数组类型 SortedArray：一个总是按照指定规则排序的数组。这很赞，因为它将多个不变性编码到了类型系统里。用户可以使用这个类型去取代普通的 数组 ，而且不用担心忘记手动排序数组。 为了保持视">
+<meta name="keywords" content="Swift 进阶">
+<meta property="og:type" content="article">
+<meta property="og:title" content="有序数组的一种实现">
+<meta property="og:url" content="https://swift.gg/2017/03/30/sorted-array/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Ole Begemann，原文链接，原文日期：2017-02-08译者：四娘；校对：Cwift；定稿：CMB   在上周的 Swift Talk 里，Florian 和 Chris 编写了一个有序数组类型 SortedArray：一个总是按照指定规则排序的数组。这很赞，因为它将多个不变性编码到了类型系统里。用户可以使用这个类型去取代普通的 数组 ，而且不用担心忘记手动排序数组。 为了保持视">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-08-26T13:33:55.016Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="有序数组的一种实现">
+<meta name="twitter:description" content="作者：Ole Begemann，原文链接，原文日期：2017-02-08译者：四娘；校对：Cwift；定稿：CMB   在上周的 Swift Talk 里，Florian 和 Chris 编写了一个有序数组类型 SortedArray：一个总是按照指定规则排序的数组。这很赞，因为它将多个不变性编码到了类型系统里。用户可以使用这个类型去取代普通的 数组 ，而且不用担心忘记手动排序数组。 为了保持视">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2017/03/30/sorted-array/" target="_blank" title="有序数组的一种实现" itemprop="url">有序数组的一种实现</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2017-03-30T05:00:00.000Z" itemprop="datePublished">2017-03-30</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Ole Begemann，<a href="https://oleb.net/blog/2017/02/sorted-array/" target="_blank" rel="noopener">原文链接</a>，原文日期：2017-02-08<br>译者：<a href="https://kemchenj.github.io" target="_blank" rel="noopener">四娘</a>；校对：<a href="http://weibo.com/277195544" target="_blank" rel="noopener">Cwift</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>在<a href="https://talk.objc.io/episodes/S01E35-sorted-arrays-collections-3" target="_blank" rel="noopener">上周的 Swift Talk</a> 里，Florian 和 Chris 编写了一个有序数组类型 <code>SortedArray</code>：一个总是按照指定规则排序的数组。这很赞，因为它将多个<a href="https://en.wikipedia.org/wiki/Invariant_(computer_science" target="_blank" rel="noopener">不变性</a>编码到了类型系统里。用户可以使用这个类型去取代普通的 <a href="https://developer.apple.com/reference/swift/array" target="_blank" rel="noopener">数组</a> ，而且不用担心忘记手动排序数组。</p>
+<p>为了保持视频简短，Florian 和 Chris 省略掉了一些很实用的功能。我想给你展示一下这部分实用功能的实现。这些实现都不难编写，我的主要目的是让你明白借助标准库去实现一个紧贴需求的自定义集合类型是多么简单。</p>
+<p>你可以去 <a href="https://github.com/ole/SortedArray" target="_blank" rel="noopener">GitHub 上查看全部代码</a> ，但下面会有更多讲解。</p>
+<a id="more"></a>
+<h2 id="指定集合的协议"><a href="#指定集合的协议" class="headerlink" title="指定集合的协议"></a>指定集合的协议</h2><p>如视频所示，SortedArray 遵守了 <a href="https://developer.apple.com/reference/swift/randomaccesscollection" target="_blank" rel="noopener">RandomAccessCollection</a> ，它可以让随机访问数组元素的操作变得更快，稍后实现一个高效的 Binary Search 的时候会用到它。</p>
+<p>实现部分很直观，因为把所有东西都桥接到用来实际存储的数组那里。由于 Index 是 Int 类型，你甚至不用自己实现 <code>index(_:offsetBy:)</code> 和 <code>distance(from:to:)</code> 函数，标准库已经提供了默认的实现。</p>
+<p>SortedArray 不能遵守 <a href="https://developer.apple.com/reference/swift/mutablecollection" target="_blank" rel="noopener">MutableCollection</a> 或者 <a href="https://developer.apple.com/reference/swift/rangereplaceablecollection" target="_blank" rel="noopener">RangeReplaceableCollection</a> ，因为他们的 <a href="https://oleb.net/blog/2017/02/why-is-dictionary-not-a-mutablecollection/" target="_blank" rel="noopener">语义</a> – 插入/替换特定位置的元素，跟我们保持元素有序的原则冲突。</p>
+<h2 id="字面量表达"><a href="#字面量表达" class="headerlink" title="字面量表达"></a>字面量表达</h2><p>SortedArray 也不遵守 <a href="https://developer.apple.com/reference/swift/expressiblebyarrayliteral" target="_blank" rel="noopener">ExpressibleByArrayLiteral</a> ，即你不能像下面这么做：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> sorted: <span class="type">SortedArray</span> = [<span class="number">3</span>,<span class="number">1</span>,<span class="number">2</span>]</span><br></pre></td></tr></table></figure>
+<p>这个功能很好，但是你没办法给一个字面数组传递排序算法，并且 SortedArray 的元素必须遵守 <a href="https://developer.apple.com/reference/swift/comparable" target="_blank" rel="noopener">Comparable</a> 。因为 Swift 3 还不支持 <a href="https://github.com/apple/swift-evolution/blob/master/proposals/0143-conditional-conformances.md" target="_blank" rel="noopener">conditional protocol conformance</a> ，所以需要写成下面这样：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">SortedArray</span>: <span class="title">ExpressibleByArrayLiteral</span> <span class="title">where</span> <span class="title">Element</span>: <span class="title">Comparable</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>也许 Swift 4 中可以实现 conditional protocol conformance。</p>
+<h2 id="Binary-search"><a href="#Binary-search" class="headerlink" title="Binary search"></a>Binary search</h2><p>使用有序数组的好处之一就是可以通过 <a href="https://en.wikipedia.org/wiki/Binary_search_algorithm" target="_blank" rel="noopener">Binary Search</a> 快速找到某一个数组元素。在这里 Binary Search 的时间复杂度 <a href="https://en.wikipedia.org/wiki/Time_complexity#Logarithmic_time" target="_blank" rel="noopener">是 log n 而不是线性的</a> 。</p>
+<p>为了实现该算法，我首先写了一个辅助函数 <code>search(for:)</code>。你可以去 <a href="https://github.com/ole/SortedArray/blob/master/Sources/SortedArray.swift#L176-L198" target="_blank" rel="noopener">GitHub 上查看完整代码</a> ；这里我想讨论一下返回的类型：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">fileprivate</span> <span class="class"><span class="keyword">enum</span> <span class="title">Match</span>&lt;<span class="title">Index</span>: <span class="title">Comparable</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">case</span> found(at: <span class="type">Index</span>)</span><br><span class="line">    <span class="keyword">case</span> notFound(insertAt: <span class="type">Index</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">SortedArray</span> </span>&#123;</span><br><span class="line">     </span><br><span class="line">    <span class="comment">/// 使用 Binary Search 找到 `newElement`</span></span><br><span class="line">    <span class="comment">///</span></span><br><span class="line">    <span class="comment">/// - Returns: 如果 `newElement` 在数组里，就返回 `.found(at: index)`，</span></span><br><span class="line">    <span class="comment">///   这里的 `index` 是数组里元素的位置</span></span><br><span class="line">    <span class="comment">///   如果 `newElement` 不在这个数组里，就会返回 `.notfound(insertAt: index)`</span></span><br><span class="line">    <span class="comment">///   这里的 `index` 是根据排序算法得出元素应该插入的位置</span></span><br><span class="line">    <span class="comment">///   如果数组包含了多个元素，且都等于 `newElement`，那就无法保证哪一个会被找到</span></span><br><span class="line">    <span class="comment">///   </span></span><br><span class="line">    <span class="comment">/// - Complexity: O(_log(n)_)，这里的 _n_ 是数组的大小.</span></span><br><span class="line">    <span class="keyword">fileprivate</span> <span class="function"><span class="keyword">func</span> <span class="title">search</span><span class="params">(<span class="keyword">for</span> newElement: Element)</span></span> -&gt; <span class="type">Match</span>&lt;<span class="type">Index</span>&gt; &#123;</span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>标准库里的 <a href="https://developer.apple.com/reference/swift/collection/1641318-index" target="_blank" rel="noopener">index(of:)</a> 返回的是一个 <code>Optional&lt;Index&gt;</code>，没有找到的情况就会返回 nil。而 <code>search(for:)</code> 方法也类似，但它的返回值是一个自定义的枚举，无论是 <code>.found</code> 或者 <code>.notFound</code> 都会带上一个序号作为附加信息。这可以让我们在搜索和插入时使用一致的算法：返回的序号就是我们需要维持有序数组时插入元素的位置。</p>
+<p>算法准备就绪之后，就可以开始实现 <code>index(of:)</code> 和 <a href="https://developer.apple.com/reference/swift/sequence/1641180-contains" target="_blank" rel="noopener"><code>contains(_:)</code></a> 了：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">SortedArray</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/// 返回特定值在集合里第一次出现的位置</span></span><br><span class="line">    <span class="comment">///</span></span><br><span class="line">    <span class="comment">/// - Complexity: O(_log(n)_)，这里的 _n_ 是数组的大小</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">index</span><span class="params">(of element: Element)</span></span> -&gt; <span class="type">Index?</span> &#123;</span><br><span class="line">        <span class="keyword">switch</span> search(<span class="keyword">for</span>: element) &#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="keyword">let</span> .found(at: index): <span class="keyword">return</span> index</span><br><span class="line">        <span class="keyword">case</span> .notFound(insertAt: <span class="number">_</span>): <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/// 返回一个布尔值，表示这个序列是否包含给定的元素</span></span><br><span class="line">    <span class="comment">///</span></span><br><span class="line">    <span class="comment">/// - Complexity: O(_log(n)_)，_n_ 是数组的大小</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">contains</span><span class="params">(<span class="number">_</span> element: Element)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> index(of: element) != <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>需要注意的是，这里的实现不止比标准库里的实现更高效，而且通用性更强. 标准库里这个方法还要求 <code>where Iterator.Element: Comparable</code> 的约束，而 SortedArray 总是拥有一个排序算法,所以不需要这样的约束。</p>
+<h2 id="插入元素"><a href="#插入元素" class="headerlink" title="插入元素"></a>插入元素</h2><p>下一个任务是利用 binary search 的优势去提高插入元素的效率。我决定提供两个插入函数: 第一个会在正确的位置去插入单个元素，保持数组有序。它利用 binary search 去找到正确的插入位置，复杂度为 <code>O(log n)</code>。插入新元素到非空数组里，最糟糕的时间复杂度是 O(n)，因为全部已有元素不得不移动位置去提供空间。</p>
+<p>第二个函数可以插入一组序列。这里我选择先把所有元素都插入到数组最后，然后进行一次重新排序. 这比重复寻找正确的插入位置更快(如果插入的数组元素个数大于 <code>log n</code>)。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">SortedArray</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/// 插入一个新元素到数组里，并保持数组有序</span></span><br><span class="line">    <span class="comment">///</span></span><br><span class="line">    <span class="comment">/// - Returns: 新元素插入的位置</span></span><br><span class="line">    <span class="comment">/// - Complexity: O(_n_)     这里的 _n_ 是数组大小</span></span><br><span class="line">    <span class="comment">///    如果新元素插入到数组最后，时间复杂度下降到 O(_log n_)</span></span><br><span class="line">    <span class="meta">@discardableResult</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">insert</span><span class="params">(<span class="number">_</span> newElement: Element)</span></span> -&gt; <span class="type">Index</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> index = insertionIndex(<span class="keyword">for</span>: newElement)</span><br><span class="line">        <span class="comment">// 如果元素可以被插入到数组最后，则复杂度为 O(1)</span></span><br><span class="line">        <span class="comment">// 最糟糕的情况是 O(_n) (插入到最前面时)</span></span><br><span class="line">        _elements.insert(newElement, at: index)</span><br><span class="line">        <span class="keyword">return</span> index</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/// 插入 `elements` 里的所有元素到 `self` 里，保持数组有序</span></span><br><span class="line">    <span class="comment">/// 这会比每个元素都单独插入一遍更快</span></span><br><span class="line">    <span class="comment">/// 因为我们只需要重新排序一次</span></span><br><span class="line">    <span class="comment">///</span></span><br><span class="line">    <span class="comment">/// - Complexity: O(_n * log(n)_)，_n_ 是插入后数组的大小</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">insert</span>&lt;S: Sequence&gt;<span class="params">(contentsOf newElements: S)</span></span> <span class="keyword">where</span> <span class="type">S</span>.<span class="type">Iterator</span>.<span class="type">Element</span> == <span class="type">Element</span> &#123;</span><br><span class="line">        _elements.append(contentsOf: newElements)</span><br><span class="line">        _elements.<span class="built_in">sort</span>(by: areInIncreasingOrder)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="其它优势"><a href="#其它优势" class="headerlink" title="其它优势"></a>其它优势</h2><p>Chris 和 Florian 已经在这一集里做过展示，我们可以得到一个更高效的 <a href="https://developer.apple.com/reference/swift/sequence/1641174-min" target="_blank" rel="noopener">min() </a> 和 <a href="https://developer.apple.com/reference/swift/sequence/1641492-max" target="_blank" rel="noopener">max() </a> 。因为最小值最大值分别是有序集合的第一个和最后一个元素：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">SortedArray</span> </span>&#123;</span><br><span class="line">     <span class="comment">/// 返回集合里的最小值</span></span><br><span class="line">    <span class="comment">///</span></span><br><span class="line">    <span class="comment">/// - Complexity: O(1).</span></span><br><span class="line">    @warn_unqualified_access</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">min</span><span class="params">()</span></span> -&gt; <span class="type">Element?</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> first</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/// 返回集合里的最大值</span></span><br><span class="line">    <span class="comment">///</span></span><br><span class="line">    <span class="comment">/// - Complexity: O(1).</span></span><br><span class="line"></span><br><span class="line">    @warn_unqualified_access</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">max</span><span class="params">()</span></span> -&gt; <span class="type">Element?</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> last</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当你在类型的内部实现中调用这些函数，却没有显式地写明 <code>self.</code> 的前缀时，<code>@warn_unqualified_access</code> <a href="http://stackoverflow.com/a/36110284/116862" target="_blank" rel="noopener">会告诉编译器抛出一个警告</a> 。这样可以帮助你避免混淆了这些函数与全局函数 <a href="https://developer.apple.com/reference/swift/1538339-min" target="_blank" rel="noopener">min(_:_:) </a> 和 <a href="https://developer.apple.com/reference/swift/1538951-max" target="_blank" rel="noopener">max(_:_:) </a> 。</p>
+<p>如同 <code>index(of:)</code> 和 <code>contains(_:)</code> 一样，我们的 <code>min()</code> 和 <code>max()</code> 更加通用，因为它们不需要元素是 Comparable 的. 我们获得了更高的效率，更少的约束。</p>
+<h3 id="只有协议要求的才可以自定义"><a href="#只有协议要求的才可以自定义" class="headerlink" title="只有协议要求的才可以自定义"></a>只有协议要求的才可以自定义</h3><p>这四个方法都不是 Sequence 和 Collection 协议里要求必须实现的，他们不在协议的定义里。他们只是拓展里的默认实现。结果就是，调用这些方法的时候都会是静态派发，因为他们不是 <a href="https://developer.apple.com/videos/play/wwdc2015-408/?time=1767" target="_blank" rel="noopener">可自定义的</a> 。</p>
+<p>SortedArray 里的实现并不会重写默认实现(因为只要协议里定义的方法才可以被重写)，他们只是附属品。当你直接使用 SortedArray 的时候，更加高效的实现会让你收益。但当它们作为泛型时将永远不会被调用。例如：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> numbers = <span class="type">SortedArray</span>(unsorted: [<span class="number">3</span>,<span class="number">2</span>,<span class="number">1</span>])</span><br><span class="line">	<span class="comment">// 这会直接调用 SortedArray.max()</span></span><br><span class="line">	<span class="keyword">let</span> a = numbers.<span class="built_in">max</span>()</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">myMax</span>&lt;S: Sequence&gt;<span class="params">(<span class="number">_</span> sequence: S )</span></span> -&gt; <span class="type">S</span>.<span class="type">Iterator</span>.<span class="type">Element?</span></span><br><span class="line">	<span class="keyword">where</span> <span class="type">S</span>.<span class="type">Iterator</span>.<span class="type">Element</span>: <span class="type">Comparable</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> sequence.<span class="built_in">max</span>()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 这种写法调用的是 Sequence.max() 了(更低效的版本)</span></span><br><span class="line"><span class="keyword">let</span> b = myMax(numbers)</span><br></pre></td></tr></table></figure>
+<p>我们没办法改变这个 “bug”，<a href="https://swift.org/community/#mailing-lists" target="_blank" rel="noopener">swift-evolution</a> 有讨论过让这些方法变成协议的一部分(我不确定这是不是一个好的做法)。</p>
+<blockquote>
+<p><em>2017.02.09 更新: 我忘了 <code>index(of:)</code> 和 <code>contains(_:)</code> 这些方法，现在还不是 Sequence 和 Collection 的一部分，因为他们需要 Iterator.Element 是 Equatable 的。而现在还没有方法去定义一个泛型协议。<a href="https://lists.swift.org/pipermail/swift-evolution/Week-of-Mon-20170206/031667.html" target="_blank" rel="noopener">Brent Royal-Gordon 在 swift-evolution 里进行了相关的讨论</a>并且提问泛型协议是否应该加入 Swift 里。</em></p>
+</blockquote>
+<h2 id="切片"><a href="#切片" class="headerlink" title="切片"></a>切片</h2><p>我尝试着把 SortedArray 保存在一个 <a href="https://developer.apple.com/reference/swift/arrayslice" target="_blank" rel="noopener">ArraySlice</a> 而不是 Array 里，这么做的优势就是可以非常简单地把 SortedArray.SubSequence 定义为 ArraySlice。这会让切片操作变得非常简单，因为 sortedArray.prefix(5) 会直接返回另一个 SortedArray，而不是默认的 <a href="https://developer.apple.com/reference/swift/randomaccessslice" target="_blank" rel="noopener">RandomAccessSlice</a> 。</p>
+<p>最后我还是决定放弃这种做法，因为长时间持有一个 ArraySlice 的实例不是一件好事. 就算只持有一个非常大的数组的切片，也会一直间接持有那个大的数组，这会导致非常高的内存占用，这是使用者不想看到的，就算基底 Array 的内存不会泄露，但切片还是会让它无法及时释放。</p>
+<h2 id="外部-Modules-引入的泛型类型的性能表现"><a href="#外部-Modules-引入的泛型类型的性能表现" class="headerlink" title="外部 Modules 引入的泛型类型的性能表现"></a>外部 Modules 引入的泛型类型的性能表现</h2><p>如果你想在你的代码里使用 SortedArray (或者别的性能要求比较高的泛型)，我建议你不要直接把它作为第三方 module 引入，而是 <a href="https://github.com/apple/swift/blob/master/docs/OptimizationTips.rst#advice-put-generic-declarations-in-the-same-module-where-they-are-used" target="_blank" rel="noopener">直接把源代码文件加入到你的 module 里</a> 。</p>
+<p>就 Swift 3 而言，Swift 无法在跨 Module 的情况下表现出泛型类型的优势。换而言之，如果你在代码里使用了 <code>SortedArray&lt;Int&gt;</code>，并且 SortedArray 是定义在另一个 Module 的时候，编译器无法为元素为 Int 的 Array 优化生成代码，只能按照常规的方式，将每一个泛型值打包到一个容器里，然后通过 witness table 进行方法派发。这很容易造成你的代码在执行时被拖慢 <a href="https://github.com/lorentey/BTree#remark-on-performance-of-imported-generics" target="_blank" rel="noopener">一到两个数量级</a> 。</p>
+<blockquote>
+<p>当前版本的 Swift 编译器无法约束从外部 Module 引入的泛型(标准库除外)。…这个限制会让外部 Module 引入的集合类型性能大幅下降。特别当集合中的元素是简单的，被极度优化的值类型，例如 Int，甚至是 String。 依赖引入的 Module，你的集合装填基础数据类型时性能会有 10-200 倍的下降。</p>
+</blockquote>
+<p>标准库是唯一一个例外，标准库里的类型对于任何 Module 都是可见的。</p>
+<p>我希望 Swift 编译器团队可以找到一个方法解决这个问题。虽然我不知道该怎么做。编译器现在加入了一个<br><a href="https://oleb.net/blog/2017/02/sorted-array/attribute" target="_blank" rel="noopener">非正式的修饰符 @_specialize</a> (可能在 <a href="https://github.com/apple/swift/pull/6486" target="_blank" rel="noopener">之后会加入一个新的语法</a> )。给一个方法添加这个修饰符时，相关的类型就告诉编译器为自己生成特殊的代码。目前正在开发的版本里，这个修饰符好像支持使用 <code>_Trivial64</code> 去把所有不那么重要的值类型都封装成相同的大小。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><a href="https://github.com/ole/SortedArray" target="_blank" rel="noopener">完整的实现</a> 总共两百多行，包括注释。</p>
+<p>就像你看到的，自定义集合类型有很多需要考量的东西。而且我们都只考虑了接口的设计，我们甚至还没接触底层的实现。但我觉得这些付出都是有回报的。我们获得了一个行为和内建集合类型完全一致的类型，兼容序列和集合操作的同时还会根据算法自我变化。</p>
+<p>虽然跨 Module 使用泛型类型确实对于性能有很大的影响。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Ole-Begemann/">Ole Begemann</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2017/03/30/sorted-array/" data-title="有序数组的一种实现 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2017/04/05/spelling-checker-tutorial/" title="拼写检查教程">
+  <strong>上一篇</strong><br>
+  <span>
+  拼写检查教程</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2017/03/29/that-one-optional-property/" title="一个可选型的属性">
+ <strong>下一篇</strong><br> 
+ <span>一个可选型的属性
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2017/03/30/sorted-array/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#指定集合的协议"><span class="toc-number">1.</span> <span class="toc-text">指定集合的协议</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#字面量表达"><span class="toc-number">2.</span> <span class="toc-text">字面量表达</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Binary-search"><span class="toc-number">3.</span> <span class="toc-text">Binary search</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#插入元素"><span class="toc-number">4.</span> <span class="toc-text">插入元素</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#其它优势"><span class="toc-number">5.</span> <span class="toc-text">其它优势</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#只有协议要求的才可以自定义"><span class="toc-number">5.1.</span> <span class="toc-text">只有协议要求的才可以自定义</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#切片"><span class="toc-number">6.</span> <span class="toc-text">切片</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#外部-Modules-引入的泛型类型的性能表现"><span class="toc-number">7.</span> <span class="toc-text">外部 Modules 引入的泛型类型的性能表现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">8.</span> <span class="toc-text">总结</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

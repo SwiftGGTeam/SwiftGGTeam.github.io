@@ -1,0 +1,1111 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>Swift 闭包捕获系列一：闭包是如何捕获变量的 | 闭包捕获语义第一弹：一网打尽！ | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift闭包捕获,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="Swift 的闭包也有着不同的捕获语义，本文介绍的就是 Swift 闭包是如何工作来捕获变量的实现过程。">
+<meta name="keywords" content="swift闭包捕获">
+<meta property="og:type" content="article">
+<meta property="og:title" content="闭包捕获语义第一弹：一网打尽！">
+<meta property="og:url" content="https://swift.gg/2016/09/09/closure-capture-1/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="Swift 的闭包也有着不同的捕获语义，本文介绍的就是 Swift 闭包是如何工作来捕获变量的实现过程。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://alisoftware.github.io/assets/pokemon-drumroll.gif">
+<meta property="og:updated_time" content="2022-08-26T13:33:55.005Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="闭包捕获语义第一弹：一网打尽！">
+<meta name="twitter:description" content="Swift 的闭包也有着不同的捕获语义，本文介绍的就是 Swift 闭包是如何工作来捕获变量的实现过程。">
+<meta name="twitter:image" content="http://alisoftware.github.io/assets/pokemon-drumroll.gif">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/09/09/closure-capture-1/" target="_blank" title="闭包捕获语义第一弹：一网打尽！" itemprop="url">闭包捕获语义第一弹：一网打尽！</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-09-09T05:00:00.000Z" itemprop="datePublished">2016-09-09</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Olivier Halligon，<a href="http://alisoftware.github.io/swift/closures/2016/07/25/closure-capture-1/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-07-25<br>译者：<a href="http://chengway.in/" target="_blank" rel="noopener">walkingway</a>；校对：<a href="http://www.swiftyper.com" target="_blank" rel="noopener">小锅</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>尽管现在已经是 ARC 的天下了，但对于程序员来说理解内存管理和对象的生命周期依然是一门必修课。对于在 Swift 当中广泛应用的闭包就是其中一个特殊的例子，与 Objc 的闭包相比，Swift 的闭包也有着不同的捕获语义。下面让我们看看闭包是如何工作的。</p>
+<a id="more"></a>
+<h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>在 Swift 中，闭包捕获他们所引用的变量：虽然这些变量在闭包之外声明，但只要在闭包内使用都会默认被闭包保留引用（retain），这是为了确保闭包执行时，这些变量还活着（译者注：没有被提前释放）。</p>
+<p>在文章接下来的部分，我们来定义一个简单的 <code>Pokemon</code>（口袋妖怪）类：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Pokemon</span>: <span class="title">CustomDebugStringConvertible</span> </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> name: <span class="type">String</span></span><br><span class="line">  <span class="keyword">init</span>(name: <span class="type">String</span>) &#123;</span><br><span class="line">    <span class="keyword">self</span>.name = name</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">var</span> debugDescription: <span class="type">String</span> &#123; <span class="keyword">return</span> <span class="string">"&lt;Pokemon \(name)&gt;"</span> &#125;</span><br><span class="line">  <span class="keyword">deinit</span> &#123; <span class="built_in">print</span>(<span class="string">"\(self) escaped!"</span>) &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接下来声明一个简单的函数，他接受一个闭包作为参数，然后在一段时间后执行这个闭包（使用 GCD）。下面的例子展示了闭包是如何捕获外部变量的。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">delay</span><span class="params">(seconds: NSTimeInterval, closure: <span class="params">()</span></span></span>-&gt;()) &#123;</span><br><span class="line">  <span class="keyword">let</span> time = dispatch_time(<span class="type">DISPATCH_TIME_NOW</span>, <span class="type">Int64</span>(seconds * <span class="type">Double</span>(<span class="type">NSEC_PER_SEC</span>)))</span><br><span class="line">  dispatch_after(time, dispatch_get_main_queue()) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"🕑"</span>)</span><br><span class="line">    closure()</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>在 Swift 3 中，上面的函数应该变成下面这种形式：</p>
+</blockquote>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">delay</span><span class="params">(seconds: Int, closure: <span class="params">()</span></span></span>-&gt;()) &#123;</span><br><span class="line">  <span class="keyword">let</span> time = <span class="type">DispatchTime</span>.now() + .seconds(seconds)</span><br><span class="line">  <span class="type">DispatchQueue</span>.main.after(when: time) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"🕑"</span>)</span><br><span class="line">    closure()</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="默认的捕获语义"><a href="#默认的捕获语义" class="headerlink" title="默认的捕获语义"></a>默认的捕获语义</h2><p>现在，先从一个简单的例子开始：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo1</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">let</span> pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Mewtwo"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: \(pokemon)"</span>)</span><br><span class="line">  delay(<span class="number">1</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure: \(pokemon)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"bye"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个例子看上去很简单，但它有趣的地方在于闭包的运行被推迟了 1 秒钟，所以当 demo1() 函数执行完毕后，闭包才开始执行；并且 1 秒后当闭包被执行的时候 <code>Pokemon</code> 实例依然存活着。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">before closure: &lt;Pokemon Mewtwo&gt;</span><br><span class="line">bye</span><br><span class="line">🕑</span><br><span class="line">inside closure: &lt;Pokemon Mewtwo&gt;</span><br><span class="line">&lt;Pokemon Mewtwo&gt; escaped!</span><br></pre></td></tr></table></figure>
+<p>这是因为闭包捕获（强引用）了 <code>pokemon</code> 变量：编译器发现在闭包内部引用了 <code>pokemon</code> 变量，它会自动捕获该变量（默认是强引用），所以 <code>pokemon</code> 的生命周期与闭包自身是一致的。</p>
+<p>因此，闭包有点像精灵球 😆，只要你持有着<del>精灵球</del>闭包，<code>pokemon</code> 变量也就会在那里，不过一旦<del>精灵球</del>闭包被释放，引用的 <code>pokemon</code> 也会被释放。</p>
+<p>在这个例子中，一旦 GCD 执行完毕，闭包就会被释放，所以 <code>pokemon</code> 的 <code>deinit</code> 方法也会被调用。</p>
+<blockquote>
+<p>如果 Swift 没有自动捕获 pokemon 变量，这就意味着当执行到 demo1 函数结尾时，pokemon 变量将会脱离作用域，随后当闭包执行时，pokemon 就已经不存在了…这可能会导致程序崩溃。<br>幸亏 Swift 足够聪明，闭包会自动为我们捕获 <code>pokemon</code>。接下来我们会学习在必要时如何弱捕获（弱引用）这些变量。</p>
+</blockquote>
+<h2 id="被捕获的变量在执行时才取值"><a href="#被捕获的变量在执行时才取值" class="headerlink" title="被捕获的变量在执行时才取值"></a>被捕获的变量在执行时才取值</h2><p>有一点值得注意的是 <strong>Swift 在闭包执行时才会取出捕获变量的值</strong>[^1]。我们可以认为它之前捕获的是变量的引用（或指针）。</p>
+<p>这里有一个有趣的例子：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo2</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Pikachu"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: \(pokemon)"</span>)</span><br><span class="line">  delay(<span class="number">1</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure: \(pokemon)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Mewtwo"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"after closure: \(pokemon)"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>你能猜猜打印的结果吗？答案如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">before closure: &lt;Pokemon Pikachu&gt;</span><br><span class="line">&lt;Pokemon Pikachu&gt; escaped!</span><br><span class="line">after closure: &lt;Pokemon Mewtwo&gt;</span><br><span class="line">🕑</span><br><span class="line">inside closure: &lt;Pokemon Mewtwo&gt;</span><br><span class="line">&lt;Pokemon Mewtwo&gt; escaped!</span><br></pre></td></tr></table></figure>
+<p>请注意我们在创建完闭包之后修改了 <code>pokemon</code> 对象，闭包延迟一秒后执行（虽然此时已经脱离了 <code>demo2()</code> 函数的作用域），我们打印的结果是新的 <code>pokemon</code> 对象，而不是旧的！这是因为 Swift 默认捕获的是变量的引用。</p>
+<p>具体的细节为：首先初始化一个值为 Pikachu 的 <code>pokemon</code> 对象，接着修改该对象的值为 Mewtwo（译者注：创建了新对象），之前值为 Pikachu 的对象由于没有其他变量强引用，所以会被释放。接着闭包等待一秒钟执行，打印捕获 pokemon 变量（引用）的内容。</p>
+<p>这个特性对于值类型也是一样的，关于这一点或许会有些奇怪，比如下面例子中的 <code>Int</code> 类型：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo3</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> value = <span class="number">42</span></span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: \(value)"</span>)</span><br><span class="line">  delay(<span class="number">1</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure: \(value)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  value = <span class="number">1337</span></span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"after closure: \(value)"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>打印结果：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">before closure: <span class="number">42</span></span><br><span class="line">after closure: <span class="number">1337</span></span><br><span class="line">🕑</span><br><span class="line">inside closure: <span class="number">1337</span></span><br></pre></td></tr></table></figure>
+<p>你没看错，闭包打印了新的整型变量值—尽管整型变量是值类型！—因为它捕获了变量的引用，而不是变量自身的内容！</p>
+<h2 id="你可以修改闭包中捕获的变量"><a href="#你可以修改闭包中捕获的变量" class="headerlink" title="你可以修改闭包中捕获的变量"></a>你可以修改闭包中捕获的变量</h2><p>如果捕获的是变量 <code>var</code>（而不是常量 <code>let</code>），你也可以<strong>在闭包中</strong>[^2]修改它的值。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo4</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> value = <span class="number">42</span></span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: \(value)"</span>)</span><br><span class="line">  delay(<span class="number">1</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure 1, before change: \(value)"</span>)</span><br><span class="line">    value = <span class="number">1337</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure 1, after change: \(value)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  delay(<span class="number">2</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure 2: \(value)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>代码的打印结果如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">before closure: 42</span><br><span class="line">🕑</span><br><span class="line">inside closure 1, before change: 42</span><br><span class="line">inside closure 1, after change: 1337</span><br><span class="line">🕑</span><br><span class="line">inside closure 2: 1337</span><br></pre></td></tr></table></figure>
+<p>变量 <code>value</code> 的值在闭包内部被修改了（尽管它已经被捕获了，但并不等同于一个常量拷贝，它依然保持着对原变量的引用）。接着第二个闭包执行时打印的就是这个新值了，此刻第一个闭包已经执行完毕并释放了所有的引用，而且 <code>value</code> 变量也脱离了 <code>demo4()</code> 函数的作用域。</p>
+<h2 id="捕获一个变量作为一个常量拷贝"><a href="#捕获一个变量作为一个常量拷贝" class="headerlink" title="捕获一个变量作为一个常量拷贝"></a>捕获一个变量作为一个常量拷贝</h2><p>如果想要在闭包<strong>创建时</strong>捕获变量的值，而不是在闭包执行时才去获取变量的值，你可以使用 <strong>捕获列表</strong></p>
+<p>捕获列表写在闭包的方括号之间，紧跟闭包的左括号（并且在闭包的参数或返回类型之前）[^3]</p>
+<p>在创建闭包时捕获变量的值（而不是变量的引用），你可以使用 <code>[localVar = varToCapture]</code> 捕获列表。看上去像这样：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo5</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> value = <span class="number">42</span></span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: \(value)"</span>)</span><br><span class="line">  delay(<span class="number">1</span>) &#123; [constValue = value] <span class="keyword">in</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure: \(constValue)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  value = <span class="number">1337</span></span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"after closure: \(value)"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>打印结果：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">before closure: 42</span><br><span class="line">after closure: 1337</span><br><span class="line">🕑</span><br><span class="line">inside closure: 42</span><br></pre></td></tr></table></figure>
+<p>与上面的 <code>demo3()</code> 比较，这次闭包打印的是变量创建时的值，而不是后来赋的新值 1337，即使整个闭包的执行是在对变量重新赋值之后。</p>
+<p>这就是 <code>[constValue = value]</code> 在闭包中所做的事情：在闭包创建时捕获变量 value 的内容 — 而不是变量的引用。</p>
+<h2 id="回到-Pokemon-上"><a href="#回到-Pokemon-上" class="headerlink" title="回到 Pokemon 上"></a>回到 Pokemon 上</h2><p>正如我们上面所看到的：如果一个变量是引用类型—就像我们的 Pokemon 类，闭包并没有真正（强引用）捕获变量的引用，而是捕获了一个针对原始实例 pokemon 的拷贝：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo6</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Pikachu"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: \(pokemon)"</span>)</span><br><span class="line">  delay(<span class="number">1</span>) &#123; [pokemonCopy = pokemon] <span class="keyword">in</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure: \(pokemonCopy)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Mewtwo"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"after closure: \(pokemon)"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这类似创建了一个中间变量指向同一个 pokemon，然后捕获了这个中间变量：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo6_equivalent</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Pikachu"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"before closure: \(pokemon)"</span>)</span><br><span class="line">  <span class="comment">// here we create an intermediate variable to hold the instance </span></span><br><span class="line">  <span class="comment">// pointed by the variable at that point in the code:</span></span><br><span class="line">  <span class="keyword">let</span> pokemonCopy = pokemon</span><br><span class="line">  delay(<span class="number">1</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"inside closure: \(pokemonCopy)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Mewtwo"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"after closure: \(pokemon)"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>事实上，使用捕获列表完全等同于上述代码的行为…除了中间变量 <code>pokemonCopy</code> 属于闭包的局部变量，只能在闭包内部访问。 </p>
+<p>相比 <code>demo2()</code> 直接使用 <code>pokemon</code>，<code>demo6()</code> 则使用了 <code>[pokemonCopy = pokemon] in …</code>，<code>demo6()</code> 输出如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">before closure: &lt;Pokemon Pikachu&gt;</span><br><span class="line">after closure: &lt;Pokemon Mewtwo&gt;</span><br><span class="line">&lt;Pokemon Mewtwo&gt; escaped!</span><br><span class="line">🕑</span><br><span class="line">inside closure: &lt;Pokemon Pikachu&gt;</span><br><span class="line">&lt;Pokemon Pikachu&gt; escaped!</span><br></pre></td></tr></table></figure>
+<p>以下是详细过程：</p>
+<ul>
+<li>皮卡丘（Pikachu）被创造。</li>
+<li>接着闭包捕获了 Pikachu 的拷贝（这里实际上是捕获了 pokemon 变量的值）。</li>
+<li>所以当我们紧接着为 pokemon 变量赋新值 “Mewtwo” 后，“Pikachu” 还没有被释放，依然被闭包所保留。</li>
+<li>当我们离开 <code>demo6</code> 函数的作用域，Mewtwo 就被释放了，在方法内部 pokemon 变量自身只被一个强引用所保持，离开作用域强引用也就消失了。</li>
+<li>稍后闭包执行时，打印了 <code>&quot;Pikachu&quot;</code>，这是因为在闭包创建时，捕获列表就捕获了 <strong>Pokemon</strong>。</li>
+<li>最后 GCD 释放了闭包，由此可以证明闭包保持了口袋妖怪皮卡丘（Pikachu pokemon）的引用。</li>
+</ul>
+<p>与此刚好相反，我们来分析下 <code>demo2</code> 的代码：</p>
+<ul>
+<li>皮卡丘（Pikachu）被创造。</li>
+<li>闭包只捕获了 <code>pokemon</code> 变量的<strong>引用</strong>，而不是捕获其所包含的值 <strong>Pickachu</strong></li>
+<li>所以当 pokemon 随后被分配了一个新值 <code>&quot;Mewtwo&quot;</code>，此时没有任何对象的强引用指向 Pikachu，它也会立即被释放。</li>
+<li>因此闭包稍后执行打印的结果也是 <strong>Mewtwo</strong></li>
+<li>在闭包执行完毕后 GCD 会释放闭包，此时 Mewtwo pokemon 会随闭包一起被释放。</li>
+</ul>
+<h2 id="知识点整合"><a href="#知识点整合" class="headerlink" title="知识点整合"></a>知识点整合</h2><p>上面的知识点都掌握了吗？我承认，确实有点多…</p>
+<p>下面是一个人为设计的例子，它包含了闭包创建时就对变量取值—归功于捕获列表，以及先捕获变量的引用，而真正的取值放到闭包执行时这两种情形：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">demo7</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Mew"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"➡️ Initial pokemon is \(pokemon)"</span>)</span><br><span class="line"></span><br><span class="line">  delay(<span class="number">1</span>) &#123; [capturedPokemon = pokemon] <span class="keyword">in</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"closure 1 — pokemon captured at creation time: \(capturedPokemon)"</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"closure 1 — variable evaluated at execution time: \(pokemon)"</span>)</span><br><span class="line">    pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Pikachu"</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"closure 1 - pokemon has been now set to \(pokemon)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Mewtwo"</span>)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"🔄 pokemon changed to \(pokemon)"</span>)</span><br><span class="line"></span><br><span class="line">  delay(<span class="number">2</span>) &#123; [capturedPokemon = pokemon] <span class="keyword">in</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"closure 2 — pokemon captured at creation time: \(capturedPokemon)"</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"closure 2 — variable evaluated at execution time: \(pokemon)"</span>)</span><br><span class="line">    pokemon = <span class="type">Pokemon</span>(name: <span class="string">"Charizard"</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"closure 2 - value has been now set to \(pokemon)"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>能猜猜打印结果是什么吗？可能有点难猜，不过这是一个很好的练习，通过自己判断打印结果来测试你是否掌握了今天的课程…</p>
+<p><img src="http://alisoftware.github.io/assets/pokemon-drumroll.gif" alt></p>
+<p>下面是打印结果，你猜对了吗？</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">➡️ Initial pokemon is &lt;Pokemon Mew&gt;</span><br><span class="line">🔄 pokemon changed to &lt;Pokemon Mewtwo&gt;</span><br><span class="line">🕑</span><br><span class="line">closure 1 — pokemon captured at creation time: &lt;Pokemon Mew&gt;</span><br><span class="line">closure 1 — variable evaluated at execution time: &lt;Pokemon Mewtwo&gt;</span><br><span class="line">closure 1 - pokemon has been now set to &lt;Pokemon Pikachu&gt;</span><br><span class="line">&lt;Pokemon Mew&gt; escaped!</span><br><span class="line">🕑</span><br><span class="line">closure 2 — pokemon captured at creation time: &lt;Pokemon Mewtwo&gt;</span><br><span class="line">closure 2 — variable evaluated at execution time: &lt;Pokemon Pikachu&gt;</span><br><span class="line">&lt;Pokemon Pikachu&gt; escaped!</span><br><span class="line">closure 2 - value has been now set to &lt;Pokemon Charizard&gt;</span><br><span class="line">&lt;Pokemon Mewtwo&gt; escaped!</span><br><span class="line">&lt;Pokemon Charizard&gt; escaped!</span><br></pre></td></tr></table></figure>
+<p>所以，到底发生了什么？稍微有点复杂，让我给大家来逐步解释一下：</p>
+<ol>
+<li>把 ➡️ <code>pokemon</code> 一开始设置为 <code>Mew</code></li>
+<li>创建闭包 1 并且它的新本地变量 <code>capturedPokemon</code> 捕获了 <code>pokemon</code> 的值（此刻 <code>pokemon</code> 的值为 <code>New</code>，并且闭包也捕获了 <code>pokemon</code> 变量的引用，<code>capturedPokemon</code> 和 <code>pokemeon</code> 都会在闭包代码中使用）</li>
+<li>🔄 然后将 <code>pokemon</code> 修改为 <code>Mewtwo</code></li>
+<li>创建闭包 2，它的新本地变量 <code>capturedPokemon</code> 捕获了 <code>pokemon</code> 的值（此刻 <code>pokemon</code> 的值为 <code>Mewtwo</code>，并且闭包也捕获了 <code>pokemon</code> 变量的引用，<code>capturedPokemon</code> 和 <code>pokemeon</code> 都会在闭包代码中使用）</li>
+<li>此刻，<code>demo7()</code> 函数已经执行完毕了</li>
+<li><p>一秒钟后，GCD 执行第一个闭包</p>
+<ul>
+<li>它的打印结果为 <code>Mew</code>，即第二步创建闭包时捕获在 <code>capturedPokemon</code> 变量中的值</li>
+<li>它也会根据所捕获 <code>pokemon</code> 的引用，找出变量的当前值，它目前为 <code>Mewtwo</code>（至少是在第五步离开 <code>demo7()</code> 函数前的值）</li>
+<li>然后将变量 <code>pokemon</code> 的值改为 <code>Pikachu</code>（再次强调，闭包捕获的是变量 <code>pokemon</code> 的引用，所以 demo7() 函数中的 <code>pokemon</code> 变量与闭包中进行赋值操作的 <code>pokemon</code> 变量具有同的引用）</li>
+<li>当闭包执行完毕被 GCD 释放后，没有对象在强引用 <code>Mew</code> 了，因此会释放掉。但是第二个闭包的 <code>capturedPokemon</code> 依然捕获着 <code>Mewtwo</code>，并且第二个闭包也捕获了 <code>pokemon</code> 变量的引用，此刻它的值为 <code>Pikachu</code></li>
+</ul>
+</li>
+<li><p>🕑 又过了一秒钟，GCD 开始执行第二个闭包</p>
+<ul>
+<li>它的打印结果为 <code>Mewtwo</code>，即步骤四第二个闭包创建时捕获在 <code>capturedPokemon</code> 变量中的值</li>
+<li>它也会根据所捕获 <code>pokemon</code> 的引用，找出变量的当前值，它目前为 <code>Pikachu</code>（因为在第一个闭包中已经修改了它）</li>
+<li>最后，将 <code>pokemon</code> 变量设置为 <code>Charizard</code>，由于 Pikachu 小精灵只被 <code>pokemon</code> 变量强引用，而此时 <code>pokemon</code> 已不再指向它了，所以也会立即被释放。</li>
+<li>当闭包执行完毕被 GCD 释放后，本地变量 <code>capturedPokemon</code> 脱离了作用域，所以 <code>Mewtwo</code> 会被释放，同时指向 <code>pokemon</code> 变量的强引用也会消失，小精灵 <code>Charizard</code> 也会被释放</li>
+</ul>
+</li>
+</ol>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>是不是感觉有点烧脑？这很正常，闭包捕获语义有时候会比较复杂，尤其类似最后那个例子。我们要记住下面几个关键点：</p>
+<ul>
+<li>在 Swift 闭包中使用的所有外部变量，闭包会自动捕获这些变量的引用</li>
+<li>在闭包<strong>执行时</strong>，<strong>会根据这些变量引用得到所对应的具体值</strong></li>
+<li>因为我们捕获的是变量的引用（而不是变量自身的值），<strong>所以你可以在闭包内部修改变量的值</strong>（当然变量要声明为 <code>var</code>，而不能是 <code>let</code>）</li>
+<li><strong>你可以在闭包创建时获取变量中的值</strong>，然后把它存储到本地常量中，而不是捕获变量的引用。我们可以使用带中括号的捕获列表来实现。</li>
+</ul>
+<p>今天的课程就先学到这里，或许有些难以理解。不要犹豫，<a href="http://alisoftware.github.io/assets/Closure-Capture.playground.zip" target="_blank" rel="noopener">打开你的 Playground 尝试测试、修改、运行这些代码</a>，直到你彻底理解了其中的原理。</p>
+<p>一旦你理解了以上内容，就可以期待我的下一篇文章了，接下来我会讨论捕获弱变量（weakly）来避免循环引用，以及闭包中的 <code>[weak self]</code> 和 <code>[unowned self]</code> 意味着什么。</p>
+<blockquote>
+<p>感谢 <a href="https://twitter.com/merowing_" target="_blank" rel="noopener">@merowing</a> 和我在 Slack 上针对所有的闭包语义所做的讨论，包括在闭包执行时才对捕获变量取值的事实。大家感兴趣的话，可以访问他的 <a href="http://merowing.info/" target="_blank" rel="noopener">blog</a> 😉</p>
+</blockquote>
+<ol>
+<li><p>对于熟悉 Objective-C 的同学已经注意到 Swift 的行为和 Objective-C 的默认闭包语义不同，而是有些类似于 Objective-C 中的变量带一个 __block 修饰符。</p>
+</li>
+<li><p>与 ObjC 的默认行为不同…更像是在 Objective-C 中使用 <code>__block</code>。</p>
+</li>
+<li><p>注意即使在我们的例子中仅捕获了一个变量，在捕获列表中你可以列出不止一个捕获的变量，这就是为什么称它为列表（lists）的原因。并且即使没有显式地写出闭包参数列表，你依然要将 <code>in</code> 关键字放置于捕获列表的后面，和闭包正文分隔开来。</p>
+</li>
+</ol>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Crunchy-Development/">Crunchy Development</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift/">Swift</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/09/09/closure-capture-1/" data-title="闭包捕获语义第一弹：一网打尽！ | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2016/09/12/default-arguments-in-protocols/" title="面向协议的日志：给 Swift 协议添加默认参数">
+  <strong>上一篇</strong><br>
+  <span>
+  面向协议的日志：给 Swift 协议添加默认参数</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/09/08/questions-can-you-call-super-in-a-setter/" title="答疑：能在 setter 方法中调用父类么？">
+ <strong>下一篇</strong><br> 
+ <span>答疑：能在 setter 方法中调用父类么？
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/09/09/closure-capture-1/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#介绍"><span class="toc-number">1.</span> <span class="toc-text">介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#默认的捕获语义"><span class="toc-number">2.</span> <span class="toc-text">默认的捕获语义</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#被捕获的变量在执行时才取值"><span class="toc-number">3.</span> <span class="toc-text">被捕获的变量在执行时才取值</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#你可以修改闭包中捕获的变量"><span class="toc-number">4.</span> <span class="toc-text">你可以修改闭包中捕获的变量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#捕获一个变量作为一个常量拷贝"><span class="toc-number">5.</span> <span class="toc-text">捕获一个变量作为一个常量拷贝</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#回到-Pokemon-上"><span class="toc-number">6.</span> <span class="toc-text">回到 Pokemon 上</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#知识点整合"><span class="toc-number">7.</span> <span class="toc-text">知识点整合</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">8.</span> <span class="toc-text">总结</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

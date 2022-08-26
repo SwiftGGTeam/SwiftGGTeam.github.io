@@ -1,0 +1,1035 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>Swift 5 字符串插值-简介 | Swift 5 字符串插值-简介 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift 5,string,interpolation,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Olivier Halligon，原文链接，原文日期：2018-12-15译者：Nemocdz；校对：numbbbbb，Yousanflics；定稿：Forelax     StringInterpolation 协议最初的设计效率低下又不易扩展，为了在后续的版本中能够将其彻底重构，Swift 4 中将该协议标记为废弃。即将在 Swift 5 中亮相的 SE-0228 提案介绍了一种新的">
+<meta name="keywords" content="swift 5,string,interpolation">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Swift 5 字符串插值-简介">
+<meta property="og:url" content="https://swift.gg/2019/04/22/swift5-stringinterpolation-part1/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Olivier Halligon，原文链接，原文日期：2018-12-15译者：Nemocdz；校对：numbbbbb，Yousanflics；定稿：Forelax     StringInterpolation 协议最初的设计效率低下又不易扩展，为了在后续的版本中能够将其彻底重构，Swift 4 中将该协议标记为废弃。即将在 Swift 5 中亮相的 SE-0228 提案介绍了一种新的">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-08-26T13:33:55.036Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Swift 5 字符串插值-简介">
+<meta name="twitter:description" content="作者：Olivier Halligon，原文链接，原文日期：2018-12-15译者：Nemocdz；校对：numbbbbb，Yousanflics；定稿：Forelax     StringInterpolation 协议最初的设计效率低下又不易扩展，为了在后续的版本中能够将其彻底重构，Swift 4 中将该协议标记为废弃。即将在 Swift 5 中亮相的 SE-0228 提案介绍了一种新的">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2019/04/22/swift5-stringinterpolation-part1/" target="_blank" title="Swift 5 字符串插值-简介" itemprop="url">Swift 5 字符串插值-简介</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2019-04-22T05:00:00.000Z" itemprop="datePublished">2019-04-22</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Olivier Halligon，<a href="http://alisoftware.github.io/swift/2018/12/15/swift5-stringinterpolation-part1/" target="_blank" rel="noopener">原文链接</a>，原文日期：2018-12-15<br>译者：<a href="https://nemocdz.github.io/" target="_blank" rel="noopener">Nemocdz</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>，<a href="http://blog.yousanflics.com.cn" target="_blank" rel="noopener">Yousanflics</a>；定稿：<a href="http://forelax.space" target="_blank" rel="noopener">Forelax</a></p>
+</blockquote>
+ <!--此处开始正文-->
+<p> <code>StringInterpolation</code> 协议最初的设计效率低下又不易扩展，为了在后续的版本中能够将其彻底重构，Swift 4 中将该协议标记为废弃。即将在 Swift 5 中亮相的 <a href="https://github.com/apple/swift-evolution/blob/master/proposals/0228-fix-expressiblebystringinterpolation.md" target="_blank" rel="noopener">SE-0228</a> 提案介绍了一种新的 <code>StringInterpolation</code> 设计，使得 String 有了更大的潜能。</p>
+ <a id="more"></a>
+<p> 在 Swift 的 <code>master</code> 分支里实现之后，就可以下载一个 <a href="https://swift.org/download/#snapshots" target="_blank" rel="noopener">快照</a> 来安装最新的 Swift 5 工具链到 Xcode 中，来尝试全新的 <code>StringInterpolation</code>。让我们来把玩一下。</p>
+<h2 id="全新的-StringInterpolation-设计"><a href="#全新的-StringInterpolation-设计" class="headerlink" title="全新的 StringInterpolation 设计"></a>全新的 StringInterpolation 设计</h2><p> 我强烈建议本篇文章的读者阅读一下 <a href="https://github.com/apple/swift-evolution/blob/master/proposals/0228-fix-expressiblebystringinterpolation.md" target="_blank" rel="noopener">SE-0228</a> 提案，感受一下新 API 的背后的设计思路和动机。</p>
+<p> 要让一个类型遵循 <code>ExpressibleByStringInterpolation</code>，最基本的你需要：</p>
+<ul>
+<li>让这个类型拥有一个类型为 <code>StringInterpolation</code> 的子类型，这个子类型遵循 <code>StringInterpolationProtocol</code> 并将负责解释插值</li>
+<li>这个子类型仅需要实现 <code>appendLiteral(_ literal: String)</code> 方法，再选择一个或多个你自己想要支持的 <code>appendInterpolation(...)</code> 签名的方法</li>
+<li>这个 <code>StringInterpolation</code> 子类型会作为“构造器”服务于你的主类型，然后编译器会调用那些 <code>append…</code> 方法一步一步地构造对象</li>
+<li>然后你的主类型需要实现 <code>init(stringInterpolation: StringInterpolation)</code> ，它会用上一步的结果来实例化它自己。</li>
+</ul>
+<p>你可以实现任何你喜欢的 <code>appenInterpolation(...)</code> 方法，这意味着你可以任意选择支持什么插值。这是一个带来巨大的可能性的超强功能。</p>
+<p>举个例子，如果你实现了 <code>func appendInterpolation(_ string: String, pad: Int)</code>，那么意味着你将可以用类似这样的插值：<code>&quot;Hello \(name, pad: 10), how are you?&quot;</code> 来构造你的类型。插值只需要匹配你的 <code>StringInterpolation</code> 子类型其中一个支持的 <code>appendInterpolation</code> 方法签名。</p>
+<h2 id="一个简单的例子"><a href="#一个简单的例子" class="headerlink" title="一个简单的例子"></a>一个简单的例子</h2><p>让我用一个简单的例子来演示一下插值是如何运作的。一起来构造一个允许引用 issue 编号和用户的 <code>GitHubComment</code> 类型吧。</p>
+<p>这个例子的目标是做到类似下面的写法：</p>
+ <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> comment: <span class="type">GitHubComment</span> = <span class="string">"""</span></span><br><span class="line"><span class="string">  See \(issue: 123) where \(user: "alisoftware") explains the steps to reproduce.</span></span><br><span class="line"><span class="string">  """</span></span><br></pre></td></tr></table></figure>
+<p>所以我们该怎么实现它呢？</p>
+<p>首先，让我们声明基本的结构体 <code>struct GitHubComment</code> 并让它遵循 <code>ExpressibleByStringLiteral</code>（因为 <code>ExpressibleByStringInterpolation</code> 继承自这个协议所以我们将它的实现抽离）和 <code>CustomStringConvertible</code>（为了 debug 时友好地在控制台中打印）。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">GitHubComment</span> </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> markdown: <span class="type">String</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">GitHubComment</span>: <span class="title">ExpressibleByStringLiteral</span> </span>&#123;</span><br><span class="line">  <span class="keyword">init</span>(stringLiteral value: <span class="type">String</span>) &#123;</span><br><span class="line">    <span class="keyword">self</span>.markdown = value</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">GitHubComment</span>: <span class="title">CustomStringConvertible</span> </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> description: <span class="type">String</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">self</span>.markdown</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后，我们让 <code>GitHubComment</code> 遵循 <code>ExpressibleByStringInterpolation</code>。这意味着在剩下需要实现的功能，将由一个 <code>StringInterpolation</code> 子类型来完成：</p>
+<ul>
+<li><p>首先初始化它自己：<code>init(literalCapacity: Int, interpolationCount: Int)</code> 提供给你保留一部分数据到缓冲区的能力，在一步步构造类型时就会用到这个能力。在这个例子中，我们可以在构造实例的时候，简单用一个 <code>String</code> 并往它上面追加片段，不过这里我采用一个 <code>parts: [String]</code> 来代替，之后再将它组合起来</p>
+</li>
+<li><p>实现 <code>appendLiteral(_ string: String)</code> 逐个追加文本到 <code>parts</code> 里</p>
+</li>
+<li><p>实现 <code>appendInterpolation(user: String)</code> 在遇到 <code>\(user: xxx)</code> 时逐个追加 markdown 表示的用户配置链接</p>
+</li>
+<li><p>实现 <code>appendInterpolation(issue: Int)</code> 逐个追加用 markdown 表示的 issue 链接</p>
+</li>
+<li><p>然后在 <code>GitHubComment</code> 上实现 <code>init(stringInterpolation: StringInterpolation)</code> 将 <code>parts</code> 构造成一个评论</p>
+</li>
+</ul>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">GitHubComment</span>: <span class="title">ExpressibleByStringInterpolation</span> </span>&#123;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">StringInterpolation</span>: <span class="title">StringInterpolationProtocol</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> parts: [<span class="type">String</span>]</span><br><span class="line">      <span class="keyword">init</span>(literalCapacity: <span class="type">Int</span>, interpolationCount: <span class="type">Int</span>) &#123;</span><br><span class="line">      <span class="keyword">self</span>.parts = []</span><br><span class="line">      <span class="comment">// - literalCapacity 文本片段的字符数 (L)</span></span><br><span class="line">      <span class="comment">// - interpolationCount 插值片段数 (I)</span></span><br><span class="line">      <span class="comment">// 我们预计通常结构会是像 "LILILIL"</span></span><br><span class="line">      <span class="comment">// — e.g. "Hello \(world, .color(.blue))!" — 因此是 2n+1</span></span><br><span class="line">      <span class="keyword">self</span>.parts.reserveCapacity(<span class="number">2</span>*interpolationCount+<span class="number">1</span>)</span><br><span class="line">    &#125;</span><br><span class="line">      <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">appendLiteral</span><span class="params">(<span class="number">_</span> literal: String)</span></span> &#123;</span><br><span class="line">      <span class="keyword">self</span>.parts.append(literal)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">appendInterpolation</span><span class="params">(user name: String)</span></span> &#123;</span><br><span class="line">      <span class="keyword">self</span>.parts.append(<span class="string">"[\(name)](https://github.com/\(name))"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">appendInterpolation</span><span class="params">(issue number: Int)</span></span> &#123;</span><br><span class="line">      <span class="keyword">self</span>.parts.append(<span class="string">"[#\(number)](issues/\(number))"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">init</span>(stringInterpolation: <span class="type">StringInterpolation</span>) &#123;</span><br><span class="line">    <span class="keyword">self</span>.markdown = stringInterpolation.parts.joined()</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这就完事了！我们成功了！</p>
+<p>注意，因为那些我们实现了的 <code>appendInterpolation</code> 方法签名，我们允许使用 <code>Hello \(user: &quot;alisoftware&quot;)</code> 但不能使用 <code>Hello \(user: 123)</code>，因为 <code>appendInterpolation(user:)</code> 期望一个 <code>String</code> 作为形参。类似的是，在你的字符串中 <code>\(issue: 123)</code> 只能允许一个 <code>Int</code> 因为 <code>appendInterpolation(issue:)</code> 采用一个 <code>Int</code> 作为形参。</p>
+<p>实际上，如果你尝试在你的 <code>StringInterpolation</code> 子类中用不支持的插值，编译器会给你提示报错：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> comment: <span class="type">GitHubComment</span> = <span class="string">"""</span></span><br><span class="line"><span class="string">See \(issue: "bob") where \(username: "alisoftware") explains the steps to reproduce.</span></span><br><span class="line"><span class="string">"""</span></span><br><span class="line"><span class="comment">//             ^~~~~         ^~~~~~~~~</span></span><br><span class="line"><span class="comment">// 错误: 无法转换 ‘String’ 类型的值到期望的形参类型 ‘Int’</span></span><br><span class="line"><span class="comment">// 错误: 调用 (have 'username:', expected 'user:')实参标签不正确</span></span><br></pre></td></tr></table></figure>
+<h2 id="这仅仅只是个开始"><a href="#这仅仅只是个开始" class="headerlink" title="这仅仅只是个开始"></a>这仅仅只是个开始</h2><p>这个新的设计打开了一大串脑洞让你去实现自己的 <code>ExpressibleByStringInterpolation</code> 类型。这些想法包括：</p>
+<ul>
+<li>创建一个 <code>HTML</code> 类型并遵循，你就可以用插值写 HTML </li>
+<li>创建一个 <code>SQLStatement</code> 类型并遵循，你就可以写更简单的 SQL 语句</li>
+<li>用字符串插值支持更多自定义格式，比如在你的插值字符串中用格式化 <code>Double</code> 或者 <code>Date</code> 值</li>
+<li>创建一个 <code>RegEX</code> 类型并遵循，你就可以用花里胡哨的语法写正则表达式</li>
+<li>创建一个 <code>AttributedString</code> 类型并遵循，就可以用字符串插值构建 <code>NSAttributedString</code> </li>
+</ul>
+<p>带来新的字符串插值设计的 <a href="https://github.com/brentdax" target="_blank" rel="noopener">Brent Royal-Gordon</a> 和 <a href="https://github.com/milseman" target="_blank" rel="noopener">Michael Ilseman</a>，提供了更多例子在这个 <a href="https://gist.github.com/brentdax/0b46ce25b7da1049e61b4669352094b6" target="_blank" rel="noopener">要点列表</a> 中。</p>
+<p>我个人尝试了一下支持 <code>NSAttributedString</code> 的实现，并想 <a href="http://alisoftware.github.io/swift/2018/12/16/swift5-stringinterpolation-part2/" target="_blank" rel="noopener">在专门的一篇文章里分享它的初步实现</a>，因为我发现它非常优雅。我们下一篇文章再见！</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Crunchy-Development/">Crunchy Development</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a><a href="/tags/Swift/">Swift</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2019/04/22/swift5-stringinterpolation-part1/" data-title="Swift 5 字符串插值-简介 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2019/05/06/implementing-a-heap-based-priority-queue-using-swift/" title="使用 Swift 实现基于堆的优先级队列">
+  <strong>上一篇</strong><br>
+  <span>
+  使用 Swift 实现基于堆的优先级队列</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2019/04/15/core-bluetooth/" title="在 iOS 11 中使用 Core Bluetooth">
+ <strong>下一篇</strong><br> 
+ <span>在 iOS 11 中使用 Core Bluetooth
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2019/04/22/swift5-stringinterpolation-part1/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#全新的-StringInterpolation-设计"><span class="toc-number">1.</span> <span class="toc-text">全新的 StringInterpolation 设计</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#一个简单的例子"><span class="toc-number">2.</span> <span class="toc-text">一个简单的例子</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#这仅仅只是个开始"><span class="toc-number">3.</span> <span class="toc-text">这仅仅只是个开始</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

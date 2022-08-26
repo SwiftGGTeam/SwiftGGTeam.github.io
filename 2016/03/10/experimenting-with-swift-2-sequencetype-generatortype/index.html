@@ -1,0 +1,1042 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>初探 Swift Sequences 和 Generators | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift sequencetype,swift generatortype,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="对于Swift自定义序列不明白的可以来看下本文，讲解了Swift Sequencestype和Swift Generatorstype。">
+<meta name="keywords" content="swift sequencetype,swift generatortype">
+<meta property="og:type" content="article">
+<meta property="og:title" content="初探 Swift Sequences 和 Generators">
+<meta property="og:url" content="https://swift.gg/2016/03/10/experimenting-with-swift-2-sequencetype-generatortype/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="对于Swift自定义序列不明白的可以来看下本文，讲解了Swift Sequencestype和Swift Generatorstype。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://swift.gg/img/articles/experimenting-with-swift-2-sequencetype-generatortype/sequences.png1457572217.60734">
+<meta property="og:updated_time" content="2022-08-26T13:33:54.990Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="初探 Swift Sequences 和 Generators">
+<meta name="twitter:description" content="对于Swift自定义序列不明白的可以来看下本文，讲解了Swift Sequencestype和Swift Generatorstype。">
+<meta name="twitter:image" content="https://swift.gg/img/articles/experimenting-with-swift-2-sequencetype-generatortype/sequences.png1457572217.60734">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/03/10/experimenting-with-swift-2-sequencetype-generatortype/" target="_blank" title="初探 Swift Sequences 和 Generators" itemprop="url">初探 Swift Sequences 和 Generators</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-03-10T06:00:00.000Z" itemprop="datePublished">2016-03-10</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：uraimo，<a href="https://www.uraimo.com/2015/11/12/experimenting-with-swift-2-sequencetype-generatortype/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-11-12<br>译者：<a href="http://coderafi.github.io/" target="_blank" rel="noopener">CoderAFI</a>；校对：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>在这篇文章中我们将介绍 Swift 2 自定义序列，并举例说明有限序列和无限序列的区别，本文是 <a href="https://www.uraimo.com/category/functional/" target="_blank" rel="noopener">Swift and the functional approach</a> 系列其中一篇。</p>
+<p><img src="/img/articles/experimenting-with-swift-2-sequencetype-generatortype/sequences.png1457572217.60734" alt="sequences"></p>
+<blockquote>
+<p>你可以访问 <a href="https://github.com/uraimo/Swift-Playgrounds/" target="_blank" rel="noopener">GitHub</a> 或下载 <a href="https://github.com/uraimo/Swift-Playgrounds/raw/master/archives/2015-11-12-SequenceTypeGeneratorTypePlayground.playground.zip" target="_blank" rel="noopener">zip 文件</a>来获取本文示例程序的 playground。</p>
+</blockquote>
+<a id="more"></a>
+<p><code>SequenceType</code> 标准协议在官方文档中被定义为一种简单的数据类型，该类型可以用 <code>for...in</code> 来循环遍历。协议中最重要的定义是在上半部分：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">protocol</span> <span class="title">SequenceType</span> </span>&#123;</span><br><span class="line">    <span class="keyword">typealias</span> <span class="type">Generator</span> : <span class="type">GeneratorType</span></span><br><span class="line">	<span class="comment">/// Return a *generator* over the elements of this *sequence*.</span></span><br><span class="line">    <span class="comment">///</span></span><br><span class="line">    <span class="comment">/// - Complexity: O(1).</span></span><br><span class="line">	<span class="keyword">public</span> <span class="function"><span class="keyword">func</span> <span class="title">generate</span><span class="params">()</span></span> -&gt; <span class="type">Self</span>.<span class="type">Generator</span></span><br><span class="line">	...</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的协议中关联了另一个 <code>GeneratorType</code> 协议类型（Swift 让协议泛型化的独特方式）。当我们要自定义序列的时候，我们同时也要自定义一个实现这个协议的生成器，保证我们自定义的 <code>SequenceType</code> 在调用 <code>generate()</code> 方法时能够返回指定元素类型的生成器。</p>
+<p>序列协议中提供了许多有意思的方法，这些方法很多都已经在扩展中实现了，例如 <strong>map</strong>、<strong>flatmap</strong>（深入了解可以参看 <a href="http://www.uraimo.com/2015/10/08/Swift2-map-flatmap-demystified/" target="_blank" rel="noopener">map and flatMap</a>）、<strong>filter</strong>、<strong>reduce</strong>、<strong>subsequence functions</strong> 等。</p>
+<p>这些方法让 <code>SequenceType</code> 协议的作用远远大于只进行 for each 遍历。</p>
+<p>让我们来看下 <code>GeneratorType</code> 的定义：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">protocol</span> <span class="title">GeneratorType</span> </span>&#123;</span><br><span class="line">    <span class="keyword">typealias</span> <span class="type">Element</span></span><br><span class="line">    <span class="comment">/// Advance to the next element and return it, or `nil` if no next</span></span><br><span class="line">    <span class="comment">/// element exists.</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">mutating</span> <span class="function"><span class="keyword">func</span> <span class="title">next</span><span class="params">()</span></span> -&gt; <span class="type">Self</span>.<span class="type">Element?</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个简单的协议只包含了一个 <code>next()</code> 方法，该方法用来返回生成器管理的下一个元素。至关重要的一点是，当序列遍历到最后时，生成器应该返回 <em>nil</em>。接下来当我们构造一个无限序列的时候，来看看为什么这里要返回 <code>nil</code>。</p>
+<p>首先，我们来写一个简单的斐波那契数序列生成器：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">FibonacciGenerator</span> : <span class="title">GeneratorType</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> last = (<span class="number">0</span>,<span class="number">1</span>)</span><br><span class="line">    <span class="keyword">var</span> endAt:<span class="type">Int</span></span><br><span class="line">    <span class="keyword">var</span> lastIteration = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span>(end:<span class="type">Int</span>)&#123;</span><br><span class="line">        endAt = end</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">next</span><span class="params">()</span></span> -&gt; <span class="type">Int?</span>&#123;</span><br><span class="line">        <span class="keyword">guard</span> lastIteration&lt;endAt <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">        &#125;</span><br><span class="line">        lastIteration++</span><br><span class="line"></span><br><span class="line">        <span class="keyword">let</span> next = last.<span class="number">0</span></span><br><span class="line">        last = (last.<span class="number">1</span>,last.<span class="number">0</span>+last.<span class="number">1</span>)</span><br><span class="line">        <span class="keyword">return</span> next</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>为了定义一个有限序列，我们需要一个自定义构造函数来指定一个序列长度。当到达这个长度时 <code>next()</code> 方法就返回 <em>nil</em>。这里我们用元组（Tuple）实现起来会节省很多代码量，让我们看下如何使用这个生成器：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> fg = <span class="type">FibonacciGenerator</span>(end:<span class="number">10</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> <span class="keyword">let</span> fib = fg.next() &#123;</span><br><span class="line">    <span class="built_in">print</span>(fib)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>用这种方式我们就可以遍历生成器中的元素，直到生成器返回 <em>nil</em>。</p>
+<p>根据这个生成器实现一个 <code>SequenceType</code> 轻而易举。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">FibonacciSequence</span> : <span class="title">SequenceType</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> endAt:<span class="type">Int</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span>(end:<span class="type">Int</span>)&#123;</span><br><span class="line">        endAt = end</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">generate</span><span class="params">()</span></span> -&gt; <span class="type">FibonacciGenerator</span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">FibonacciGenerator</span>(end: endAt)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> arr = <span class="type">Array</span>(<span class="type">FibonacciSequence</span>(end:<span class="number">10</span>))</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> f <span class="keyword">in</span> <span class="type">FibonacciSequence</span>(end: <span class="number">10</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(f)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的序列正如预期那样，可以在 foreach 遍历中使用，同样也可以用来生成其他类型的序列，比如数组。</p>
+<p>其实我们没有必要单独定义一种生成器类型，我们可以用 <code>anyGenerator</code> 工具方法和 <code>AnyGenerator&lt;T&gt;</code> 类来降低序列定义的耦合性：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CompactFibonacciSequence</span> : <span class="title">SequenceType</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> endAt:<span class="type">Int</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span>(end:<span class="type">Int</span>)&#123;</span><br><span class="line">        endAt = end</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">generate</span><span class="params">()</span></span> -&gt; <span class="type">AnyGenerator</span>&lt;<span class="type">Int</span>&gt; &#123;</span><br><span class="line">        <span class="keyword">var</span> last = (<span class="number">0</span>,<span class="number">1</span>)</span><br><span class="line">        <span class="keyword">var</span> lastIteration = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">anyGenerator</span>(&#123;</span><br><span class="line">            <span class="keyword">guard</span> lastIteration&lt;<span class="keyword">self</span>.endAt <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">            &#125;</span><br><span class="line">            lastIteration++</span><br><span class="line"></span><br><span class="line">            <span class="keyword">let</span> next = last.<span class="number">0</span></span><br><span class="line">            last = (last.<span class="number">1</span>,last.<span class="number">0</span>+last.<span class="number">1</span>)</span><br><span class="line">            <span class="keyword">return</span> next</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这种定义方式跟上面序列的最终效果是一样的。唯一的区别就是 <code>generate</code> 方法返回了 <code>AnyGenerator&lt;Int&gt;</code> 类型。它已经不是我们开始的时候定义的简单<em>生成器类型</em>。</p>
+<p>这种做法在这里看起来可能没太大用处，但是在很多情况下，相较于让一个生成器嵌入一个序列集合中，用一个简单 <code>anyGenerator()</code> 方法来生成的序列更具扩展性。</p>
+<p>例如，我们用 <a href="https://en.wikipedia.org/wiki/Lucas_number" target="_blank" rel="noopener">Lucas 序列</a>的前 10 个数来创建一个序列。Lucas 序列与斐波那契序列非常相似，不同之处是斐波那契序列以 0，1 开头而 Lucas 序列以 2，1 开头，所以当然最终会生成截然不同的序列，例如：2，1，3，4，7，11，18，29…下面我们只定义一个生成器，并用它来初始化一个数组。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> last = (<span class="number">2</span>,<span class="number">1</span>)</span><br><span class="line"><span class="keyword">var</span> <span class="built_in">c</span> = <span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> lucas = <span class="built_in">anyGenerator</span>&#123;</span><br><span class="line">    ()-&gt;<span class="type">Int?</span> <span class="keyword">in</span></span><br><span class="line">    <span class="keyword">guard</span> <span class="built_in">c</span>&lt;<span class="number">10</span> <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">c</span>++</span><br><span class="line">    <span class="keyword">let</span> next = last.<span class="number">0</span></span><br><span class="line">    last = (last.<span class="number">1</span>,last.<span class="number">0</span>+last.<span class="number">1</span>)</span><br><span class="line">    <span class="keyword">return</span> next</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> a = <span class="type">Array</span>(lucas) <span class="comment">//[2, 1, 3, 4, 7, 11, 18, 29, 47, 76]</span></span><br></pre></td></tr></table></figure>
+<p>看起来不错，我们删除了一些无用的代码，我们也可以扩展我们的算法，让它返回一个<a href="http://www.wikiwand.com/en/Golden_ratio" target="_blank" rel="noopener">黄金分割比</a>，让我们试试：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Darwin</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> <span class="type">Phi</span> = (sqrt(<span class="number">5</span>)+<span class="number">1.0</span>)/<span class="number">2</span></span><br><span class="line"><span class="keyword">let</span> phi = <span class="number">1</span>/<span class="type">Phi</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">luc</span><span class="params">(n:Int)</span></span>-&gt;<span class="type">Int</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="type">Int</span>(pow(<span class="type">Phi</span>, <span class="type">Double</span>(n))+pow(-phi,<span class="type">Double</span>(n)))</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">c</span> = <span class="number">0</span></span><br><span class="line"><span class="keyword">var</span> compactLucas = <span class="built_in">anyGenerator</span>&#123; <span class="built_in">c</span>&lt;<span class="number">10</span> ? luc(<span class="built_in">c</span>++): <span class="literal">nil</span> &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> a2 = <span class="type">Array</span>(compactLucas) <span class="comment">//[2, 1, 3, 4, 7, 11, 18, 29, 47, 76]</span></span><br></pre></td></tr></table></figure>
+<p>这样确实行得通吗？当然，你可以下载 <a href="https://github.com/uraimo/Swift-Playgrounds/" target="_blank" rel="noopener">playground</a> 或<a href="https://raw.githubusercontent.com/uraimo/Swift-Playgrounds/master/archives/2015-11-12-SequenceTypeGeneratorTypePlayground.playground.zip" target="_blank" rel="noopener">打包的 zip 文件</a>来验证。</p>
+<p>为了尝试 <code>SequenceType</code> 提供的一些特性方法。我们构建一个只返回偶数的 Lucas 数字序列：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="built_in">c</span> = <span class="number">0</span></span><br><span class="line"><span class="keyword">var</span> evenCompactLucas = <span class="built_in">anyGenerator</span>&#123; <span class="built_in">c</span>&lt;<span class="number">10</span> ? luc(<span class="built_in">c</span>++): <span class="literal">nil</span> &#125;.<span class="built_in">filter</span>(&#123;$<span class="number">0</span> % <span class="number">2</span> == <span class="number">0</span>&#125;)</span><br><span class="line"><span class="keyword">let</span> a3 = <span class="type">Array</span>(evenCompactLucas) <span class="comment">//[2, 4, 18, 76]</span></span><br></pre></td></tr></table></figure>
+<p>注意，这里我们其实是重新定义了 <code>AnyGenerator</code>，由于前面的序列是有限的，当遍历到最后时，就会产生另一个有限的序列。这从另一方面也可以说明，我们很容易就能改变原有序列，返回一组新的数据集。我们也可以用 map 方法来做一些更直接的转换。</p>
+<h3 id="无限序列"><a href="#无限序列" class="headerlink" title="无限序列"></a>无限序列</h3><p>现在，我们移除 nil 的返回值限制，这样就能根据 Lucas 算法生成一个无限序列。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="built_in">c</span> = <span class="number">0</span></span><br><span class="line"><span class="keyword">var</span> infiniteLucas = <span class="built_in">anyGenerator</span>&#123;luc(<span class="built_in">c</span>++)&#125;</span><br></pre></td></tr></table></figure>
+<p>可见，将一个有限序列转换成无限序列是非常容易的。现在我们生成了一个没有数量限制的新序列。但是我们需要另外一种方式来限制序列元素数，从而让无限序列元素数更可控。</p>
+<p>幸运的是 <code>SequenceType</code> 协议提供了一个方法来解决这个问题：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> a4 = <span class="type">Array</span>(infiniteLucas.<span class="keyword">prefix</span>(<span class="number">10</span>)) <span class="comment">//[2, 1, 3, 4, 7, 11, 18, 29, 47, 76]</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> <span class="keyword">var</span> f <span class="keyword">in</span> infiniteLucas.<span class="keyword">prefix</span>(<span class="number">10</span>)&#123;</span><br><span class="line">    <span class="built_in">print</span>(f)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这种方式将会从当前序列筛选出 10 个元素并添加到一个新的序列中，而且新序列使用起来跟前面的无限序列是一样的。</p>
+<p>让我们进一步来看一下 <em>filter</em> 方法的用法，看看怎么样用它来获取 Lucas 偶数。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> onlyEvenLucas = infiniteLucas.<span class="built_in">filter</span>(&#123;$<span class="number">0</span> % <span class="number">2</span> == <span class="number">0</span>&#125;)</span><br><span class="line"><span class="keyword">for</span> <span class="keyword">var</span> f <span class="keyword">in</span> onlyEvenLucas.<span class="keyword">prefix</span>(<span class="number">10</span>)&#123;</span><br><span class="line">    <span class="built_in">print</span>(f)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><em>然而，上面的代码并不会像预期那样工作。</em></p>
+<p>如果是在 playground 运行，在声明 <code>onlyEventLucas</code> 时你会看到高亮报错。如果是在应用程序中写了这段代码，你的应用程序会崩溃。</p>
+<p>要了解问题的原因，必须要了解 <em>filter</em> 函数的工作原理。 当对一个序列进行 filter 操作时，我们<br>必须要把序列的所有元素都获取到，但是如果没有 <em>nil</em> 限制，序列元素是无限的，就无法确认元素的遍历操作什么时候结束。</p>
+<p>让我们在每次从生成器获取元素时都打印一段文本，来更形象的看下原因：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">InfiniteSequence</span> :<span class="title">SequenceType</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">generate</span><span class="params">()</span></span> -&gt; <span class="type">AnyGenerator</span>&lt;<span class="type">Int</span>&gt; &#123;</span><br><span class="line">        <span class="keyword">var</span> i = <span class="number">0</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">anyGenerator</span>(&#123;</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">"# Returning "</span>+<span class="type">String</span>(i))</span><br><span class="line">            <span class="keyword">return</span> i++</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> fs = <span class="type">InfiniteSequence</span>().<span class="built_in">filter</span>(&#123;$<span class="number">0</span> % <span class="number">2</span> == <span class="number">0</span>&#125;).generate()</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="number">1</span>...<span class="number">5</span> &#123;</span><br><span class="line">    <span class="built_in">print</span>(fs.next())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果你运行这段代码，会发现在 <code>InfiniteSequence</code> 上的过滤处理一直在运行，<em>直到一段时间后处理器无法再继续运行，程序就崩溃了。</em></p>
+<p>幸运的是，解决上面的问题也很容易。我们只需要<strong>延迟计算（Lazily evaluate)</strong>这个无限的 Lucas 序列：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> onlyEvenLucas = infiniteLucas.<span class="built_in">lazy</span>.<span class="built_in">filter</span>(&#123;$<span class="number">0</span> % <span class="number">2</span> == <span class="number">0</span>&#125;)</span><br><span class="line"><span class="keyword">for</span> <span class="keyword">var</span> f <span class="keyword">in</span> onlyEvenLucas.<span class="keyword">prefix</span>(<span class="number">10</span>)&#123;</span><br><span class="line">    <span class="built_in">print</span>(f)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>使用无限序列的 <code>.lazy</code> 属性就能获取一个新的 <code>LazySequenceType</code> 类型，该类型会让 <strong>map</strong>、<strong>flatmap</strong>、<strong>reduce</strong> 或者 <strong>filter</strong> 这些方法延迟执行，也就是说真正的计算会等到例如 <code>next</code> 这样的终端操作（Terminal Operation）（其他语言是这么叫的）执行时才会被执行。</p>
+<p>让无限序列支持延迟计算是一个必要步骤，默认情况下 Swift 的序列不能延迟计算（该特性是在 Swift 1.0 发布的）。具体你可以通过<a href="http://swiftdoc.org/v2.1/protocol/LazySequenceType/" target="_blank" rel="noopener">官方文档</a>来详细了解如何自定义一个 <em>LazySequence</em>（大多数情况可能是解决问题的最好办法），我也会就该内容进行讲解，敬请期待。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/uraimo/">uraimo</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/03/10/experimenting-with-swift-2-sequencetype-generatortype/" data-title="初探 Swift Sequences 和 Generators | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2016/03/11/whats-up-in-swift-evolution/" title="Swift 新进展（2016年1月份）">
+  <strong>上一篇</strong><br>
+  <span>
+  Swift 新进展（2016年1月份）</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/03/09/swift-qa-2016-03-09/" title="每周 Swift 社区问答 2016-03-09（第十二期）">
+ <strong>下一篇</strong><br> 
+ <span>每周 Swift 社区问答 2016-03-09（第十二期）
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/03/10/experimenting-with-swift-2-sequencetype-generatortype/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#无限序列"><span class="toc-number">1.</span> <span class="toc-text">无限序列</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

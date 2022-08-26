@@ -1,0 +1,1056 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>GCD 使用指南 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="grand central dispatch,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="GCD 是一个具备底层特性的框架，在 Swift 中使用可以构建高层级的抽象行为，不会的来看下本指南上手吧。">
+<meta name="keywords" content="grand central dispatch">
+<meta property="og:type" content="article">
+<meta property="og:title" content="GCD 使用指南">
+<meta property="og:url" content="https://swift.gg/2016/05/05/the-gcd-handbook/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="GCD 是一个具备底层特性的框架，在 Swift 中使用可以构建高层级的抽象行为，不会的来看下本指南上手吧。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-08-26T13:33:54.995Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="GCD 使用指南">
+<meta name="twitter:description" content="GCD 是一个具备底层特性的框架，在 Swift 中使用可以构建高层级的抽象行为，不会的来看下本指南上手吧。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/05/05/the-gcd-handbook/" target="_blank" title="GCD 使用指南" itemprop="url">GCD 使用指南</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-05-05T05:00:00.000Z" itemprop="datePublished">2016-05-05</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Soroush Khanlou，<a href="http://khanlou.com/2016/04/the-GCD-handbook/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-04-25<br>译者：<a href="http://chengway.in/" target="_blank" rel="noopener">walkingway</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p><strong>Grand Central Dispatch</strong> 大中枢派发😂 或俗称 GCD 是一件极其强大的武器。它为你提供了很多底层工具（比如队列和信号量），你可以组合这些工具来实现自己想要的多线程效果。不幸的是，这些基于 C 的 API 晦涩难懂，此外将低级工具组合起来实现高抽象层级 API（译者注：类似于 <code>NSOperation</code>）也不是一件容易的事。在这篇文章中，我会教大家如何利用 GCD 提供的工具来实现高抽象层级的行为。<a href="http://khanlou.com/2016/04/the-GCD-handbook/" target="_blank" rel="noopener">英文原文</a></p>
+<a id="more"></a>
+<h2 id="后台执行"><a href="#后台执行" class="headerlink" title="后台执行"></a>后台执行</h2><p>这或许是 GCD 提供的最简单的工具了，你可以在后台线程中处理一些工作，处理完毕后返回主线程继续执行（因为 UIKit 相关的操作只能在主线程中进行）。</p>
+<p>在本指南中，我将使用 <code>doSomeExpensiveWork()</code> 函数来表示一个长时间执行的任务，它会返回一个值。</p>
+<p>这种模式的代码如下所示：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">let defaultPriority = DISPATCH_QUEUE_PRIORITY_DEFAULT</span><br><span class="line">let backgroundQueue = dispatch_get_global_queue(defaultPriority, 0)</span><br><span class="line">dispatch_async(backgroundQueue, &#123;</span><br><span class="line">	let result = doSomeExpensiveWork()</span><br><span class="line">	dispatch_async(dispatch_get_main_queue(), &#123;</span><br><span class="line">		//使用 `result` 做各种事</span><br><span class="line">	&#125;)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>在实际项目中，除了 <code>DISPATCH_QUEUE_PRIORITY_DEFAULT</code>，我们几乎用不到其他的优先级选项。<code>dispatch_get_global_queue()</code> 将返回一个队列，其中可能有数百个线程在并发执行。如果你经常需要在后台队列执行开销庞大的操作，那可以用 <code>dispatch_queue_create</code> 创建自己的队列，<code>dispatch_queue_create</code> 带两个参数，第一个是需要指定的队列名，第二个说明是串行队列还是并发队列。</p>
+<p>注意，每次调用使用的是 <code>dispatch_async</code> 而不是 <code>dispatch_sync</code>。<code>dispatch_async</code> 将在 block 执行前立即返回，而 <code>dispatch_sync</code> 则会等到 block 执行完毕后才返回。内部的调用可以使用 <code>dispatch_sync</code>（因为不在乎什么时候返回），但是外部的调用必须是 <code>dispatch_async</code>（否则主线程会被阻塞）。</p>
+<h2 id="创建单例"><a href="#创建单例" class="headerlink" title="创建单例"></a>创建单例</h2><p><code>dispatch_once</code> 这个 API 可以用来创建单例。不过这种方式在 Swift 中已不再重要，Swift 有更简单的方法来创建单例。我这里就只贴 OC 的实现：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">+ (instancetype) sharedInstance &#123;  </span><br><span class="line">	static dispatch_once_t onceToken;  </span><br><span class="line">	static id sharedInstance;  </span><br><span class="line">	dispatch_once(&amp;onceToken, ^&#123;  </span><br><span class="line">		sharedInstance = [[self alloc] init];  </span><br><span class="line">	&#125;);  </span><br><span class="line">	return sharedInstance;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="摊平-completion-block"><a href="#摊平-completion-block" class="headerlink" title="摊平 completion block"></a>摊平 completion block</h2><p>至此我们的 GCD 之旅开始变得有趣起来。我们可以使用<em>信号量</em>来阻塞一个线程任意时间，直到一个信号从另一个线程发出。信号量和 GCD 的其他部分一样是线程安全的，并且能够从任意位置被触发。</p>
+<p>如果你想同步执行一个异步 API，那你可以使用信号量，但是你不能修改它。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">// 在后台队列</span><br><span class="line">dispatch_semaphore_t semaphore = dispatch_semaphore_create(0)</span><br><span class="line">doSomeExpensiveWorkAsynchronously(completionBlock: &#123;</span><br><span class="line">    dispatch_semaphore_signal(semaphore)</span><br><span class="line">&#125;)</span><br><span class="line">dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER)</span><br><span class="line">// 现在开销很大的异步工作已经完成</span><br></pre></td></tr></table></figure>
+<p>调用 <code>dispatch_semaphore_wait</code> 会阻塞线程，直到 <code>dispatch_semaphore_signal</code> 被调用。这就意味着 <code>signal</code> <strong>必须</strong>从不同的线程被调用，因为当前线程已经被阻塞。你永远都不应该在主线程中调用 <code>wait</code>，只能在后台线程中调用它。</p>
+<p>你可以在调用 <code>dispatch_semaphore_wait</code> 时设置一个超时时间，但是我一般会使用 <code>DISPATCH_TIME_FOREVER</code>。</p>
+<p>为什么在已有 completion block 的情况下还要摊平代码？因为方便呀，我能想到的一种场景是串行执行一组异步程序（即只有前一个任务执行完成，才会继续执行下一个任务）。下面把上述想法简单地抽象成一个 <code>AsyncSerialWorker</code> 类：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">typealias DoneBlock = () -&gt; ()</span><br><span class="line">typealias WorkBlock = (DoneBlock) -&gt; ()</span><br><span class="line"></span><br><span class="line">class AsyncSerialWorker &#123;</span><br><span class="line">    private let serialQueue = dispatch_queue_create(&quot;com.khanlou.serial.queue&quot;, DISPATCH_QUEUE_SERIAL)</span><br><span class="line"></span><br><span class="line">    func enqueueWork(work: WorkBlock) &#123;</span><br><span class="line">        dispatch_async(serialQueue) &#123;</span><br><span class="line">            let semaphore = dispatch_semaphore_create(0)</span><br><span class="line">            work(&#123;</span><br><span class="line">                dispatch_semaphore_signal(semaphore)</span><br><span class="line">            &#125;)</span><br><span class="line">            dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面这个简短的类创建了一个串行队列，允许你将 work 的入队列操作放进 block 中。<code>WorkBlock</code> 需要一个 <code>DoneBlock</code> 作为参数，而 <code>DoneBlock</code> 会在当前工作结束时被执行，我们通过将 <code>DoneBlock</code> 设置为 <code>{dispatch_semaphore_signal(semaphore)}</code> 来调整信号量，从而让串行队列继续执行下去。</p>
+<blockquote>
+<p>译者注：既然已经使用了 DISPATCH_QUEUE_SERIAL，那么队列中 work 的执行顺序不应该是先进先出的吗？确实是这样，但如果我们把 work 看成是一个耗时的网络操作，其内部是提交到其他线程并发去执行（<code>dispatch_async</code>），也就是每次执行到 work 就立刻返回了，即使最终结果可能还未返回。那么我们想要保证队列中的 work 等到前一个 work 执行返回结果后才执行，就需要 <code>semaphore</code>。说了这么多还是举个例子吧，打开 Playground：</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">import UIKit</span><br><span class="line">import XCPlayground</span><br><span class="line"></span><br><span class="line">typealias DoneBlock = () -&gt; ()</span><br><span class="line">typealias WorkBlock = (DoneBlock) -&gt; ()</span><br><span class="line"></span><br><span class="line">class AsyncSerialWorker &#123;</span><br><span class="line">    private let serialQueue = dispatch_queue_create(&quot;com.khanlou.serial.queue&quot;, DISPATCH_QUEUE_SERIAL)</span><br><span class="line">    </span><br><span class="line">    func enqueueWork(work: WorkBlock) &#123;</span><br><span class="line">        dispatch_async(serialQueue) &#123;</span><br><span class="line">            let semaphore = dispatch_semaphore_create(0)</span><br><span class="line">            work(&#123;</span><br><span class="line">                dispatch_semaphore_signal(semaphore)</span><br><span class="line">            &#125;)</span><br><span class="line">            dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">let a = AsyncSerialWorker()</span><br><span class="line"></span><br><span class="line">for i in 1...5 &#123;</span><br><span class="line">    a.enqueueWork &#123; doneBlock in</span><br><span class="line">        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) &#123;</span><br><span class="line">            sleep(arc4random_uniform(4)+1)</span><br><span class="line">            print(i)</span><br><span class="line">            doneBlock()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">XCPlaygroundPage.currentPage.needsIndefiniteExecution = true</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>此时的输出结果为：<code>1，2，3，4，5</code>，如果将关于 <code>semaphore</code> 的代码都注释掉，结果就不会是按顺序输出了。</p>
+</blockquote>
+<blockquote>
+<p><code>dispatch_semaphore_create(0)</code> 当两个线程需要协调处理某个事件时，我们在这里传入 0；内部其实是维护了一个计数器，下面会说到。</p>
+</blockquote>
+<h2 id="限制并发的数量"><a href="#限制并发的数量" class="headerlink" title="限制并发的数量"></a>限制并发的数量</h2><p>在上面的例子中，信号量被用作一个简单的标志，但它也可以当成一个有限资源的计数器。如果你想针对某些特定的资源限制连接数，可以这样做：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">class LimitedWorker &#123;</span><br><span class="line">    private let concurrentQueue = dispatch_queue_create(&quot;com.khanlou.concurrent.queue&quot;, DISPATCH_QUEUE_CONCURRENT)</span><br><span class="line">    private let semaphore: dispatch_semaphore_t</span><br><span class="line">    </span><br><span class="line">    init(limit: Int) &#123;</span><br><span class="line">    	semaphore = dispatch_semaphore_create(limit)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    func enqueueWork(work: () -&gt; ()) &#123;</span><br><span class="line">        dispatch_async(concurrentQueue) &#123;</span><br><span class="line">            dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER)</span><br><span class="line">            work()</span><br><span class="line">            dispatch_semaphore_signal(semaphore)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个例子来自于苹果官方的<a href="https://developer.apple.com/library/ios/documentation/General/Conceptual/ConcurrencyProgrammingGuide/OperationQueues/OperationQueues.html#//apple_ref/doc/uid/TP40008091-CH102-SW24" target="_blank" rel="noopener">多线程编程指南</a>，官方给出的解释如下：</p>
+<blockquote>
+<p>在创建信号量时，可以限定资源的可用数。这个可用数（long 类型）会在信号量初始化时作为参数传入。每次等待信号量时，<code>dispatch_semaphore_wait</code> 都会消耗一次可用数，如果结果为负，函数会告诉内核阻断你的线程。另一方面，<code>dispatch_semaphore_signal</code> 函数每次执行都会将该可用计数 <code>+ 1</code>，以此来表明已经释放了资源。如果此刻有因为等待可用资源而被阻隔的任务，系统会从等待的队列中解锁一个任务来执行。</p>
+</blockquote>
+<p>这个效果类似 <code>NSOperationQueue</code> 的 <code>maxConcurrentOperationCount</code>。如果你使用原生的 GCD 队列而不是 <code>NSOperationQueue</code>，你就能使用信号量来限制并发任务的数量。</p>
+<p>值得注意是：每次调用 <code>enqueueWork</code> 都会将 work 提交到一个<code>并发队列</code>，而该<code>并发队列</code>收到任务就会丢出去执行，直到触碰到信号量数量耗尽的天花板（work 入队列的速度太快，<code>dispatch_semaphore_wait</code> 已经消耗完了所有的数量，而之前的 work 还未执行完毕，<code>dispatch_semaphore_signal</code> 不能增加信号量的可用数量）</p>
+<h2 id="等待许多并发任务完成"><a href="#等待许多并发任务完成" class="headerlink" title="等待许多并发任务完成"></a>等待许多并发任务完成</h2><p>如果你有许多 blocks 任务要去执行，你需要在它们全部完成时得到通知，那可以使用 group。<code>dispatch_group_async</code> 允许你在队列中添加任务（这些任务应该是同步执行的），而且你会追踪有多少被添加的任务。注意：同一个 <code>dispatch group</code> 能够添加不同队列上的任务，并且能保持对所有组内任务的追踪。当所有被追踪的任务完成时，一个传递给 <code>dispatch_group_notify</code> 的 <code>block</code> 会被触发执行，有点类似于 <code>completion block</code></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">dispatch_group_t group = dispatch_group_create()</span><br><span class="line">for item in someArray &#123;</span><br><span class="line">	dispatch_group_async(group, backgroundQueue, &#123;</span><br><span class="line">		performExpensiveWork(item: item)</span><br><span class="line">	&#125;)</span><br><span class="line">&#125;</span><br><span class="line">dispatch_group_notify(group, dispatch_get_main_queue(), &#123;</span><br><span class="line">	// 所有任务都已完成</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个例子很好地展示了如何摊平 completion block。Dispatch group 会在 block 返回时调用 completion block，所以你需要在 block 中等待所有任务完成。</p>
+<p>下面这个例子更加详细地展示了 dispatch group 的用法，如果你的任务已经是异步，可以这样使用：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">// 必须在后台队列使用</span><br><span class="line">dispatch_group_t group = dispatch_group_create()</span><br><span class="line">for item in someArray &#123;</span><br><span class="line">	dispatch_group_enter(group)</span><br><span class="line">	performExpensiveAsyncWork(item: item, completionBlock: &#123;</span><br><span class="line">		dispatch_group_leave(group)</span><br><span class="line">	&#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">dispatch_group_wait(group, DISPATCH_TIME_FOREVER)</span><br><span class="line"></span><br><span class="line">// 所有任务都已完成</span><br></pre></td></tr></table></figure>
+<p>这段代码更加复杂，不过认真阅读还是能看懂的。和信号量一样，groups 同样保持着一个线程安全的、可以操控的内部计数器。你可以使用这个计数器来确保在 completion block 执行前，多个大开销任务都已执行完毕。使用 <code>enter</code> 来增加计数器，使用 <code>leave</code> 来减少计数器。<code>dispatch_group_async</code> 已为你处理了这些细节，所以尽情地享受即可。</p>
+<p>代码片段的最后一行是 <code>wait</code> 调用：它会阻断当前线程并且等计数器到 0 时继续执行。注意，虽然你使用了 <code>enter/leave</code> API，但你还是能够通过 <code>dispatch_group_notify</code> 将 block 提交到队列中。反过来也成立：如果你用了 <code>dispatch_group_async</code> API，也能使用 <code>dispatch_group_wait</code>。</p>
+<p><code>dispatch_group_wait</code> 和 <code>dispatch_semaphore_wait</code> 一样接收一个超时参数。再次重申，我更喜欢 <code>DISPATCH_TIME_FOREVER</code>。另外，不要在主线程中调用 <code>dispatch_group_wait</code>。</p>
+<p>上面两段代码最大的区别是，<code>notify</code> 可以在主线程中调用，而 <code>wait</code> 只能在后台线程中调用（至少 <code>wait</code> 部分要在后台线程中调用，因为它会完全阻塞当前线程）。</p>
+<h2 id="隔离队列"><a href="#隔离队列" class="headerlink" title="隔离队列"></a>隔离队列</h2><p>Swift 中的字典（和数组）都是值类型，当它们被修改时，它们的引用会被一个新的副本所替代。但是，因为更新 Swift 对象的实例变量操作并不是原子性的，所以这些操作不是线程安全的。如果两个线程同一时间更新一个字典（比如都添加一个值），而且这两个操作都尝试写同一块内存，这就会导致内存崩坏。我们可以使用隔离队列来实现线程安全。</p>
+<p>先构建一个<strong>标识映射</strong> <a href="http://martinfowler.com/eaaCatalog/identityMap.html" target="_blank" rel="noopener">Identity Map</a>，一个标识映射是一个字典，表示从 <code>ID</code> 到 model 对象的映射。</p>
+<blockquote>
+<p>标识映射（Identity Map）模式将所有已加载对象放在一个映射中，确保所有对象只被加载一次，并且在引用这些对象时使用该映射来查找对象。在处理数据并发访问时，需要一种策略让多个用户共同操作同一个业务实体，这个很重要。同样重要的是，单个用户在一个长运行事务或复杂事务中始终使用业务实体的一致版本。标识映射模式会为事务中使用所有的业务对象保存一个版本，如果一个实体被请求两次，会得到同一个实体。</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">class IdentityMap&lt;T: Identifiable&gt; &#123;</span><br><span class="line">	var dictionary = Dictionary&lt;String, T&gt;()</span><br><span class="line">	</span><br><span class="line">	func object(forID ID: String) -&gt; T? &#123;</span><br><span class="line">		return dictionary[ID] as T?</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	func addObject(object: T) &#123;</span><br><span class="line">		dictionary[object.ID] = object</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个对象基本就是一个字典封装器，如果有多个线程在同一时刻调用函数 <code>addObject</code>，内存将会崩坏，因为线程会操作相同的引用。这也是操作系统中的经典的<a href="https://en.wikipedia.org/wiki/Readers–writers_problem" target="_blank" rel="noopener">读者-写者问题</a>，简而言之，我们可以在同一时刻有多个读者，但同一时刻只能有一个线程可以写入。</p>
+<p>幸运的是 GCD 针对在该场景下同样拥有强力武器，我们可以使用如下四个 API：</p>
+<ul>
+<li><code>dispatch_sync</code></li>
+<li><code>dispatch_async</code></li>
+<li><code>dispatch_barrier_sync</code></li>
+<li><code>dispatch_barrier_async</code></li>
+</ul>
+<p>理想的情况是，读操作并发执行，写操作异步执行并且必须确保没有其他操作同时执行。GCD 的 <code>barrier</code> 集合 API 提供了解决方案：它们会在队列中的任务清空后执行 block。使用 <code>barrier</code> API 可以限制我们对字典对象的写入，并且确保我们不会在同一时刻执行多个写操作，或者在执行写操作同时执行读操作。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">class IdentityMap&lt;T: Identifiable&gt; &#123;</span><br><span class="line">	var dictionary = Dictionary&lt;String, T&gt;()</span><br><span class="line">	let accessQueue = dispatch_queue_create(&quot;com.khanlou.isolation.queue&quot;, DISPATCH_QUEUE_CONCURRENT)</span><br><span class="line">	    </span><br><span class="line">	func object(withID ID: String) -&gt; T? &#123;</span><br><span class="line">		var result: T? = nil</span><br><span class="line">		dispatch_sync(accessQueue, &#123;</span><br><span class="line">			result = dictionary[ID] as T?</span><br><span class="line">		&#125;)</span><br><span class="line">		return result</span><br><span class="line">	&#125;</span><br><span class="line">	    </span><br><span class="line">	func addObject(object: T) &#123;</span><br><span class="line">		dispatch_barrier_async(accessQueue, &#123;</span><br><span class="line">			dictionary[object.ID] = object</span><br><span class="line">		&#125;)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>dispatch_sync</code> 将会分发 block 到我们的隔离队列上，然后等待其执行完毕。通过这种方式，我们就实现了同步读操作（如果我们想异步读取，getter 方法就需要一个 completion block）。因为 <code>accessQueue</code> 是并发队列，这些同步读取操作可以并发执行，也就是允许同时读。</p>
+<p><code>dispatch_barrier_async</code> 将分发 block 到隔离队列上，<code>async</code> 异步部分意味着会立即返回，并不会等待 block 执行完毕。这对性能有好处，但是在一个写操作后立即执行一个读操作会导致读到一个半成品的数据（因为可能写操作还未完成就开始读了）。</p>
+<p><code>dispatch_barrier_async</code> 中 <code>barrier</code> 部分的逻辑是：barrier block 进入队列后不会立即执行，而是会等待该队列其他 block 执行完毕后再执行。这就保证了我们的 <code>barrier block</code> 每次都只有它自己在执行。而所有在它之后提交的 block 也会一直等待这个 barrier block 执行完再执行。</p>
+<blockquote>
+<p>传入 <code>dispatch_barrier_async()</code> 函数的 <strong>queue</strong>，必须是 <code>dispatch_queue_create</code> 创建的并发 <strong>queue</strong>。如果是串行 <strong>queue</strong> 或者是 <strong>global concurrent queues</strong>，这个函数就变成 <code>dispatch_async()</code> 了</p>
+</blockquote>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>GCD 是一个具备底层特性的框架，通过它，我们可以构建高层级的抽象行为。如果还有一些我没提到的可以用 GCD 构建的高层行为，请告诉我。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Soroush-Khanlou/">Soroush Khanlou</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/05/05/the-gcd-handbook/" data-title="GCD 使用指南 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2016/05/06/units/" title="度量单位">
+  <strong>上一篇</strong><br>
+  <span>
+  度量单位</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/05/04/swift-qa-2016-05-04/" title="每周 Swift 社区问答：@NSApplicationMain 和 @UIApplicationMain">
+ <strong>下一篇</strong><br> 
+ <span>每周 Swift 社区问答：@NSApplicationMain 和 @UIApplicationMain
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/05/05/the-gcd-handbook/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#后台执行"><span class="toc-number">1.</span> <span class="toc-text">后台执行</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#创建单例"><span class="toc-number">2.</span> <span class="toc-text">创建单例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#摊平-completion-block"><span class="toc-number">3.</span> <span class="toc-text">摊平 completion block</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#限制并发的数量"><span class="toc-number">4.</span> <span class="toc-text">限制并发的数量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#等待许多并发任务完成"><span class="toc-number">5.</span> <span class="toc-text">等待许多并发任务完成</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#隔离队列"><span class="toc-number">6.</span> <span class="toc-text">隔离队列</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">7.</span> <span class="toc-text">总结</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

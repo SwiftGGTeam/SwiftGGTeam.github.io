@@ -1,0 +1,1032 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>Swift 中动手封装字节 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift封装,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="在 Swift 中怎么怎么封装字节呢，疑问这个的来看下本文吧，实战搞定封装 Float32 类型数据到 SQLite 组里面。">
+<meta name="keywords" content="swift封装">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Swift 中动手封装字节">
+<meta property="og:url" content="https://swift.gg/2016/09/01/packing-bytes-in-swift/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="在 Swift 中怎么怎么封装字节呢，疑问这个的来看下本文吧，实战搞定封装 Float32 类型数据到 SQLite 组里面。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-08-26T13:33:55.005Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Swift 中动手封装字节">
+<meta name="twitter:description" content="在 Swift 中怎么怎么封装字节呢，疑问这个的来看下本文吧，实战搞定封装 Float32 类型数据到 SQLite 组里面。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/09/01/packing-bytes-in-swift/" target="_blank" title="Swift 中动手封装字节" itemprop="url">Swift 中动手封装字节</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-09-01T05:00:00.000Z" itemprop="datePublished">2016-09-01</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Russ Bishop，<a href="http://www.russbishop.net/packing-bytes-in-swift" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-05-12<br>译者：<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" rel="noopener">pmst</a>；校对：<a href="http://chengway.in/" target="_blank" rel="noopener">walkingway</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>今天，我想尝试封装 <code>Float32</code> 类型数据到 <a href="https://www.sqlite.org/" target="_blank" rel="noopener">SQLite</a> <a href="https://www.sqlite.org/datatype3.html" target="_blank" rel="noopener">二进制大对象⌈Binary Large Object (BLOB)⌋</a> 组中。当然，我可以使用 JSON，protobuf，或是其他一些编码方式。除此之外，<code>NSNumber</code>，<code>NSArray</code> ，<code>NSCoder</code> 和 plist 文件也是不错的选择。</p>
+<p>不过，我希望以更加 Swift 的方式来实现，有点类似 C 语言风格，实现迅速且不会引入任何相关性，解码器（decoder）也非常简单，可以在任何平台上实现。</p>
+<a id="more"></a>
+<h2 id="PointerEncoder"><a href="#PointerEncoder" class="headerlink" title="PointerEncoder"></a>PointerEncoder</h2><p>我们将在 <code>PointEncoder</code> 结构体中实现最终的接口：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">PointEncoder</span> </span>&#123;</span><br><span class="line">  <span class="comment">// 解码过程中，如果我们得到一个相当大的数值，可以假定为服务器拒绝或是损坏的数据</span></span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">let</span> <span class="type">MaxPoints</span> = <span class="number">1_310_719</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 容量大小</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">let</span> _sizeOfCount = <span class="built_in">sizeof</span>(<span class="type">Int64</span>.<span class="keyword">self</span>)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 一个点由两个 Float32 类型数据组成，所占内存大小如下</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">let</span> _sizeOfPair = <span class="number">2</span> * <span class="built_in">sizeof</span>(<span class="type">Float32</span>.<span class="keyword">self</span>)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">encodePoints</span><span class="params">(points: [CGPoint])</span></span> -&gt; <span class="type">NSData?</span> &#123;</span><br><span class="line">  <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">decodePoints</span><span class="params">(data: NSData)</span></span> -&gt; [<span class="type">CGPoint</span>]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>点数组的最大容量 <code>MaxPoints</code> 被限制在大约 10 MB，这已经远远满足示例中的限定值。试想在移动蜂窝网络或是信号不佳环境下的 WiFi，传递如此数量的点给服务器，会迫使服务器断开连接。当然你可以视根据自身情况选择合适的大小。</p>
+<p>接下来，我们需要获取以上类型所占内存大小。计算公式非常简单，一旦明确了不同类型所占内存的大小，就能集中在一个地方定义它们，而不是分散在各地调用 <code>sizeof()</code> 函数。</p>
+<h2 id="编码（encoding）"><a href="#编码（encoding）" class="headerlink" title="编码（encoding）"></a>编码（encoding）</h2><p>下面让我们看看 <code>encodePoints</code> 的实现</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">guard</span> !points.isEmpty &amp;&amp; points.<span class="built_in">count</span> &lt; <span class="type">MaxPoints</span> <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 缓存区的最大容量值</span></span><br><span class="line"><span class="keyword">let</span> bufferLength = _sizeOfCount + (points.<span class="built_in">count</span> * _sizeOfPair)</span><br><span class="line"><span class="built_in">precondition</span>(bufferLength &gt;= (_sizeOfCount + _sizeOfPair), <span class="string">"Empty buffer?"</span>)</span><br><span class="line"><span class="built_in">precondition</span>(bufferLength &lt; megabytes(<span class="number">10</span>), <span class="string">"Buffer would exceed 10MB"</span>)</span><br></pre></td></tr></table></figure>
+<p>第一步确保编码内容不为空，且不超过容量最大值。</p>
+<p>第二步计算缓存区的大小，不宜过大或过小。注意第一步中的 <code>isEmpty</code> 理论上来说排除了缓存区为空的可能，不过倘若之后有人重构了代码，那就不一定了。紧接着我们会检查缓存区分配过多内存的可能。</p>
+<p>以上是我喜欢进行的额外安全检查之一，主要考虑到一些二把刀程序员的尿性。试想之后有人了重构代码，并意外引入一个错误，但优秀的程序员不太可能会删除 <code>precondition</code> 断言语句。<code>precondition</code> 语句之后紧跟着是分配内存，请时刻注意“这里可能发生危险，要格外小心！”。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> rawMemory = <span class="type">UnsafeMutablePointer</span>&lt;<span class="type">Void</span>&gt;.alloc(bufferLength)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Failed to allocate memory</span></span><br><span class="line"><span class="keyword">guard</span> rawMemory != <span class="literal">nil</span> <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</span><br></pre></td></tr></table></figure>
+<p>下一步开始真正创建缓存区，一旦创建失败就跳出。</p>
+<p>控制程序应对内存不足的情况非常困难。如果是因为内存不足造成创建类实例失败，程序应该调用 <code>abort()</code> 方法，因为简单的日志输出或 <code>print</code> 语句依旧涉及一些内存分配操作，这就无法以日志的形式通知失败结果（会使得所有的构造方法失败）。</p>
+<p>考虑另外一种情况，分配大的缓存区有会可能失败，但堆碎片（heap fragmentation）可能还存在额外可用的内存。因此，如何优雅地处理它是一门学问（尤其像在 iOS 这种受限的环境中）。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="type">UnsafeMutablePointer</span>&lt;<span class="type">Int64</span>&gt;(rawMemory).memory = <span class="type">Int64</span>(points.<span class="built_in">count</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> buffer = <span class="type">UnsafeMutablePointer</span>&lt;<span class="type">Float32</span>&gt;(rawMemory + sizeOfCount)</span><br></pre></td></tr></table></figure>
+<p>这里有一点要注意。等式右边将 <code>points.count</code> 类型转换成了 64 位类型的整数，因此不随平台变化而发生改变（Swift 的 <code>Int</code> 类型在编译时会自适应平台，32 位平台下为 32 位整数，同理 64 位平台下为 64 位整数）。我们可不希望用户在升级设备后，引发崩溃或数据损坏问题。</p>
+<p>等式左侧将 <code>rawMemory</code> 强转成 <code>Int64</code> 指针类型，然后将其指向的内存内容赋值为 <code>Int64(points.count)</code>。64 位整数占 8 个字节，因此分配的前 8 个字节内存包含了点个数（<code>sizeOfCount</code>）信息。</p>
+<p>最后，我们将指针偏移 8 个字节（正如前面所说的），指针指向缓存区首地址。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> (index, point) <span class="keyword">in</span> points.<span class="built_in">enumerate</span>() &#123;</span><br><span class="line">  <span class="keyword">let</span> ptr = buffer + (index * <span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Store the point values.</span></span><br><span class="line">  ptr.memory = <span class="type">Float32</span>(point.x)</span><br><span class="line">  ptr.advancedBy(<span class="number">1</span>).memory = <span class="type">Float32</span>(point.y)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接下来进行遍历 <code>points</code> 点数组操作。我们对 <code>UnsafeMutablePointer</code> 指针进行简单偏移量计算，得到缓冲区中的相关位置。值得注意的是，swift 中的不安全指针仅知道当前所使用的类型大小，所有指针偏移量都是以当前类型为单位，而非字节！（不过 <code>Void</code> 类型指针无法确定类型的大小，所以这种情况是以字节为单位的）。</p>
+<p>因此，通过对基址进行 <code>index * 2</code> 偏移累加，得到下一对点成员（注：即x，y点坐标）的地址。然后我们为当前指针指向的内存区域作赋值操作。</p>
+<p>接着我使用了 <code>ptr.advancedBy()</code> 方法，并未保留指针的引用，同时也没有设置 <code>ptr</code> 为可变指针。这仅仅是我个人喜好。你可以使用 <code>+</code> 或 <code>advancedBy()</code>，这两者作用一致。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">return</span> <span class="type">NSData</span>(</span><br><span class="line">  bytesNoCopy: rawMemory, </span><br><span class="line">  length: bufferLength, </span><br><span class="line">  deallocator: &#123; (ptr, length) <span class="keyword">in</span></span><br><span class="line">    ptr.destroy(length)</span><br><span class="line">    ptr.dealloc(length)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>最后要注意的，我们将数据返回给调用者。此时已经分配了一个合适的缓存区，接着使用 <code>bytesNoCopy</code> 进行初始化操作，将适当的长度以及闭包作为参数传递给函数。</p>
+<p>为什么要传递一个用作释放的闭包参数（deallocator）呢？从技术上讲，你或许可以使用 <code>NSData(bytesNoCopy:length:freeWhenDone:)</code> 侥幸实现，但无法保证没有意外发生。倘若 Swift runtime 没有使用系统默认的 <code>malloc/free</code> 方法，而是采用其他内存分配方式，那么你将得到一个报错。</p>
+<p>如果我们的缓存区恰巧需要存储一些复杂的 Swift 类型，适时的释放操作是必须的：你必须调用 <code>ptr.destroy(count)</code> 来进行释放，需要借助引用类型，递归枚举用例等等，否则会造成内存泄露。在本例中，我们知道 <code>Float32</code> 和 <code>Int64</code> 类型所占位数，从技术正确角度来讲，调用 <code>destroy</code> 方法能够更好的保证这一点。</p>
+<h2 id="解码（decoding）"><a href="#解码（decoding）" class="headerlink" title="解码（decoding）"></a>解码（decoding）</h2><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">guard</span></span><br><span class="line">  data.bytes != <span class="literal">nil</span> &amp;&amp;</span><br><span class="line">    data.length &gt; (_sizeOfCount + _sizeOfPair)</span><br><span class="line">  <span class="keyword">else</span> &#123; <span class="keyword">return</span> [] &#125;</span><br></pre></td></tr></table></figure>
+<p>首先，我们确保 <code>NSData</code> 中的指针不为 <code>nil</code>，并且足够容纳 <code>Int64</code> 数量的点数组。这为接下来的操作铺平了道路，不需要再进行一些额外的安全检查。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> rawMemory = data.bytes</span><br><span class="line"><span class="keyword">let</span> buffer = rawMemory + _sizeOfCount</span><br><span class="line"></span><br><span class="line"><span class="comment">// 从内存中获取到 Int64 类型的点个数</span></span><br><span class="line"><span class="keyword">let</span> pointCount64 = <span class="type">UnsafePointer</span>&lt;<span class="type">Int64</span>&gt;(rawMemory).memory</span><br><span class="line"></span><br><span class="line"><span class="built_in">precondition</span>(</span><br><span class="line">  <span class="type">Int64</span>(<span class="type">MaxPoints</span>) &lt; <span class="type">Int64</span>(<span class="type">Int32</span>.<span class="built_in">max</span>),</span><br><span class="line">  <span class="string">"MaxPoints would overflow on 32-bit platforms"</span>)</span><br><span class="line"><span class="built_in">precondition</span>(</span><br><span class="line">  pointCount64 &gt; <span class="number">0</span> &amp;&amp; pointCount64 &lt; <span class="type">Int64</span>(<span class="type">MaxPoints</span>),</span><br><span class="line">  <span class="string">"Invalid pointCount = \(pointCount64)"</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> pointCount = <span class="type">Int</span>(pointCount64)</span><br></pre></td></tr></table></figure>
+<p>接下来设置我们的指针。再次将原始指针强制转换成 Int64 类型的指针，此时我们使用了非可变指针，这是出于只读操作的考虑。</p>
+<p>注意到前面代码中我将点个数类型设置为 64 位，这样确保了 <code>Int32.max</code> 不会溢出或下溢；C 语言中经常使用 <code>if(value + x &gt; INT_MAX)</code> 判断检查是否溢出，属于未定义行为之一。现在请放下手上工作思考一分钟：计算机是如何处理 <code>value + x</code> 超出整型最大值的情况呢？答案是：无法继续累加，转而变成一个负值。那么当我们使用一个超大的负值进行类似 <code>malloc</code> 或 <code>is_admin()</code> 操作时会发生什么情况呢？这是我留给读者的一个课后小作业。</p>
+<p>末行代码将点个数转换成 <code>Int</code> 类型。 32 位平台上一旦值超过 <code>Int32.max</code> ，我们将会陷入“万劫不复”。Swift 相对于 C 语言要安全的多 —— 我们必须时刻警惕值溢出或下溢的情况发生。一旦此类情况发生，程序就会在运行时崩溃，值得庆幸的是，程序在挂掉之前会给出清晰的错误提示。</p>
+<p>64 位平台上，绝对有可能超过 4GB 容量点数组的情况（数值超过大约42亿），代码需要进一步重构。不过对于我的需求来说无关紧要，所以这里采用了硬编码限制了容量。这也使得在 64 位系统上创建的值无法加载到 32 位系统当中（这只是理论上最大值的情况，实际我所使用的容量将会小得多）。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> points: [<span class="type">CGPoint</span>] = []</span><br><span class="line">points.reserveCapacity(pointCount)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> ptr <span class="keyword">in</span> (<span class="number">0</span>..&lt;pointCount).<span class="built_in">map</span>(&#123;</span><br><span class="line">  <span class="type">UnsafePointer</span>&lt;<span class="type">Float32</span>&gt;(buffer) + (<span class="number">2</span> * $<span class="number">0</span>)</span><br><span class="line">&#125;) &#123;</span><br><span class="line">  points.append(</span><br><span class="line">    <span class="type">CGPoint</span>(</span><br><span class="line">      x: <span class="type">CGFloat</span>(ptr.memory),</span><br><span class="line">      y: <span class="type">CGFloat</span>(ptr.advancedBy(<span class="number">1</span>).memory))</span><br><span class="line">  )</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> points</span><br></pre></td></tr></table></figure>
+<p>代码也很简单。我们设定数组的备用容量，以避免重新分配。这不会对性能造成太大影响，毕竟我们已经知道了最大限制容量，所以这么做没什么问题。</p>
+<p>另外，指针类型为 <code>Float32</code>，Swift 知道该类型所占内存大小。我们只需要将索引值乘以2（<code>2 * $0</code>）得到下一对坐标点的指针，然后从指针指向的内存区域读取数值。</p>
+<h2 id="关于测试"><a href="#关于测试" class="headerlink" title="关于测试"></a>关于测试</h2><p>毫无疑问，类似这种类型都应该使用 <code>Address Sanitizer</code> 内存检测用具来帮助捕获任何滥用内存的问题，并且在产品发布前应该进行大量的代码审查（或借助 <code>AFL fuzzing</code> 同样能够方便揭露一些问题）。</p>
+<p>我从来不敢 100% 保证代码中任何有关线程或内存的部分不会出现纰漏。我甚至无法 100% 确定本文用例没有 bug。不过我使用 <code>Addess Sanitizer</code> 工具并没有发现任何问题，但我坚信一个好的程序员应该有敬畏之心。时刻警惕那些可能出现的错误或失误（如果你发现本文有任何纰漏，请留言告知我！）</p>
+<p><strong>包括你在内，没有人优秀到写代码可以完全避免缓冲区溢出。</strong></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Swift 编译器始终重视安全问题，但它有时也令人心寒。如果你保证不做一些调皮的事情，它会完全信任你。如果你有必要做一些字节或 <code>void</code> 指针操作，请重新创建一个 <code>.swift</code> 文件然后在里面使用。</p>
+<h2 id="最终实现"><a href="#最终实现" class="headerlink" title="最终实现"></a>最终实现</h2><p>我已经在最终实现的用例 gist 中嵌入了要点和详细注释。如果对你有帮助的话，请尽情使用它。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Written by Russ Bishop</span></span><br><span class="line"><span class="comment">// MIT licensed, use freely.</span></span><br><span class="line"><span class="comment">// No warranty, not suitable for any purpose. Use at your own risk!</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">PointEncoder</span> </span>&#123;</span><br><span class="line">  <span class="comment">// When parsing if we get a wildly large value we can</span></span><br><span class="line">  <span class="comment">// assume denial of service or corrupt data.</span></span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">let</span> <span class="type">MaxPoints</span> = <span class="number">1_310_719</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// How big an Int64 is</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">let</span> _sizeOfCount = <span class="built_in">sizeof</span>(<span class="type">Int64</span>.<span class="keyword">self</span>)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// How big a point (two Float32s are)</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">let</span> _sizeOfPair = <span class="number">2</span> * <span class="built_in">sizeof</span>(<span class="type">Float32</span>.<span class="keyword">self</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">  <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">encodePoints</span><span class="params">(points: [CGPoint])</span></span> -&gt; <span class="type">NSData?</span> &#123;</span><br><span class="line">    <span class="keyword">guard</span> !points.isEmpty &amp;&amp; points.<span class="built_in">count</span> &lt; <span class="type">MaxPoints</span> <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Total size of the buffer</span></span><br><span class="line">    <span class="keyword">let</span> bufferLength = _sizeOfCount + (points.<span class="built_in">count</span> * _sizeOfPair)</span><br><span class="line">    <span class="built_in">precondition</span>(bufferLength &gt;= (_sizeOfCount + _sizeOfPair), <span class="string">"Empty buffer?"</span>)</span><br><span class="line">    <span class="built_in">precondition</span>(bufferLength &lt; megabytes(<span class="number">10</span>), <span class="string">"Buffer would exceed 10MB"</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> rawMemory = <span class="type">UnsafeMutablePointer</span>&lt;<span class="type">Void</span>&gt;.alloc(bufferLength)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Failed to allocate memory</span></span><br><span class="line">    <span class="keyword">guard</span> rawMemory != <span class="literal">nil</span> <span class="keyword">else</span> &#123; <span class="keyword">return</span> <span class="literal">nil</span> &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Store the point count in the first portion of the buffer</span></span><br><span class="line">    <span class="type">UnsafeMutablePointer</span>&lt;<span class="type">Int64</span>&gt;(rawMemory).memory = <span class="type">Int64</span>(points.<span class="built_in">count</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// The remaining bytes are for the Float32 pairs</span></span><br><span class="line">    <span class="keyword">let</span> buffer = <span class="type">UnsafeMutablePointer</span>&lt;<span class="type">Float32</span>&gt;(rawMemory + _sizeOfCount)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Store the points</span></span><br><span class="line">    <span class="keyword">for</span> (index, point) <span class="keyword">in</span> points.<span class="built_in">enumerate</span>() &#123;</span><br><span class="line">      <span class="comment">// Since buffer is UnsafeMutablePointer&lt;Float32&gt;, addition counts</span></span><br><span class="line">      <span class="comment">// the number of Float32s, *not* the number of bytes!</span></span><br><span class="line">      <span class="keyword">let</span> ptr = buffer + (index * <span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">      <span class="comment">// Store the point values.</span></span><br><span class="line">      ptr.memory = <span class="type">Float32</span>(point.x)</span><br><span class="line">      ptr.advancedBy(<span class="number">1</span>).memory = <span class="type">Float32</span>(point.y)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// We can tell NSData not to bother copying memory.</span></span><br><span class="line">    <span class="comment">// For consistency and since we can't guarantee the memory allocated</span></span><br><span class="line">    <span class="comment">// by UnsafeMutablePointer can just be freed, we provide a deallocator</span></span><br><span class="line">    <span class="comment">// block. </span></span><br><span class="line">    <span class="keyword">return</span> <span class="type">NSData</span>(</span><br><span class="line">      bytesNoCopy: rawMemory,</span><br><span class="line">      length: bufferLength,</span><br><span class="line">      deallocator: &#123; (ptr, length) <span class="keyword">in</span></span><br><span class="line">        <span class="comment">// If ptr held more complex types, failing to call</span></span><br><span class="line">        <span class="comment">// destroy will cause lots of leakage.</span></span><br><span class="line">        <span class="comment">// No one wants leakage.</span></span><br><span class="line">        ptr.destroy(length)</span><br><span class="line">        ptr.dealloc(length)</span><br><span class="line">    &#125;)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">decodePoints</span><span class="params">(data: NSData)</span></span> -&gt; [<span class="type">CGPoint</span>] &#123;</span><br><span class="line">    <span class="comment">// If we don't have at least one point pair</span></span><br><span class="line">    <span class="comment">// and a size byte, bail.</span></span><br><span class="line">    <span class="keyword">guard</span></span><br><span class="line">      data.bytes != <span class="literal">nil</span> &amp;&amp;</span><br><span class="line">        data.length &gt; (_sizeOfCount + _sizeOfPair)</span><br><span class="line">      <span class="keyword">else</span> &#123; <span class="keyword">return</span> [] &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> rawMemory = data.bytes</span><br><span class="line">    <span class="keyword">let</span> buffer = rawMemory + _sizeOfCount</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Extract the point count as an Int64</span></span><br><span class="line">    <span class="keyword">let</span> pointCount64 = <span class="type">UnsafePointer</span>&lt;<span class="type">Int64</span>&gt;(rawMemory).memory</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Swift is safer than C here; you can't</span></span><br><span class="line">    <span class="comment">// accidentally overflow/underflow and not</span></span><br><span class="line">    <span class="comment">// trigger a trap, but I am still checking</span></span><br><span class="line">    <span class="comment">// to provide better error messages.</span></span><br><span class="line">    <span class="comment">// In all cases, better to kill the process</span></span><br><span class="line">    <span class="comment">// than corrupt memory.</span></span><br><span class="line">    <span class="built_in">precondition</span>(</span><br><span class="line">      <span class="type">Int64</span>(<span class="type">MaxPoints</span>) &lt; <span class="type">Int64</span>(<span class="type">Int32</span>.<span class="built_in">max</span>),</span><br><span class="line">      <span class="string">"MaxPoints would overflow on 32-bit platforms"</span>)</span><br><span class="line">    <span class="built_in">precondition</span>(</span><br><span class="line">      pointCount64 &gt; <span class="number">0</span> &amp;&amp; pointCount64 &lt; <span class="type">Int64</span>(<span class="type">MaxPoints</span>),</span><br><span class="line">      <span class="string">"Invalid pointCount = \(pointCount64)"</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// On 32-bit systems this would trap if</span></span><br><span class="line">    <span class="comment">// MaxPoints were too big and we didn't</span></span><br><span class="line">    <span class="comment">// check above.</span></span><br><span class="line">    <span class="keyword">let</span> pointCount = <span class="type">Int</span>(pointCount64)</span><br><span class="line">    <span class="built_in">precondition</span>(</span><br><span class="line">      _sizeOfPair + (_sizeOfCount * pointCount) &lt;= data.length,</span><br><span class="line">      <span class="string">"Size lied or buffer truncated"</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> points: [<span class="type">CGPoint</span>] = []</span><br><span class="line">    <span class="comment">// Small optimization since</span></span><br><span class="line">    <span class="comment">// we know the array size</span></span><br><span class="line">    points.reserveCapacity(pointCount)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> ptr <span class="keyword">in</span> (<span class="number">0</span>..&lt;pointCount).<span class="built_in">map</span>(&#123;</span><br><span class="line">      <span class="comment">// buffer points past the size header</span></span><br><span class="line">      <span class="comment">// Again, since the pointer knows we are</span></span><br><span class="line">      <span class="comment">// counting Float32 values we want the</span></span><br><span class="line">      <span class="comment">// number of Float32s, *not* their size</span></span><br><span class="line">      <span class="comment">// in bytes!</span></span><br><span class="line">      <span class="type">UnsafePointer</span>&lt;<span class="type">Float32</span>&gt;(buffer) + (<span class="number">2</span> * $<span class="number">0</span>)</span><br><span class="line">    &#125;) &#123;</span><br><span class="line">      points.append(</span><br><span class="line">        <span class="type">CGPoint</span>(</span><br><span class="line">          x: <span class="type">CGFloat</span>(ptr.memory),</span><br><span class="line">          y: <span class="type">CGFloat</span>(ptr.advancedBy(<span class="number">1</span>).memory))</span><br><span class="line">      )</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> points</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">kilobytes</span><span class="params">(value: Int)</span></span> -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> value * <span class="number">1024</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">megabytes</span><span class="params">(value: Int)</span></span> -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> kilobytes(value * <span class="number">1024</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">gigabytes</span><span class="params">(value: Int)</span></span> -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> megabytes(value * <span class="number">1024</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Russ-Bishop/">Russ Bishop</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift/">Swift</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/09/01/packing-bytes-in-swift/" data-title="Swift 中动手封装字节 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2016/09/02/xcode7-xcode8/" title="同时兼容 Xcode7 和 Xcode8">
+  <strong>上一篇</strong><br>
+  <span>
+  同时兼容 Xcode7 和 Xcode8</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/08/30/core-spotlight-framework/" title="如何使用 iOS 9 的 Core Spotlight 框架">
+ <strong>下一篇</strong><br> 
+ <span>如何使用 iOS 9 的 Core Spotlight 框架
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/09/01/packing-bytes-in-swift/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#PointerEncoder"><span class="toc-number">1.</span> <span class="toc-text">PointerEncoder</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#编码（encoding）"><span class="toc-number">2.</span> <span class="toc-text">编码（encoding）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#解码（decoding）"><span class="toc-number">3.</span> <span class="toc-text">解码（decoding）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#关于测试"><span class="toc-number">4.</span> <span class="toc-text">关于测试</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">5.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#最终实现"><span class="toc-number">6.</span> <span class="toc-text">最终实现</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

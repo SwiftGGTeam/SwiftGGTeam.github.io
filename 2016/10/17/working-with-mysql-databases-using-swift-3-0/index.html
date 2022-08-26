@@ -1,0 +1,1030 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>使用 Swift 3.0 操作 MySQL 数据库 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="Linux,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Joe，原文链接，原文日期：2016-09-24译者：shanks；校对：walkingway；定稿：CMB   如果你阅读过本主其他的 Swift 文章，你会发现我们是 Swift 服务器端开发的忠实拥护者。今天我们将继续研究这个主题，使用 Vapor 封装的 MySQL wrapper 来操作 MySQL 数据库。 说明：这并不是一篇介绍 MySQL 或 SQL 的文章，如果你对数据库">
+<meta name="keywords" content="Linux">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用 Swift 3.0 操作 MySQL 数据库">
+<meta property="og:url" content="https://swift.gg/2016/10/17/working-with-mysql-databases-using-swift-3-0/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Joe，原文链接，原文日期：2016-09-24译者：shanks；校对：walkingway；定稿：CMB   如果你阅读过本主其他的 Swift 文章，你会发现我们是 Swift 服务器端开发的忠实拥护者。今天我们将继续研究这个主题，使用 Vapor 封装的 MySQL wrapper 来操作 MySQL 数据库。 说明：这并不是一篇介绍 MySQL 或 SQL 的文章，如果你对数据库">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-08-26T13:33:55.008Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用 Swift 3.0 操作 MySQL 数据库">
+<meta name="twitter:description" content="作者：Joe，原文链接，原文日期：2016-09-24译者：shanks；校对：walkingway；定稿：CMB   如果你阅读过本主其他的 Swift 文章，你会发现我们是 Swift 服务器端开发的忠实拥护者。今天我们将继续研究这个主题，使用 Vapor 封装的 MySQL wrapper 来操作 MySQL 数据库。 说明：这并不是一篇介绍 MySQL 或 SQL 的文章，如果你对数据库">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/10/17/working-with-mysql-databases-using-swift-3-0/" target="_blank" title="使用 Swift 3.0 操作 MySQL 数据库" itemprop="url">使用 Swift 3.0 操作 MySQL 数据库</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-10-17T05:00:00.000Z" itemprop="datePublished">2016-10-17</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Joe，<a href="http://dev.iachieved.it/iachievedit/working-with-mysql-databases-using-swift-3-0" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-09-24<br>译者：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a>；校对：<a href="http://chengway.in/" target="_blank" rel="noopener">walkingway</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>如果你阅读过本主其他的 Swift 文章，你会发现我们是 Swift 服务器端开发的忠实拥护者。<br>今天我们将继续研究这个主题，使用 Vapor 封装的 <a href="https://github.com/vapor/mysql" target="_blank" rel="noopener">MySQL wrapper</a> 来操作 MySQL 数据库。</p>
+<p><strong>说明</strong>：这并不是一篇介绍 MySQL 或 SQL 的文章，如果你对数据库还不熟悉，网上有大量的教程可供学习。本篇我们将焦聚在 Linux 上使用 Swift 3.0 来操作 MySQL 数据库。</p>
+<a id="more"></a>
+<h2 id="开始"><a href="#开始" class="headerlink" title="开始"></a>开始</h2><p>在这篇教程中，我们采用 Ubuntu 16.04 系统和 MySQL 5.7。MySQL 5.7 引入了一系列的新特性。其中一个就是提供了更加高效的存储 JSON 数据的能力，同时提供了查询 JSON 数据内部的能力。稍后如果 MySQL 5.7 成为了 Ubuntu 16.04 上默认的 MySQL 版本以后，我们将使用 Ubuntu 16.04 作为我们的操作系统。</p>
+<p>如果你还没有安装 Swift， 你可以使用 apt-get 方式来安装。参见这篇<a href="http://dev.iachieved.it/iachievedit/swift-3-0-for-ubuntu-16-04-xenial-xerus/" target="_blank" rel="noopener">文章</a>的说明安装。2016 年 9 月底，苹果也开始在 Ubuntu16.04 上编译 Swift 的镜像。请查看 <a href="https://swift.org/download/#releases" target="_blank" rel="noopener">Swift.org</a> 获取更多的信息。</p>
+<h2 id="创建数据库"><a href="#创建数据库" class="headerlink" title="创建数据库"></a>创建数据库</h2><p>我们把数据库命名为 <code>swift_test</code>, 分配的用户是 <code>swift</code>， 密码是 <code>swiftpass</code>，如果你熟悉 MySQL，你应该知道需要执行 <code>GRANT ALL ON swift_test.*</code> 进行授权。<br>下面是这部分的命令：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># sudo mysql</span><br><span class="line">...</span><br><span class="line">mysql&gt; create user swift;</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; create database swift_test;</span><br><span class="line">Query OK, 1 row affected (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; grant all on swift_test.* to &apos;swift&apos;@&apos;localhost&apos; identified by &apos;swiftpass&apos;;</span><br><span class="line">Query OK, 0 rows affected, 1 warning (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; flush privileges;</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; quit</span><br><span class="line">Bye</span><br></pre></td></tr></table></figure>
+<h3 id="创建-Swift-包"><a href="#创建-Swift-包" class="headerlink" title="创建 Swift 包"></a>创建 Swift 包</h3><p>现在开始正式进行编码，首先创建一个包：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># mkdir swift_mysql</span><br><span class="line"># swift package init --type executable</span><br></pre></td></tr></table></figure>
+<p>编写 Package.swift 文件：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> PackageDescription</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> package = <span class="type">Package</span>(</span><br><span class="line">    name: <span class="string">"swift_mysql"</span>,</span><br><span class="line">    dependencies:[</span><br><span class="line">      .<span class="type">Package</span>(url:<span class="string">"https://github.com/vapor/mysql"</span>, majorVersion:<span class="number">1</span>)</span><br><span class="line">    ]</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>第二步，我们使用一些辅助的工具代码来生成一些随机的数据，填充到数据库中。<br>在 Sources 目录下添加 utils.swift 文件并在里面添加以下内容：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Glibc</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Random</span> </span>&#123;</span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">let</span> initialize:<span class="type">Void</span> = &#123;</span><br><span class="line">    srandom(<span class="type">UInt32</span>(time(<span class="literal">nil</span>)))</span><br><span class="line">    <span class="keyword">return</span> ()</span><br><span class="line">  &#125;()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">randomString</span><span class="params">(ofLength length:Int)</span></span> -&gt; <span class="type">String</span> &#123;</span><br><span class="line">  <span class="type">Random</span>.initialize</span><br><span class="line">  <span class="keyword">let</span> charactersString = <span class="string">"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"</span></span><br><span class="line">  <span class="keyword">let</span> charactersArray:[<span class="type">Character</span>] = <span class="type">Array</span>(charactersString.characters)</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">var</span> string = <span class="string">""</span></span><br><span class="line">  <span class="keyword">for</span> <span class="number">_</span> <span class="keyword">in</span> <span class="number">0</span>..&lt;length &#123;</span><br><span class="line">    string.append(charactersArray[<span class="type">Int</span>(random()) % charactersArray.<span class="built_in">count</span>])</span><br><span class="line">  &#125;</span><br><span class="line">               </span><br><span class="line">  <span class="keyword">return</span> string</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">randomInt</span><span class="params">()</span></span> -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">  <span class="type">Random</span>.initialize</span><br><span class="line">  <span class="keyword">return</span> <span class="type">Int</span>(random() % <span class="number">10000</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Vapor-MySQL"><a href="#Vapor-MySQL" class="headerlink" title="Vapor MySQL"></a>Vapor MySQL</h2><p>接下来是真正的代码，我们的 main.swift 文件使用了 Vapor MySQL 模块。</p>
+<h3 id="连接数据库"><a href="#连接数据库" class="headerlink" title="连接数据库"></a>连接数据库</h3><p>添加以下代码到 <code>Sources/main.swift</code> 中：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Glibc</span><br><span class="line"><span class="keyword">import</span> MySQL</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> mysql:<span class="type">Database</span></span><br><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">  mysql = <span class="keyword">try</span> <span class="type">Database</span>(host:<span class="string">"localhost"</span>,</span><br><span class="line">                       user:<span class="string">"swift"</span>,</span><br><span class="line">                       password:<span class="string">"swiftpass"</span>,</span><br><span class="line">                       database:<span class="string">"swift_test"</span>)</span><br><span class="line">  <span class="keyword">try</span> mysql.execute(<span class="string">"SELECT @@version"</span>)</span><br><span class="line">&#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"Unable to connect to MySQL:  \(error)"</span>)</span><br><span class="line">  exit(-<span class="number">1</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>以上代码设置数据库并且处理 mysql。构造器 <code>Database(host:String, user:String, password:String, database:String)</code> 一目了然。<br>语句 <code>try mysql.execute(&quot;SELECT @@version”)</code> 是用来测试保证我们连接正确，并成功连接到了数据库。如果 do 代码块运行无错误，接下来就可以开始操作数据库了！</p>
+<h3 id="整型和字符串"><a href="#整型和字符串" class="headerlink" title="整型和字符串"></a>整型和字符串</h3><p>所有对 MySQL 的调用都将通过 <code>execute(_:String)</code> 方法。需要注意的是该方法和一些抽象 API 的方法不同，比如 <code>.create(table:String, ...)</code> 或者 <code>.insert(table:String, …</code>。<code>execute</code> 获取原始的 SQL 语句并传给 MySQL 连接器。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">  <span class="keyword">try</span> mysql.execute(<span class="string">"DROP TABLE IF EXISTS foo"</span>)</span><br><span class="line">  <span class="keyword">try</span> mysql.execute(<span class="string">"CREATE TABLE foo (bar INT(4), baz VARCHAR(16))"</span>)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> i <span class="keyword">in</span> <span class="number">1</span>...<span class="number">10</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> int    = randomInt()</span><br><span class="line">    <span class="keyword">let</span> string = randomString(ofLength:<span class="number">16</span>)</span><br><span class="line">    <span class="keyword">try</span> mysql.execute(<span class="string">"INSERT INTO foo VALUES (\(int), '\(string)')"</span>)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Query</span></span><br><span class="line">  <span class="keyword">let</span> results = <span class="keyword">try</span> mysql.execute(<span class="string">"SELECT * FROM foo"</span>)</span><br><span class="line">  <span class="keyword">for</span> result <span class="keyword">in</span> results &#123;</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">let</span> bar = result[<span class="string">"bar"</span>]?.int,</span><br><span class="line">       <span class="keyword">let</span> baz = result[<span class="string">"baz"</span>]?.string &#123;</span><br><span class="line">      <span class="built_in">print</span>(<span class="string">"\(bar)\t\(baz)"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"Error:  \(error)"</span>)</span><br><span class="line">  exit(-<span class="number">1</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>查询结果也是使用的 <code>execute(_:String)</code> 方法。但是返回的结果是一个 <code>[String:Node]</code> 字典。字典的 key 对应着数据库的列名。</p>
+<p><code>Node</code> 类型是 Vapor 中的数据结构，用于转化为不同的类型。你可以从<a href="https://github.com/vapor/node" target="_blank" rel="noopener">这里</a>获取更多的信息。使用 <code>Node</code> 类型来表达 MySQL 可以方便的转换成对应的 Swift 类型。比如：<code>let bar = result[&quot;bar&quot;]?.int</code> 给我们一个整型。</p>
+<h3 id="继续"><a href="#继续" class="headerlink" title="继续"></a>继续</h3><p>接着我们来看一些更复杂的例子，比如创建一个表，包含了 MySQL 的 DATE， POINT 和 JSON 数据类型。我们的表名叫 <code>samples</code>。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">  <span class="keyword">try</span> mysql.execute(<span class="string">"DROP TABLE IF EXISTS samples"</span>)</span><br><span class="line">  <span class="keyword">try</span> mysql.execute(<span class="string">"CREATE TABLE samples (id INT PRIMARY KEY AUTO_INCREMENT, created_at DATETIME, location POINT, reading JSON)"</span>)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// ... Date</span></span><br><span class="line">  <span class="comment">// ... Point</span></span><br><span class="line">  <span class="comment">// ... Sample</span></span><br><span class="line">  <span class="comment">// ... Insert</span></span><br><span class="line">  <span class="comment">// ... Query</span></span><br><span class="line">&#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">"Error:  \(error)"</span>)</span><br><span class="line">  exit(-<span class="number">1</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>要插入一个日期到数据库中，需要正确的 SQL 语句：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ... Date</span></span><br><span class="line"><span class="keyword">let</span> now              = <span class="type">Date</span>()</span><br><span class="line"><span class="keyword">let</span> formatter        = <span class="type">DateFormatter</span>()</span><br><span class="line">formatter.dateFormat = <span class="string">"yyyy-MM-dd HH:mm:ss"</span> <span class="comment">// MySQL will accept this format</span></span><br><span class="line"><span class="keyword">let</span> created_at       = formatter.string(from:date)</span><br></pre></td></tr></table></figure>
+<p>接下来使用 Swift 元组来创建一个 <code>POINT</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ... Point</span></span><br><span class="line"><span class="keyword">let</span> location = (<span class="number">37.20262</span>, -<span class="number">112.98785</span>) <span class="comment">// latitude, longitude</span></span><br></pre></td></tr></table></figure>
+<p>最后，我们来处理 MySQL 5.7 中新的 JSON 数据类型，此外我们使用了 <a href="http://dev.iachieved.it/iachievedit/working-with-mysql-databases-using-swift-3-0/?utm_source=rss&amp;utm_medium=rss" target="_blank" rel="noopener">Jay</a> 包来快速将一个 Swift 字典 <code>[String:Any]</code> 转换为 JSON 格式的字符串。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ... Sample</span></span><br><span class="line">  <span class="keyword">let</span> sample:[<span class="type">String</span>:<span class="type">Any</span>] = [</span><br><span class="line">    <span class="string">"heading"</span>:<span class="number">90</span>,</span><br><span class="line">    <span class="string">"gps"</span>:[</span><br><span class="line">      <span class="string">"latitude"</span>:<span class="number">37.20262</span>,</span><br><span class="line">      <span class="string">"longitude"</span>:-<span class="number">112.98785</span></span><br><span class="line">    ],</span><br><span class="line">    <span class="string">"speed"</span>:<span class="number">82</span>,</span><br><span class="line">    <span class="string">"temperature"</span>:<span class="number">200</span></span><br><span class="line">  ]</span><br></pre></td></tr></table></figure>
+<p>提示：你不需要显式在 Package.swift 中声明对 Jay 的依赖，因为在 MySQL 的包中已经包含了这个依赖。<br>接下来我们把 JSON 数据转换为 String，用来拼凑 MySQL 语句。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> sampleData = <span class="keyword">try</span> <span class="type">Jay</span>(formatting:.minified).dataFromJson(any:sample) <span class="comment">// [UInt8]</span></span><br><span class="line"><span class="keyword">let</span> sampleJSON = <span class="type">String</span>(data:<span class="type">Data</span>(sampleData), encoding:.utf8)</span><br></pre></td></tr></table></figure>
+<p>这样我们就有了 date， point 和 JSON 字符串（sample) 了， 现在添加数据到 sample 表中：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ... Insert</span></span><br><span class="line"><span class="keyword">let</span> stmt = <span class="string">"INSERT INTO samples (created_at, location, sample) VALUES ('\(created_at)', POINT\(point), '\(sampleJSON)')"</span></span><br><span class="line"><span class="keyword">try</span> mysql.execute(stmt)</span><br></pre></td></tr></table></figure>
+<p>请注意我们在处理 POINT 时候，使用了一些技巧。在对  (point) 展开为字符串 (37.20262, -112.98785) 后，完整的字符串是 POINT(37.20262, -112.98785)，这是 MySQL 所需要的数据，整个语句的字符串如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">INSERT INTO samples (created_at, location, sample) VALUES (&apos;2016-09-21 22:28:44&apos;, POINT(37.202620000000003, -112.98784999999999), &apos;&#123;&quot;gps&quot;:&#123;&quot;latitude&quot;:37.20262,&quot;longitude&quot;:-112.98785&#125;,&quot;heading&quot;:90,&quot;speed&quot;:82,&quot;temperature&quot;:200&#125;&apos;)</span><br></pre></td></tr></table></figure>
+<h3 id="获取结果"><a href="#获取结果" class="headerlink" title="获取结果"></a>获取结果</h3><p>警告：在写这篇文章的时候(2016-09-22), Vapor MySQL 1.0.0 有一个 bug：在读取 POINT 数据类型时会 crash 掉，所以不得不在下面代码中加入 do 代码块，然后不使用 select 语句。<br>我们在 Vapor MySQL 中记录了这个 issue，等这个 issue 修复以后，我们将更新文章。</p>
+<p>在下面的例子中，我们将使用 MySQL 5.7 中引入对 JSON 数据内部的查询特性，使用  SELECT … WHERE 查询 JSON 数据。在这里查询的是 samples 表中 JSON 数据类型 sample<br>中、speed 字段大于 80 的数据。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">// ... 查询</span><br><span class="line">  let results = try mysql.execute(&quot;SELECT created_at,sample FROM samples where JSON_EXTRACT(sample, &apos;$.speed&apos;) &gt; 80&quot;) </span><br><span class="line">  for result in results &#123;</span><br><span class="line">    if let sample      = result[&quot;sample&quot;]?.object,</span><br><span class="line">       let speed       = sample[&quot;speed&quot;]?.int,</span><br><span class="line">       let temperature = sample[&quot;temperature&quot;]?.int,</span><br><span class="line">       let created_at  = result[&quot;created_at&quot;]?.string &#123;</span><br><span class="line">      print(&quot;Time:\(created_at)\tSpeed:\(speed)\tTemperature:\(temperature)&quot;)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>这里做一些说明。JSON_EXTRACT 函数是用来 返回从 JSON 文档中的数据，根据传入的路径参数选择文档中满足条件的数据。在本例中，我们解包了列 sample 中的 speed 值。</p>
+<p>为了循环处理结果，我们使用了 for result in results 语句，接着使用 if let 语句验证结果数据。首先使用 <code>let sample = result[&quot;sample&quot;]?.object</code> 获取一个字典，对应 MySQL 中的 JSON 文档，这是一句关键的代码！Vapor MySQL 库并没有返回一个 String，而 String 还需进行 JSON 的解析。这个解析工作库已经帮你做了，所以你可以直接使用 sample 字典啦。</p>
+<p>剩下的 let 语句给了我们 speed，temperature 和 created_at。注意 created_at 在 MySQL 中是 DATETIME 类型，我们读取它为字符串。为了在 Swift 中转换成 Date 类型，需要使用 .date(from:String) 方法加一个 DateFormatter 来做类型转换。</p>
+<h3 id="获取代码"><a href="#获取代码" class="headerlink" title="获取代码"></a>获取代码</h3><p>如果你想直接运行代码，请到 <a href="https://github.com/iachievedit/swift_mysql" target="_blank" rel="noopener">github</a> 上下载我们的代码。<br>在任何地方使用 <code>swift build</code> 进行编译，运行可执行代码，不要忘了你还需要拥有一个数据库，用户名并且授权通过。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/iAchieved-it/">iAchieved.it</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/10/17/working-with-mysql-databases-using-swift-3-0/" data-title="使用 Swift 3.0 操作 MySQL 数据库 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2016/10/18/unitsquare/" title="使用幽灵类型的Measurements和Units，第四部分">
+  <strong>上一篇</strong><br>
+  <span>
+  使用幽灵类型的Measurements和Units，第四部分</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/10/12/swift3-nsdata-data/" title="Data 解析 Doom 的 WAD 文件">
+ <strong>下一篇</strong><br> 
+ <span>Data 解析 Doom 的 WAD 文件
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/10/17/working-with-mysql-databases-using-swift-3-0/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#开始"><span class="toc-number">1.</span> <span class="toc-text">开始</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#创建数据库"><span class="toc-number">2.</span> <span class="toc-text">创建数据库</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#创建-Swift-包"><span class="toc-number">2.1.</span> <span class="toc-text">创建 Swift 包</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Vapor-MySQL"><span class="toc-number">3.</span> <span class="toc-text">Vapor MySQL</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#连接数据库"><span class="toc-number">3.1.</span> <span class="toc-text">连接数据库</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#整型和字符串"><span class="toc-number">3.2.</span> <span class="toc-text">整型和字符串</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#继续"><span class="toc-number">3.3.</span> <span class="toc-text">继续</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#获取结果"><span class="toc-number">3.4.</span> <span class="toc-text">获取结果</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#获取代码"><span class="toc-number">3.5.</span> <span class="toc-text">获取代码</span></a></li></ol></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

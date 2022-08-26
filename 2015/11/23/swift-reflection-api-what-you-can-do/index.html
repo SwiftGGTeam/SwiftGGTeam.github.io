@@ -1,0 +1,1117 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>Swift 反射 API 及用法 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Benedikt Terhechte，原文链接，原文日期：2015-10-24译者：mmoaay；校对：千叶知风；定稿：千叶知风   尽管 Swift 一直在强调强类型、编译时安全和静态调度，但它的标准库仍然提供了反射机制。可能你已经在很多博客文章或者类似Tuples、Midi Packets 和 Core Data 的项目中见过它。也许你刚好对在项目中使用反射机制感兴趣，或者你想更好的了">
+<meta name="keywords" content="Swift 进阶">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Swift 反射 API 及用法">
+<meta property="og:url" content="https://swift.gg/2015/11/23/swift-reflection-api-what-you-can-do/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Benedikt Terhechte，原文链接，原文日期：2015-10-24译者：mmoaay；校对：千叶知风；定稿：千叶知风   尽管 Swift 一直在强调强类型、编译时安全和静态调度，但它的标准库仍然提供了反射机制。可能你已经在很多博客文章或者类似Tuples、Midi Packets 和 Core Data 的项目中见过它。也许你刚好对在项目中使用反射机制感兴趣，或者你想更好的了">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-08-26T13:33:54.980Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Swift 反射 API 及用法">
+<meta name="twitter:description" content="作者：Benedikt Terhechte，原文链接，原文日期：2015-10-24译者：mmoaay；校对：千叶知风；定稿：千叶知风   尽管 Swift 一直在强调强类型、编译时安全和静态调度，但它的标准库仍然提供了反射机制。可能你已经在很多博客文章或者类似Tuples、Midi Packets 和 Core Data 的项目中见过它。也许你刚好对在项目中使用反射机制感兴趣，或者你想更好的了">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2015/11/23/swift-reflection-api-what-you-can-do/" target="_blank" title="Swift 反射 API 及用法" itemprop="url">Swift 反射 API 及用法</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2015-11-23T06:00:00.000Z" itemprop="datePublished">2015-11-23</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Benedikt Terhechte，<a href="http://appventure.me/2015/10/24/swift-reflection-api-what-you-can-do/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-10-24<br>译者：<a href="http://mmoaay.photo/" target="_blank" rel="noopener">mmoaay</a>；校对：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>尽管 Swift 一直在强调强类型、编译时安全和静态调度，但它的标准库仍然提供了反射机制。可能你已经在很多博客文章或者类似<a href="http://design.featherless.software/enumerating-tuple-values-swift/?utm_campaign=Swift%252BSandbox&amp;utm_medium=email&amp;utm_source=Swift_Sandbox_12" target="_blank" rel="noopener">Tuples</a>、<a href="http://design.featherless.software/enumerate-messages-midipacket-swift-reflection/" target="_blank" rel="noopener">Midi Packets</a> 和 <a href="https://github.com/terhechte/corevalue" target="_blank" rel="noopener">Core Data</a> 的项目中见过它。也许你刚好对在项目中使用反射机制感兴趣，或者你想更好的了解反射可以应用的领域，那这篇文章就正是你需要的。文章的内容是基于我在德国法兰克福 Macoun会议上的一次演讲，它对 Swift 的反射 API 做了一个概述。</p>
+<a id="more"></a>
+<h1 id="API-概述"><a href="#API-概述" class="headerlink" title="API 概述"></a>API 概述</h1><p>理解这个主题最好的方式就是看 API，看它都提供了什么功能。</p>
+<h2 id="Mirror"><a href="#Mirror" class="headerlink" title="Mirror"></a><code>Mirror</code></h2><p>Swift 的反射机制是基于一个叫 <strong>Mirror</strong> 的 <code>struct</code> 来实现的。你为具体的 <code>subject</code> 创建一个 <code>Mirror</code>，然后就可以通过它查询这个对象 <code>subject</code> 。</p>
+<p>在我们创建 <code>Mirror</code> 之前，我们先创建一个可以让我们当做对象来使用的简单数据结构。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation.NSURL <span class="comment">// [译者注]此处应该为import Foundation</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Store</span> </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> storesToDisk: <span class="type">Bool</span> = <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">BookmarkStore</span>: <span class="title">Store</span> </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> itemCount: <span class="type">Int</span> = <span class="number">10</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">struct</span> <span class="title">Bookmark</span> </span>&#123;</span><br><span class="line">   <span class="class"><span class="keyword">enum</span> <span class="title">Group</span> </span>&#123;</span><br><span class="line">      <span class="keyword">case</span> <span class="type">Tech</span></span><br><span class="line">      <span class="keyword">case</span> <span class="type">News</span></span><br><span class="line">   &#125;</span><br><span class="line">   <span class="keyword">private</span> <span class="keyword">let</span> store = &#123;</span><br><span class="line">       <span class="keyword">return</span> <span class="type">BookmarkStore</span>()</span><br><span class="line">   &#125;()</span><br><span class="line">   <span class="keyword">let</span> title: <span class="type">String?</span></span><br><span class="line">   <span class="keyword">let</span> url: <span class="type">NSURL</span></span><br><span class="line">   <span class="keyword">let</span> keywords: [<span class="type">String</span>]</span><br><span class="line">   <span class="keyword">let</span> group: <span class="type">Group</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> aBookmark = <span class="type">Bookmark</span>(title: <span class="string">"Appventure"</span>, url: <span class="type">NSURL</span>(string: <span class="string">"appventure.me"</span>)!, keywords: [<span class="string">"Swift"</span>, <span class="string">"iOS"</span>, <span class="string">"OSX"</span>], group: .<span class="type">Tech</span>)</span><br></pre></td></tr></table></figure>
+<h2 id="创建一个-Mirror"><a href="#创建一个-Mirror" class="headerlink" title="创建一个 Mirror"></a>创建一个 <code>Mirror</code></h2><p>创建 <code>Mirror</code> 最简单的方式就是使用 <code>reflecting</code> 构造器：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">init</span>(reflecting subject: <span class="type">Any</span>)</span><br></pre></td></tr></table></figure>
+<p>然后在 <code>aBookmark</code> <code>struct</code> 上使用它：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> aMirror = <span class="type">Mirror</span>(reflecting: aBookmark)</span><br><span class="line"><span class="built_in">print</span>(aMirror)</span><br><span class="line"><span class="comment">// 输出 : Mirror for Bookmark</span></span><br></pre></td></tr></table></figure>
+<p>这段代码创建了 <code>Bookmark 的 Mirror</code>。正如你所见，对象的类型是 <code>Any</code>。这是 Swift 中最通用的类型。Swift 中的任何东西至少都是 <code>Any</code> 类型的<a href="#1">1</a>。这样一来 <code>mirror</code> 就可以兼容 <code>struct</code>, <code>class</code>, <code>enum</code>, <code>Tuple</code>, <code>Array</code>, <code>Dictionary</code>, <code>set</code> 等。</p>
+<p><code>Mirror</code> 结构体还有另外三个构造器，然而这三个都是在你需要自定义 <code>mirror</code> 这种情况下使用的。我们会在接下来<a href="#custom_mirrors">讨论自定义 <code>mirror</code> 时详细讲解这些额外的构造器</a>。</p>
+<h2 id="Mirror-中都有什么？"><a href="#Mirror-中都有什么？" class="headerlink" title="Mirror 中都有什么？"></a><code>Mirror</code> 中都有什么？</h2><p><code>Mirror struct</code> 中包含几个 <code>types</code> 来帮助确定你想查询的信息。</p>
+<p>第一个是 <code>DisplayStyle</code> <code>enum</code>，它会告诉你对象的类型：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">enum</span> <span class="title">DisplayStyle</span> </span>&#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="type">Struct</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">Class</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">Enum</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">Tuple</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">Optional</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">Collection</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">Dictionary</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">Set</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这些都是反射 API 的辅助类型。正如之前我们知道的，反射只要求对象是 <code>Any</code> 类型，而且Swift 标准库中还有很多类型为 <code>Any</code> 的东西没有被列举在上面的 <code>DisplayStyle</code> <code>enum</code> 中。如果试图反射它们中间的某一个又会发生什么呢？比如 <code>closure</code>。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> closure = &#123; (a: <span class="type">Int</span>) -&gt; <span class="type">Int</span> <span class="keyword">in</span> <span class="keyword">return</span> a * <span class="number">2</span> &#125;</span><br><span class="line"><span class="keyword">let</span> aMirror = <span class="type">Mirror</span>(reflecting: closure)</span><br></pre></td></tr></table></figure>
+<p>在这种情况下，这里你会得到一个 <code>mirror</code>，但是 <code>DisplayStyle</code> 为 <code>nil</code> <a href="#2">2</a></p>
+<p>也有提供给 <code>Mirror</code> 的子节点使用的 <code>typealias</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">typealias</span> <span class="type">Child</span> = (label: <span class="type">String?</span>, value: <span class="type">Any</span>)</span><br></pre></td></tr></table></figure>
+<p>所以每个 <code>Child</code> 都包含一个可选的 <code>label</code> 和 <code>Any</code> 类型的 <code>value</code>。为什么 <code>label</code> 是 <code>Optional</code> 的？如果你仔细考虑下，其实这是非常有意义的，并不是所有支持反射的数据结构都包含有名字的子节点。 <code>struct</code> 会以属性的名字做为 <code>label</code>，但是 <code>Collection</code> 只有下标，没有名字。<code>Tuple</code> 同样也可能没有给它们的条目指定名字。</p>
+<p>接下来是 <code>AncestorRepresentation</code> <code>enum</code> <a href="#3">3</a>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">enum</span> <span class="title">AncestorRepresentation</span> </span>&#123;</span><br><span class="line">    <span class="comment">/// 为所有 ancestor class 生成默认 mirror。</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">Generated</span></span><br><span class="line">    <span class="comment">/// 使用最近的 ancestor 的 customMirror() 实现来给它创建一个 mirror。    </span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">Customized</span>(() -&gt; <span class="type">Mirror</span>)</span><br><span class="line">    <span class="comment">/// 禁用所有 ancestor class 的行为。Mirror 的 superclassMirror() 返回值为 nil。</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">Suppressed</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个 <code>enum</code> 用来定义被反射的对象的父类应该如何被反射。也就是说，这只应用于 <code>class</code> 类型的对象。默认情况（正如你所见）下 Swift 会为每个父类生成额外的 <code>mirror</code>。然而，如果你需要做更复杂的操作，你可以使用 <code>AncestorRepresentation enum</code> 来定义父类被反射的细节。<a href="#custom_mirrors">我们会在下面的内容中进一步研究这个</a>。</p>
+<h2 id="如何使用一个-Mirror"><a href="#如何使用一个-Mirror" class="headerlink" title="如何使用一个 Mirror"></a>如何使用一个 <code>Mirror</code></h2><p>现在我们有了给 <code>Bookmark</code> 类型的对象<code>aBookmark</code> 做反射的实例变量 <code>aMirror</code>。可以用它来做什么呢？</p>
+<p>下面列举了 <code>Mirror</code> 可用的属性 / 方法：</p>
+<ul>
+<li><code>let children: Children</code>：对象的子节点。</li>
+<li><code>displayStyle: Mirror.DisplayStyle?</code>：对象的展示风格</li>
+<li><code>let subjectType: Any.Type</code>：对象的类型</li>
+<li><code>func superclassMirror() -&gt; Mirror?</code>：对象父类的 <code>mirror</code></li>
+</ul>
+<p>下面我们会分别对它们进行解析。</p>
+<h3 id="displayStyle"><a href="#displayStyle" class="headerlink" title="displayStyle"></a><code>displayStyle</code></h3><p>很简单，它会返回 <code>DisplayStyle</code> <code>enum</code> 的其中一种情况。如果你想要对某种不支持的类型进行反射，你会得到一个空的 <code>Optional</code> 值（这个之前解释过）。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="built_in">print</span> (aMirror.displayStyle)</span><br><span class="line"><span class="comment">// 输出: Optional(Swift.Mirror.DisplayStyle.Struct)</span></span><br><span class="line"><span class="comment">// [译者注]此处输出：Optional(Struct)</span></span><br></pre></td></tr></table></figure>
+<h3 id="children"><a href="#children" class="headerlink" title="children"></a><code>children</code></h3><p>这会返回一个包含了对象所有的子节点的 <code>AnyForwardCollection&lt;Child&gt;</code>。这些子节点不单单限于 <code>Array</code> 或者 <code>Dictionary</code> 中的条目。诸如 <code>struct</code> 或者 <code>class</code> 中所有的属性也是由 <code>AnyForwardCollection&lt;Child&gt;</code> 这个属性返回的子节点。<code>AnyForwardCollection</code> 协议意味着这是一个支持遍历的 <code>Collection</code> 类型。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> <span class="keyword">case</span> <span class="keyword">let</span> (label?, value) <span class="keyword">in</span> aMirror.children &#123;</span><br><span class="line">    <span class="built_in">print</span> (label, value)</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//输出:</span></span><br><span class="line"><span class="comment">//: store main.BookmarkStore</span></span><br><span class="line"><span class="comment">//: title Optional("Appventure")</span></span><br><span class="line"><span class="comment">//: url appventure.me</span></span><br><span class="line"><span class="comment">//: keywords ["Swift", "iOS", "OSX"]</span></span><br><span class="line"><span class="comment">//: group Tech</span></span><br></pre></td></tr></table></figure>
+<h3 id="SubjectType"><a href="#SubjectType" class="headerlink" title="SubjectType"></a><code>SubjectType</code></h3><p>这是对象的类型：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="built_in">print</span>(aMirror.subjectType)</span><br><span class="line"><span class="comment">//输出 : Bookmark</span></span><br><span class="line"><span class="built_in">print</span>(<span class="type">Mirror</span>(reflecting: <span class="number">5</span>).subjectType)</span><br><span class="line"><span class="comment">//输出 : Int</span></span><br><span class="line"><span class="built_in">print</span>(<span class="type">Mirror</span>(reflecting: <span class="string">"test"</span>).subjectType)</span><br><span class="line"><span class="comment">//输出 : String</span></span><br><span class="line"><span class="built_in">print</span>(<span class="type">Mirror</span>(reflecting: <span class="type">NSNull</span>()).subjectType)</span><br><span class="line"><span class="comment">//输出 : NSNull</span></span><br></pre></td></tr></table></figure>
+<p>然而，Swift 的文档中有下面一句话：</p>
+<blockquote>
+<p>“当 <code>self</code> 是另外一个 <code>mirror</code> 的 <code>superclassMirror()</code> 时，这个类型和对象的动态类型可能会不一样。”</p>
+</blockquote>
+<h3 id="SuperclassMirror"><a href="#SuperclassMirror" class="headerlink" title="SuperclassMirror"></a><code>SuperclassMirror</code></h3><p>这是我们对象父类的 <code>mirror</code>。如果这个对象不是一个类，它会是一个空的 <code>Optional</code> 值。如果对象的类型是基于类的，你会得到一个新的 <code>Mirror</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 试试 struct</span></span><br><span class="line"><span class="built_in">print</span>(<span class="type">Mirror</span>(reflecting: aBookmark).superclassMirror())</span><br><span class="line"><span class="comment">// 输出: nil</span></span><br><span class="line"><span class="comment">// 试试 class</span></span><br><span class="line"><span class="built_in">print</span>(<span class="type">Mirror</span>(reflecting: aBookmark.store).superclassMirror())</span><br><span class="line"><span class="comment">// 输出: Optional(Mirror for Store)</span></span><br></pre></td></tr></table></figure>
+<h1 id="实例"><a href="#实例" class="headerlink" title="实例"></a>实例</h1><h2 id="Struct-转-Core-Data"><a href="#Struct-转-Core-Data" class="headerlink" title="Struct 转 Core Data"></a><code>Struct</code> 转 <code>Core Data</code></h2><p>假设我们在一个叫 <strong>Books Bunny</strong> 的新兴高科技公司工作，我们以浏览器插件的方式提供了一个人工智能，它可以自动分析用户访问的所有网站，然后把相关页面自动保存到书签中。</p>
+<p>现在是 2016 年，Swift 已经开源，所以我们的后台服务端肯定是用 Swift 编写。因为在我们的系统中同时有数以百万计的网站访问活动，我们想用 <code>struct</code> 来存储用户访问网站的分析数据。不过，如果我们 AI 认定某个页面的数据是需要保存到书签中的话，我们需要使用 <code>CoreData</code> 来把这个类型的对象保存到数据库中。</p>
+<p>现在我们不想为每个新建的 <code>struct</code> 单独写自定义的 <code>Core Data</code> 序列化代码。而是想以一种更优雅的方式来开发，从而可以让将来的所有 <code>struct</code> 都可以利用这种方式来做序列化。</p>
+<p>那么我们该怎么做呢？</p>
+<h2 id="一个协议"><a href="#一个协议" class="headerlink" title="一个协议"></a>一个协议</h2><p>记住，我们有一个 <code>struct</code>，它需要自动转换为 <code>NSManagedObject</code> （<strong>Core Data</strong>）。</p>
+<p>如果我们想要支持不同的 <code>struct</code> 甚至类型，我们可以用协议来实现，然后确保我们需要的类型符合这个协议。所以我们假想的协议应该有哪些功能呢？</p>
+<ul>
+<li>第一，协议应该允许自定义我们想要创建的<strong>Core Data 实体</strong>的名字</li>
+<li>第二，协议需要提供一种方式来告诉它如何转换为 <code>NSManagedObject</code>。</li>
+</ul>
+<p>我们的 <code>protocol</code>（协议） 看起来是下面这个样子的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">StructDecoder</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 我们 Core Data 实体的名字</span></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">var</span> <span class="type">EntityName</span>: <span class="type">String</span> &#123; <span class="keyword">get</span> &#125;</span><br><span class="line">    <span class="comment">// 返回包含我们属性集的 NSManagedObject</span></span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">toCoreData</span><span class="params">(context: NSManagedObjectContext)</span></span> <span class="keyword">throws</span> -&gt; <span class="type">NSManagedObject</span> <span class="comment">//[译者注]使用 NSManagedObjectContext 需要 import CoreData</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>toCoreData</code> 方法使用了 Swift 2.0 新的异常处理来抛出错误，如果转换失败，会有几种错误情况，这些情况都在下面的 <code>ErrorType</code> <code>enum</code> 进行了列举：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">SerializationError</span>: <span class="title">ErrorType</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 我们只支持 struct</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">StructRequired</span></span><br><span class="line">    <span class="comment">// 实体在 Core Data 模型中不存在</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">UnknownEntity</span>(name: <span class="type">String</span>)</span><br><span class="line">    <span class="comment">// 给定的类型不能保存在 core data 中</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">UnsupportedSubType</span>(label: <span class="type">String?</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面列举了三种转换时需要注意的错误情况。第一种情况是我们试图把它应用到非 <code>struct</code> 的对象上。第二种情况是我们想要创建的 <code>entity</code> 在 Core Data 模型中不存在。第三种情况是我们想要把一些不能存储在 Core Data 中的东西保存到 Core Data 中（即 <code>enum</code>）。</p>
+<p>让我们创建一个 <code>struct</code> 然后为其增加协议一致性：</p>
+<h2 id="Bookmark-struct"><a href="#Bookmark-struct" class="headerlink" title="Bookmark struct"></a><code>Bookmark struct</code></h2><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Bookmark</span> </span>&#123;</span><br><span class="line">   <span class="keyword">let</span> title: <span class="type">String</span></span><br><span class="line">   <span class="keyword">let</span> url: <span class="type">NSURL</span></span><br><span class="line">   <span class="keyword">let</span> pagerank: <span class="type">Int</span></span><br><span class="line">   <span class="keyword">let</span> created: <span class="type">NSDate</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接下来，我们要实现 <code>toCoreData</code> 方法。</p>
+<h2 id="协议扩展"><a href="#协议扩展" class="headerlink" title="协议扩展"></a>协议扩展</h2><p>当然我们可以为每个 <code>struct</code> 都写新的 <code>toCoreData</code> 方法，但是工作量很大，因为 <code>struct</code> 不支持继承，所以我们不能使用基类的方式。不过我们可以使用 <code>protocol extension</code> 来扩展这个方法到所有相符合的 <code>struct</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">StructDecoder</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">toCoreData</span><span class="params">(context: NSManagedObjectContext)</span></span> <span class="keyword">throws</span> -&gt; <span class="type">NSManagedObject</span> &#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>因为扩展已经被应用到相符合的 <code>struct</code>，这个方法就可以在 <code>struct</code> 的上下文中被调用。因此，在协议中，<code>self</code> 指的是我们想分析的 <code>struct</code>。</p>
+<p>所以，我们需要做的第一步就是创建一个可以写入我们 <code>Bookmark struct</code> 值的<code>NSManagedObject</code>。我们该怎么做呢？</p>
+<h2 id="一点-Core-Data"><a href="#一点-Core-Data" class="headerlink" title="一点 Core Data"></a>一点 <code>Core Data</code></h2><p><code>Core Data</code> 有点啰嗦，所以如果需要创建一个对象，我们需要如下的步骤：</p>
+<ol>
+<li>获得我们需要创建的实体的名字（字符串）</li>
+<li>获取 <code>NSManagedObjectContext</code>，然后为我们的实体创建 <code>NSEntityDescription</code></li>
+<li>利用这些信息创建 <code>NSManagedObject</code>。</li>
+</ol>
+<p>实现代码如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 获取 Core Data 实体的名字</span></span><br><span class="line"><span class="keyword">let</span> entityName = <span class="keyword">self</span>.<span class="keyword">dynamicType</span>.<span class="type">EntityName</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建实体描述</span></span><br><span class="line"><span class="comment">// 实体可能不存在, 所以我们使用 'guard let' 来判断，如果实体</span></span><br><span class="line"><span class="comment">// 在我们的 core data 模型中不存在的话，我们就抛出错误 </span></span><br><span class="line"><span class="keyword">guard</span> <span class="keyword">let</span> desc = <span class="type">NSEntityDescription</span>.entityForName(entityName, inManagedObjectContext: context)</span><br><span class="line">    <span class="keyword">else</span> &#123; <span class="keyword">throw</span> <span class="type">UnknownEntity</span>(name: entityName) &#125; <span class="comment">// [译者注] UnknownEntity 为 SerializationError.UnknownEntity</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建 NSManagedObject</span></span><br><span class="line"><span class="keyword">let</span> managedObject = <span class="type">NSManagedObject</span>(entity: desc, insertIntoManagedObjectContext: context)</span><br></pre></td></tr></table></figure>
+<h2 id="实现反射"><a href="#实现反射" class="headerlink" title="实现反射"></a>实现反射</h2><p>下一步，我们想使用反射 API 来读取 <code>bookmark</code> 对象的属性然后把它写入到 <code>NSManagedObject</code> 实例中。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 创建 Mirror</span></span><br><span class="line"><span class="keyword">let</span> mirror = <span class="type">Mirror</span>(reflecting: <span class="keyword">self</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 确保我们是在分析一个 struct</span></span><br><span class="line"><span class="keyword">guard</span> mirror.displayStyle == .<span class="type">Struct</span> <span class="keyword">else</span> &#123; <span class="keyword">throw</span> <span class="type">SerializationError</span>.<span class="type">StructRequired</span> &#125;</span><br></pre></td></tr></table></figure>
+<p>我们通过测试 <code>displayStyle</code> 属性的方式来确保这是一个 <code>struct</code>。</p>
+<p>所以现在我们有了一个可以让我们读取属性的 <code>Mirror</code>，也有了一个可以用来设置属性的 <code>NSManagedObject</code>。因为 <code>mirror</code> 提供了读取所有 <code>children</code> 的方式，所以我们可以遍历它们并保存它们的值。方式如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> <span class="keyword">case</span> <span class="keyword">let</span> (label?, value) <span class="keyword">in</span> mirror.children &#123;</span><br><span class="line">    managedObject.setValue(value, forKey: label)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>太棒了！但是，如果我们试图编译它，它会失败。原因是 <code>setValueForKey</code> 需要一个 <code>AnyObject?</code> 类型的对象，而我们的 <code>children</code> 属性只返回一个 <code>(String?, Any)</code> 类型的 <code>tuple</code>。也就是说 <code>value</code> 是 <code>Any</code> 类型但是我们需要 <code>AnyObject</code> 类型的。为了解决这个问题，我们要测试 <code>value</code> 的  <code>AnyObject</code> 协议一致性。这也意味着如果得到的属性的类型不符合 <code>AnyObject</code> 协议（比如 <code>enum</code>)，我们就可以抛出一个错误。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> mirror = <span class="type">Mirror</span>(reflecting: <span class="keyword">self</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">guard</span> mirror.displayStyle == .<span class="type">Struct</span> </span><br><span class="line">  <span class="keyword">else</span> &#123; <span class="keyword">throw</span> <span class="type">SerializationError</span>.<span class="type">StructRequired</span> &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> <span class="keyword">case</span> <span class="keyword">let</span> (label?, anyValue) <span class="keyword">in</span> mirror.children &#123;</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">let</span> value = anyValue <span class="keyword">as</span>? <span class="type">AnyObject</span> &#123;</span><br><span class="line">	managedObject.setValue(child, forKey: label) <span class="comment">// [译者注] 正确代码为：managedObject.setValue(value, forKey: label)</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">	<span class="keyword">throw</span> <span class="type">SerializationError</span>.<span class="type">UnsupportedSubType</span>(label: label)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在，只有在 <code>child</code> 是 <code>AnyObject</code> 类型的时候我们才会调用 <code>setValueForKey</code> 方法。</p>
+<p>然后唯一剩下的事情就是返回 <code>NSManagedObject</code>。完整的代码如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">StructDecoder</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">toCoreData</span><span class="params">(context: NSManagedObjectContext)</span></span> <span class="keyword">throws</span> -&gt; <span class="type">NSManagedObject</span> &#123;</span><br><span class="line">	<span class="keyword">let</span> entityName = <span class="keyword">self</span>.<span class="keyword">dynamicType</span>.<span class="type">EntityName</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// 创建实体描述</span></span><br><span class="line">	<span class="keyword">guard</span> <span class="keyword">let</span> desc = <span class="type">NSEntityDescription</span>.entityForName(entityName, inManagedObjectContext: context)</span><br><span class="line">	    <span class="keyword">else</span> &#123; <span class="keyword">throw</span> <span class="type">UnknownEntity</span>(name: entityName) &#125; <span class="comment">// [译者注] UnknownEntity 为 SerializationError.UnknownEntity</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// 创建 NSManagedObject</span></span><br><span class="line">	<span class="keyword">let</span> managedObject = <span class="type">NSManagedObject</span>(entity: desc, insertIntoManagedObjectContext: context)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 创建一个 Mirror</span></span><br><span class="line">	<span class="keyword">let</span> mirror = <span class="type">Mirror</span>(reflecting: <span class="keyword">self</span>)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 确保我们是在分析一个 struct</span></span><br><span class="line">	<span class="keyword">guard</span> mirror.displayStyle == .<span class="type">Struct</span> <span class="keyword">else</span> &#123; <span class="keyword">throw</span> <span class="type">SerializationError</span>.<span class="type">StructRequired</span> &#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> <span class="keyword">case</span> <span class="keyword">let</span> (label?, anyValue) <span class="keyword">in</span> mirror.children &#123;</span><br><span class="line">	    <span class="keyword">if</span> <span class="keyword">let</span> value = anyValue <span class="keyword">as</span>? <span class="type">AnyObject</span> &#123;</span><br><span class="line">		managedObject.setValue(child, forKey: label) <span class="comment">// [译者注] 正确代码为：managedObject.setValue(value, forKey: label)</span></span><br><span class="line">	    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="keyword">throw</span> <span class="type">SerializationError</span>.<span class="type">UnsupportedSubType</span>(label: label)</span><br><span class="line">	    &#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> managedObject</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>搞定，我们现在已经把 <code>struct</code> 转换为 <code>NSManagedObject</code> 了。</p>
+<h1 id="性能"><a href="#性能" class="headerlink" title="性能"></a>性能</h1><p>那么，速度如何呢？这个方法可以在生产中应用么？我做了一些测试：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">创建 <span class="number">2000</span> 个 <span class="type">NSManagedObject</span></span><br><span class="line">原生: <span class="number">0.062</span> seconds</span><br><span class="line">反射: <span class="number">0.207</span> seconds</span><br></pre></td></tr></table></figure>
+<p>这里的原生是指创建一个 <code>NSManagedObject</code>，然后通过 <code>setValueForKey</code> 设置属性值。如果你在 <code>Core Data</code> 内创建一个 <code>NSManagedObject</code> 子类然后把值直接设置到属性上（没有了动态 <code>setValueForKey</code> 的开销），速度可能更快。</p>
+<p>所以正如你所见，使用反射使创建 <code>NSManagedObject</code> 的性能下降了<strong>3.5倍</strong>。当你在数量有限的项目上使用这个方法，或者你不关心处理速度时，这是没问题的。但是当你需要反射大量的 <code>struct</code> 时，这个方法可能会大大降低你 app 的性能。</p>
+<p><a name="custom_mirrors"></a></p>
+<h1 id="自定义-Mirror"><a href="#自定义-Mirror" class="headerlink" title="自定义 Mirror"></a>自定义 <code>Mirror</code></h1><p>我们之前已经讨论过，创建 <code>Mirror</code> 还有其他的选项。这些选项是非常有用的，比如，你想自己定义 <code>mirror</code> 中<strong>对象</strong>的哪些部分是可访问的。对于这种情况 <code>Mirror Struct</code> 提供了其他的构造器。</p>
+<h2 id="Collection"><a href="#Collection" class="headerlink" title="Collection"></a><code>Collection</code></h2><p>第一个特殊 <code>init</code> 是为 <code>Collection</code> 量身定做的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">init</span>&lt;<span class="type">T</span>, <span class="type">C</span> : <span class="type">CollectionType</span> <span class="keyword">where</span> <span class="type">C</span>.<span class="type">Generator</span>.<span class="type">Element</span> == <span class="type">Child</span>&gt;</span><br><span class="line">  (<span class="number">_</span> subject: <span class="type">T</span>, children: <span class="type">C</span>, </span><br><span class="line">   displayStyle: <span class="type">Mirror</span>.<span class="type">DisplayStyle?</span> = <span class="keyword">default</span>, </span><br><span class="line">   ancestorRepresentation: <span class="type">Mirror</span>.<span class="type">AncestorRepresentation</span> = <span class="keyword">default</span>)</span><br></pre></td></tr></table></figure>
+<p>与之前的 <code>init(reflecting:)</code> 相比，这个构造器允许我们定义更多反射处理的细节。</p>
+<ul>
+<li>它只对 <code>Collection</code> 有效</li>
+<li>我们可以设定被反射的对象<strong>以及</strong>对象的 <code>children</code> （<code>Collection</code> 的内容）</li>
+</ul>
+<h2 id="class-或者-struct"><a href="#class-或者-struct" class="headerlink" title="class 或者 struct"></a><code>class</code> 或者 <code>struct</code></h2><p>第二个可以在 <code>class</code> 或者 <code>struct</code> 上使用。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">init</span>&lt;<span class="type">T</span>&gt;(<span class="number">_</span> subject: <span class="type">T</span>, </span><br><span class="line">  children: <span class="type">DictionaryLiteral</span>&lt;<span class="type">String</span>, <span class="type">Any</span>&gt;, </span><br><span class="line">  displayStyle: <span class="type">Mirror</span>.<span class="type">DisplayStyle?</span> = <span class="keyword">default</span>, </span><br><span class="line">  ancestorRepresentation: <span class="type">Mirror</span>.<span class="type">AncestorRepresentation</span> = <span class="keyword">default</span>)</span><br></pre></td></tr></table></figure>
+<p>有意思的是，这里是由你指定对象的 <code>children</code> （即属性），指定的方式是通过一个 <code>DictionaryLiteral</code>，它有点像字典，可以直接用作函数参数。如果我们为 <code>Bookmark struct</code> 实现这个构造器，它看起来是这样的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Bookmark</span>: <span class="title">CustomReflectable</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">customMirror</span><span class="params">()</span></span> -&gt; <span class="type">Mirror</span> &#123; <span class="comment">// [译者注] 此处应该为 public func customMirror() -&gt; Mirror &#123;</span></span><br><span class="line">	<span class="keyword">let</span> children = <span class="type">DictionaryLiteral</span>&lt;<span class="type">String</span>, <span class="type">Any</span>&gt;(dictionaryLiteral: </span><br><span class="line">	(<span class="string">"title"</span>, <span class="keyword">self</span>.title), (<span class="string">"pagerank"</span>, <span class="keyword">self</span>.pagerank), </span><br><span class="line">	(<span class="string">"url"</span>, <span class="keyword">self</span>.url), (<span class="string">"created"</span>, <span class="keyword">self</span>.created), </span><br><span class="line">	(<span class="string">"keywords"</span>, <span class="keyword">self</span>.keywords), (<span class="string">"group"</span>, <span class="keyword">self</span>.group))</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="type">Mirror</span>.<span class="keyword">init</span>(<span class="type">Bookmark</span>.<span class="keyword">self</span>, children: children, </span><br><span class="line">	    displayStyle: <span class="type">Mirror</span>.<span class="type">DisplayStyle</span>.<span class="type">Struct</span>, </span><br><span class="line">	    ancestorRepresentation:.<span class="type">Suppressed</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果现在我们做另外一个性能测试，会发现性能甚至略微有所提升：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">创建 <span class="number">2000</span> 个 <span class="type">NSManagedObject</span></span><br><span class="line">原生: <span class="number">0.062</span> seconds</span><br><span class="line">反射: <span class="number">0.207</span> seconds</span><br><span class="line">反射: <span class="number">0.203</span> seconds</span><br></pre></td></tr></table></figure>
+<p>但这个工作几乎没有任何价值，因为它与我们之前反射 <code>struct</code> 成员变量的初衷是相违背的。</p>
+<h1 id="用例"><a href="#用例" class="headerlink" title="用例"></a>用例</h1><p>所以留下来让我们思考的问题是什么呢？好的反射用例又是什么呢？很显然，如果你在很多 <code>NSManagedObject</code> 上使用反射，它会大大降低你代码的性能。同时如果只有一个或者两个 <code>struct</code>，根据自己掌握的<code>struct</code> 领域的知识编写一个序列化的方法会更容易，更高性能且更不容易让人困惑。</p>
+<p>而本文展示反射技巧可以当你在有很多复杂的 <code>struct</code> ，且偶尔想对它们中的一部分进行存储时使用。</p>
+<p>例子如下：</p>
+<ul>
+<li>设置收藏夹</li>
+<li>收藏书签</li>
+<li>加星</li>
+<li>记住上一次选择</li>
+<li>在重新启动时存储AST打开的项目</li>
+<li>在特殊处理时做临时存储</li>
+</ul>
+<p>当然除此之外，反射当然还有其他的使用场景：</p>
+<ul>
+<li>遍历 <code>tuples</code></li>
+<li>对类做分析</li>
+<li>运行时分析对象的一致性</li>
+<li>自动生成详细日志 / 调试信息（即外部生成对象）</li>
+</ul>
+<h1 id="讨论"><a href="#讨论" class="headerlink" title="讨论"></a>讨论</h1><p>反射 API 主要做为 <code>Playground</code> 的一个工具。符合反射 API 的对象可以很轻松滴就在 <code>Playground</code> 的侧边栏中以分层的方式展示出来。因此，尽管它的性能不是最优的，在 <code>Playground</code> 之外仍然有很多有趣的应用场景，这些应用场景我们在<strong>用例</strong>章节中都讲解过。</p>
+<h1 id="更多信息"><a href="#更多信息" class="headerlink" title="更多信息"></a>更多信息</h1><p>反射 API 的源文件注释非常详细，我强烈建议每个人都去看看。</p>
+<p>同时，GitHub 上的 <a href="http://github.com/terhechte/corevalue" target="_blank" rel="noopener">CoreValue</a> 项目展示了关于这个技术更详尽的实现，它可以让你很轻松滴把 <code>struct</code> 编码成 <code>CoreData</code>，或者把 <code>CoreData</code> 解码成  <code>struct</code>。</p>
+<p><a name="1">1、实际上，<code>Any</code> 是一个空的协议，所有的东西都隐式滴符合这个协议。<br><a name="2">2、更确切地说，是一个空的可选类型。<br><a name="3">3、我对注释稍微做了简化。</a></a></a></p>
+<p>本文对应代码地址：<a href="https://github.com/mmoaay/MBPlayGroundForSwiftGG/tree/master/SwiftReflectionAPIPlayground.playground" target="_blank" rel="noopener">下载</a></p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/APPVENTURE/">APPVENTURE</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2015/11/23/swift-reflection-api-what-you-can-do/" data-title="Swift 反射 API 及用法 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2015/11/24/speeding-up-swift-playgrounds-with-closure-initialization-swiftlang/" title="如何使用闭包初始化来加速 Swift 的 playground">
+  <strong>上一篇</strong><br>
+  <span>
+  如何使用闭包初始化来加速 Swift 的 playground</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2015/11/20/advanced-practical-enum-examples/" title="Swift 中枚举高级用法及实践">
+ <strong>下一篇</strong><br> 
+ <span>Swift 中枚举高级用法及实践
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2015/11/23/swift-reflection-api-what-you-can-do/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#API-概述"><span class="toc-number">1.</span> <span class="toc-text">API 概述</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Mirror"><span class="toc-number">1.1.</span> <span class="toc-text">Mirror</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#创建一个-Mirror"><span class="toc-number">1.2.</span> <span class="toc-text">创建一个 Mirror</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Mirror-中都有什么？"><span class="toc-number">1.3.</span> <span class="toc-text">Mirror 中都有什么？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#如何使用一个-Mirror"><span class="toc-number">1.4.</span> <span class="toc-text">如何使用一个 Mirror</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#displayStyle"><span class="toc-number">1.4.1.</span> <span class="toc-text">displayStyle</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#children"><span class="toc-number">1.4.2.</span> <span class="toc-text">children</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SubjectType"><span class="toc-number">1.4.3.</span> <span class="toc-text">SubjectType</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SuperclassMirror"><span class="toc-number">1.4.4.</span> <span class="toc-text">SuperclassMirror</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#实例"><span class="toc-number">2.</span> <span class="toc-text">实例</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Struct-转-Core-Data"><span class="toc-number">2.1.</span> <span class="toc-text">Struct 转 Core Data</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#一个协议"><span class="toc-number">2.2.</span> <span class="toc-text">一个协议</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Bookmark-struct"><span class="toc-number">2.3.</span> <span class="toc-text">Bookmark struct</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#协议扩展"><span class="toc-number">2.4.</span> <span class="toc-text">协议扩展</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#一点-Core-Data"><span class="toc-number">2.5.</span> <span class="toc-text">一点 Core Data</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实现反射"><span class="toc-number">2.6.</span> <span class="toc-text">实现反射</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#性能"><span class="toc-number">3.</span> <span class="toc-text">性能</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#自定义-Mirror"><span class="toc-number">4.</span> <span class="toc-text">自定义 Mirror</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Collection"><span class="toc-number">4.1.</span> <span class="toc-text">Collection</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#class-或者-struct"><span class="toc-number">4.2.</span> <span class="toc-text">class 或者 struct</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#用例"><span class="toc-number">5.</span> <span class="toc-text">用例</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#讨论"><span class="toc-number">6.</span> <span class="toc-text">讨论</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#更多信息"><span class="toc-number">7.</span> <span class="toc-text">更多信息</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

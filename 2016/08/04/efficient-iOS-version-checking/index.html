@@ -1,0 +1,1042 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>高效的 iOS 版本检测方法 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="原文链接 : Efficient iOS Version Checking 原文作者 : Peter Steinberger 译文出自 : 掘金翻译计划 译者 : DeadLion 校对者: MAYDAY1993, Siegen    极少数应用程序很“奢侈”的只支持最新版本的 iOS。 设置一个较低的部署目标以及基于特定 iOS 版本的代码分支通常是很有必要的。虽然苹果公司的信息有些矛盾，还">
+<meta name="keywords" content="Swift">
+<meta property="og:type" content="article">
+<meta property="og:title" content="高效的 iOS 版本检测方法">
+<meta property="og:url" content="https://swift.gg/2016/08/04/efficient-iOS-version-checking/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="原文链接 : Efficient iOS Version Checking 原文作者 : Peter Steinberger 译文出自 : 掘金翻译计划 译者 : DeadLion 校对者: MAYDAY1993, Siegen    极少数应用程序很“奢侈”的只支持最新版本的 iOS。 设置一个较低的部署目标以及基于特定 iOS 版本的代码分支通常是很有必要的。虽然苹果公司的信息有些矛盾，还">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-08-26T13:33:55.003Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="高效的 iOS 版本检测方法">
+<meta name="twitter:description" content="原文链接 : Efficient iOS Version Checking 原文作者 : Peter Steinberger 译文出自 : 掘金翻译计划 译者 : DeadLion 校对者: MAYDAY1993, Siegen    极少数应用程序很“奢侈”的只支持最新版本的 iOS。 设置一个较低的部署目标以及基于特定 iOS 版本的代码分支通常是很有必要的。虽然苹果公司的信息有些矛盾，还">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/08/04/efficient-iOS-version-checking/" target="_blank" title="高效的 iOS 版本检测方法" itemprop="url">高效的 iOS 版本检测方法</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-08-04T05:00:00.000Z" itemprop="datePublished">2016-08-04</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<ul>
+<li>原文链接 : <a href="https://pspdfkit.com/blog/2016/efficient-iOS-version-checking/" target="_blank" rel="noopener">Efficient iOS Version Checking</a></li>
+<li>原文作者 : <a href="https://twitter.com/steipete" target="_blank" rel="noopener">Peter Steinberger</a></li>
+<li>译文出自 : <a href="https://github.com/xitu/gold-miner" target="_blank" rel="noopener">掘金翻译计划</a></li>
+<li>译者 : <a href="https://github.com/DeadLion" target="_blank" rel="noopener">DeadLion</a></li>
+<li>校对者: <a href="https://github.com/MAYDAY1993" target="_blank" rel="noopener">MAYDAY1993</a>, <a href="https://github.com/siegeout" target="_blank" rel="noopener">Siegen</a></li>
+</ul>
+</blockquote>
+<!--此处开始正文-->
+<p>极少数应用程序很“奢侈”的只支持最新版本的 iOS。 设置一个较低的<a href="https://pspdfkit.com/guides/ios/current/announcements/version-support/" target="_blank" rel="noopener">部署目标</a>以及基于特定 iOS 版本的代码分支通常是很有必要的。虽然苹果公司的信息有些矛盾，还是有各种办法来完成这个。最近在<a href="https://twitter.com/stevemoseley/status/748953473069092864" target="_blank" rel="noopener">这条 tweet</a>上看到有人警告说，不要这样做：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#define IsIOS7 ([[[[UIDevice currentDevice] systemVersion] substringToIndex:1] intValue]&gt;=7)</span><br></pre></td></tr></table></figure>
+<p><a href="https://github.com/search?q=%5B%5B%5BUIDevice+currentDevice%5D+systemVersion%5D+substringToIndex%3A1%5D&amp;type=Code&amp;utf8=" target="_blank" rel="noopener">GitHub 搜索显示，有超过 8000 的结果</a>调用了 <code>substringToIndex:1</code> 。所有这些代码碰到 iOS 10 就“懵逼”了。因为 iOS 10 会被检测成 iOS 1 了，估计只有在越狱的应用中才会出现吧。</p>
+<p>又是同样的老故事。<a href="http://www.pcworld.com/article/2690724/why-windows-10-isnt-named-9-windows-95-legacy-code.html" target="_blank" rel="noopener">Windows 9 变成 Windows 10</a> 是因为有<a href="https://searchcode.com/?q=if%28version%2Cstartswith%28%22windows+9%22%29" target="_blank" rel="noopener">太多代码</a>通过 <code>if (name.startsWith(&quot;windows 9&quot;))</code> 来检查 Windows 95 和 98 了。</p>
+<a id="more"></a>
+<h2 id="新-API"><a href="#新-API" class="headerlink" title="新 API"></a>新 API</h2><p>苹果公司令人惊讶的花了相当长的时间才意识到这个问题并提供了更好的 API。iOS 8 中，终于有了一些改进！现在 <a href="https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Classes/NSProcessInfo_Class/" target="_blank" rel="noopener"><code>NSProcessInfo</code></a> 有一个新的 <a href="https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Classes/NSProcessInfo_Class/#//apple_ref/occ/instp/NSProcessInfo/operatingSystemVersion" target="_blank" rel="noopener"><code>operatingSystemVersion</code></a> 方法，更重要的是还有 <a href="https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Classes/NSProcessInfo_Class/#//apple_ref/occ/instm/NSProcessInfo/isOperatingSystemAtLeastVersion:" target="_blank" rel="noopener"><code>- (BOOL)isOperatingSystemAtLeastVersion:(NSOperatingSystemVersion)version</code></a> 方法来检查。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">if ([[NSProcessInfo processInfo] isOperatingSystemAtLeastVersion:(NSOperatingSystemVersion)&#123;.majorVersion = 9, .minorVersion = 1, .patchVersion = 0&#125;]) &#123;</span><br><span class="line">    NSLog(@&quot;Hello from &gt; iOS 9.1&quot;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// Using short-form for the struct, we can make things somewhat more compact:</span><br><span class="line">if ([NSProcessInfo.processInfo isOperatingSystemAtLeastVersion:(NSOperatingSystemVersion)&#123;9,3,0&#125;]) &#123;</span><br><span class="line">    NSLog(@&quot;Hello from &gt; iOS 9.3&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="我们在-PSPDFKit-做了什么"><a href="#我们在-PSPDFKit-做了什么" class="headerlink" title="我们在 PSPDFKit 做了什么"></a>我们在 PSPDFKit 做了什么</h2><p><a href="https://pspdfkit.com/why-pspdfkit/" target="_blank" rel="noopener">PSPDFKit</a>  是一个关于PDF的SDK，我们可以用它在PDF文档上实现查看、注释以及填写表单的功能。最开始写这个 SDK 的时候还是 iOS 4，随着一系列新 iOS 版本的发布，它也不断的在改进。那个时候还没有专门的 API 来检测版本，许多应用采用类似下面的代码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">if ([[[UIDevice currentDevice] systemVersion] isEqualToString:@&quot;7.0&quot;]) &#123;</span><br><span class="line">    //do stuff</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样用不好，所以我们从来没这样用过。比较字符串速度可能很快，但是在这种情况下是个错误的选择。正确的做法是像下面<a href="https://gist.github.com/alex-cellcity/998472" target="_blank" rel="noopener">这样</a>：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v) \</span><br><span class="line">  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)</span><br><span class="line"></span><br><span class="line">if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@&quot;9.0&quot;)) &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样又太笨重了，容易出错。有种更简单的方法。我们可以用 <a href="https://developer.apple.com/reference/foundation/nsfoundationversionnumber" target="_blank" rel="noopener"><code>NSFoundationVersionNumber</code></a>（或者 <a href="https://developer.apple.com/library/ios/documentation/CoreFoundation/Reference/CFBaseUtils/#//apple_ref/c/data/kCFCoreFoundationVersionNumber" target="_blank" rel="noopener"><code>kCFCoreFoundationVersionNumber</code></a>）来比较。系统检测开销降低到一个简单的 if 比较。不需要调用其它方法，所以它效率极高，即使在紧凑的循环中表现也不错。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">if (NSFoundationVersionNumber &gt;= NSFoundationVersionNumber_iOS_9_0) &#123;</span><br><span class="line">    // do stuff for iOS 9 and newer</span><br><span class="line">&#125;</span><br><span class="line">else &#123;</span><br><span class="line">    // do stuff for older versions than iOS 9</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>事实上，这正是苹果公司在 <a href="http://devstreaming.apple.com/videos/techtalks/2013/15_Architecting_Modern_Apps_Part_2/Architecting_Modern_Apps_Part_2.pdf" target="_blank" rel="noopener">2013 构建现代应用程序技术论坛中章节 2</a>所建议的。</p>
+<p>告诫：有时候会缺少一些常量。<code>NSFoundationVersionNumber</code> 是在 <code>NSObjCRuntime.h</code> 中定义的，作为 Xcode 7.3.1 的一部分，我们设定常数范围从 iPhone OS 2 到 <code>#define NSFoundationVersionNumber_iOS_8_4 1144.17</code> - 而不是 9.0-9.3\。  对于  <code>kCFCoreFoundationVersionNumber</code> 也一样。注意，虽然这些数字很相似，但是它们的意义是不同的，所以使用其中一个或者另外一个。</p>
+<p>如果你做 macOS 开发的话，也可以<a href="http://nshipster.com/swift-system-version-checking/" target="_blank" rel="noopener">使用 <code>NSAppKitVersionNumber</code> ，它通常是更新到最新的</a>。</p>
+<p>在 SDK 10（Xcode 8）苹果补充了缺少的数字，甚至还有未来的版本。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#define NSFoundationVersionNumber_iOS_9_0 1240.1</span><br><span class="line">#define NSFoundationVersionNumber_iOS_9_1 1241.14</span><br><span class="line">#define NSFoundationVersionNumber_iOS_9_2 1242.12</span><br><span class="line">#define NSFoundationVersionNumber_iOS_9_3 1242.12</span><br><span class="line">#define NSFoundationVersionNumber_iOS_9_4 1280.25</span><br><span class="line">#define NSFoundationVersionNumber_iOS_9_x_Max 1299</span><br></pre></td></tr></table></figure>
+<p>会有 iOS 9.4 吗？考虑到 iOS 10 将在未来 3 个月内发布，而且 9.3.3 仍然是 beta 版，我估计是不会有了，但是最好还是占个坑吧。在 PSPDFKit 中，我们是使用下面的模式来定义缺少的版本号。如果代码以一个更高的最低部署目标构建，代码会自动编译，当我们遗漏了一些 iOS 版本时，这会很有帮助。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">// iOS 9 compatibility</span><br><span class="line">#ifndef kCFCoreFoundationVersionNumber_iOS_9_0</span><br><span class="line">#define kCFCoreFoundationVersionNumber_iOS_9_0 1223.1</span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">#define PSPDF_IS_IOS9_OR_GREATER (kCFCoreFoundationVersionNumber &gt;= kCFCoreFoundationVersionNumber_iOS_9_0)</span><br><span class="line"></span><br><span class="line">#if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) &amp;&amp; __IPHONE_OS_VERSION_MAX_ALLOWED &gt;= 90000</span><br><span class="line">#define PSPDF_IF_IOS9_OR_GREATER(...) \</span><br><span class="line">if (PSPDF_IS_IOS9_OR_GREATER) &#123; \</span><br><span class="line">PSPDF_PARTIAL_AVAILABILITY_BEGIN \</span><br><span class="line">__VA_ARGS__ \</span><br><span class="line">PSPDF_PARTIAL_AVAILABILITY_END &#125;</span><br><span class="line">#else</span><br><span class="line">#define PSPDF_IF_IOS9_OR_GREATER(...)</span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">#if defined(__IPHONE_OS_VERSION_MIN_REQUIRED) &amp;&amp; __IPHONE_OS_VERSION_MIN_REQUIRED &lt; 90000</span><br><span class="line">#define PSPDF_IF_PRE_IOS9(...)  \</span><br><span class="line">if (kCFCoreFoundationVersionNumber &lt; kCFCoreFoundationVersionNumber_iOS_9_0) &#123; \</span><br><span class="line">PSPDF_PARTIAL_AVAILABILITY_BEGIN \</span><br><span class="line">__VA_ARGS__ \</span><br><span class="line">PSPDF_PARTIAL_AVAILABILITY_END &#125;</span><br><span class="line">#else</span><br><span class="line">#define PSPDF_IF_PRE_IOS9(...)</span><br><span class="line">#endif</span><br></pre></td></tr></table></figure>
+<p>请注意部分可用的宏。这是添加到 SDK 9 中出现的一个警告。当我们打包进版本代码块时，这些没什么用，所以禁用它。我们有一些单独的宏，在做一些其他类型的可用性检查时会有用。我们在某些情况下使用，例如在 <code>UICollectionView</code> 中实现一些交互动画，<a href="https://pspdfkit.com/features/document-editor/ios/" target="_blank" rel="noopener">在 iOS 9 中拖拽 tab 或者 page</a>，同时也要支持 iOS 8。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#define PSPDF_PARTIAL_AVAILABILITY_BEGIN \</span><br><span class="line">_Pragma(&quot;clang diagnostic push&quot;) \</span><br><span class="line">_Pragma(&quot;clang diagnostic ignored \&quot;-Wpartial-availability\&quot;&quot;)</span><br><span class="line"></span><br><span class="line">#define PSPDF_PARTIAL_AVAILABILITY_END \</span><br><span class="line">_Pragma(&quot;clang diagnostic pop&quot;)</span><br></pre></td></tr></table></figure>
+<h3 id="为什么用这些宏"><a href="#为什么用这些宏" class="headerlink" title="为什么用这些宏"></a>为什么用这些宏</h3><p>自从<a href="https://pspdfkit.com/guides/ios/current/announcements/version-support/" target="_blank" rel="noopener">前段时间我们放弃了 iOS 7</a>，我们可以轻易的切换到新的 <code>isOperatingSystemAtLeastVersion:</code> 方法上。其内部实现是通过调用 <code>operatingSystemVersion</code> ，是相当高效的。但它会产生更多的代码，仍然比我们现在的实现要慢一点。我没看到过基础检测的正面比较，但是可以肯定的说用了这些宏会更好，如果没有用宏的话，赶紧试试吧。</p>
+<p>如果我们直接看 <code>operatingSystemVersion</code> 的实现，确实有点丑。它被缓存了，但是它通过调用 <code>_CFCopySystemVersionDictionary()</code> 生成版本号，然后查找 <code>kCFSystemVersionProductVersionKey</code> （就是 <code>ProductVersion</code>），然后对该字符串执行 <code>componentsSeparatedByString:</code> 。不知道为啥，我更期望这是硬编码，但是从外部字典文件读取可能更加灵活。</p>
+<h2 id="Swift"><a href="#Swift" class="headerlink" title="Swift"></a>Swift</h2><p>由于 Swift 2.0 是<a href="https://www.hackingwithswift.com/new-syntax-swift-2-availability-checking" target="_blank" rel="noopener">支持内置版本检查的语言</a>，以前是这么用的：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">if NSProcessInfo().isOperatingSystemAtLeastVersion(NSOperatingSystemVersion(majorVersion: 10, minorVersion: 0, patchVersion: 0)) &#123;</span><br><span class="line">    // modern code</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在可以用更少的代码完成同样的事：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">if #available(iOS 10.0, *) &#123;</span><br><span class="line">    // modern code</span><br><span class="line">&#125; else &#123;</span><br><span class="line">    // Fallback on earlier versions</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>Swift 还适用于代码块中 API 调用的可用性检查</strong>，所以我们保证了编译时安全，在 Objective-C 是无法轻易做到的。 在 <a href="https://developer.apple.com/videos/play/wwdc2015/411/" target="_blank" rel="noopener">“Swift in Practice” (WWDC 2015, Session 411)</a>  8：40 开始，一名苹果工程师详细介绍了这一特性。</p>
+<p>那么，Swift 底层是怎样实现的？好在它是开源的而且有着良好的结构。让我们来看看 <a href="https://github.com/apple/swift/blob/master/stdlib/public/core/Availability.swift#L20-L43" target="_blank" rel="noopener"><code>Availability.swift</code></a>:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">/// Returns 1 if the running OS version is greater than or equal to</span><br><span class="line">/// major.minor.patchVersion and 0 otherwise.</span><br><span class="line">///</span><br><span class="line">/// This is a magic entry point known to the compiler. It is called in</span><br><span class="line">/// generated code for API availability checking.</span><br><span class="line">@_semantics(&quot;availability.osversion&quot;)</span><br><span class="line">public func _stdlib_isOSVersionAtLeast(</span><br><span class="line">  _ major: Builtin.Word,</span><br><span class="line">  _ minor: Builtin.Word,</span><br><span class="line">  _ patch: Builtin.Word</span><br><span class="line">) -&gt; Builtin.Int1 &#123;</span><br><span class="line">#if os(OSX) || os(iOS) || os(tvOS) || os(watchOS)</span><br><span class="line">  let runningVersion = _swift_stdlib_operatingSystemVersion()</span><br><span class="line">  let queryVersion = _SwiftNSOperatingSystemVersion(</span><br><span class="line">    majorVersion: Int(major),</span><br><span class="line">    minorVersion: Int(minor),</span><br><span class="line">    patchVersion: Int(patch)</span><br><span class="line">  )</span><br><span class="line"></span><br><span class="line">  let result = runningVersion &gt;= queryVersion</span><br><span class="line"></span><br><span class="line">  return result._value</span><br><span class="line">#else</span><br><span class="line">  // FIXME: As yet, there is no obvious versioning standard for platforms other</span><br><span class="line">  // than Darwin-based OS&apos;, so we just assume false for now. </span><br><span class="line">  // rdar://problem/18881232</span><br><span class="line">  return false._value</span><br><span class="line">#endif</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在，更有趣的是，<code>_swift_stdlib_operatingSystemVersion()</code> 是干什么的，它是怎么定义的？想要找到答案的话，我们得离开舒适的 Swift 世界了，然后深入探究 [“疯狂”的 Objective-C++] 。进入   <a href="https://github.com/apple/swift/blob/master/stdlib/public/stubs/Availability.mm#L26" target="_blank" rel="noopener"><code>Availability.mm</code></a>:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">/// Return the version of the operating system currently running for use in</span><br><span class="line">/// API availability queries.</span><br><span class="line">_SwiftNSOperatingSystemVersion swift::_swift_stdlib_operatingSystemVersion() &#123;</span><br><span class="line">  static NSOperatingSystemVersion version = ([]&#123;</span><br><span class="line">    // Use -[NSProcessInfo.operatingSystemVersion] when present</span><br><span class="line">    // (on iOS 8 and OS X 10.10 and above).</span><br><span class="line">    if ([NSProcessInfo</span><br><span class="line">         instancesRespondToSelector:@selector(operatingSystemVersion)]) &#123;</span><br><span class="line">      return [[NSProcessInfo processInfo] operatingSystemVersion];</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">      // Otherwise load and parse from SystemVersion dictionary.</span><br><span class="line">      return operatingSystemVersionFromPlist();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;)();</span><br><span class="line"></span><br><span class="line">  return &#123; version.majorVersion, version.minorVersion, version.patchVersion &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Swift 使用了 iOS 8 的新 API，但是低于 iOS 8 的版本又回退到糟糕的方法了，开放了  <code>@&quot;/System/Library/CoreServices/SystemVersion.plist&quot;</code> 文件。这样结果就会被缓存，版本检测会访问硬盘，但是只访问一次。我的第一反应是发送一个变化的 pull 请求，简单的使用已有的公用 API（<code>systemVersion</code>），然而 <a href="https://stackoverflow.com/questions/37817554/xcode-8-recommend-me-to-change-the-min-ios-deployment-target-from-7-1-to-8-0" target="_blank" rel="noopener">Xcode 8 设置最小部署目标为 iOS 8</a>，我们不可能看到另外一个有着 Swift 更新的 Xcode 7.3.x 发布，所以这段代码在低于 iOS 8 的版本可能是完全无用的。</p>
+<h2 id="更多关于向后兼容"><a href="#更多关于向后兼容" class="headerlink" title="更多关于向后兼容"></a>更多关于向后兼容</h2><p>值得注意的是，苹果正在努力让这些版本检测成为不必要的。当然还有 <a href="https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Protocols/NSObject_Protocol/index.html#//apple_ref/occ/intfm/NSObject/respondsToSelector:" target="_blank" rel="noopener"><code>respondsToSelector:</code></a> 和 <a href="https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Classes/NSObject_Class/index.html#//apple_ref/occ/clm/NSObject/instancesRespondToSelector:" target="_blank" rel="noopener"><code>instancesRespondToSelector:</code></a> ，它们是 Objective-C 的一部分。假设你已经了解这些，那么使用它们是极好的，在某些情况下，我们也会使用。然而，还是有些情况不适用的。例如，有时苹果会把已经存在于一些组件或者更深层的内部构造中的有着不同特性的 API 公开。这就是为什么 <a href="https://openradar.appspot.com/14216650" target="_blank" rel="noopener"><code>appStoreReceiptURL</code> 在 iOS 7 中添加，但是 iOS 6 中也存在的原因</a>。在这种情况下，显式的版本是更可靠的。此外，当你希望放弃旧版本的 iOS 时，也更容易清理代码。所有需要你做的就是移除兼容性宏和修复构建错误。</p>
+<h3 id="弱链接"><a href="#弱链接" class="headerlink" title="弱链接"></a>弱链接</h3><p>在很早的时候，使用一个不在所有版本中可用的类意味着要使用下面的模式：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Class cls = NSClassFromString (@&quot;NSRegularExpression&quot;);</span><br><span class="line">if (cls) &#123;</span><br><span class="line">    // Create an instance of the class and use it.</span><br><span class="line">&#125; else &#123;</span><br><span class="line">    // Alternate code path to follow when the</span><br><span class="line">    // class is not available.</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>随着 iOS 4.2 <a href="https://developer.apple.com/library/ios/documentation/DeveloperTools/Conceptual/cross_development/Using/using.html#//apple_ref/doc/uid/20002000-SW3" target="_blank" rel="noopener">弱链接类</a>的添加，现在这要简单得多︰</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">if ([UIPrintInteractionController class]) &#123;</span><br><span class="line">    // Create an instance of the class and use it.</span><br><span class="line">&#125; else &#123;</span><br><span class="line">    // Alternate code path to follow when the</span><br><span class="line">    // class is not available.</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><a href="http://sealiesoftware.com/blog/archive/2009/09/09/objc_explain_Weak-import_classes.html" target="_blank" rel="noopener">Greg Parker 在他的 Hamster Emporium 文章中分享了更多</a>，包括这个梗：</p>
+<blockquote>
+<p>为 Objective-C 增加弱导入是 Snow Leopard 没有按时发布的原因。假设在 Mac OS X 10.7（以猫科动物命名）按时发布，直到 Mac OS X 10.8 你才能用的上。</p>
+</blockquote>
+<p>弱链接可以扩展到一个整体框架。在 PSPDFKit，我们为 <a href="https://developer.apple.com/library/ios/documentation/SafariServices/Reference/SafariServicesFramework_Ref/" target="_blank" rel="noopener">SafariServices</a> 做了扩展，其中包含 <a href="https://developer.apple.com/library/ios/documentation/SafariServices/Reference/SFSafariViewController_Ref/index.html#//apple_ref/occ/cl/SFSafariViewController" target="_blank" rel="noopener"><code>SFSafariViewController</code></a>（在 iOS 9 中加入）。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">// Part of our .xcconfig file:</span><br><span class="line">-weak_framework SafariServices</span><br></pre></td></tr></table></figure>
+<p>弱链接在启动的时候会有些性能损耗，所以当你不得不使用的时候再用。想学习更多，看看 <a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/cross_development/Using/using.html#//apple_ref/doc/uid/20002000-SW6" target="_blank" rel="noopener">Apple’s SDK Compatibility Guide</a>。</p>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>对于大多数应用，在 Objective-C 中使用 <code>isOperatingSystemAtLeastVersion:</code>，在 Swift 中使用 <code>#available()</code> 就足够了。了解底层实现还是很有趣的，一切都比字符串比较要好。如果你喜欢刨根问底，那么 <a href="https://pspdfkit.com/jobs/" target="_blank" rel="noopener">PSPDFKit 就是你该来的地方。</a></p>
+<h2 id="更新"><a href="#更新" class="headerlink" title="更新"></a>更新</h2><p>发表这篇文章之后，Devin Coughlin ，<code>#available</code> 方法的作者回复了为什么在 Swift 中不能使用 <code>systemVersion</code>：</p>
+<blockquote>
+<p><a href="https://twitter.com/coughlin/status/750706938489425921" target="_blank" rel="noopener">@steipete Also: 为什么不用 “systemVersion”? 因为 UIDevice 在 macOS 中不存在，然后我们想在所有平台上使用同样的代码路径。</a></p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/投稿/">投稿</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift/">Swift</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/08/04/efficient-iOS-version-checking/" data-title="高效的 iOS 版本检测方法 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2016/08/05/afternoon-whoa-swifts-guard-case/" title="午后问答：Swift 中的 guard case = 语法">
+  <strong>上一篇</strong><br>
+  <span>
+  午后问答：Swift 中的 guard case = 语法</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/08/03/swift-prettify-your-print-statements-pt-1/" title="Swift:如何优雅地使用 print()（一）">
+ <strong>下一篇</strong><br> 
+ <span>Swift:如何优雅地使用 print()（一）
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/08/04/efficient-iOS-version-checking/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#新-API"><span class="toc-number">1.</span> <span class="toc-text">新 API</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#我们在-PSPDFKit-做了什么"><span class="toc-number">2.</span> <span class="toc-text">我们在 PSPDFKit 做了什么</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#为什么用这些宏"><span class="toc-number">2.1.</span> <span class="toc-text">为什么用这些宏</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Swift"><span class="toc-number">3.</span> <span class="toc-text">Swift</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#更多关于向后兼容"><span class="toc-number">4.</span> <span class="toc-text">更多关于向后兼容</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#弱链接"><span class="toc-number">4.1.</span> <span class="toc-text">弱链接</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结论"><span class="toc-number">5.</span> <span class="toc-text">结论</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#更新"><span class="toc-number">6.</span> <span class="toc-text">更新</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

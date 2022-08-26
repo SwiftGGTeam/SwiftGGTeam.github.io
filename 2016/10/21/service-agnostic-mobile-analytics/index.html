@@ -1,0 +1,1098 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>与服务器无关的移动端分析 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Joe，原文链接，原文日期：2016/04/12译者：Cwift；校对：walkingway；定稿：CMB   移动应用分析是指捕获并分析用户在使用应用时产生的用户行为。当然，完整的应用分析包括了操作系统、桌面应用、web应用等等，移动应用分析只是其中的一个分支。直到今年早些时候，Parse 还是一个流行的云平台，用于捕获和显示移动应用程序的使用数据。 从 Prase 的突然离开给我们上了">
+<meta name="keywords" content="Swift">
+<meta property="og:type" content="article">
+<meta property="og:title" content="与服务器无关的移动端分析">
+<meta property="og:url" content="https://swift.gg/2016/10/21/service-agnostic-mobile-analytics/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Joe，原文链接，原文日期：2016/04/12译者：Cwift；校对：walkingway；定稿：CMB   移动应用分析是指捕获并分析用户在使用应用时产生的用户行为。当然，完整的应用分析包括了操作系统、桌面应用、web应用等等，移动应用分析只是其中的一个分支。直到今年早些时候，Parse 还是一个流行的云平台，用于捕获和显示移动应用程序的使用数据。 从 Prase 的突然离开给我们上了">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/appname_xcodeproj.png">
+<meta property="og:image" content="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/ApiKeys_plist.png">
+<meta property="og:image" content="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/appname.png">
+<meta property="og:image" content="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/AmplitudeAnalytics.png">
+<meta property="og:image" content="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/SetupOrganizationAndApp.png">
+<meta property="og:image" content="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/AddingAmplitude.png">
+<meta property="og:image" content="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/bridgingheader.png">
+<meta property="og:image" content="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/AmplitudeApiKeys.png">
+<meta property="og:image" content="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/WelcomeToCleverTap.png">
+<meta property="og:image" content="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/AddYourApp2.png">
+<meta property="og:image" content="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/cleverTapCredentials.png">
+<meta property="og:updated_time" content="2022-08-26T13:33:55.008Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="与服务器无关的移动端分析">
+<meta name="twitter:description" content="作者：Joe，原文链接，原文日期：2016/04/12译者：Cwift；校对：walkingway；定稿：CMB   移动应用分析是指捕获并分析用户在使用应用时产生的用户行为。当然，完整的应用分析包括了操作系统、桌面应用、web应用等等，移动应用分析只是其中的一个分支。直到今年早些时候，Parse 还是一个流行的云平台，用于捕获和显示移动应用程序的使用数据。 从 Prase 的突然离开给我们上了">
+<meta name="twitter:image" content="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/appname_xcodeproj.png">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/10/21/service-agnostic-mobile-analytics/" target="_blank" title="与服务器无关的移动端分析" itemprop="url">与服务器无关的移动端分析</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-10-21T05:00:00.000Z" itemprop="datePublished">2016-10-21</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Joe，<a href="http://dev.iachieved.it/iachievedit/service-agnostic-mobile-analytics/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016/04/12<br>译者：<a href="http://weibo.com/277195544" target="_blank" rel="noopener">Cwift</a>；校对：<a href="http://chengway.in/" target="_blank" rel="noopener">walkingway</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>移动应用分析是指捕获并分析用户在使用应用时产生的用户行为。当然，完整的应用分析包括了操作系统、桌面应用、web应用等等，移动应用分析只是其中的一个分支。直到今年早些时候，<a href="http://blog.parse.com/announcements/moving-on/" target="_blank" rel="noopener">Parse</a> 还是一个流行的云平台，用于捕获和显示移动应用程序的使用数据。</p>
+<p>从 Prase 的突然离开给我们上了一课。首先，对于从事软件开发超过一年的人来说，不应该感到奇怪，<em>没有什么是永恒的</em>。所以，事情发生了改变。第二个教训可能是，你曾经经历过因为平台不断改动引发的愤怒（或者疼痛），那么为什么不抽象出一些底层的操作，并且让这些操作在将来更容易被更改呢？我们已经从前人的经验中学习，准备应用到移动分析上，让应用更加的“面向未来”。</p>
+<a id="more"></a>
+<h2 id="协议"><a href="#协议" class="headerlink" title="协议"></a>协议</h2><p>关于何为协议，苹果的<a href="https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/Protocols.html" target="_blank" rel="noopener">官方文档</a>给出了一个简洁定义：<em>为适配某些特定任务或功能，规划出的由方法、属性和其他要求组成的蓝图</em>。下面是一些所有记录器都应该提供的基础方法：</p>
+<ul>
+<li>记录后台的打印信息</li>
+<li>记录事件</li>
+<li>用数据字典记录事件</li>
+</ul>
+<p>当然，在不同的分析平台上你可以发现各式各样的特性，不过我们希望至少有以上三类关键数据。一个完美的协议定义如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">AnalyticsEventLogger</span> </span>&#123;</span><br><span class="line">  </span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">initialize</span><span class="params">()</span></span></span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">logEvent</span><span class="params">(name:String)</span></span></span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">logEvent</span><span class="params">(name:String, data:AnyObject)</span></span></span><br><span class="line">  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>就协议 AnalyticsEventLogger 本身而言不做任何事情，它只是一个蓝图。我们需要一个具体的分析框架来完成工作。</p>
+<h2 id="Amplitude"><a href="#Amplitude" class="headerlink" title="Amplitude"></a>Amplitude</h2><p>当我们思考如何从 Parse 上迁移 Bondi 时，<a href="https://amplitude.com/home-2" target="_blank" rel="noopener">Amplitude</a>是我们遇到的第一个移动分析服务。它通过『一个记录事件的简单 API』实现了直截了当（并且免费）的注册流程。AnalyticsEventLogger 协议的实现起来也非常简单：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">AmplitudeEventLogger</span> : <span class="title">AnalyticsEventLogger</span> </span>&#123;</span><br><span class="line">  </span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">initialize</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="type">Amplitude</span>.instance().initializeApiKey(<span class="type">AmplitudeApplicationKey</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">logEvent</span><span class="params">(name:String)</span></span> &#123;</span><br><span class="line">    <span class="type">Amplitude</span>.instance().logEvent(name)</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">logEvent</span><span class="params">(name:String, data:AnyObject)</span></span> &#123;</span><br><span class="line">    <span class="type">Amplitude</span>.instance().logEvent(name, withEventProperties: data <span class="keyword">as</span>! [<span class="type">NSObject</span> : <span class="type">AnyObject</span>])</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="CleverTap"><a href="#CleverTap" class="headerlink" title="CleverTap"></a>CleverTap</h2><p>CleverTap 是另一个移动分析平台，提供快捷的注册和记录服务。不过说实话在应用中集成 CleverTap SDK 的步骤有些繁琐。我们很快就意识到了问题所在，但为了完整起见，依旧列出这个基于 CleverTap 实现的事件日志工具样式：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CleverTapEventLogger</span> : <span class="title">AnalyticsEventLogger</span> </span>&#123;</span><br><span class="line">  </span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">initialize</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="type">CleverTap</span>.changeCredentials(withAccountID: accountID, andToken: accountToken)</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">logEvent</span><span class="params">(name:String)</span></span> &#123;</span><br><span class="line">    <span class="type">CleverTap</span>.sharedInstance().recordEvent(name)</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">logEvent</span><span class="params">(name:String, data:AnyObject)</span></span> &#123;</span><br><span class="line">    <span class="type">CleverTap</span>.sharedInstance().recordEvent(name, withProps: data <span class="keyword">as</span>! [<span class="type">NSObject</span>:<span class="type">AnyObject</span>])</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>需要注意的关键点是，<em>协议</em> 掌控着方法：</p>
+<ul>
+<li>initialize()</li>
+<li>logEvent(name:String)</li>
+<li>logEvent(name:String, data:AnyObject)</li>
+</ul>
+<p>基于 Amplitude 的事件日志工具在底层实现中使用了 Amplitude SDK 中的方法。基于 CleverTap 的协议实现将使用 CleverTap SDK 提供的方法。</p>
+<p><strong>注意：</strong>许多移动分析平台提供了更丰富的方法。比如，其中一些平台提供了用户在屏幕上触摸的热图分析。我们的目标不是构建一个能涵盖所有移动分析功能的协议，而是着力于筛选出那些最有用的功能。</p>
+<h1 id="示例应用"><a href="#示例应用" class="headerlink" title="示例应用"></a>示例应用</h1><p>我们已经快速搭建了一个示例应用，允许你使用 Amplitude 或者 CleverTap 来实现事件日志工具的功能。下面的部分将通过演示引导你在程序的适当地方插入 API 密钥。不过，为了让程序跑起来，你需要在网上注册这些服务。</p>
+<p>事件记录器本身是 AppDelegate 中的 eventLogger 实例。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">AppDelegate</span>: <span class="title">UIResponder</span>, <span class="title">UIApplicationDelegate</span> </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> window: <span class="type">UIWindow?</span></span><br><span class="line">  <span class="keyword">var</span> eventLogger:<span class="type">AnalyticsEventLogger</span> = <span class="type">AmplitudeEventLogger</span>()</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">application</span><span class="params">(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?)</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line"></span><br><span class="line">    eventLogger.initialize()</span><br><span class="line">    eventLogger.logEvent(<span class="type">AnalyticsStartEvent</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Additional routines</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的代码中声明了一个名为 eventLogger 的类实例，该实例的上下文是协议 AnalyticsEventLogger。实际的实例将会是一个 AmplitudeEventLogger，这个类被声明在 AmplitudeEventLogger.swift 文件中。如果你想要使用 CleverTap，只需要简单地替换声明部分即可。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> eventLogger:<span class="type">AnalyticsEventLogger</span> = <span class="type">CleverTapEventLogger</span>()</span><br></pre></td></tr></table></figure>
+<p>实际上，你甚至不需要声明变量的类型（AnalyticsEventLogger）。Swift 的编译器能够推断出来。</p>
+<h2 id="获取代码"><a href="#获取代码" class="headerlink" title="获取代码"></a>获取代码</h2><p>在终端上输入 <code>git clone git@bitbucket.org:iachievedit/mobileanalytics.git</code> 可以从 BitBucket 上得到示例应用的源代码。在 Xcode 中打开 appname.xcodeproj。</p>
+<p><img src="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/appname_xcodeproj.png" alt><br>appname Project</p>
+<h2 id="项目的基础"><a href="#项目的基础" class="headerlink" title="项目的基础"></a>项目的基础</h2><p>示例项目中需要回顾的关键性文件如下：</p>
+<ul>
+<li>AnalyticsEventLogger.swift – 这个文件中包含了我们的 AnalyticsEventLogger 协议，所有的事件日志工具都需要遵守这个协议。</li>
+<li>AmplitudeEventLogger.swift – 使用 Amplitude 服务实现的 AnalyticsEventLogger 协议</li>
+<li>CleverTapEventLogger.swift – 使用 CleverTap 服务实现的 AnalyticsEventLogger 协议</li>
+<li>ViewController.swift – 在示例应用中，当我们按下屏幕上的那些按钮时，会打印对应的事件的分析。这些点击事件对应的 IBAction 被定义在控制器当中</li>
+<li>ApiKeys.swift - 这个文件中包含了一个实例，用来从一个 .plist 文件中提取 API 密钥。具体的实现细节将在将会在接下来的章节 <strong>API 密钥</strong> 中详细讲解。</li>
+</ul>
+<h2 id="API-密钥"><a href="#API-密钥" class="headerlink" title="API 密钥"></a>API 密钥</h2><p>大多数情况下，不代表全部，分析平台会让你使用一个单独的应用密钥或者使用用户账号标识符和应用密钥的组合。这方面 Amplitude 和 CleverTap 没有什么不同。示例应用使用了<a href="https://developer.apple.com/library/content/documentation/Cocoa/Conceptual/PropertyLists/Introduction/Introduction.html" target="_blank" rel="noopener">属性列表</a>来<a href="http://dev.iachieved.it/iachievedit/using-property-lists-for-api-keys-in-swift-applications/" target="_blank" rel="noopener">管理 API 密钥</a>。如果你<em>还没有</em>注册任何一个服务，请跳到专门讲解 Amplitude 或者 CleverTap 注册流程的章节为你的应用进行注册。</p>
+<p>注意上面的 ApiKeys.plist 文件是红色的。这意味着这个文件不存在，所以你需要创建一个这样的文件，然后向其中添加你所选择的移动分析服务商密钥。为了能在 Amplitude 和 CleverTap 之间切换，你还需要同时保存二者的账户和 API 密钥。可以通过下面的说明来了解，或者使用最初的模板工程尝试一下其他的服务，比如 <a href="https://login.flurry.com" target="_blank" rel="noopener">Flurry</a> 或者 <a href="http://appanalytics.io" target="_blank" rel="noopener">AppAnalytics</a>。</p>
+<p>使用 Xcode 的  <strong>File – New – File</strong> 来创建一个 ApiKeys.plist 文件，然后选中 <strong>iOS Resource</strong>，选择 <strong>Property List</strong> 模板。点击 <strong>Next</strong> 并且把文件命名为 ApiKeys.plist，确定对话框中勾选了将其添加到应用的 Target 中的选项。</p>
+<p>为你想要在工程中引用的每一个 API 创建密钥，比如 AmplitudeDevelopmentApplicationKey。如果你一直在使用这个示例工程并且使用了 Amplitude 和 CleverTap，你的 ApiKeys.plist 看上去应该是下面这样：</p>
+<p><img src="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/ApiKeys_plist.png" alt></p>
+<p>ApiKeys.plist</p>
+<p>一旦 API 密钥就位，更新 AppDelegate 文件，选择你需要的日志工具，然后在真机或者模拟器上运行程序。</p>
+<p><img src="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/appname.png" alt></p>
+<p>Logging Events</p>
+<p>点击 <strong>Like</strong>，<strong>DisLike</strong> 等，按钮会调用移动分析的日志方法（见 ViewController.swift 文件）。在 Donate（捐赠） 按钮的情境中，日志方法将包含捐赠的数量。</p>
+<h2 id="Amplitude-入门"><a href="#Amplitude-入门" class="headerlink" title="Amplitude 入门"></a>Amplitude 入门</h2><p><strong>注意：</strong>这是一个有关如何注册 Amplitude 的简单介绍，并不涵盖所有的功能。<br>首先，你需要在 Amplitude 的<a href="https://amplitude.com/signup" target="_blank" rel="noopener">注册页</a>上注册。填写所有需要的信息（姓名、电子邮件等），然后你会看到 <strong>欢迎来到 Amplitude</strong> 的对话框。</p>
+<p><img src="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/AmplitudeAnalytics.png" alt></p>
+<p>点击 <strong>Let’s Go</strong> 按钮，创建你的第一个应用。我们在组织一栏填写 iAchieved.it LLC  ，应用名一栏填写 <strong>Appname Development*</strong>。开发版本和应用版本的应用会有不同的密钥。</p>
+<p><img src="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/SetupOrganizationAndApp.png" alt></p>
+<p>点击 <strong>Continue</strong>并且选择 iOS SDK，然后点击 <strong>I’m Ready to Install</strong>。Amplitude 将会展示一个 Amplitude SDK 的安装页面，该页面提供了诸如如何下载 iOS SDK 、向工程中导入 SQLite 时应如何更新 build settings 的一系列说明，然后还展示了一个调用服务的 Objective C 示例。我们热衷于在应用中使用 Swift 语言，所以在这一步时点击 <a href="https://github.com/amplitude/Amplitude-iOS/archive/master.zip" target="_blank" rel="noopener">Download the source code</a> 链接下载 Amplitude 源码。解压下载得到的文件夹。</p>
+<p>示例应用已经包含了 Amplitude SDK，但是如果你在使用一个新建的项目，把 Amplitude 子文件夹拖拽到工程目录中。确定你勾选了 <strong>Copy items if needed</strong> 和 <strong>Create groups</strong>，当然还要确定 application target 也是选中的。</p>
+<p><img src="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/AddingAmplitude.png" alt></p>
+<p>AddingAmplitude</p>
+<p>回到 Amplitude 的门户页，你可以点击 <strong>Install Amplitude SDK</strong> 页面的 <strong>Continue</strong> 按钮，然后点击 <strong>Done</strong>，当提示邀请成员加入你的团队时，选择 <strong>Skip</strong>。</p>
+<h2 id="添加附加框架"><a href="#添加附加框架" class="headerlink" title="添加附加框架"></a>添加附加框架</h2><p>向你的 Xcode 工程中添加以下框架：</p>
+<ul>
+<li>libsqlite.tbd</li>
+</ul>
+<p>可以通过下面的步骤轻松地增加框架：进入工程的 target 目录下，选择 Build Phases，来到  Link Binary With Libraries 功能区，然后点击 + 按钮选择框架。</p>
+<h2 id="添加桥接头文件"><a href="#添加桥接头文件" class="headerlink" title="添加桥接头文件"></a>添加桥接头文件</h2><p>在 iAchieved.it，自 Swift 诞生之日起我们就在使用这门语言，并且从未放弃。如果你也正在使用 Swift 构建你的工程，为了访问 Amplitude 的 API 你需要在工程中添加一个桥接头文件。桥接头文件很容易添加。首先，使用 <strong>File – New – File</strong>，选择 <strong>iOS Source</strong>，然后找到 <strong>Header file</strong> 图标。把文件命名为 bridgingHeader.h。</p>
+<p>接下来，在应用的 target 中点击 <strong>Build Settings</strong>，在搜索框中输入 bridging，你将看到下面的页面：</p>
+<p><img src="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/bridgingheader.png" alt></p>
+<p>双击 <strong>Objective-C Bridging Header</strong> 一栏，在对话框中输入 $(SRCROOT)/bridgingHeader.h。$(SRCROOT) 会被映射到你程序的根目录。</p>
+<p>现在，在 bridgingHeader.h 文件中输入一行代码：<code>#import &quot;Amplitude.h&quot;</code>。</p>
+<h2 id="API-证书"><a href="#API-证书" class="headerlink" title="API 证书"></a>API 证书</h2><p>应用需要的 API 证书可以从 Amplitude 轻松获得。在网站门户页，点击右上角的 account e-mail，然后在下拉菜单中选择 <strong>Account Settings</strong>。</p>
+<p><img src="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/AmplitudeApiKeys.png" alt></p>
+<p>Amplitude API Keys</p>
+<p>在我们的示例应用中，我们使用 .plist 方法保存 API 的密钥，所以拿到对应的密钥并加入到 ApiKeys.plist 文件中。或者你可以打开 AmplitudeEventLogger.swift 文件，把 API 密钥直接增加到 Amplitude.instance.initializeApiKey 方法中。</p>
+<h2 id="CleverTap-入门"><a href="#CleverTap-入门" class="headerlink" title="CleverTap 入门"></a>CleverTap 入门</h2><p><strong>注意：</strong>这是一个有关如何注册 CleverTap 的简单介绍，并不涵盖所有的功能。<br>我们发现 CleverTap 使用起来不像 Amplitude 那样直观。然而，它不需要信用卡就可以上手，这样你可以在考虑购买之前先试用一段时间。</p>
+<p>按照标题找到 CleverTap 的<a href="https://clevertap.com/sign-up/" target="_blank" rel="noopener">注册页面</a>，填写所需的信息。你将收到一封激活的邮件，其中会包含一个完成注册的链接。产看电子邮件并点击 <strong>Complete your signup</strong> 按钮。</p>
+<p><img src="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/WelcomeToCleverTap.png" alt><br>点击 <strong>Add my first app</strong> 按钮你会看到下面的页面：</p>
+<p><img src="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/AddYourApp2.png" alt></p>
+<p>Add Your App</p>
+<p>请注意， CleverTap 自动为你的应用创建了一个 <strong>TEST</strong> 环境。坦白说，我不太喜欢这个特性，因为它在猜测你的环境命名。使用 Amplitude 的时候，可以自己管理应用的开发、升级以及发布版本，而 CleverTap 则简单地假设你有一个 <strong>TEST</strong> 的应用版本。</p>
+<p>点击 <strong>Add My App</strong>。你需要在屏幕上选择你所要进行开发的平台（Android版，iOS版，Windows等），并且提交你的应用在应用商店中的 URL。选择 iOS，然后点击 <strong>Skip URL</strong>。</p>
+<p>这里遇到的 CleverTap 的整合命令并不像想象中的那么简单。建议跳过整合的步骤，然后按照下面的操作步骤整合：</p>
+<h2 id="获取-CleverTap-的-iOS-SDK"><a href="#获取-CleverTap-的-iOS-SDK" class="headerlink" title="获取 CleverTap 的 iOS SDK"></a>获取 CleverTap 的 iOS SDK</h2><p>CleverTap iOS SDK 的下载链接可以从 <a href="https://support.clevertap.com/integration/ios-sdk/" target="_blank" rel="noopener">iOS SDK 的集成页面</a>中找到。选择下载 Xcode 7 或者 Xcode 6 的版本，在你下载得到的文件夹中你将看到一个 CleverTapSDK-v2.0.10-20160405.framework.zip 文件。解压该文件，将得到一个单独的 framework 文件 CleverTapSDK.framework。拖拽 CleverTapSDK.framework 到你的工程中，确保选中了Copy items if necessary 和 Create groups 选项。当然你也会把它添加到你应用的 target 中。</p>
+<h2 id="添加附加的框架"><a href="#添加附加的框架" class="headerlink" title="添加附加的框架"></a>添加附加的框架</h2><p>添加如下所示的框架到你的 Xcode 工程中：</p>
+<ul>
+<li>SystemConfiguration</li>
+<li>CoreTelephony</li>
+<li>Security</li>
+<li>UIKit</li>
+<li>CoreLocation</li>
+</ul>
+<h2 id="添加一个桥接头文件（如果你在使用Swift的话）"><a href="#添加一个桥接头文件（如果你在使用Swift的话）" class="headerlink" title="添加一个桥接头文件（如果你在使用Swift的话）"></a>添加一个桥接头文件（如果你在使用Swift的话）</h2><p>和 Amplitude一样，如果你在使用 Swift 语言，你需要添加一个桥接头文件。详情请参考添加头文件的快速指南。在 bridgingHeader.h 文件中增加一行：<code>#import &lt;CleverTapSDK/CleverTap.h&gt;</code>。</p>
+<h2 id="API-证书-1"><a href="#API-证书-1" class="headerlink" title="API 证书"></a>API 证书</h2><p>CleverTap 尽力让自己的 API 密钥足够简单。可以调用一个名为 autoIntegrate 的方法，该方法会通过 CleverTap 的后台“注册一切”。autoIntegrate 方法没有参数，它与下面的步骤紧密关联：</p>
+<p><img src="http://dev.iachieved.it/iachievedit/wp-content/uploads/2016/04/cleverTapCredentials.png" alt></p>
+<p>CleverTap Autointegrate</p>
+<p>它明确提示要向“你的 .plist 文件”中增加两个密钥 CleverTapAccountID 和 CleverTapToken。一个针对 Info.plist 文件的假设是，如果你在管理一个测试版的应用和一个常规版本的应用，根据条件切换 .plist 文件是令人烦恼的。所以，相比于使用 autoIntegrate 方法，你应该使用 <code>changeCredentials(withAccountID:andToken)</code> 方法。这个方法会跳过原本的自动集成以及使用 .plist 文件管理 API 密钥的方式。因此你可以使用下面的方法：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> accountID    = valueForAPIKey(named:<span class="string">"CleverTapDevelopmentAccountID"</span>)</span><br><span class="line"><span class="keyword">let</span> accountToken = valueForAPIKey(named:<span class="string">"CleverTapDevelopmentAccountToken"</span>)</span><br><span class="line"><span class="type">CleverTap</span>.changeCredentials(withAccountID: accountID, andToken: accountToken)</span><br></pre></td></tr></table></figure>
+<p><strong>注意：</strong> valueForAPIKey 示例来自于我们使用属性列表管理 API 密钥的方式，不过使用 valueForAPIKey 的方式你可以决定密钥的名字。</p>
+<h2 id="结束前的思考"><a href="#结束前的思考" class="headerlink" title="结束前的思考"></a>结束前的思考</h2><p>软件开发者是一群有趣的生物。当可以使用一门新的语言或者框架时，我们经常重写一些东西，但是当这种改变是强制性的时候却不一定会关心这些变化。对于所开发的“系统”，期望它可扩展并且能够适应未来的需求。我们开发的与服务端无关的事件日志系统遵循了这种方法的精神，但是即使如此仍须明白，未来的移动分析平台会提供新的特性与功能，如果要使用这些功能，你必须适配这些功能。换言之，这里使用的方法绝不是故事的结尾，每当有新的服务需要评估的时候，我们必须时刻准备着对不再适应需求的代码区域进行返工。即使如此，当你因为这样或那样的原因（特别喜欢的 API 被<a href="https://allseeing-i.com/asihttprequest/" target="_blank" rel="noopener">弃用</a>了，<a href="https://github.com/AFNetworking/AFNetworking" target="_blank" rel="noopener">代码对你来说不够 Swifty</a>，要么就像 Parse 那样走到了生命尽头）而体会到了修改 API 的痛苦时，你可能会考虑使用一个基于协议的方法，在当前所使用的服务和其他服务之间充当一个填充的中间层。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/iAchieved-it/">iAchieved.it</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift/">Swift</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/10/21/service-agnostic-mobile-analytics/" data-title="与服务器无关的移动端分析 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2016/10/24/mqtt-last-will-and-testament/" title="MQTT 的遗愿消息">
+  <strong>上一篇</strong><br>
+  <span>
+  MQTT 的遗愿消息</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/10/20/swifty-delegates/" title="Swift 中代理方法的命名方式">
+ <strong>下一篇</strong><br> 
+ <span>Swift 中代理方法的命名方式
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/10/21/service-agnostic-mobile-analytics/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#协议"><span class="toc-number">1.</span> <span class="toc-text">协议</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Amplitude"><span class="toc-number">2.</span> <span class="toc-text">Amplitude</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CleverTap"><span class="toc-number">3.</span> <span class="toc-text">CleverTap</span></a></li></ol><li class="toc-item toc-level-1"><a class="toc-link" href="#示例应用"><span class="toc-number"></span> <span class="toc-text">示例应用</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#获取代码"><span class="toc-number">1.</span> <span class="toc-text">获取代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#项目的基础"><span class="toc-number">2.</span> <span class="toc-text">项目的基础</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#API-密钥"><span class="toc-number">3.</span> <span class="toc-text">API 密钥</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Amplitude-入门"><span class="toc-number">4.</span> <span class="toc-text">Amplitude 入门</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#添加附加框架"><span class="toc-number">5.</span> <span class="toc-text">添加附加框架</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#添加桥接头文件"><span class="toc-number">6.</span> <span class="toc-text">添加桥接头文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#API-证书"><span class="toc-number">7.</span> <span class="toc-text">API 证书</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CleverTap-入门"><span class="toc-number">8.</span> <span class="toc-text">CleverTap 入门</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#获取-CleverTap-的-iOS-SDK"><span class="toc-number">9.</span> <span class="toc-text">获取 CleverTap 的 iOS SDK</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#添加附加的框架"><span class="toc-number">10.</span> <span class="toc-text">添加附加的框架</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#添加一个桥接头文件（如果你在使用Swift的话）"><span class="toc-number">11.</span> <span class="toc-text">添加一个桥接头文件（如果你在使用Swift的话）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#API-证书-1"><span class="toc-number">12.</span> <span class="toc-text">API 证书</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结束前的思考"><span class="toc-number">13.</span> <span class="toc-text">结束前的思考</span></a></li></ol>
+ 
+  </li></div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

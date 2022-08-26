@@ -1,0 +1,1061 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>UIStoryboard：和枚举、协议扩展、泛型一起使用更安全 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Andyy Hope，原文链接，原文日期：2016-01-24译者：jseanj；校对：saitjr；定稿：CMB   几周前，我无意发现 Guille Gonzalez  写的一篇文章，介绍了如何用协议和扩展让 UITableViewCell 的注册和重用更安全。 看完这篇文章后我非常惊叹，因为不需要依赖继承，只需要协议扩展和泛型就可以非常容易的实现自定义的行为。自从 WWDC15，我们">
+<meta name="keywords" content="iOS 开发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UIStoryboard：和枚举、协议扩展、泛型一起使用更安全">
+<meta property="og:url" content="https://swift.gg/2016/09/26/uistoryboard-safer-with-enums-protocol-extensions-and-generics/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Andyy Hope，原文链接，原文日期：2016-01-24译者：jseanj；校对：saitjr；定稿：CMB   几周前，我无意发现 Guille Gonzalez  写的一篇文章，介绍了如何用协议和扩展让 UITableViewCell 的注册和重用更安全。 看完这篇文章后我非常惊叹，因为不需要依赖继承，只需要协议扩展和泛型就可以非常容易的实现自定义的行为。自从 WWDC15，我们">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://swiftgg-main.b0.upaiyun.com/image/uistoryboard-safer-with-enums-protocol-extensions-and-generics-1.png">
+<meta property="og:image" content="http://swiftgg-main.b0.upaiyun.com/image/uistoryboard-safer-with-enums-protocol-extensions-and-generics-2.png">
+<meta property="og:updated_time" content="2022-08-26T13:33:55.007Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UIStoryboard：和枚举、协议扩展、泛型一起使用更安全">
+<meta name="twitter:description" content="作者：Andyy Hope，原文链接，原文日期：2016-01-24译者：jseanj；校对：saitjr；定稿：CMB   几周前，我无意发现 Guille Gonzalez  写的一篇文章，介绍了如何用协议和扩展让 UITableViewCell 的注册和重用更安全。 看完这篇文章后我非常惊叹，因为不需要依赖继承，只需要协议扩展和泛型就可以非常容易的实现自定义的行为。自从 WWDC15，我们">
+<meta name="twitter:image" content="http://swiftgg-main.b0.upaiyun.com/image/uistoryboard-safer-with-enums-protocol-extensions-and-generics-1.png">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/09/26/uistoryboard-safer-with-enums-protocol-extensions-and-generics/" target="_blank" title="UIStoryboard：和枚举、协议扩展、泛型一起使用更安全" itemprop="url">UIStoryboard：和枚举、协议扩展、泛型一起使用更安全</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-09-26T05:00:00.000Z" itemprop="datePublished">2016-09-26</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Andyy Hope，<a href="https://medium.com/swift-programming/uistoryboard-safer-with-enums-protocol-extensions-and-generics-7aad3883b44d#.78boguiqy" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-01-24<br>译者：<a href="undefined">jseanj</a>；校对：<a href="http://www.saitjr.com" target="_blank" rel="noopener">saitjr</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>几周前，我无意发现 <a href="https://medium.com/u/fbc540d399e7" target="_blank" rel="noopener">Guille Gonzalez</a>  写的一篇<a href="https://medium.com/@gonzalezreal/ios-cell-registration-reusing-with-swift-protocol-extensions-and-generics-c5ac4fb5b75e#.d8iqbh6db" target="_blank" rel="noopener">文章</a>，介绍了如何用协议和扩展让 UITableViewCell 的注册和重用更安全。</p>
+<p>看完这篇文章后我非常惊叹，因为不需要依赖继承，只需要协议扩展和泛型就可以非常容易的实现自定义的行为。自从 WWDC15，我们已经听到关于 Swift 如何是一门<a href="https://developer.apple.com/videos/play/wwdc2015-408/" target="_blank" rel="noopener">面向协议的语言</a>，而我只是一知半解，如果你懂我的意思的话。而就在此时我终于明白他们在讲的是什么了。</p>
+<p>在我花费大量时间做的应用中有一个大的 storyboard，使用起来令人难以置信的繁琐，所以我最后决定将它分离开。将一个巨大的 UIStoryboard 分成众多小的 UIStoryboard，然后我只需要在我的代码中用不同的字符串去实例化 UIStoryboard，但是这样从来不安全。</p>
+<a id="more"></a>
+<h2 id="字符串"><a href="#字符串" class="headerlink" title="字符串"></a>字符串</h2><h3 id="你留在家中的无声杀手"><a href="#你留在家中的无声杀手" class="headerlink" title="你留在家中的无声杀手"></a>你留在家中的无声杀手</h3><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> name = <span class="string">"News"</span></span><br><span class="line"><span class="keyword">let</span> storyboard = <span class="type">UIStoryboard</span>(name: name, bundle: <span class="literal">nil</span>)</span><br><span class="line"><span class="keyword">let</span> identifier = <span class="string">"ArticleViewController"</span></span><br><span class="line"><span class="keyword">let</span> viewController = storyboard.instantiateViewControllerWithIdentifier(identifier) <span class="keyword">as</span>! <span class="type">ArticleViewController</span></span><br></pre></td></tr></table></figure>
+<p>上面的代码中，我们创建了一个名称为 <em>“News”</em> 的 UIStoryboard 实例，这会在工程资源目录下找名称为 <em>“News.storyboard”</em> 的文件。但是，如果有一个更复杂的名称比如 <em>“Onomatopoeia”</em>，由于这个词非常奇怪并且不寻常，导致我为了文章的书写必须查查怎么拼写这个词。可以想象，在工程代码中如果我要不停的去猜如何拼写类似的词，这将是非常愚蠢的，但实际上人们就是在做着疯狂的事情。</p>
+<p>不知道怎么拼写就算了，更糟的是由于它是一个字符串，Xcode 的语法检查器并不会检测出来拼写错误，因此你只能在运行时才可能发现这种错误。唉！</p>
+<h2 id="如何才能让-UIStoryboard-更安全"><a href="#如何才能让-UIStoryboard-更安全" class="headerlink" title="如何才能让 UIStoryboard 更安全"></a>如何才能让 UIStoryboard 更安全</h2><h3 id="全局字符串常量"><a href="#全局字符串常量" class="headerlink" title="全局字符串常量"></a>全局字符串常量</h3><p>不，永远不。刚开始这听起来是一个好想法，因为你只需要定义一次常量就可以在任何地方使用。如果你想改变常量的值，只需要更改一处就可以让工程中所有使用该常量的地方发生变化。</p>
+<p>但是这样你会少了一个变量名，你会对经常要重用一个变量名而感到惊讶。你曾经尝试过给一个 NSObject 的子类的属性命名为 “description” 吗？这时你就知道我的意思了。如果 storyboards 使用多个字符串常量标识符的话，就会丧失一致性，如果它们定义在工程中的不同地方，也会使查找和合并它们变得更困难。</p>
+<p>定义一个全局字符串常量还有诸多坏处，但是为了继续讨论文章中要提到的精华，所以我们将会忽略这些坏处。</p>
+<h3 id="关联的-Storyboard-名称"><a href="#关联的-Storyboard-名称" class="headerlink" title="关联的 Storyboard 名称"></a>关联的 Storyboard 名称</h3><p>首要原则是你的 storyboard 应该以它包含的模块命名。例如，如果一个 storyboard 包含的控制器是关于新闻的，那么就把 storyboard 文件命名为 “News.storyboard”。</p>
+<p><img src="http://swiftgg-main.b0.upaiyun.com/image/uistoryboard-safer-with-enums-protocol-extensions-and-generics-1.png" alt></p>
+<h3 id="统一-Storyboard-标识符"><a href="#统一-Storyboard-标识符" class="headerlink" title="统一 Storyboard 标识符"></a>统一 Storyboard 标识符</h3><p>当你打算在你的控制器上使用 Storyboard 标识符时，通常的做法是使用类名作为标识符。比如 “ArticleViewController” 作为 ArticleViewController 的标识符。这将会减少你和同事们的负担，你和你的同事们不必再去想和记忆统一标识符或者命名规范。</p>
+<p><img src="http://swiftgg-main.b0.upaiyun.com/image/uistoryboard-safer-with-enums-protocol-extensions-and-generics-2.png" alt></p>
+<h3 id="枚举"><a href="#枚举" class="headerlink" title="枚举"></a>枚举</h3><p>可以考虑将枚举作为统一的、中心全局化的 UIStoryboard 字符串标识符。为了让 storyboard 实例化对象变得真正的安全，我们可以创建一个 UIStoryboard 类的扩展，其中定义了工程中不同的 storyboard 文件。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UIStoryboard</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">enum</span> <span class="title">Storyboard</span> : <span class="title">String</span> </span>&#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="type">Main</span></span><br><span class="line">        <span class="keyword">case</span> <span class="type">News</span></span><br><span class="line">        <span class="keyword">case</span> <span class="type">Gallery</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>正如你所见，所有的内容在工程中都是统一并且中心化的。实例化也更加安全，当你敲击标识符时 Xcode 也会自动补全。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> storyboard = <span class="type">UIStoryboard</span>(name: <span class="type">UIStoryboard</span>.<span class="type">Storyboard</span>.<span class="type">News</span>.rawValue, bundle: <span class="literal">nil</span>)</span><br></pre></td></tr></table></figure>
+<p>这段代码可以顺畅的编译并运行，但是语法却很丑陋。因此我们再深入地简化一下语法，在 UIStoryboard 扩展中创建一个便利构造方法：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">convenience</span> <span class="keyword">init</span>(storyboard: <span class="type">Storyboard</span>, bundle: <span class="type">NSBundle?</span> = <span class="literal">nil</span>) &#123;</span><br><span class="line">    <span class="keyword">self</span>.<span class="keyword">init</span>(name: storyboard.rawValue, bundle: bundle)</span><br><span class="line">&#125;</span><br><span class="line">...</span><br><span class="line"><span class="keyword">let</span> storyboard = <span class="type">UIStoryboard</span>(storyboard: .<span class="type">News</span>)</span><br></pre></td></tr></table></figure>
+<p>你将会注意到，<em>bundle:</em> 参数默认是 <em>nil</em>，因此在调用构造方法时可以忽略 <em>bundle:</em> 参数。</p>
+<p>这样做的原因是如果你传 <em>nil</em> 给 bundle 参数，UIStroyboard 类会去 main bundle 中查找资源，所以给 <em>bundle</em> 参数传 <em>nil</em> 和传 <em>NSBundle.mainBundle()</em> 是一样的，就像苹果文档中说的：</p>
+<blockquote>
+<p>bundle 中包含了 storyboard 文件和相关的资源文件，如果你传 nil，这个方法会去当前应用的 main bundle 中查找。<br>—— <a href="https://developer.apple.com/library/ios/documentation/UIKit/Reference/UIStoryboard_Class/#//apple_ref/occ/clm/UIStoryboard/storyboardWithName:bundle:" target="_blank" rel="noopener">UIStoryboard Class Reference</a></p>
+</blockquote>
+<p>和创建便利构造方法等价的是创建一个 UIStoryboard 类方法，该类方法返回 UIStoryboard 实例。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">func</span> <span class="title">storyboard</span>(<span class="title">storyboard</span>: <span class="title">Storyboard</span>, <span class="title">bundle</span>: <span class="title">NSBundle</span>? = <span class="title">nil</span>) -&gt; <span class="title">UIStoryboard</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="type">UIStoryboard</span>(name: storyboard.rawValue, bundle: bundle)</span><br><span class="line">&#125;</span><br><span class="line">...</span><br><span class="line"><span class="keyword">let</span> storyboard = <span class="type">UIStoryboard</span>.storyboard(.<span class="type">News</span>)</span><br></pre></td></tr></table></figure>
+<p>无论是创建便利构造方法还是类方法，结果都是一样的。唯一的差别是语法形式上的个人喜好，我个人认为类方法更好一些，因此我会在自己的代码中使用它们。无论你选择哪种方式，确保在你的工程中保持一致就可以了。</p>
+<p>好的，让我们加大马力来看看在文章开头中吸引你的那些东西。</p>
+<h2 id="协议扩展和泛型"><a href="#协议扩展和泛型" class="headerlink" title="协议扩展和泛型"></a>协议扩展和泛型</h2><p>通常工程中不会有那么多的 storyboard 文件，即使我们有 20 个 storyboard 文件，我们也可以使用上面的方法来很好的维护它们。另一方面，控制器完全就是另一回事了。在我工作的 Xcode 工程中快速的搜索一下，我发现目前使用了超过 100 个不同的 UIViewController 子类。这是一个难题。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> storyboard = <span class="type">UIStoryboard</span>.storyboard(.<span class="type">News</span>)</span><br><span class="line"><span class="keyword">let</span> identifier = <span class="string">"ArticleViewController"</span></span><br><span class="line"><span class="keyword">let</span> viewController = storyboard.instantiateViewControllerWithIdentifier(identifier) <span class="keyword">as</span>! <span class="type">ArticleViewController</span></span><br></pre></td></tr></table></figure>
+<p>现在我们不仅要管理代码中的 storyboard 标识符和 Interface Builder，还要处理各种各样的类型转换，因为这个方法只返回 UIViewController：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">instantiateViewControllerWithIdentifier</span><span class="params">(<span class="number">_</span> identifier: String)</span></span> -&gt; <span class="type">UIViewController</span></span><br></pre></td></tr></table></figure>
+<p>由于我们有如此多的 UIViewController 子类，所以之前在 UIStoryboard 中使用的枚举方式会比字符串标识符更好一些，但是这种方式管理这么多控制器仍显笨拙。</p>
+<h3 id="StoryboardIdentifiable-协议"><a href="#StoryboardIdentifiable-协议" class="headerlink" title="StoryboardIdentifiable 协议"></a>StoryboardIdentifiable 协议</h3><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">StoryboardIdentifiable</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">var</span> storyboardIdentifier: <span class="type">String</span> &#123; <span class="keyword">get</span> &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们创建一个任何类都可以遵循的协议，协议中有一个静态变量 storyboardIdentifier。这将会减少我们管理控制器标识符的工作量。</p>
+<h3 id="StoryboardIdentifiable-协议扩展"><a href="#StoryboardIdentifiable-协议扩展" class="headerlink" title="StoryboardIdentifiable 协议扩展"></a>StoryboardIdentifiable 协议扩展</h3><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">StoryboardIdentifiable</span> <span class="title">where</span> <span class="title">Self</span>: <span class="title">UIViewController</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">var</span> storyboardIdentifier: <span class="type">String</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">String</span>(<span class="keyword">self</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在我们的协议扩展声明中，<em>where</em> 子句表示该扩展只适用于 UIViewController 或者它的子类。像 NSDate 这样的类就不会获取到 <em>storyboardIdentifier</em> 协议变量。</p>
+<p>在协议扩展中，我们提供了一个在运行时动态获取 <em>storyboardIdentifier</em> 字符串的方法。</p>
+<p>我最近才发现 Swift 字符串有这样的功能，这要感谢 <a href="https://twitter.com/NatashaTheRobot" target="_blank" rel="noopener">NatashaTheRobot</a> 的 <a href="https://www.natashatherobot.com/nsstringfromclass-in-swift/" target="_blank" rel="noopener">文章</a>。这个比 Objective-C 的 NSStringFromClass() 更好，这里是<a href="http://stackoverflow.com/questions/24107658/get-a-user-readable-version-of-the-class-name-in-swift-in-objc-nsstringfromclas" target="_blank" rel="noopener">原因</a>。（译者注：同时，翻译组也翻译了 Natasha 的这篇文章，详见：<a href="http://swift.gg/2016/01/29/nsstringfromclass-in-swift/">《优雅的 NSStringFromClass 替代方案》</a>）</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> classString = <span class="type">String</span>(<span class="type">ArticleViewController</span>)</span><br><span class="line"><span class="built_in">print</span>(classString) </span><br><span class="line"><span class="comment">// prints: ArticleViewController</span></span><br></pre></td></tr></table></figure>
+<h3 id="StoryboardIdentifiable-全局一致性"><a href="#StoryboardIdentifiable-全局一致性" class="headerlink" title="StoryboardIdentifiable 全局一致性"></a>StoryboardIdentifiable 全局一致性</h3><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UIViewController</span> : <span class="title">StoryboardIdentifiable</span> </span>&#123; &#125;</span><br></pre></td></tr></table></figure>
+<p>现在我们让工程中的每个 UIViewController 都遵循 StoryboardIdentifiable 协议。这种方式减轻了工作量，使得我们不用更新每个 UIViewController 来遵循该协议，同时也不需要记住在创建新的 UIViewController 类时让它遵循该协议。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ArticleViewController</span> : <span class="title">UIViewController</span> </span>&#123; &#125;</span><br><span class="line">...</span><br><span class="line"><span class="built_in">print</span>(<span class="type">ArticleViewController</span>.storyboardIdentifier)</span><br><span class="line"><span class="comment">// prints: ArticleViewController</span></span><br></pre></td></tr></table></figure>
+<h3 id="带有泛型的-UIStoryboard-扩展"><a href="#带有泛型的-UIStoryboard-扩展" class="headerlink" title="带有泛型的 UIStoryboard 扩展"></a>带有泛型的 UIStoryboard 扩展</h3><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">instantiateViewController</span>&lt;T: UIViewController where T: StoryboardIdentifiable&gt;<span class="params">()</span></span> -&gt; <span class="type">T</span></span><br></pre></td></tr></table></figure>
+<p>我们摆脱了使用 storyboard 字符串标识符从 storyboard 中创建控制器，取而代之的是一种更新更安全的方式：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UIStoryboard</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">instantiateViewController</span>&lt;T: UIViewController where T: StoryboardIdentifiable&gt;<span class="params">()</span></span> -&gt; <span class="type">T</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> optionalViewController = <span class="keyword">self</span>.instantiateViewControllerWithIdentifier(<span class="type">T</span>.storyboardIdentifier)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">guard</span> <span class="keyword">let</span> viewController = optionalViewController <span class="keyword">as</span>? <span class="type">T</span>  <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="built_in">fatalError</span>(“<span class="type">Couldn</span>’t instantiate view controller with identifier \(<span class="type">T</span>.storyboardIdentifier) “)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> viewController</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里我们使用泛型，它只允许我们传入的类是 UIViewController 或者是 UIViewController 的子类，而且在泛型声明中有一个 <em>where</em> 子句，它限制了这些类也需要遵循 <em>StoryboardIdentifiable</em> 协议。</p>
+<p>如果我们尝试传入一个 NSObject 对象，Xcode 会编译不过。或者我们传入一个 UIViewController 但是不遵循 <em>StoryboardIdentifiable</em> 协议的对象，Xcode 也不会编译通过。这已经足够安全。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">&lt;<span class="type">T</span>: <span class="type">UIViewController</span> <span class="keyword">where</span> <span class="type">T</span>: <span class="type">StoryboardIdentifiable</span>&gt;() -&gt; <span class="type">T</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>Yo! 这些奇怪的语法是什么？</p>
+</blockquote>
+<p>通常泛型使用 <em>“T”</em> 作为参数名称，然而你可以在尖括号里的第一次声明时替换成任何你想要的名称。如果我们想换，我们可以将 _T_ 重命名为一个更易读的名称 “VC” 或者 “ViewController”：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">&lt;<span class="type">VC</span>: <span class="type">UIViewController</span> <span class="keyword">where</span> <span class="type">VC</span>: <span class="type">StoryboardIdentifiable</span>&gt;() -&gt; <span class="type">VC</span></span><br></pre></td></tr></table></figure>
+<p>无论你使用哪个名称，必须在声明和方法体中保持一致。但是对于这个例子，我们会坚持用 _T_，因为你会在其他的代码和例子中发现这是 Swift 的传统。</p>
+<blockquote>
+<p>关于 Swift 泛型的更多内容可以到<a href="https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/Generics.html" target="_blank" rel="noopener">官方文档</a>中查看</p>
+</blockquote>
+<p>回到刚刚打断的地方：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> optionalViewController = <span class="keyword">self</span>.instantiateViewControllerWithIdentifier(<span class="type">T</span>.storyboardIdentifier)</span><br></pre></td></tr></table></figure>
+<p>我们调用原始的 UIStoryboard 的 instantiateViewControllerWithIdentifier 方法，并传递 storyboardIdentifier 变量作为参数，方法返回的是一个可选类型的 UIViewController。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">guard</span> <span class="keyword">let</span> </span><br><span class="line">    viewController = optionalViewController <span class="keyword">as</span>? <span class="type">T</span> </span><br><span class="line"><span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="built_in">fatalError</span>(“<span class="type">Couldn</span>’t instantiate view controller with identifier \(<span class="type">T</span>.storyboardIdentifier) “)</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> viewController</span><br></pre></td></tr></table></figure>
+<p>我们尝试对可选类型的 UIViewController 对象进行解包，并转换成传入的类型。如果由于某种原因控制器不存在，<em>fatalError</em> 方法会被调用，同时控制台会在调试模式时通知你，因此这些错误不会在发布版本中发生。</p>
+<p>最后，我们返回类型是 _T_ 的解包过的 <em>viewController</em>。</p>
+<h2 id="实践"><a href="#实践" class="headerlink" title="实践"></a>实践</h2><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ArticleViewController</span> : <span class="title">UIViewController</span></span></span><br><span class="line"><span class="class"></span>&#123; </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">printHeadline</span><span class="params">()</span></span> &#123; &#125;</span><br><span class="line">&#125;</span><br><span class="line">...</span><br><span class="line"><span class="keyword">let</span> storyboard = <span class="type">UIStoryboard</span>.storyboard(.<span class="type">News</span>)</span><br><span class="line"><span class="keyword">let</span> viewController: <span class="type">ArticleViewController</span> = storyboard.instantiateViewController()</span><br><span class="line">viewController.printHeadline()</span><br><span class="line">presentViewController(viewController, animated: <span class="literal">true</span>, completion: <span class="literal">nil</span>)</span><br></pre></td></tr></table></figure>
+<p>这就是全部，我们摆脱了丑陋的，不安全的字符串标识符，取而代之的是枚举、协议扩展和泛型。</p>
+<p>而且，我们可以通过 UIStoryboard 方法实例化一个特殊类型的控制器对象，并且不需要类型转换就可以执行特殊的操作。这难道不是你一天当中看到的最棒的事情吗？</p>
+<h2 id="更新"><a href="#更新" class="headerlink" title="更新"></a>更新</h2><p>感谢 <a href="https://medium.com/u/f7e214e82b32" target="_blank" rel="noopener">Raifura Andrei</a> 和 <a href="https://medium.com/u/c020125e0086" target="_blank" rel="noopener">Kyle Davis</a> 的反馈，我已经更新了文章和示例代码，简化了语法同时提高了可读性。Github 和 Gists 也同步更新了。享受吧。</p>
+<p>本文的<a href="https://github.com/andyyhope/Blog_UIStoryboardSafety" target="_blank" rel="noopener">示例代码</a>可以在 Github 上找到。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/medium-com/">medium.com</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/iOS-开发/">iOS 开发</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/09/26/uistoryboard-safer-with-enums-protocol-extensions-and-generics/" data-title="UIStoryboard：和枚举、协议扩展、泛型一起使用更安全 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2016/09/27/wift-associated-types-cont/" title="Swift 关联类型(续)">
+  <strong>上一篇</strong><br>
+  <span>
+  Swift 关联类型(续)</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/09/23/swift-configuring-a-constant-using-shorthand-argument-names/" title="Swift：让人眼前一亮的初始化方式">
+ <strong>下一篇</strong><br> 
+ <span>Swift：让人眼前一亮的初始化方式
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/09/26/uistoryboard-safer-with-enums-protocol-extensions-and-generics/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#字符串"><span class="toc-number">1.</span> <span class="toc-text">字符串</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#你留在家中的无声杀手"><span class="toc-number">1.1.</span> <span class="toc-text">你留在家中的无声杀手</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#如何才能让-UIStoryboard-更安全"><span class="toc-number">2.</span> <span class="toc-text">如何才能让 UIStoryboard 更安全</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#全局字符串常量"><span class="toc-number">2.1.</span> <span class="toc-text">全局字符串常量</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#关联的-Storyboard-名称"><span class="toc-number">2.2.</span> <span class="toc-text">关联的 Storyboard 名称</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#统一-Storyboard-标识符"><span class="toc-number">2.3.</span> <span class="toc-text">统一 Storyboard 标识符</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#枚举"><span class="toc-number">2.4.</span> <span class="toc-text">枚举</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#协议扩展和泛型"><span class="toc-number">3.</span> <span class="toc-text">协议扩展和泛型</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#StoryboardIdentifiable-协议"><span class="toc-number">3.1.</span> <span class="toc-text">StoryboardIdentifiable 协议</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#StoryboardIdentifiable-协议扩展"><span class="toc-number">3.2.</span> <span class="toc-text">StoryboardIdentifiable 协议扩展</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#StoryboardIdentifiable-全局一致性"><span class="toc-number">3.3.</span> <span class="toc-text">StoryboardIdentifiable 全局一致性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#带有泛型的-UIStoryboard-扩展"><span class="toc-number">3.4.</span> <span class="toc-text">带有泛型的 UIStoryboard 扩展</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实践"><span class="toc-number">4.</span> <span class="toc-text">实践</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#更新"><span class="toc-number">5.</span> <span class="toc-text">更新</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

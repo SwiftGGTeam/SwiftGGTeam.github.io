@@ -1,0 +1,1056 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>Swift guard 语句的使用 | 使用 guard 的正确姿势 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift guard语句,swift guard let,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="在Swift中怎么正确使用swift guard语句呢，本文就来详细说下swift guard let的使用方法吧。">
+<meta name="keywords" content="swift guard语句,swift guard let">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用 guard 的正确姿势">
+<meta property="og:url" content="https://swift.gg/2016/02/14/swift-guard-radix/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="在Swift中怎么正确使用swift guard语句呢，本文就来详细说下swift guard let的使用方法吧。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-08-26T13:33:54.988Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用 guard 的正确姿势">
+<meta name="twitter:description" content="在Swift中怎么正确使用swift guard语句呢，本文就来详细说下swift guard let的使用方法吧。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/02/14/swift-guard-radix/" target="_blank" title="使用 guard 的正确姿势" itemprop="url">使用 guard 的正确姿势</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-02-14T16:00:00.000Z" itemprop="datePublished">2016-02-14</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Radek Pietruszewski，<a href="http://radex.io/swift/guard/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-12-14<br>译者：<a href="http://www.futantan.com" target="_blank" rel="noopener">Prayer</a>；校对：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="noopener">Channe</a>；定稿：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p><code>guard</code> 是 Swift 2 中我最喜爱的特性之一。虽然完全不使用 <code>guard</code> 也没有什么影响，它只是给我们提供了更微妙的句法表达，但是如果能够正确使用 <code>guard</code> 语句，无疑是一件令人愉快的事。它可以让我们的方法表意更加明确，更易于阅读，它能够表达『提前退出』的意图，同时提高了程序的健壮性。</p>
+<p>因此，学习和理解如何正确使用 <code>guard</code> 表达式非常重要。<code>guard</code> 有它适用的场景，但是这并不意味着要将所有的 <code>if..else</code> 和 <code>if let</code> 语句都替换成 <code>guard</code> 语句。虽然 <code>guard</code> 语句很棒，但是很容易被滥用，并不是所有的代码结构中都适合使用 <code>guard</code> 语句。</p>
+<p>下面是 <code>guard</code> 语句的使用原则。</p>
+<a id="more"></a>
+<h2 id="可以用-guard：在验证入口条件时"><a href="#可以用-guard：在验证入口条件时" class="headerlink" title="可以用 guard：在验证入口条件时"></a>可以用 <code>guard</code>：在验证入口条件时</h2><p>这可能是最简单和最常用的情况。你写了一个方法来完成某个工作，但是只有在满足某些先决条件的情况下，方法才能够被继续执行。</p>
+<p>例如：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">updateWatchApplicationContext</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">let</span> session = <span class="type">WCSession</span>.defaultSession()</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">guard</span> session.watchAppInstalled <span class="keyword">else</span> &#123; <span class="keyword">return</span> &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> context = [<span class="string">"token"</span>: api.token]</span><br><span class="line">        <span class="keyword">try</span> session.updateApplicationContext(context)</span><br><span class="line">    &#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">        <span class="built_in">print</span>(error)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样写有两个好处：</p>
+<p>首先，在方法开头进行条件的检查，而不是将其包裹在整个的 <code>if</code> 语句之中。这样一眼就能看出，这个条件检查并不是函数本身的功用，而是函数执行的先决条件。</p>
+<p>其次，使用 <code>guard</code> 语句时，读者和编译器就会知道如果条件为 <code>false</code>，方法将会直接 <code>return</code>。虽然这只是对编译器检查的一个细微的说明，但是从长远来看，代码的可维护性得到了加强——如果有人不小心将提前退出的语句从 <code>else</code> 表达式中移除了，编译器会及时告诉你这个错误。</p>
+<h2 id="可以用-guard：在成功路径上提前退出"><a href="#可以用-guard：在成功路径上提前退出" class="headerlink" title="可以用 guard：在成功路径上提前退出"></a>可以用 <code>guard</code>：在成功路径上提前退出</h2><p>使用场景：方法中存在非常长的执行路径，在最终结果得到之前，中间会有多个需要被满足的条件，这些条件都应该为真，否则应该直接 <code>return</code> 或者抛出异常。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">vendAllNamed</span><span class="params">(itemName: String)</span></span> <span class="keyword">throws</span> &#123;</span><br><span class="line">    <span class="keyword">guard</span> isEnabled <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="type">VendingMachineError</span>.<span class="type">Disabled</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> items = getItemsNamed(itemName)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">guard</span> items.<span class="built_in">count</span> &gt; <span class="number">0</span> <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="type">VendingMachineError</span>.<span class="type">OutOfStock</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> totalPrice = items.<span class="built_in">reduce</span>(<span class="number">0</span>, combine: +)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">guard</span> coinsDeposited &gt;= totalPrice <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="type">VendingMachineError</span>.<span class="type">InsufficientFunds</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    coinsDeposited -= totalPrice</span><br><span class="line">    removeFromInventory(itemName)</span><br><span class="line">    dispenseSnacks(items)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="可以用-guard：在可选值解包时（拍扁-if-let-else-金字塔）"><a href="#可以用-guard：在可选值解包时（拍扁-if-let-else-金字塔）" class="headerlink" title="可以用 guard：在可选值解包时（拍扁 if let..else 金字塔）"></a>可以用 <code>guard</code>：在可选值解包时（拍扁 <code>if let..else</code> 金字塔）</h2><p>可能的场景：需要确保执行的先决条件，或者需要在很长的执行路径中，确保某些检查点的条件能够满足。但是和一些返回 <code>boolean</code> 类型的普通检查不同，你想要确保某些可选值非空且需要将它解包。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">taskFromJSONResponse</span><span class="params">(jsonData: NSData)</span></span> <span class="keyword">throws</span> -&gt; <span class="type">Task</span> &#123;</span><br><span class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> json = decodeJSON(jsonData) <span class="keyword">as</span>? [<span class="type">String</span>: <span class="type">AnyObject</span>] <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="type">ParsingError</span>.<span class="type">InvalidJSON</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> id = json[<span class="string">"id"</span>] <span class="keyword">as</span>? <span class="type">Int</span>,</span><br><span class="line">          <span class="keyword">let</span> name = json[<span class="string">"name"</span>] <span class="keyword">as</span>? <span class="type">String</span>,</span><br><span class="line">          <span class="keyword">let</span> userId = json[<span class="string">"user_id"</span>] <span class="keyword">as</span>? <span class="type">Int</span>,</span><br><span class="line">          <span class="keyword">let</span> position = json[<span class="string">"pos"</span>] <span class="keyword">as</span>? <span class="type">Double</span></span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="type">ParsingError</span>.<span class="type">MissingData</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="type">Task</span>(id: id, name: name, userId: userId, position: position)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>进阶 Tip：</strong>在 Swift 中更好的处理 JSON 方式可以<a href="https://github.com/LoganWright/Genome" target="_blank" rel="noopener">参考这里</a></p>
+<p>使用 <code>guard</code> 的方式来解包可选值是非常推荐的。<code>if let</code> 的方式需要在大括号内使用解包之后的值，而 <code>guard</code> 语句将解包之后的值添加到了之后的作用域之中——所以你可以在使用 <code>guard</code> 解包之后直接使用它，不用包裹在大括号内。</p>
+<p>我们更推荐使用 <code>guard</code> 的方式，因为如果你有多个需要解包的可选值，使用 <code>guard</code> 的方式可以避免金字塔灾难（多个层级的 <code>if let</code> 嵌套）</p>
+<p>对我们的大脑来说，在简单的情况下，理解一个扁平的代码路径相比于理解分析嵌套的分支结构更为容易。</p>
+<h2 id="可以用-guard：return-和-throw-中"><a href="#可以用-guard：return-和-throw-中" class="headerlink" title="可以用 guard：return 和 throw 中"></a>可以用 <code>guard</code>：<code>return</code> 和 <code>throw</code> 中</h2><p>提前退出，作为一种通用的适用规则，表示是以下三种情形之一：</p>
+<p><strong>执行被终止</strong></p>
+<p>当方法没有返回值，方法仅执行一个命令，但是该命令无法被完成时。</p>
+<p>例子：一个用来更新 WatchKit 应用程序上下文的方法，但是这个应用没有被部署到 Apple Watch 上去。</p>
+<p>推荐做法：直接返回</p>
+<p><strong>计算的结果为空值</strong></p>
+<p>方法会返回某些值，例如将输入的参数做某些转化，而转化没有被正确的执行。</p>
+<p>例子：方法将反序列化缓存，返回一个对象数组，但是磁盘中的相应缓存不存在。</p>
+<p>推荐的做法：</p>
+<ul>
+<li><code>return nil</code></li>
+<li><code>return []</code>, <code>return &quot;&quot;</code> — 返回标准库容器的空值</li>
+<li><code>return Account.guestAccount()</code> — 返回相应对象中，表示为默认或者为空的状态的值</li>
+</ul>
+<p><strong>执行出现错误</strong></p>
+<p>方法有可能因为多种原因执行失败，而同时想告知方法的调用者，这些失败的原因。</p>
+<p>例子：方法从磁盘上读取文件内容，或者进行网络请求并解析获得的数据</p>
+<p>推荐的做法：</p>
+<ul>
+<li><code>throw FileError.NotFound</code></li>
+<li><code>return Result.Failure(.NotFound)</code> — 如果你要使用指定类型的返回值</li>
+<li><code>onFailure(.NotFound); return</code> — 适用于异步调用</li>
+<li><code>return Promise(error: FileError.NotFound)</code> — 在异步调用中使用 Promises 的情况</li>
+</ul>
+<h2 id="可以用-guard：日志、崩溃和断言中"><a href="#可以用-guard：日志、崩溃和断言中" class="headerlink" title="可以用 guard：日志、崩溃和断言中"></a>可以用 <code>guard</code>：日志、崩溃和断言中</h2><p><strong>日志</strong></p>
+<p>有时候，在方法返回之前有必要将日志信息输出到控制台，至少在开发阶段这种方式非常有用。即使在我们的代码能够很好地处理错误情况下，也能够帮助我们跟踪错误信息。然而，在 <code>guard</code> 的 <code>else</code> 语句中包含太多的处理代码是不太合适的。</p>
+<p><strong>致命状态（Fatal conditions）</strong></p>
+<p>程序的执行的条件不能够被满足，如果这是个非常严重的程序错误，那么故意让这种状况 crash 掉，这种处理方式将非常有意义。如果你的应用无论哪种方式都会 crash 掉，又或者程序最终会处于一种非法的状态的话，这种情形最好自己去处理。通过 <code>guard</code> 的方式，你可以确保程序在可知的情况下退出，在 crash 的时候能够显示相应的原因。</p>
+<p>这种的使用场景通常是<strong>precondition</strong>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="built_in">precondition</span>(internet.kittenCount == <span class="type">Int</span>.<span class="built_in">max</span>, <span class="string">"Not enough kittens in the internet"</span>)</span><br></pre></td></tr></table></figure>
+<p>然而，如果判断的条件不仅是简单的布尔表达式而涉及到可选值的解包，可以使用 <code>guard</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">guard</span> <span class="keyword">let</span> kittens = internet.kittens <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="built_in">fatalError</span>(<span class="string">"OMG ran out of kittens!"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>断言</strong></p>
+<p>有时候，总是期望在某种条件能够被满足，然而即使条件不满足也不是什么大不了的程序错误。在这种情况下，可以考虑像下面这样使用 <code>assertionFailure</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">guard</span> <span class="keyword">let</span> puppies = internet.puppies <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="built_in">assertionFailure</span>(<span class="string">"Huh, no dogs"</span>)</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过这种 crash 的方式，可以在开发和内测期间很容易的找到 bug 位置，但是在正式发布的时候，应用不会 crash 掉（虽然可能 bug 满天飞）。</p>
+<p>在提醒一次，如果判断的条件仅仅是个布尔类型，使用 <code>assert(condition)</code> 就可以胜任。</p>
+<h2 id="不要用-guard：替代琐碎的-if-else-语句"><a href="#不要用-guard：替代琐碎的-if-else-语句" class="headerlink" title="不要用 guard：替代琐碎的 if..else 语句"></a>不要用 <code>guard</code>：替代琐碎的 <code>if..else</code> 语句</h2><p>如果有一个简单的方法，只包含一个简单的 if..else 语句，不要使用 guard：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Don't:</span></span><br><span class="line"><span class="keyword">var</span> projectName: <span class="type">String?</span> &#123;</span><br><span class="line">    <span class="keyword">guard</span> <span class="keyword">let</span> project = task.project <span class="keyword">where</span> project.isValid <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> project.name</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对这种简单的情况而言，使用两个分支的 <code>if..else</code> 语句比起没有分支的 <code>guard</code> 更加容易理解。虽然可能在其他的情形中使用 <code>guard</code> 也是一个很好的候选项。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Better!</span></span><br><span class="line"><span class="keyword">var</span> projectName: <span class="type">String?</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">let</span> project = task.project <span class="keyword">where</span> project.isValid &#123;</span><br><span class="line">        <span class="keyword">return</span> project.name</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>进阶 Tip：</strong>请确保自己理解了<a href="https://developer.apple.com/library/mac/documentation/Swift/Conceptual/Swift_Programming_Language/OptionalChaining.html#//apple_ref/doc/uid/TP40014097-CH21-ID245" target="_blank" rel="noopener">可选链</a>：<code>Optional.map</code> 和 <code>Optional.flatMap</code>；通过使用这些工具，通常可以避免使用显式的 <code>if let</code> 来解包。</p>
+<h2 id="不要用-guard：作为-if-的相反情况"><a href="#不要用-guard：作为-if-的相反情况" class="headerlink" title="不要用 guard：作为 if 的相反情况"></a>不要用 <code>guard</code>：作为 <code>if</code> 的相反情况</h2><p>在一些语言中，例如 Ruby，有 <code>unless</code> 语句，本质上是 <code>if</code> 的相反情况（reverse if）——作用域内的代码只有在传递进来的条件被判断为 <code>false</code> 的时候执行。</p>
+<p>Swift 中的 <code>guard</code>，虽然有一些类似，但是它们是不同的东西。<code>guard</code> 不是通常意义上的分支语义。它特别强调，在某些期望的条件不满足时，提前退出。</p>
+<p>虽然在一些情况下，你可以将 <code>guard</code> 强行掰弯，当做 reverse if 来使用，但是，亲不要啊！使用 <code>if..else</code> 语句或者考虑将代码分割成多个函数。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Don't:</span></span><br><span class="line"><span class="keyword">guard</span> <span class="keyword">let</span> s = sequence <span class="keyword">as</span>? <span class="type">Set</span>&lt;<span class="type">Element</span>&gt; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">for</span> item <span class="keyword">in</span> sequence &#123;</span><br><span class="line">        insert(item)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">switch</span> (s._variantStorage) &#123;</span><br><span class="line"><span class="keyword">case</span> .<span class="type">Native</span>(<span class="keyword">let</span> owner):</span><br><span class="line">    _variantStorage = .<span class="type">Native</span>(owner)</span><br><span class="line"><span class="keyword">case</span> .<span class="type">Cocoa</span>(<span class="keyword">let</span> owner):</span><br><span class="line">    _variantStorage = .<span class="type">Cocoa</span>(owner)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="不要：在-guard-的-else-语句中放入复杂代码"><a href="#不要：在-guard-的-else-语句中放入复杂代码" class="headerlink" title="不要：在 guard 的 else 语句中放入复杂代码"></a>不要：在 <code>guard</code> 的 <code>else</code> 语句中放入复杂代码</h2><p>这是上面这些原则的推论：</p>
+<p><code>guard</code> 的 <code>else</code> 语句中，除了一个简单的提前退出语句外，不应该有其他的代码逻辑。加入一些诊断日志的代码是可以的，但是其他的代码逻辑不应该有。当然也可以在 <code>else</code> 中加入一些对未完成工作的清理或者打开资源的释放，虽然大部分情况下，你应该使用 <code>defer</code> 来完成这些清理工作。</p>
+<p>总之，如果你在 <code>else</code> 块做了任何实际功能，除了那些离开当前方法的必要操作，你就误用了 <code>guard</code>。</p>
+<p><strong>经验之谈: </strong><code>guard</code> 的 <code>else</code> 代码块不要多于 2-3 行代码。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/radex-io/">radex.io</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/02/14/swift-guard-radix/" data-title="使用 guard 的正确姿势 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2016/02/15/how-to-become-a-developer-1/" title="如何成为一名入门级 iOS 开发者">
+  <strong>上一篇</strong><br>
+  <span>
+  如何成为一名入门级 iOS 开发者</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/02/06/when-to-use-mutating-functions-in-swift-structs/" title="在 Swift 结构体中使用 Mutating 函数的最佳时机">
+ <strong>下一篇</strong><br> 
+ <span>在 Swift 结构体中使用 Mutating 函数的最佳时机
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/02/14/swift-guard-radix/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#可以用-guard：在验证入口条件时"><span class="toc-number">1.</span> <span class="toc-text">可以用 guard：在验证入口条件时</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#可以用-guard：在成功路径上提前退出"><span class="toc-number">2.</span> <span class="toc-text">可以用 guard：在成功路径上提前退出</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#可以用-guard：在可选值解包时（拍扁-if-let-else-金字塔）"><span class="toc-number">3.</span> <span class="toc-text">可以用 guard：在可选值解包时（拍扁 if let..else 金字塔）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#可以用-guard：return-和-throw-中"><span class="toc-number">4.</span> <span class="toc-text">可以用 guard：return 和 throw 中</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#可以用-guard：日志、崩溃和断言中"><span class="toc-number">5.</span> <span class="toc-text">可以用 guard：日志、崩溃和断言中</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#不要用-guard：替代琐碎的-if-else-语句"><span class="toc-number">6.</span> <span class="toc-text">不要用 guard：替代琐碎的 if..else 语句</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#不要用-guard：作为-if-的相反情况"><span class="toc-number">7.</span> <span class="toc-text">不要用 guard：作为 if 的相反情况</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#不要：在-guard-的-else-语句中放入复杂代码"><span class="toc-number">8.</span> <span class="toc-text">不要：在 guard 的 else 语句中放入复杂代码</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

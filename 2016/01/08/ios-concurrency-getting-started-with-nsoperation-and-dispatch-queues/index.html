@@ -1,0 +1,1112 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>iOS 并发：从 NSOperation 和 Dispatch Queues 开始 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：hossam ghareeb，原文链接，原文日期：2015-12-09译者：ray16897188；校对：Channe；定稿：千叶知风   并发（Concurrency）在 iOS 开发中总是被看作是洪水猛兽一般。人们以为它是一个很危险的领域，很多开发者都尽量避免与其接触。更有传闻说你一定要竭尽所能的避免写任何关于多线程的代码。假如你对并发不是很了解却还去使用它的话，那么我同意：并发是很危">
+<meta name="keywords" content="Swift 进阶">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iOS 并发：从 NSOperation 和 Dispatch Queues 开始">
+<meta property="og:url" content="https://swift.gg/2016/01/08/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：hossam ghareeb，原文链接，原文日期：2015-12-09译者：ray16897188；校对：Channe；定稿：千叶知风   并发（Concurrency）在 iOS 开发中总是被看作是洪水猛兽一般。人们以为它是一个很危险的领域，很多开发者都尽量避免与其接触。更有传闻说你一定要竭尽所能的避免写任何关于多线程的代码。假如你对并发不是很了解却还去使用它的话，那么我同意：并发是很危">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://swift.gg/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214820.2549465">
+<meta property="og:image" content="https://swift.gg/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.022044">
+<meta property="og:image" content="https://swift.gg/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.2764683">
+<meta property="og:image" content="https://swift.gg/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.4513347">
+<meta property="og:image" content="https://swift.gg/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.6419117">
+<meta property="og:image" content="https://swift.gg/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.7265584">
+<meta property="og:updated_time" content="2022-08-26T13:33:54.984Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="iOS 并发：从 NSOperation 和 Dispatch Queues 开始">
+<meta name="twitter:description" content="作者：hossam ghareeb，原文链接，原文日期：2015-12-09译者：ray16897188；校对：Channe；定稿：千叶知风   并发（Concurrency）在 iOS 开发中总是被看作是洪水猛兽一般。人们以为它是一个很危险的领域，很多开发者都尽量避免与其接触。更有传闻说你一定要竭尽所能的避免写任何关于多线程的代码。假如你对并发不是很了解却还去使用它的话，那么我同意：并发是很危">
+<meta name="twitter:image" content="https://swift.gg/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214820.2549465">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/01/08/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/" target="_blank" title="iOS 并发：从 NSOperation 和 Dispatch Queues 开始" itemprop="url">iOS 并发：从 NSOperation 和 Dispatch Queues 开始</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-01-08T06:00:00.000Z" itemprop="datePublished">2016-01-08</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：hossam ghareeb，<a href="http://www.appcoda.com/ios-concurrency/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-12-09<br>译者：<a href="http://www.jianshu.com/users/97c49dfd1f9f/latest_articles" target="_blank" rel="noopener">ray16897188</a>；校对：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="noopener">Channe</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>并发（Concurrency）在 iOS 开发中总是被看作是洪水猛兽一般。人们以为它是一个很危险的领域，很多开发者都尽量避免与其接触。更有传闻说你一定要竭尽所能的避免写任何关于多线程的代码。假如你对并发不是很了解却还去使用它的话，那么我同意：并发是很危险的。只是它的危险是因为你不了解它。试想一下常人一生中体验过的危险运动和行为有多少，很多对吧？但是当掌握了之后，就会统统变成小菜一碟。并发是把双刃剑，你应该掌握并学会如何去使用它。它能帮你写出效率高、执行快、反应灵敏的 App，而与此同时，对它的滥用会无情的毁掉你的 App。这就是为什么在开始写任何关于并发的代码之前，先要想一想你为什么要用到并发、需要用到哪个（与并发有关的）API 来解决这个问题。iOS 中我们有很多能用到的 API。在此教程里我会讲到最常用的两个：<code>NSOperation</code> 和 <code>Dispatch Queues</code>（派发队列）。</p>
+<a id="more"></a>
+<p><img src="/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214820.2549465" alt></p>
+<h2 id="我们为什么要用并发？"><a href="#我们为什么要用并发？" class="headerlink" title="我们为什么要用并发？"></a>我们为什么要用并发？</h2><p>我知道你是一个有 iOS 背景的出色开发者。然而无论你要做一个什么样的 App，你都需要了解并发，让你的 App 更快，更灵敏。我总结了一下学习和使用并发所带来的优点：</p>
+<ul>
+<li><strong>能更有效的利用 iOS 设备的硬件：</strong>现在所有的 iOS 设备都有一个多核处理器，可以让开发者并行执行多个任务。你应该好好利用这个特性，让硬件优势发挥出来。</li>
+<li><strong>更好的用户体验：</strong>你可能写过一些呼叫网络服务、处理 IO，或者是其他任何执行繁重任务的代码。你也知道在 UI 所在的线程中做这些操作会把你的 App 冻结住，使它没任何反应。当用户遇到这种情况时，他/她会毫不犹豫的直接杀掉或是关闭你的 App。而用并发的话，这些繁重的任务就会被安排到后台去执行，不会占满主线程、干扰你用户的操作。他们依旧能够点击按钮，来回拖动屏幕并在你的 App 中的每个页面之间跳转，与此同时在后台还处理着繁重的装载任务。</li>
+<li><strong>NSOperation 和 Dispatch Queues 这样的 API 让使用并发变得容易：</strong>创建并管理线程并不是简单的事情。这也是为什么很多的开发者一听到并发，还有多线程代码这样的术语时会感到害怕的原因。在 iOS 中我们有强大而易用的并发 API，让你的生活变得更来福。你无需再为创建线程或管理底层的东西操心，API 会为你搞定。这些 API 的另一个优点是它们能轻松帮你实现同步（synchronization），避免了竞态条件（race condition）的产生，而竞态条件产生在当多个线程试图访问相同的资源的时候，这会引起无法预计的后果。有了同步，你就保护了资源不会被多个线程同时访问。</li>
+</ul>
+<h2 id="关于并发你都需要知道些什么？"><a href="#关于并发你都需要知道些什么？" class="headerlink" title="关于并发你都需要知道些什么？"></a>关于并发你都需要知道些什么？</h2><p>在本篇教程中，我会解释为理解并发你所需要了解的一切，消除你对它的所有恐惧心理。首先我推荐你去看一下 blocks（即 Swift 中的 closures），它们在并发中会被大量使用。之后我们会聊一下 <code>Dispatch Queues</code> 和 <code>NSOperationQueues</code>。我会带你了解每个并发中的概念，概念之间的不同，以及如何使用它们。</p>
+<h2 id="第一部分：GCD（Grand-Central-Dispatch）"><a href="#第一部分：GCD（Grand-Central-Dispatch）" class="headerlink" title="第一部分：GCD（Grand Central Dispatch）"></a>第一部分：GCD（Grand Central Dispatch）</h2><p>GCD 是在系统的Unix层级中用于管理并发代码并异步执行操作时最常用的 API。GCD 提供并且管理任务的队列（queues of tasks）。先来看看什么是队列。</p>
+<h3 id="什么是队列"><a href="#什么是队列" class="headerlink" title="什么是队列"></a>什么是队列</h3><p>队列是按照先进先出（FIFO）顺序管理对象的数据结构。队列类似于电影院的售票窗口前的长队。电影票是按先到先得的顺序卖出。长队前面的人先买到票，晚来的人后买到票。计算机科学中的队列概念和这个很像，因为第一个被加到队列中的对象也是第一个要从队列中被移除的。<br><img src="/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.022044" alt="Photo credit: FreeImages.com/Sigurd Decroos"></p>
+<h3 id="Dispatch-Queues"><a href="#Dispatch-Queues" class="headerlink" title="Dispatch Queues"></a>Dispatch Queues</h3><p><code>Dispatch Queues</code> 是一种能够轻松执行异步和并发任务的方式。它们是队列，其中的任务是由你的 App 以 blocks（代码块）的形式提交。<code>Dispatch Queues</code> 有两种：(1)串行队列（serial queues），和(2)并发队列（concurrent queues）。在讲述两者的不同之前，你需要知道派给这两种队列的任务是在另外的线程中被执行，而不是在创建它们的那个线程中被执行。换句话说，你是在主线程中创建block并将其提交到 <code>Dispatch Queues</code> 中去。但所有这些任务（block）会在其他的线程中运行，并非主线程。</p>
+<h3 id="串行队列"><a href="#串行队列" class="headerlink" title="串行队列"></a>串行队列</h3><p>当你选择创建一个串行队列时，该队列在某一时刻只能执行一个任务。该队列中的所有任务都会彼此尊重，按序执行。然而你无需担心其他队列中的任务，意思是你依然可以通过使用多个串行队列来以并发的形式执行任务。例如你可以创建两个串行队列，每一个队列某一时刻只能执行一个任务，但是还是有最多两个任务被并发执行。</p>
+<p>用串行队列来管理一个共享资源（shared resource）再合适不过。它提供的对共享资源的访问确保是串行化的，从而防止竞态条件的发生。想象一下有个售票小摊，还有一大堆人想买电影票，那小摊的售票员就是一个共享资源。如果这个售票员必须同时为这堆人服务时就会特别混乱。为避免这个情况，买票的人会被要求去排队（串行队列），这样售票员同一时刻就可以只对一人服务。</p>
+<p>再说一遍，这里没有说电影院每时刻只能为一个顾客服务。如果电影院再开两个售票点，就可以同时服务三位客户了。这也是为什么我说过即使你使用串行队列还依然能并行执行多个任务的原因。</p>
+<p>使用串行队列的优点：</p>
+<ol>
+<li>能确保对一个共享资源进行串行化的访问，避免了竞态条件；</li>
+<li>任务的执行顺序是可预知的；你向一个串行队列提交任务时，它们被执行的顺序与它们被提交的顺序相同；</li>
+<li>你可以创建任意数量的串行队列；</li>
+</ol>
+<h3 id="并发队列"><a href="#并发队列" class="headerlink" title="并发队列"></a>并发队列</h3><p>正如其名，并发队列可以让你并行的执行多个任务。任务（block）按照它们被加入到队列中的顺序依次开始，但是它们都是并发的被执行，并不需要彼此等待才开始。并发队列能保证任务按同一顺序开始，但你不能知道执行的顺序、执行的时间以及在某一时刻正在被执行任务的数量。</p>
+<p>比如你向一个并发队列提交了三个任务（任务#1，#2和#3）。任务被并发执行，按照加入队列的顺序依次开始。然而任务的执行时间和结束时间都不相同。即使任务#2和#3可能会迟一些开始，它们可能都会先于任务#1结束。对任务的执行是由系统本身决定。</p>
+<h3 id="使用队列"><a href="#使用队列" class="headerlink" title="使用队列"></a>使用队列</h3><p>已经解释了串行队列和并发队列，现在来看看如何使用它们。系统会缺省为每个应用提供一个串行队列和四个并发队列。其中 main dispatch queue（主派发队列）是全局可用的串行队列，在应用的主线程中执行任务。这个队列被用来更新 App 的 UI，执行所有与更新 UIViews 相关的任务。该队列中同一时刻只执行一个任务，这就是为什么当你在主队列中运行一个繁重的任务时UI会被阻塞的原因。</p>
+<p>除主队列之外，系统还提供了4个并发队列。我们管它们叫 Global Dispatch queues（全局派发队列）。这些队列对整个应用来说是全局可用的，彼此只有优先级高低的区别。要使用其中一个全局并发队列的话，你得使用 <strong>dispatch_get_global_queue</strong> 函数获得一个你想要的队列的引用，该函数的第一个参数取如下值：</p>
+<ul>
+<li>DISPATCH_QUEUE_PRIORITY_HIGH</li>
+<li>DISPATCH_QUEUE_PRIORITY_DEFAULT</li>
+<li>DISPATCH_QUEUE_PRIORITY_LOW</li>
+<li>DISPATCH_QUEUE_PRIORITY_BACKGROUND</li>
+</ul>
+<p>这些队列类型代表着执行优先级。带有 HIGH 的队列有最高优先级，BACKGROUND 则是最低的优先级。这样你就能基于任务的优先级来决定要用哪一个队列。还要注意这些队列也被 Apple 的 API 所使用，所以这些队列中并不只有你自己的任务。</p>
+<p>最后，你可以创建任何数量的串行或并发队列。使用并发队列的情况下，即使你可以自己创建，我还是强烈建议你使用上面那四个全局队列。</p>
+<h2 id="GCD-小抄"><a href="#GCD-小抄" class="headerlink" title="GCD 小抄"></a>GCD 小抄</h2><p>现在你应该有了一个对 <code>Dispatch Queues</code> 的基本了解。我会给你一个简单的小抄做参考。里面很简单，包含了对 GCD 你需要了解的所有信息。</p>
+<p><img src="/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.2764683" alt></p>
+<p>还不错吧？现在我们来研究一个简单的示范，看看如何使用 <code>Dispatch Queues</code>。我会告诉你如何使用 <code>Dispatch Queues</code> 来优化 App 的性能，让它有更快的响应速度。</p>
+<h2 id="示例项目"><a href="#示例项目" class="headerlink" title="示例项目"></a>示例项目</h2><p>我们的初始项目很简单，它展示4个 image views，每个 image view 显示一张来自远端站点的图片。图片的请求是在主线程中完成。为了给你展示这么做对UI响应会有何影响，我还在图片下面加了一个简单的 slider。<a href="https://www.dropbox.com/s/lkiasutevec5vx0/ConcurrencyDemoStarter.zip?dl=0" target="_blank" rel="noopener">下载并运行这个初始项目</a>。点击 <strong>Start</strong> 按钮开始图片的下载，然后在图片下载的过程中拖动 slider，你会发现根本就拖不动。</p>
+<p><img src="/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.4513347" alt><br>你点了 Start 按钮之后，图片就会在主线程中开始下载。显然这种方式糟糕至极，让 UI 无法响应。不幸的是时至今日还有很对的 App 依旧在主线程中执行繁重的装载任务。现在我们使用 <code>Dispatch Queues</code> 来解决这个问题。</p>
+<p>首先我们使用并发队列的解决方案，随后再使用串行队列的解决方案。</p>
+<h3 id="使用-Concurrent-Dispatch-Queues"><a href="#使用-Concurrent-Dispatch-Queues" class="headerlink" title="使用 Concurrent Dispatch Queues"></a>使用 Concurrent Dispatch Queues</h3><p>现在回到 Xcode 项目的 ViewController.swift 文件中。如果你细看一下代码，就会看到点击事件的方法 <strong>didClickOnStart</strong>。这个方法负责处理图片的下载。我们现在是这样来完成该任务的：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="meta">@IBAction</span> <span class="function"><span class="keyword">func</span> <span class="title">didClickOnStart</span><span class="params">(sender: AnyObject)</span></span> &#123;</span><br><span class="line">    <span class="keyword">let</span> img1 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">0</span>])</span><br><span class="line">    <span class="keyword">self</span>.imageView1.image = img1</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> img2 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">1</span>])</span><br><span class="line">    <span class="keyword">self</span>.imageView2.image = img2</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> img3 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">2</span>])</span><br><span class="line">    <span class="keyword">self</span>.imageView3.image = img3</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> img4 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">3</span>])</span><br><span class="line">    <span class="keyword">self</span>.imageView4.image = img4</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>每一个 downloader 都被看作是一个任务，而所有的任务都在主队列中被执行。现在我们来获得一个全局并发队列的引用，该队列是默认优先级的那个。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> queue = dispatch_get_global_queue(<span class="type">DISPATCH_QUEUE_PRIORITY_DEFAULT</span>, <span class="number">0</span>)</span><br><span class="line">        dispatch_async(queue) &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">            </span><br><span class="line">            <span class="keyword">let</span> img1 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">0</span>])</span><br><span class="line">            dispatch_async(dispatch_get_main_queue(), &#123;</span><br><span class="line">                </span><br><span class="line">                <span class="keyword">self</span>.imageView1.image = img1</span><br><span class="line">            &#125;)</span><br><span class="line">            </span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<p>先用 <em>dispatch_get_global_queue</em> 获得到默认并发队列的引用，然后在 block 中提交一个任务，下载第一张图片。当图片下载完成后，我们再向主队列提交另外一个任务，这个任务用拿下载好了的图片去更新 image view。换句话说，我们就是将图片下载任务放到了后台线程中执行，而 UI 相关的任务则是在主线程中执行。</p>
+<p>对剩下的图片做同样改动，代码如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="meta">@IBAction</span> <span class="function"><span class="keyword">func</span> <span class="title">didClickOnStart</span><span class="params">(sender: AnyObject)</span></span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> queue = dispatch_get_global_queue(<span class="type">DISPATCH_QUEUE_PRIORITY_DEFAULT</span>, <span class="number">0</span>)</span><br><span class="line">    dispatch_async(queue) &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">let</span> img1 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">0</span>])</span><br><span class="line">        dispatch_async(dispatch_get_main_queue(), &#123;</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">self</span>.imageView1.image = img1</span><br><span class="line">        &#125;)</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">    dispatch_async(queue) &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">let</span> img2 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">1</span>])</span><br><span class="line">        </span><br><span class="line">        dispatch_async(dispatch_get_main_queue(), &#123;</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">self</span>.imageView2.image = img2</span><br><span class="line">        &#125;)</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">    dispatch_async(queue) &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">let</span> img3 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">2</span>])</span><br><span class="line">        </span><br><span class="line">        dispatch_async(dispatch_get_main_queue(), &#123;</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">self</span>.imageView3.image = img3</span><br><span class="line">        &#125;)</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">    dispatch_async(queue) &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">let</span> img4 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">3</span>])</span><br><span class="line">        </span><br><span class="line">        dispatch_async(dispatch_get_main_queue(), &#123;</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">self</span>.imageView4.image = img4</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>你向默认队列以并发任务的形式提交了四个图片的下载任务。现在创建项目然后运行 App ，运行起来应该更快了（如果你收到任何错误告警，在把你的代码和上面的比较一下）。注意到下载图片的过程中你应该可以拖动那个 slider，没有任何延迟。</p>
+<h3 id="使用-Serial-Dispatch-Queues"><a href="#使用-Serial-Dispatch-Queues" class="headerlink" title="使用 Serial Dispatch Queues"></a>使用 Serial Dispatch Queues</h3><p>另一种解决延迟问题的方法是使用串行队列。现在还是回到 ViewController.swift 中的 didClickOnStart() 方法。这回我们用一个串行队列来下载图片。使用串行队列时你一定要留意你所引用的到底是哪一个串行队列。每一个 App 都有一个默认的串行队列，实际上它也是UI任务相关的主队列。所以切记用串行队列的时候，你一定要创建一个新的，否则就会在 App 尝试执行更新UI相关任务的同时又执行你的任务。这就会产生错误，引起延时，毁掉用户体验。你可以使用 dispatch_queue_create 函数创建一个新的队列，然后将所有任务按相同方式提交给它，和我们之前做的一样。更改之后，代码如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="meta">@IBAction</span> <span class="function"><span class="keyword">func</span> <span class="title">didClickOnStart</span><span class="params">(sender: AnyObject)</span></span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> serialQueue = dispatch_queue_create(<span class="string">"com.appcoda.imagesQueue"</span>, <span class="type">DISPATCH_QUEUE_SERIAL</span>)</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    dispatch_async(serialQueue) &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">let</span> img1 = <span class="type">Downloader</span> .downloadImageWithURL(imageURLs[<span class="number">0</span>])</span><br><span class="line">        dispatch_async(dispatch_get_main_queue(), &#123;</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">self</span>.imageView1.image = img1</span><br><span class="line">        &#125;)</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">    dispatch_async(serialQueue) &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">let</span> img2 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">1</span>])</span><br><span class="line">        </span><br><span class="line">        dispatch_async(dispatch_get_main_queue(), &#123;</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">self</span>.imageView2.image = img2</span><br><span class="line">        &#125;)</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">    dispatch_async(serialQueue) &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">let</span> img3 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">2</span>])</span><br><span class="line">        </span><br><span class="line">        dispatch_async(dispatch_get_main_queue(), &#123;</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">self</span>.imageView3.image = img3</span><br><span class="line">        &#125;)</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">    dispatch_async(serialQueue) &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">let</span> img4 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">3</span>])</span><br><span class="line">        </span><br><span class="line">        dispatch_async(dispatch_get_main_queue(), &#123;</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">self</span>.imageView4.image = img4</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>正如我们所见，与并行队列解决方案唯一的不同就是需要创建一个串行队列。再次点击 build 然后运行 App ，你又会看见图片在后台进行下载，所以可以和UI进行交互。</p>
+<p>但是你会注意到两点：</p>
+<ol>
+<li>与使用并发队列的情况相比，下载图片的时间有些长。原因是我们在同一时刻只下载一张图片。每个任务必须等到前一个任务执行完成后才会被执行。</li>
+<li>图片的下载是按照 image1，image2，image3，和 image4 的顺序。因为使用的是每次只能执行一个任务的串行队列。</li>
+</ol>
+<h2 id="第二部分：Operation-Queues"><a href="#第二部分：Operation-Queues" class="headerlink" title="第二部分：Operation Queues"></a>第二部分：Operation Queues</h2><p>GCD 是一个底层的 C API，能让开发者并行执行任务。与之相对比，Operation queues 是对队列模型的高层级抽象，而且是基于GCD创建的。这意味着你可以像GCD那样执行并发任务，只不过是以一种面性对象的风格。简而言之，Operation Queues 让开发者的“来福”更进一步。</p>
+<p>与 GCD 不同的是，Operation Queues 不遵循先进先出的顺序。以下是 Operation Queues 和 <code>Dispatch Queues</code> 的不同：</p>
+<ol>
+<li>不遵循 FIFO（先进先出）：在 Operation Queues 中，你可以设置 operation（操作）的执行优先级，并且可以在 operation 之间添加依赖，这意味着你可以定义某些 operation，使得它们可以在另外一些 operation 执行完毕之后再被执行。这就是为什么它们不遵循先进先出的顺序。</li>
+<li>默认情况下 Operation Queues 是并发执行：虽然你不能将其改成串行队列，但还是有一种方法，通过在 operation 之间添加相依性来让 Operation Queues 中的任务按序执行。</li>
+<li>Operation Queues 是 <em>NSOperationQueue</em> 类的实例，任务被封装在 <em>NSOperation</em> 的实例中。</li>
+</ol>
+<h3 id="NSOperation"><a href="#NSOperation" class="headerlink" title="NSOperation"></a>NSOperation</h3><p>任务是以 <em>NSOperation</em> 实例的形式被提交到 Operation Queues 中去的。之前说过 GCD 中任务是以 block 的形式被提交。在这里也是类似，只不过是需要被绑到 <a href="https://developer.apple.com/library/mac/documentation/Cocoa/Reference/NSOperation_class/" target="_blank" rel="noopener">NSOperation</a> 实例中。你可以简单的将 <code>NSOperation</code> 看作是一套工作任务的整体。</p>
+<p><code>NSOperation</code> 是一个抽象的类，不可以被直接拿来用，所以你只能使用 <code>NSOperation</code> 的子类。在 iOS 的 SDK 中有两个 <code>NSOperation</code> 的具体子类。这两个类可以直接用，但是你也可以用 <code>NSOperation</code> 的子类，创建你自己的类来完成特定 operation。这两个可以直接使用的类是：</p>
+<ol>
+<li><strong>NSBlockOperation</strong> - 用这个类来初始化包含一个或多个 blocks 的 operation。该 operation 本身可包含的 block 超过一个，当所有的block 执行完毕后这个 operation 就被视为已完成。</li>
+<li><strong>NSInvocationOperation</strong>  - 用这个类来初始化一个 operation，能用来调用某指定对象的选择器（selector）。</li>
+</ol>
+<p>那么 <code>NSOperation</code> 的优势在哪里？</p>
+<ol>
+<li>首先它可以通过 <code>NSOperation</code> 类的 addDependency（op: NSOperation）方法获得对相依性的支持。如果你有这样的需求：即某 operation 的启动需取决于另一个 operation 的执行，那么就得用 <code>NSOperation</code>。<br><img src="/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.6419117" alt></li>
+<li>其次，你可将 <em>queuePriority</em> 属性设为以下值来改变执行优先级：</li>
+</ol>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">enum</span> <span class="title">NSOperationQueuePriority</span> : <span class="title">Int</span> </span>&#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="type">VeryLow</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">Low</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">Normal</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">High</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">VeryHigh</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>拥有最高优先级的 operation 会被第一个执行。</p>
+<ol start="3">
+<li><p>你可以取消掉某特定队列中的某个 operation，或者是取消队列中所有的 operation。<br>通过调用 <code>NSOperation</code> 类的 cancel() 方法来实现对 operation 的取消。你取消任何 operation 的时候，会是下面三种场景之一：</p>
+<ul>
+<li>你的 operation 已经完成了，这种情况下 cancel 方法没有任何效果。</li>
+<li>你的 operation 正在被执行的过程中，这种情况下系统不会强制停止你的 operation 代码，而是将 cancelled 属性置为 true。</li>
+<li>你的 operation 还在队列中等待被执行，这种情况下你的 operation 就不会被执行。</li>
+</ul>
+</li>
+<li><p><code>NSOperation</code> 有3个有用的布尔型属性：<code>finished</code>，<code>cancelled</code> 和 <code>ready</code>。<code>finished</code> 在 operation 执行完毕后被置为 true。<code>cancelled</code> 在 operation 被取消后被置为 true。<code>ready</code> 在 operation 即将被执行时被置为 true。</p>
+</li>
+<li><p>所有的 <code>NSOperation</code> 在任务被完成后都可以选择去设置一段 completion block。<code>NSOperation</code> 的 <code>finished</code> 属性变为 true 后这段 block 就会被执行。</p>
+</li>
+</ol>
+<p>现在来重写一下我们的示例项目，这次使用 NSOperationQueues。首先在 ViewController 类中声明如下变量：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> queue = <span class="type">NSOperationQueue</span>()</span><br></pre></td></tr></table></figure>
+<p>然后将 didClickOnStart 方法中的代码替换成下面的，再看看在 NSOperationQueue 中怎样去执行 operation：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="meta">@IBAction</span> <span class="function"><span class="keyword">func</span> <span class="title">didClickOnStart</span><span class="params">(sender: AnyObject)</span></span> &#123;</span><br><span class="line">    queue = <span class="type">NSOperationQueue</span>()</span><br><span class="line"> </span><br><span class="line">    queue.addOperationWithBlock &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">let</span> img1 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">0</span>])</span><br><span class="line"> </span><br><span class="line">        <span class="type">NSOperationQueue</span>.mainQueue().addOperationWithBlock(&#123;</span><br><span class="line">            <span class="keyword">self</span>.imageView1.image = img1</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    queue.addOperationWithBlock &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        <span class="keyword">let</span> img2 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">1</span>])</span><br><span class="line">        </span><br><span class="line">        <span class="type">NSOperationQueue</span>.mainQueue().addOperationWithBlock(&#123;</span><br><span class="line">            <span class="keyword">self</span>.imageView2.image = img2</span><br><span class="line">        &#125;)</span><br><span class="line"> </span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    queue.addOperationWithBlock &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        <span class="keyword">let</span> img3 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">2</span>])</span><br><span class="line">        </span><br><span class="line">        <span class="type">NSOperationQueue</span>.mainQueue().addOperationWithBlock(&#123;</span><br><span class="line">            <span class="keyword">self</span>.imageView3.image = img3</span><br><span class="line">        &#125;)</span><br><span class="line"> </span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    queue.addOperationWithBlock &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        <span class="keyword">let</span> img4 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">3</span>])</span><br><span class="line">        </span><br><span class="line">        <span class="type">NSOperationQueue</span>.mainQueue().addOperationWithBlock(&#123;</span><br><span class="line">            <span class="keyword">self</span>.imageView4.image = img4</span><br><span class="line">        &#125;)</span><br><span class="line"> </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如上所见，你使用了 <em>addOperationWithBlock</em> 方法来创建一个新的、带有某给定 block（或者它在 Swift 中的名字：闭包）的 operation。很简单，对吧？为在主队列中完成某个任务，与使用 GCD 时调用 dispatch_async() 不同，我们用 NSOperationQueue（NSOperationQueue.mainQueue()）也可以达到相同结果，将你想要在主队列中执行的 operation 提交过去。</p>
+<p>可以运行一下这个 App 做个快速测试。如果代码输入正确的话， App 应该能够在后台下载图片，不会阻塞UI。</p>
+<p>之前的例子中我们使用了 addOperationWithBlock 方法把 operation 添加到队列中。再让我们来看看如何使用 NSBlockOperation：在达到相同的效果的同时，还会给我们提供更多的功能和选项，比如设置 completion handler。改后的 didClickOnStart 方法如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="meta">@IBAction</span> <span class="function"><span class="keyword">func</span> <span class="title">didClickOnStart</span><span class="params">(sender: AnyObject)</span></span> &#123;</span><br><span class="line">    </span><br><span class="line">    queue = <span class="type">NSOperationQueue</span>()</span><br><span class="line">    <span class="keyword">let</span> operation1 = <span class="type">NSBlockOperation</span>(block: &#123;</span><br><span class="line">        <span class="keyword">let</span> img1 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">0</span>])</span><br><span class="line">        <span class="type">NSOperationQueue</span>.mainQueue().addOperationWithBlock(&#123;</span><br><span class="line">            <span class="keyword">self</span>.imageView1.image = img1</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;)</span><br><span class="line">    </span><br><span class="line">    operation1.completionBlock = &#123;</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">"Operation 1 completed"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    queue.addOperation(operation1)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> operation2 = <span class="type">NSBlockOperation</span>(block: &#123;</span><br><span class="line">        <span class="keyword">let</span> img2 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">1</span>])</span><br><span class="line">        <span class="type">NSOperationQueue</span>.mainQueue().addOperationWithBlock(&#123;</span><br><span class="line">            <span class="keyword">self</span>.imageView2.image = img2</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;)</span><br><span class="line">    </span><br><span class="line">    operation2.completionBlock = &#123;</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">"Operation 2 completed"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    queue.addOperation(operation2)</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> operation3 = <span class="type">NSBlockOperation</span>(block: &#123;</span><br><span class="line">        <span class="keyword">let</span> img3 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">2</span>])</span><br><span class="line">        <span class="type">NSOperationQueue</span>.mainQueue().addOperationWithBlock(&#123;</span><br><span class="line">            <span class="keyword">self</span>.imageView3.image = img3</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;)</span><br><span class="line">    </span><br><span class="line">    operation3.completionBlock = &#123;</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">"Operation 3 completed"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    queue.addOperation(operation3)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> operation4 = <span class="type">NSBlockOperation</span>(block: &#123;</span><br><span class="line">        <span class="keyword">let</span> img4 = <span class="type">Downloader</span>.downloadImageWithURL(imageURLs[<span class="number">3</span>])</span><br><span class="line">        <span class="type">NSOperationQueue</span>.mainQueue().addOperationWithBlock(&#123;</span><br><span class="line">            <span class="keyword">self</span>.imageView4.image = img4</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;)</span><br><span class="line">    </span><br><span class="line">    operation4.completionBlock = &#123;</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">"Operation 4 completed"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    queue.addOperation(operation4)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对每个 operation，我们都为其创建了一个新的 NSBlockOperation 实例并将任务封装在一个 block 中。而使用了 NSBlockOperation，你还可以设置 completion handler。当 operation 完成后，completion handler 就会被调用。将示例运行一下，就会在控制台看见这样的输出：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="type">Operation</span> <span class="number">1</span> completed</span><br><span class="line"><span class="type">Operation</span> <span class="number">3</span> completed</span><br><span class="line"><span class="type">Operation</span> <span class="number">2</span> completed</span><br><span class="line"><span class="type">Operation</span> <span class="number">4</span> completed</span><br></pre></td></tr></table></figure>
+<h3 id="取消-operation"><a href="#取消-operation" class="headerlink" title="取消 operation"></a>取消 operation</h3><p>之前提过，NSBlockOperation 能够让你管理 operation。那么现在来看看如何取消一个 operation。首先给 navigation bar 加一个 bar button item，将其命名为 Cancel。为展示取消 operation，我们在 Operation #2 和 Operation #1 之间添加一个相依性，Operation #3 和 Operation #2 之间添加另一个相依性。也就是说 Operation #2 会在 Operation #1 完成后开始执行，而 Operation #3 会在 Operation #2 完成后执行。Operation #4 并没有相依性，它会被并发执行。要取消 operation 的话，你只需调用 NSOperationQueue 的 cancelAllOperations() 方法。在ViewController 类中插入下面的方法：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="meta">@IBAction</span> <span class="function"><span class="keyword">func</span> <span class="title">didClickOnCancel</span><span class="params">(sender: AnyObject)</span></span> &#123;</span><br><span class="line">        <span class="keyword">self</span>.queue.cancelAllOperations()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>记住需要把你在 navigation bar 上添加的 Cancel 按钮与 didClickOnCancel 方法关联起来。你可以这么做：返回 Main.storyboard 文件，打开Connections Inspector，这里你会在Received Actions区域中看见unlink didSelectCancel()。点击 + 并将其从空圆圈拖拽到 Cancel bar button 上。然后在 didClickOnStart 方法中添加相依性：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">operation2.addDependency(operation1)</span><br><span class="line">operation3.addDependency(operation2)</span><br></pre></td></tr></table></figure>
+<p>接下来把 operation #1 的 completion block 改一下，让它在控制台打印出 cancel 的状态：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">operation1.completionBlock = &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"Operation 1 completed, cancelled:\(operation1.cancelled) "</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>你可以自己改一下 operation #2，#3 和 #4 的打印语句，这样可以更好的理解这一过程。然后创建并运行项目。你点击了 Start 按钮之后，再按 Cancel 按钮，这就会在 operation #1 执行完毕后取消所有的 operation。下面告诉了我们都发生了些什么：</p>
+<ul>
+<li>由于 operation #1 已经开始执行，取消对它没有任何效果。这就是为什么 <code>cancelled</code> 会被记录成 false，并且 App 还是会显示第一张图片。</li>
+<li>如果你点击 Cancel 按钮足够快的话，operation #2 会被取消。对 cancelAllOperations() 的调用会停止对该 operation 的执行，所以第二张图片没有被下载。</li>
+<li>operation #3 已经排在队列中，等待 operation #2 的完成。因为 operation #3 是否开始取决于 operation #2 的完成与否，而 operation #2 已经被取消，operation #3 就不会被执行，从队列中被立即踢出了。</li>
+<li>没有对 operation #4 做任何相依性的设置，所以它被并发的执行了，下载了第四张图片。</li>
+</ul>
+<p><img src="/img/articles/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/12401452214821.7265584" alt></p>
+<h2 id="接下来看什么？"><a href="#接下来看什么？" class="headerlink" title="接下来看什么？"></a>接下来看什么？</h2><p>本篇教程中我为你讲解了 iOS 中并发的概念，以及你在 iOS 中该如何去使用它。我给了你一个还不错的并发入门简介，解释了 GCD，并示范了怎样去创建串行和并发队列。除此之外，我们还看了一下 NSOperationQueues。你现在应该对 GCD 和 NSOperationQueues 之间的不同有所了解了。</p>
+<p>如果想进一步了解 iOS 的并发，建议你去看一下 <a href="https://developer.apple.com/library/ios/documentation/General/Conceptual/ConcurrencyProgrammingGuide/Introduction/Introduction.html" target="_blank" rel="noopener">Apple 的并发指南</a>。</p>
+<p>你可以从 <a href="https://github.com/appcoda/NSOperation-Demo" target="_blank" rel="noopener">iOS Concurrency repository on Github</a> 这里找到此教程提到的全套源代码以作参考。</p>
+<p>随便问任何问题，我真心喜欢你的评论。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/AppCoda/">AppCoda</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/01/08/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/" data-title="iOS 并发：从 NSOperation 和 Dispatch Queues 开始 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2016/01/11/public-properties-with-private-setters/" title="Swift：带有私有设置方法的公有属性">
+  <strong>上一篇</strong><br>
+  <span>
+  Swift：带有私有设置方法的公有属性</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/01/07/app-thinning-appcoda/" title="如何使用 iOS 9 App 瘦身功能">
+ <strong>下一篇</strong><br> 
+ <span>如何使用 iOS 9 App 瘦身功能
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/01/08/ios-concurrency-getting-started-with-nsoperation-and-dispatch-queues/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#我们为什么要用并发？"><span class="toc-number">1.</span> <span class="toc-text">我们为什么要用并发？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#关于并发你都需要知道些什么？"><span class="toc-number">2.</span> <span class="toc-text">关于并发你都需要知道些什么？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#第一部分：GCD（Grand-Central-Dispatch）"><span class="toc-number">3.</span> <span class="toc-text">第一部分：GCD（Grand Central Dispatch）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#什么是队列"><span class="toc-number">3.1.</span> <span class="toc-text">什么是队列</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dispatch-Queues"><span class="toc-number">3.2.</span> <span class="toc-text">Dispatch Queues</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#串行队列"><span class="toc-number">3.3.</span> <span class="toc-text">串行队列</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#并发队列"><span class="toc-number">3.4.</span> <span class="toc-text">并发队列</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#使用队列"><span class="toc-number">3.5.</span> <span class="toc-text">使用队列</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GCD-小抄"><span class="toc-number">4.</span> <span class="toc-text">GCD 小抄</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#示例项目"><span class="toc-number">5.</span> <span class="toc-text">示例项目</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#使用-Concurrent-Dispatch-Queues"><span class="toc-number">5.1.</span> <span class="toc-text">使用 Concurrent Dispatch Queues</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#使用-Serial-Dispatch-Queues"><span class="toc-number">5.2.</span> <span class="toc-text">使用 Serial Dispatch Queues</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#第二部分：Operation-Queues"><span class="toc-number">6.</span> <span class="toc-text">第二部分：Operation Queues</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#NSOperation"><span class="toc-number">6.1.</span> <span class="toc-text">NSOperation</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#取消-operation"><span class="toc-number">6.2.</span> <span class="toc-text">取消 operation</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#接下来看什么？"><span class="toc-number">7.</span> <span class="toc-text">接下来看什么？</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

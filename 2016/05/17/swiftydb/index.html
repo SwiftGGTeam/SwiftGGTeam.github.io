@@ -1,0 +1,1234 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>使用 SwiftyDB 库开发 Swift App | 用 SwiftyDB 管理 SQLite 数据库 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swiftydb,swift database,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="使用 SwiftyDB 可以将开发者从繁重的手动创建 SQLite 数据库的工作中解放出来，再也不用提前定义好各种表和字段了。">
+<meta name="keywords" content="swiftydb,swift database">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用 SwiftyDB 管理 SQLite 数据库">
+<meta property="og:url" content="https://swift.gg/2016/05/17/swiftydb/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="使用 SwiftyDB 可以将开发者从繁重的手动创建 SQLite 数据库的工作中解放出来，再也不用提前定义好各种表和字段了。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://www.appcoda.com/wp-content/uploads/2016/03/t50_1_note_list.png">
+<meta property="og:image" content="http://www.appcoda.com/wp-content/uploads/2016/03/t50_2_delete_note.png">
+<meta property="og:image" content="http://www.appcoda.com/wp-content/uploads/2016/03/t50_3_edit_note.png">
+<meta property="og:image" content="http://www.appcoda.com/wp-content/uploads/2016/03/t50_4_podfile.png">
+<meta property="og:image" content="http://www.appcoda.com/wp-content/uploads/2016/03/t50_5_pod_install_2.png">
+<meta property="og:image" content="http://www.appcoda.com/wp-content/uploads/2016/03/t50_6_folder_after_installation.png">
+<meta property="og:updated_time" content="2022-08-26T13:33:54.997Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="用 SwiftyDB 管理 SQLite 数据库">
+<meta name="twitter:description" content="使用 SwiftyDB 可以将开发者从繁重的手动创建 SQLite 数据库的工作中解放出来，再也不用提前定义好各种表和字段了。">
+<meta name="twitter:image" content="http://www.appcoda.com/wp-content/uploads/2016/03/t50_1_note_list.png">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/05/17/swiftydb/" target="_blank" title="用 SwiftyDB 管理 SQLite 数据库" itemprop="url">用 SwiftyDB 管理 SQLite 数据库</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-05-17T05:00:00.000Z" itemprop="datePublished">2016-05-17</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：AppCoda，<a href="http://www.appcoda.com/swiftydb/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-03-16<br>译者：<a href="http://www.jianshu.com/users/7a2d2cc38444/latest_articles" target="_blank" rel="noopener">Crystal Sun</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>；定稿：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>选择哪种数据持久化的方式，是我们在开发 App 时常常遇到的问题。我们有太多选择了：创建一个单独的文件、使用 CoreData 或者创建 SQLite 数据库。使用 SQLite 数据库有点麻烦，因为首先要先创建数据库，提前写好表和字段。此外，从编程的角度来看，数据的存储、更新、和获取都不是很容易的操作。</p>
+<a id="more"></a>
+<p>而当我们使用 GitHub 上的 SwiftyDB 这个第三方库时，上面的这些问题都可以轻而易举地解决。SwiftyDB，用作者的话来说，就是即插即用型的好帮手。SwiftyDB 将开发者从繁重的手动创建 SQLite 数据库的工作中解放出来，再也不用提前定义好各种表和字段了。SwiftyDB 中类的属性能够自动完成上述工作，可以直接用类作为数据模型。除此之外，所有对数据库的操作都被封装起来，开发者可以把所有的注意力放到应用的逻辑层面上。简单强悍的 API 可以让处理数据成为小菜一碟的事情。</p>
+<p>不过需要强调一下，SwiftyDB 并不能创造奇迹。它只是一个靠谱的第三方库，可以很好地完成它该做的事情（虽然有一些特性目前还不具备）。尽管如此，它仍然是一个非常好用的工具，值得你花时间学习。在本篇文章中，我们将学习 SwiftyDB 的基本使用操作。</p>
+<p>可以从<a href="http://oyvindkg.github.io/swiftydb/" target="_blank" rel="noopener">这里</a>找到文档，看完这篇文章后最好再去看看文档。如果你一直想用 SQLite，可是从来没有真正开始，那 SwiftyDB 是一个好的开始。</p>
+<p>好了，让我们开始探索这个全新的、令人期待的工具吧。</p>
+<h2 id="关于-Demo-App"><a href="#关于-Demo-App" class="headerlink" title="关于 Demo App"></a>关于 Demo App</h2><p>在这篇文章中，我们要创建一个非常简单的笔记应用，可以实现如下这些基本操作：</p>
+<ul>
+<li>列出笔记</li>
+<li>创建新的笔记</li>
+<li>更新已经创建的笔记的内容</li>
+<li>删除笔记</li>
+</ul>
+<p>很明显，SwiftyDB 将要管理一个 SQLite 数据库，上面列出的操作足以向你展示如何使用 SwiftyDB。</p>
+<p>简单起见，我事先创建了一个<a href="https://raw.githubusercontent.com/appcoda/SwiftyDB-Demo/master/NotesDBStarter.zip" target="_blank" rel="noopener">工程</a>，点击下载然后打开工程。用 Xcode 打开工程后，能够看到所有的基本功能，不过缺少与数据有关的代码。运行项目，你就能看到全貌了。</p>
+<p>应用有一个导航栏，在第一个 view controller 中，有一个 tableview 列出所有笔记。</p>
+<center><br><img src="http://www.appcoda.com/wp-content/uploads/2016/03/t50_1_note_list.png" alt><br></center>
+
+<p>点击某个笔记，我们可以编辑更新内容，如果向左滑动某条笔记，可以删除笔记：</p>
+<center><br><img src="http://www.appcoda.com/wp-content/uploads/2016/03/t50_2_delete_note.png" alt><br></center>
+
+
+<p>创建一个新笔记只需点击导航栏上的加号按钮，下面是我们在编辑笔记时可以进行的操作：</p>
+<ol>
+<li>设置笔记的标题和内容。</li>
+<li>更改字体。</li>
+<li>更改字体的大小。</li>
+<li>更改字体的颜色。</li>
+<li>添加图片。</li>
+<li>移动图片到另外一个位置。</li>
+</ol>
+<p>上述所有值的改变都会存储到数据库中。在最后两条中，图片实际上是存储在应用的 documents directory 中，我们在数据库中只是存储图片的名字和 frame。此外，我们还要创建一个类来管理图片（更多细节参见后面的内容）。</p>
+<center><br><img src="http://www.appcoda.com/wp-content/uploads/2016/03/t50_3_edit_note.png" alt><br></center>
+
+
+<p>最后还要强调一点，虽然你只是下载了一个简单的项目，但是在下一节中它会变成一个 workspace，因为我们要使用 <strong>CocoaPods</strong> 来下载 SwiftyDB 以及其他依赖项目。</p>
+<p>准备好了吗？如果你在 Xcode 中打开了刚刚下载的初始工程，那么请先关闭。</p>
+<h2 id="安装-SwiftyDB"><a href="#安装-SwiftyDB" class="headerlink" title="安装 SwiftyDB"></a>安装 SwiftyDB</h2><p>第一件事情就是下载 SwiftyDB，然后在工程中使用。下载库的文件然后放到工程中可不管用，我们要先安装 <a href="https://cocoapods.org" target="_blank" rel="noopener"><strong>CocoaPods</strong></a>。安装过程不复杂，不会花费太多时间，即使你从来没有用过 CocoaPods。详细内容请点击链接。</p>
+<h3 id="安装-CocoaPods"><a href="#安装-CocoaPods" class="headerlink" title="安装 CocoaPods"></a>安装 CocoaPods</h3><p>我们要将 CocoaPods 安装到系统中，如果你已经安装了 CocoaPods，那么请跳过这一步，如果没有，那么打开 <strong>Terminal 终端</strong> ，输入下列命令：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo gem install cocoapods</span><br></pre></td></tr></table></figure>
+<p>然后按回车，输入 Mac 密码，等一会然后开始下载，下载完毕后不要关闭 Terminal 终端 ，我们之后还会用到。</p>
+<h3 id="安装-SwiftyDB-和其他的依赖库"><a href="#安装-SwiftyDB-和其他的依赖库" class="headerlink" title="安装 SwiftyDB 和其他的依赖库"></a>安装 SwiftyDB 和其他的依赖库</h3><p>使用 <strong>cd</strong> 命令找到初始工程对应的文件夹（仍然是在 Terminal 终端中进行操作）。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd PATH_TO_THE_STARTER_PROJECT_DIRECTORY</span><br></pre></td></tr></table></figure>
+<p>现在可以创建 <strong>Podfile</strong> 文件了，我们在 Podfile 里写出我们需要的下载的库。最简单的方法是输入下列命名，让 CocoaPods 给我们创建一个 Podfile。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pod init</span><br></pre></td></tr></table></figure>
+<p>一个名为 <code>Podfile</code> 的文件就创建好了，在工程文件夹里，打开 Podfile，最好使用文本编辑软件（最好不要用 TextEdit 这个软件），然后将内容修改成：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">use_frameworks!</span><br><span class="line"></span><br><span class="line">target &apos;NotesDB&apos; do</span><br><span class="line">	pod &quot;SwiftyDB&quot;</span><br><span class="line">end</span><br></pre></td></tr></table></figure>
+<center><br><img src="http://www.appcoda.com/wp-content/uploads/2016/03/t50_4_podfile.png" alt><br></center>
+
+
+<p>这行代码实际上就做了 <code>pod &quot;swiftyDB&quot;</code> 一件事。CocoaPods 会下载 SwiftyDB 库和所有的依赖库，还会创建一些新的子文件夹，以及一个 Xcode workspace。</p>
+<p>编辑完 <code>Podfile</code> 文件后，保存关闭。确保你关闭了初始工程，回到 Terminail 终端上，输入下列命令：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pod install</span><br></pre></td></tr></table></figure>
+<center><br><img src="http://www.appcoda.com/wp-content/uploads/2016/03/t50_5_pod_install_2.png" alt><br></center>
+
+
+<p>安装完毕之后继续。我们这次不再打开初始工程，而是打开 <code>NoteDB.xcworkspace</code>。</p>
+<center><br><img src="http://www.appcoda.com/wp-content/uploads/2016/03/t50_6_folder_after_installation.png" alt><br></center>
+
+
+<h2 id="开始使用-SwiftyDB-我们的-Model"><a href="#开始使用-SwiftyDB-我们的-Model" class="headerlink" title="开始使用 SwiftyDB - 我们的 Model"></a>开始使用 SwiftyDB - 我们的 Model</h2><p>在 <code>NotesDB</code> 工程中，有个文件叫做 <code>Note.swift</code>，目前还是空的。这就是我们今天要讲述的重点内容，我们要创建一些类，表示一条笔记的实体，在理论层面上，即将完成的工作就是 iOS <a href="https://developer.apple.com/library/ios/documentation/General/Conceptual/DevPedia-CocoaCore/MVC.html" target="_blank" rel="noopener">MVC</a> 模式里的 <code>Model</code>。</p>
+<p>首先需要引入 SwiftyDB 库，在文件的头部输入如下代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> SwiftyDB</span><br></pre></td></tr></table></figure>
+<p>现在，声明最重要的一个类：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Note</span>: <span class="title">NSObject</span>, <span class="title">Storable</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们使用 SwiftyDB 时，需要遵循几条规则，上面这个类的第一行体现出其中两条：</p>
+<ol>
+<li>带有属性的类如果要用 SwiftyDB 存到数据库，必须是 <code>NSObject</code> 类的子类</li>
+<li>带有属性的类如果要用 SwiftyDB 存到数据库，必须必须遵守 <code>Storable</code> 协议（也是一个 SwiftyDB 协议）。</li>
+</ol>
+<p>现在，我们要想一想，这个类需要哪些属性，这就需要了解 SwiftyDB 的一条新规则：从数据库中获取数据时，<code>datatypes</code> 属性必须是<a href="http://oyvindkg.github.io/swiftydb/#howToRetrieveObjects" target="_blank" rel="noopener">这里</a>列出的一种，以便能载入整个 <code>Note</code> 对象，而不是简单数据（比如一个都是字典的数组）。如果有某个属性是“不兼容的”数据类型，那么我们就需要额外做一些操作，把它们转换成建议的类型（我们在之后会进行详细的说明）。默认情况下，将数据存储到数据库时，不兼容的数据类型的数据都会被 SwiftyDB 直接忽略掉。也不会创建对应的表单。同样的，对于我们不想存储到数据库中的其他属性，我们也会特殊对待的。</p>
+<p>目前需要说明的最后一条要求：遵守 <code>Storable</code> 协议的类必须执行 <code>init</code> 方法：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Note</span>: <span class="title">NSObject</span>, <span class="title">Storable</span> </span>&#123;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">override</span> <span class="keyword">required</span> <span class="keyword">init</span>() &#123;</span><br><span class="line">		<span class="keyword">super</span>.<span class="keyword">init</span>()</span><br><span class="line">		</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在，我们已经有所需的信息了，下面开始声明类的属性吧。有些属性后面才需要用到，这里先声明好：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Note</span>: <span class="title">NSObject</span>, <span class="title">Storable</span> </span>&#123;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">let</span> database: <span class="type">SwiftyDB!</span> = <span class="type">SwiftyDB</span>(databaseName: <span class="string">"notes"</span>)</span><br><span class="line">    <span class="keyword">var</span> noteID: <span class="type">NSNumber!</span></span><br><span class="line">    <span class="keyword">var</span> title:<span class="type">String!</span></span><br><span class="line">    <span class="keyword">var</span> text:<span class="type">String!</span></span><br><span class="line">    <span class="keyword">var</span> textColor: <span class="type">NSData!</span></span><br><span class="line">    <span class="keyword">var</span> fontName:<span class="type">String!</span></span><br><span class="line">    <span class="keyword">var</span> fontSize:<span class="type">NSNumber!</span></span><br><span class="line">    <span class="keyword">var</span> creationDate:<span class="type">NSDate!</span></span><br><span class="line">    <span class="keyword">var</span> modificationDate:<span class="type">NSDate!</span></span><br><span class="line">    </span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>除了第一个之外，其他的无需多言。对象初始化后（如果数据库不存在）会创建一个新的数据库（名为 <code>notes.sqlite</code>）并自动创建一个表，表单会和拥有正确数据类型的属性匹配。反之，如果数据库已经存在了，就会直接打开数据库。</p>
+<p>你可能会注意到，上面的属性都是描述一条笔记和我们想存储的特性（标题、问题、文字颜色、字体和大小、创建和修改日期），但是唯独没有笔记中存储的图片。哈哈，我是故意的，我要给图片单独创建一个类，只存储两个属性：图片的名字和尺寸。</p>
+<p>所以，继续在 <code>Note.swift</code> 文件中创建下列类，放到之前的那个类的上方或者下方皆可：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ImageDescriptor</span>: <span class="title">NSObject</span>, <span class="title">NSCoding</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">var</span> frameData: <span class="type">NSData!</span></span><br><span class="line">    <span class="keyword">var</span> imageName: <span class="type">String!</span></span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意，在类中，图片的 frame 是一个 <code>NSData</code> 对象，不是 <code>CGRect</code> 对象。必须这样操作，因为这样我们可以非常容易的将值存储到数据库里。过一会你就会看到我们是如何转换的，到时候你就明白为什么我们要使用 <code>NSCoding</code> 协议。</p>
+<p>回到 <code>Note</code> 类，我们声明一个 <code>ImageDescriptor</code> 数组，如下文：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Note</span>: <span class="title">NSObject</span>, <span class="title">Storable</span> </span>&#123;</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">var</span> images: [<span class="type">ImageDescriptor</span>]!</span><br><span class="line">	</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里有一个限制，现在是时候提到它了，就是实际上 SwiftyDB <code>不会把集合存储到数据库中</code>。简单来说，我们的 <code>images</code> 数组永远不会被存储到数据库里，我们不得不解决图片的存储问题。我们可以使用受支持的数据类型中的一个（看我之前提供的连接），而最合适的数据类型是 <code>NSData</code>。所以，我们不会把 <code>images</code> 数组存储到数据库里，而是存储下列新的属性：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Note</span>: <span class="title">NSObject</span>, <span class="title">Storable</span> </span>&#123;</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">var</span> imageData:<span class="type">NSData!</span></span><br><span class="line">	</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>但是我们如何才能将带有 <code>ImageDescriptor</code> 对象的 <code>images</code> 数组变成 <code>imagesData`</code>NSData<code>对象呢？恩，答案就是</code>归档（archiving）<code>这个</code>images<code>数组，使用</code>NSKeyedArchiver<code>类生成</code>NSData<code>对象。我们在后面会演示如何用代码实现，这里只是介绍一下实现思路，后面再来修改</code>ImageDescriptor` 类。</p>
+<p>如你所知，一个类可以被归档（在其他编程语言中也就做 <code>序列化（serialized）</code>），只要类的所有属性都可以被序列化就行。在我们的例子中，这是可行的，因为<code>ImageDescriptor</code> 类里的这两个属性的数据类型（<code>NSData</code> 和 <code>String</code>）是可以被序列化的。然而这还不够，因为我们还必须要 <code>编码（encode）</code> 和 <code>解码（decode）</code> 它们，以便于归档和解压（unarchive），这也就是我们需要 <code>NSCoding</code> 协议的原因。有了 <code>NSCoding</code> 协议，我们可以引进如下方法（其中一个就是 <code>init</code> 方法），从而能恰当地编码和解码这两个属性：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ImageDescriptor</span>: <span class="title">NSObject</span>, <span class="title">NSCoding</span> </span>&#123;</span><br><span class="line">	...</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">required</span> <span class="keyword">init</span>?(coder aDecoder: <span class="type">NSCoder</span>) &#123;</span><br><span class="line">        frameData = aDecoder.decodeObjectForKey(<span class="string">"frameData"</span>) <span class="keyword">as</span>! <span class="type">NSData</span></span><br><span class="line">        imageName = aDecoder.decodeObjectForKey(<span class="string">"imageName"</span>) <span class="keyword">as</span>! <span class="type">String</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">encodeWithCoder</span><span class="params">(aCoder: NSCoder)</span></span> &#123;</span><br><span class="line">        aCoder.encodeObject(frameData, forKey: <span class="string">"frameData"</span>)</span><br><span class="line">        aCoder.encodeObject(imageName, forKey: <span class="string">"imageName"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>更多关于 <code>NSCoding</code> 协议和 <code>NSKeyedArchiver</code> 类的信息请参见<a href="https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Protocols/NSCoding_Protocol/" target="_blank" rel="noopener">这里</a>和<a href="https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Classes/NSKeyedArchiver_Class/" target="_blank" rel="noopener">这里</a>，我们不会在这里讨论。</p>
+<p>除此之外，我们定义一个便利的自定义的 <code>init</code> 方法。代码非常简单，一看就懂：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ImageDescriptor</span>: <span class="title">NSObject</span>, <span class="title">NSCoding</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">init</span>(frameData: <span class="type">NSData!</span>, imageName: <span class="type">String!</span>) &#123;</span><br><span class="line">        <span class="keyword">super</span>.<span class="keyword">init</span>()</span><br><span class="line">        <span class="keyword">self</span>.frameData = frameData</span><br><span class="line">        <span class="keyword">self</span>.imageName = imageName</span><br><span class="line">    &#125;   </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这一节中我们快速介绍了 SwiftyDB 库。虽然我们还没有大量使用 SwiftyDB，但是这部分很重要，因为它包含三个要点：</p>
+<ol>
+<li>创建一个能使用 SwiftyDB 库的类。</li>
+<li>了解一些在使用 SwiftyDB 库时的规则。</li>
+<li>了解一些有关数据类型的限制要求，哪些数据类型可以被存储到 SwiftyDB里。</li>
+</ol>
+<p><code>注意</code>：如果你在 Xcode 中看到错误提示，立即 Build 工程（Command + B），错误提示就会消失了。</p>
+<h2 id="主键和忽略属性"><a href="#主键和忽略属性" class="headerlink" title="主键和忽略属性"></a>主键和忽略属性</h2><p>在和数据库打交道时，强烈推荐使用 <code>主键（primary keys）</code>，它们能够帮你在数据库表中创建独一无二的标识符，进行各种各样的操作（例如，更新某个数据）。你可以在<a href="http://databases.about.com/cs/administration/g/primarykey.htm" target="_blank" rel="noopener">这里</a>找到有关主键的定义。</p>
+<p>在 SwiftyDB 数据库中，将类中的某个或某些属性定义为主键的操作非常简单，库里提供了 <code>PrimaryKeys</code> 协议，所有类都应该实现这个协议，从而让对应的表中有主键，这样对象才能有独一无二的标识符。实现方法非常简单，动手吧。</p>
+<p>在 <code>NotesDB</code> 工程中找到名为 <code>Extensions.swift</code> 的文件，点击打开，加入下列代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Note</span>: <span class="title">PrimaryKeys</span> </span>&#123;</span><br><span class="line">	<span class="class"><span class="keyword">class</span> <span class="title">func</span> <span class="title">primaryKeys</span>() -&gt; <span class="title">Set</span>&lt;<span class="title">String</span>&gt; </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> [<span class="string">"noteID"</span>]</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在我们的 demo 里，我想让 <code>noteID</code> 属性成为 sqlite 数据库对应的表里唯一的主键。如果需要更多的主键，用逗号分隔即可（比如，<code>return [&quot;key1&quot;,&quot;key2&quot;,&quot;key3&quot;]</code>）。</p>
+<p>除此之外，并不是类中所有的属性都要存储到数据库中，你应该明确指出哪些不存储。例如，在 <code>Note</code> 类中，我们有两个属性是不存储到数据库里的（要么就是不能被存储，要么就是我们不想存储）：<code>images</code> 数组和 <code>database</code> 对象。我们如何明确地排除这两个属性呢？引入 SwiftyDB 提供的另外一个协议：<code>IgnoredPropertie</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Note</span>: <span class="title">IgnoredProperties</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">func</span> <span class="title">ignoredProperties</span>() -&gt; <span class="title">Set</span>&lt;<span class="title">String</span>&gt; </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> [<span class="string">"images"</span>,<span class="string">"database"</span>]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果还有更多属性我们不想存储到数据库中，那么也需要添加到上面的代码中，例如，假设我们有这么一个属性：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> noteAuthor: <span class="type">String!</span></span><br></pre></td></tr></table></figure>
+<p>我们不想把它存储到数据库中，这就需要把这个属性添加到 <code>IgnoredProperties</code> 协议里：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">Note</span>: <span class="title">IgnoredProperties</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">func</span> <span class="title">ignoredProperties</span>() -&gt; <span class="title">Set</span>&lt;<span class="title">String</span>&gt; </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> [<span class="string">"images"</span>,<span class="string">"database"</span>,<span class="string">"noteAuthor"</span>]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="保存一个新笔记"><a href="#保存一个新笔记" class="headerlink" title="保存一个新笔记"></a>保存一个新笔记</h2><p>我们在 <code>Note</code> 里已经做了很多工作，是时候回到 demo app 的功能了。我们还没有给新的类添加任何方法呢，接下来就做这件事，补全所有缺失的功能。</p>
+<p>首先要有笔记，需要告诉 App 如何正确地使用 SwiftyDB 来保存笔记和两个新创建的类。大部分的操作会在 <code>EditNoteViewController.swift</code> 中实现，打开此文件，在写代码之前，我先列出几条特别重要的属性：</p>
+<ul>
+<li><code>imageViews</code>：这个数组里有所有的 image view 对象，对象里有所有添加到笔记的图片。这个数组已经存在了，过会就能发现它的强大作用。</li>
+<li><code>currentFontName</code>：里面有应用于文本的字体名字。</li>
+<li><code>currentFontSize</code>：里面是文本的字体的字号。</li>
+<li><code>editedNoteID</code>：即将更新内容的笔记的 <code>noteID</code> 值（primary key）。一会儿我们就会用到。</li>
+</ul>
+<p>基础的功能已经在初始工程中提前写好了，我们需要做的就是补全缺失的 <code>saveNote()</code> 方法中的逻辑。首先做两件事情：一、如果笔记没有标题或者笔记没有内容，那么，不允许用户保存笔记。二、在保存笔记时，隐藏键盘。如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">saveNote</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> txtTitle.text?.characters.<span class="built_in">count</span> == <span class="number">0</span> || tvNote.text.characters.<span class="built_in">count</span> == <span class="number">0</span> &#123;</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> tvNote.isFirstResponder() &#123;</span><br><span class="line">        tvNote.resignFirstResponder()</span><br><span class="line">    &#125;</span><br><span class="line">     </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>继续初始化一个新的 <code>Note</code> 对象，给各个属性赋值。images 属性需要特殊对待，我们在后边再处理。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">saveNote</span><span class="params">()</span></span> &#123;</span><br><span class="line">    ...</span><br><span class="line">            </span><br><span class="line">    <span class="keyword">let</span> note = <span class="type">Note</span>()</span><br><span class="line">    note.noteID = <span class="type">Int</span>(<span class="type">NSDate</span>().timeIntervalSince1970)</span><br><span class="line">    note.creationDate = <span class="type">NSDate</span>()</span><br><span class="line">    note.title = txtTitle.text</span><br><span class="line">    note.text = tvNote.text!</span><br><span class="line">    note.textColor = <span class="type">NSKeyedArchiver</span>.archivedDataWithRootObject(tvNote.textColor!)</span><br><span class="line">    note.fontName = tvNote.font?.fontName</span><br><span class="line">    note.fontSize = tvNote.font?.pointSize</span><br><span class="line">    note.modificationDate = <span class="type">NSDate</span>()       </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在稍微解释一下上面的代码：</p>
+<ul>
+<li><p><code>noteID</code> 属性需要 Int 类型的数字作为主键。你可以创建生成任何你想要的值，只要它们是独一无二的。在这里，我们把当前时间戳作为我们的主键，不过在实际的应用开发中这不是一个好主意，因为时间戳包含了太多数字。然而对我们目前的这个应用来说，时间戳还是一个不错的选择，毕竟这是创建独一无二数值最简单的方法。</p>
+</li>
+<li><p>当我们第一次存储一条新笔记时，把当前时间（也就是 NSDate 对象）设置为创建日期和修改日期。</p>
+</li>
+<li><p>这里唯一需要特殊处理的行为是将文本颜色转换成 NSData 对象，通过使用 <code>NSKeyedArchiver</code> 类来存储颜色对象。</p>
+</li>
+</ul>
+<p>接下来看如何存储图片。我们创建一个新的方法来处理图片数组。这个方法主要做两件事：将实际图片存储到应用的 documents 目录下，给每个图片创建 <code>ImageDescriptor</code> 对象并添加到 <code>images</code> 数组里。</p>
+<p>在实现这个方法之前，我们先要修改一下 <code>Note.swift</code> 文件。先看代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">storeNoteImagesFromImageViews</span><span class="params">(imageViews: [PanningImageView])</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> imageViews.<span class="built_in">count</span> &gt; <span class="number">0</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> images == <span class="literal">nil</span> &#123;</span><br><span class="line">            images = [<span class="type">ImageDescriptor</span>]()</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            images.removeAll()</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="number">0</span>..&lt;imageViews.<span class="built_in">count</span> &#123;</span><br><span class="line">            <span class="keyword">let</span> imageView = imageViews[i]</span><br><span class="line">            <span class="keyword">let</span> imageName = <span class="string">"img_\(Int(NSDate().timeIntervalSince1970))_\(i)"</span></span><br><span class="line">            </span><br><span class="line">            images.append(<span class="type">ImageDescriptor</span>(frameData: imageView.frame.toNSData(), imageName: imageName))</span><br><span class="line">            </span><br><span class="line">            <span class="type">Helper</span>.saveImage(imageView.image!, withName: imageName)</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        imagesData = <span class="type">NSKeyedArchiver</span>.archivedDataWithRootObject(images)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        imagesData = <span class="type">NSKeyedArchiver</span>.archivedDataWithRootObject(<span class="type">NSNull</span>())</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面这个方法到底做了什么呢：</p>
+<ol>
+<li>首先，我们确认 <code>images</code> 数组是否存在。如果为空，进行初始化，如果存在，我们只需要将里面的数据清除即可，在更新既有的笔记时，第二个方法在会非常有用。</li>
+<li>然后对每个图片我们创建一个独一无二的名字，每个名字都类似这样：“img_12345679_1”。</li>
+<li>使用 <code>init</code> 方法初始化一个新的 <code>ImageDescriptor</code> 方法， image view 的 frame 和名字是该方法的参数。<code>toNSData()</code> 方法已经实现好了，是 <code>CGRect</code> 的扩展，你可以从 <code>Extensions.swift</code> 文件里找到。目的是将 frame 转换成 <code>NSData</code> 对象。一旦新的 <code>ImageDescriptor</code> 对象准备好了，就可以添加到 <code>images</code> 数组里了。</li>
+<li>我们将实际的图片存储到 documents 目录下，<code>saveImage(_: withName:)</code> 类方法可以在 <code>Helper.swift</code> 文件里找到，这里还有很多有用的类方法。</li>
+<li>最后，当所有的 image views 都处理过后，通过 archiving（归档）我们将 <code>images</code> 数组转换成 <code>NSData</code> 对象，存储到 <code>imagesData</code> 属性里。上面代码中的最后一行，是 <code>NSCoding</code> 协议必须实现的方法。</li>
+</ol>
+<p>上面的 <code>else</code> 看起来似乎有些多余，实际上很有用。默认情况下，<code>imagesData</code> 为空，如果某条笔记里没有添加图片，就会一直为空直。然而，SQLite 不识别 nil（空），SQLite 理解的是 <code>NSNull</code>，也就是转换成 <code>NSData</code> 对象。</p>
+<p>回到 <code>EditNoteViewController.swift</code> 文件中，用上我们刚刚创建的方法：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">saveNote</span><span class="params">()</span></span> &#123;</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">	note.storeNoteImagesFromImageViews(imageViews)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在回到 <code>Note.swift</code>，实现实际存储到数据库的方法。这里有个重点：SwiftyDB 可以同步或异步执行任何数据库相关操作，选择哪种方法取决于应用的性质。然而，我建议使用异步方法，这样在进行数据库操作时，不会阻塞主线程，也不会出现 UI 控件突然卡住这种不好的用户体验。不过我还是再强调一次，选择哪种方法，完全由你决定。</p>
+<p>这里我们用异步方式来存储数据。如你所见，每个 SwiftyDB 方法都包含一个闭包，可以返回执行结果。你可以在<a href="http://oyvindkg.github.io/swiftydb/#resultFormat" target="_blank" rel="noopener">这里</a>阅读相关的信息，实际上，我建议你现在先去阅读。</p>
+<p>现在来实现我们的新方法：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">saveNote</span><span class="params">(shouldUpdate: Bool = <span class="literal">false</span>, completionHandler: <span class="params">(success: Bool)</span></span></span> -&gt; <span class="type">Void</span>) &#123;</span><br><span class="line">    database.asyncAddObject(<span class="keyword">self</span>, update: shouldUpdate) &#123; (result) -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">let</span> error = result.error &#123;</span><br><span class="line">            <span class="built_in">print</span>(error)</span><br><span class="line">            completionHandler(success: <span class="literal">false</span>)</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            completionHandler(success: <span class="literal">true</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从上面的实现方法可以知道，我们要使用相同的方法来更新笔记。把 <code>shouldUpdate</code> 设置为布尔值，作为该方法的参数，然后根据 <code>asyncDataObject</code> 的值来判断是否创建一个新的笔记，或者更新一个已存在的笔记。</p>
+<p>此外，第二个参数是 completion handler。能否用合适的参数值调用它，取决于我们的存储是否成功。当你的任务在后台使用异步方法时，我建议你使用 completion handler。这样，当任务完成后，你就能通知调用方法，将任何结果或者数据调回来。</p>
+<p>上面你看到的这些，其他的数据库相关方法中也有。我们会先检查错误，然后根据是否存在结果来执行下一步的操作。在上面的例子中，如果出现错误，我们就可以调用 completion handler，传入 <code>false</code> 值，意味着存储失败，反之，我们传入 <code>true</code> 值，表示操作成功。</p>
+<p>回到 <code>EditNoteViewController</code> 类，完成 <code>saveNote()</code> 方法。调用上面创建的方法，如果笔记存储成功了，pop 当前的 view controller，如果存储发生了错误，我们显示一段提示信息。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">saveNote</span><span class="params">()</span></span> &#123;</span><br><span class="line">	 ...</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> shouldUpdate = (editedNoteID == <span class="literal">nil</span>) ? <span class="literal">false</span> : <span class="literal">true</span></span><br><span class="line">    </span><br><span class="line">    note.saveNote(shouldUpdate) &#123; (success) -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        dispatch_async(dispatch_get_main_queue(), &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">            <span class="keyword">if</span> success &#123;</span><br><span class="line">            <span class="keyword">self</span>.navigationController?.popViewControllerAnimated(<span class="literal">true</span>)</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">let</span> alertController = <span class="type">UIAlertController</span>(title: <span class="string">"NotesDB"</span>, message: <span class="string">"An error occurred and the note could not be saved."</span>, preferredStyle: <span class="type">UIAlertControllerStyle</span>.<span class="type">Alert</span>)</span><br><span class="line">                alertController.addAction(<span class="type">UIAlertAction</span>(title: <span class="string">"OK"</span>, style: <span class="type">UIAlertActionStyle</span>.<span class="type">Default</span>, handler: &#123; (action) -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">                    </span><br><span class="line">                &#125;))</span><br><span class="line">                <span class="keyword">self</span>.presentViewController(alertController, animated: <span class="literal">true</span>, completion: <span class="literal">nil</span>)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意上面方法中的 <code>shouldUpdate</code> 变量，它能否得到合适的值，取决于 <code>editedNoteID</code> 属性是否为空，也就是笔记是否被更新。</p>
+<p>现在，你可以运行 App 然后试着存储一条新笔记了。如果你是按照上面一步一步走到现在的，那么存储笔记功能已经可以正常使用了。</p>
+<h2 id="下载和列出笔记"><a href="#下载和列出笔记" class="headerlink" title="下载和列出笔记"></a>下载和列出笔记</h2><p>创建和存储新笔记的功能已经实现了，我们可以继续开发读取笔记功能了。读取笔记意味着将笔记列在 <code>NoteListViewController</code> 类中，在我们正式开始之前，先在 <code>Note.swift</code> 文件里读取数据。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">loadAllNotes</span><span class="params">(completionHandler: <span class="params">(notes: [Note]!)</span></span></span> -&gt; <span class="type">Void</span>) &#123;</span><br><span class="line">    database.asyncObjectsForType(<span class="type">Note</span>.<span class="keyword">self</span>) &#123; (result) -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">let</span> notes = result.value &#123;</span><br><span class="line">            completionHandler(notes: notes)</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">let</span> error = result.error &#123;</span><br><span class="line">            <span class="built_in">print</span>(error)</span><br><span class="line">            completionHandler(notes: <span class="literal">nil</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>SwiftyDB 里执行读取功能的方法是 <code>asyncObjectsForType(...)</code>，是一个异步执行的方法。结果要么是一个错误，要么就是从数据库里读取一个 note 对象集合（数组）。在第一种情况下，我们调用 completion handler 传入 nil，告诉调用者这里在读取数据时遇到了问题。在第二种情况下，把 ‘Note’ 对象传入 completion handler，这样可以在方法之外使用它们。</p>
+<p>现在回到 <code>NoteListViewController.swift</code> 文件，首先必须声明一个数组包含 <code>Note</code> 对象（刚刚从数据库中读取出来）。这个数组就是 tableview 的 datasource（很明显嘛）。所以，在类的开头，加入下列代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> notes = [<span class="type">Note</span>]()</span><br></pre></td></tr></table></figure>
+<p>除此之外，初始化一个新的 <code>Note</code> 对象，可以使用之前创建的 <code>loadAllNotes(...)</code> 方法：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> note = <span class="type">Note</span>()</span><br></pre></td></tr></table></figure>
+<p>是时候写一个简单的新方法了，调用上面的方法，读取所有存储在数据库中的对象，放到 <code>notes</code> 数组里。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">loadNotes</span><span class="params">()</span></span> &#123;</span><br><span class="line">    note.loadAllNotes &#123; (notes) -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        dispatch_async(dispatch_get_main_queue(), &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">            <span class="keyword">if</span> notes != <span class="literal">nil</span> &#123;</span><br><span class="line">                <span class="keyword">self</span>.notes = notes</span><br><span class="line">                <span class="keyword">self</span>.sortNotes()</span><br><span class="line">                <span class="keyword">self</span>.tblNotes.reloadData()</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>请注意，在读取所有的笔记后用主线程重新加载 tableview.当然，在重载之前，把所有的笔记存到 <code>notes</code> 数组里。</p>
+<p>上面的两个方法就是我们所需的全部方法。有了这两个方法，我们就能从数据库里得到之前存储的笔记。别忘了，<code>loadNotes()</code> 必须在某个地方被调用，我们在 <code>viewDidLoad()</code> 方法中调用 <code>loadNotes()</code> 。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">	loadNotes()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>光是读取笔记还不够，读取笔记数据之后还要使用这些数据。我们先更新 tableview 的相关方法，从行数开始：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">tableView</span><span class="params">(tableView: UITableView, numberOfRowsInSection section: Int)</span></span> -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> notes.<span class="built_in">count</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接下来我们把笔记的数据放到 tableview 中，具体说来，我们会展示笔记的标题、创建笔记和修改笔记的日期。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">tableView</span><span class="params">(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath)</span></span> -&gt; <span class="type">UITableViewCell</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> cell = tableView.dequeueReusableCellWithIdentifier(<span class="string">"idCellNote"</span>, forIndexPath: indexPath) <span class="keyword">as</span>! <span class="type">NoteCell</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> currentNote = notes[indexPath.row]</span><br><span class="line">    </span><br><span class="line">    cell.lblTitle.text = currentNote.title!</span><br><span class="line">    cell.lblCreatedDate.text = <span class="string">"Created: \(Helper.convertTimestampToDateString(currentNote.creationDate!))"</span></span><br><span class="line">    cell.lblModifiedDate.text = <span class="string">"Modified: \(Helper.convertTimestampToDateString(currentNote.modificationDate!))"</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> cell</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在运行应用吧，你创建的所有笔记都会出现在 tableview 中了。</p>
+<h2 id="另外一种获取数据的方法"><a href="#另外一种获取数据的方法" class="headerlink" title="另外一种获取数据的方法"></a>另外一种获取数据的方法</h2><p>现在我们是用 <code>asyncObjectsForType(...)</code> 方法来加载数据库中所有的笔记。如你所知，这个方法会返回一个数组对象（在我们的例子里，就是 <code>Note</code> 对象），我觉得这个方法特别有用，但并不能适应所有情况。某些情况下，读取实际的数值数据会更方便。</p>
+<p>这一点 SwiftyDB 也能做到，它提供了另外一种方法来获取数据：<code>asyncDataForType(...)</code> （或 <code>dataForType(...)</code>，如果你想使用同步操作的话）。它会返回一个字典类型的集合，格式 <code>[[String: SQLiteVlalue]]</code>（在这里 <code>SQLiteVlalue</code> 是任何一种支持的数据类型）。</p>
+<p>你可以在<a href="http://oyvindkg.github.io/swiftydb/#asyncRetrieveData" target="_blank" rel="noopener">这里</a>和<a href="http://oyvindkg.github.io/swiftydb/#syncRetrieveData" target="_blank" rel="noopener">这里</a>找到更多的信息，我把这个任务留给你，作为一个练习：修改 <code>Note</code> 类，加载简单的数据和数值，而不是只加载对象。</p>
+<h2 id="更新一条笔记"><a href="#更新一条笔记" class="headerlink" title="更新一条笔记"></a>更新一条笔记</h2><p>我们还想让应用具有编辑笔记的功能，换句话说，当用户点击某一行时，我们就显示 <code>EditNoteViewController</code> 界面，其中包含这条笔记的所有信息；用户修改之后保存，我们需要存储笔记修改后的信息。</p>
+<p>首先，在 <code>NoteListViewController.swift</code> 文件里，我们需要一个新的属性来存储所选笔记的 ID，所以我们在类的顶部写入下列代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> idOfNoteToEdit: <span class="type">Int!</span></span><br></pre></td></tr></table></figure>
+<p>下面我们来实现一个 <code>UITableViewDelegate</code> 方法，根据所有的行找到对应的 <code>noteID</code> 值，通过 segue 来显示 <code>EditViewContrller</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">tableView</span><span class="params">(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath)</span></span> &#123;</span><br><span class="line">    idOfNoteToEdit = notes[indexPath.row].noteID <span class="keyword">as</span> <span class="type">Int</span></span><br><span class="line">    performSegueWithIdentifier(<span class="string">"idSegueEditNote"</span>, sender: <span class="keyword">self</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在 <code>prepareForSegue(...)</code> 方法里，我们把 <code>idOfNoteToEdit</code> 值传给接下来出现的 view controller：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">prepareForSegue</span><span class="params">(segue: UIStoryboardSegue, sender: AnyObject?)</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">let</span> identifier = segue.identifier &#123;</span><br><span class="line">        <span class="keyword">if</span> identifier == <span class="string">"idSegueEditNote"</span> &#123;</span><br><span class="line">            <span class="keyword">let</span> editNoteViewController = segue.destinationViewController <span class="keyword">as</span>! <span class="type">EditNoteViewController</span></span><br><span class="line">            editNoteViewController.delegate = <span class="keyword">self</span></span><br><span class="line">            </span><br><span class="line">            <span class="keyword">if</span> idOfNoteToEdit != <span class="literal">nil</span> &#123;</span><br><span class="line">                editNoteViewController.editedNoteID = idOfNoteToEdit</span><br><span class="line">                idOfNoteToEdit = <span class="literal">nil</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>到这里我们已经完成了一半的工作了，在我们回到 <code>EditNoteViewController</code> 类之前，先去 <code>Note</code> 类里实现一个简单的新方法，能通过输入的 ID 值取回单条笔记的信息，下面是实现方法：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">loadSingleNoteWithID</span><span class="params">(id: Int, completionHandler: <span class="params">(note: Note!)</span></span></span> -&gt; <span class="type">Void</span>) &#123;</span><br><span class="line">    database.asyncObjectsForType(<span class="type">Note</span>.<span class="keyword">self</span>, matchingFilter: <span class="type">Filter</span>.<span class="built_in">equal</span>(<span class="string">"noteID"</span>, value: id)) &#123; (result) -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">let</span> notes = result.value &#123;</span><br><span class="line">            <span class="keyword">let</span> singleNote = notes[<span class="number">0</span>]</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">if</span> singleNote.imagesData != <span class="literal">nil</span> &#123;</span><br><span class="line">                singleNote.images = <span class="type">NSKeyedUnarchiver</span>.unarchiveObjectWithData(singleNote.imagesData) <span class="keyword">as</span>? [<span class="type">ImageDescriptor</span>]</span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            completionHandler(note: singleNote)</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">let</span> error = result.error &#123;</span><br><span class="line">            <span class="built_in">print</span>(error)</span><br><span class="line">            completionHandler(note: <span class="literal">nil</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里有个新东西，我们首次使用 <code>filter</code> 方法来对返回的结果进行过滤。使用 Filter 类里的 <code>equal(...)</code> 方法可以设置我们想要的过滤条件。别忘了看一下<a href="http://oyvindkg.github.io/swiftydb/#filterResults" target="_blank" rel="noopener">这个</a>链接，里面有更多实现过滤的方法（在从数据库里取数据或者对象时）。</p>
+<p>通过上面的过滤方法，我们实际上可以让 SwiftyDB 只加载符合条件的笔记：上面方法中参数的值对应的 <code>noteID</code> 的笔记。当然，只会返回一条笔记，因为我们这里使用的是主键，一个主键只对应一个记录。</p>
+<p>返回的结果会作为 <code>Note</code> 对象的数组，所以需要先获取集合的第一个（唯一一个）元素。然后，必须将 image data（如果存在的话）转换为 <code>ImageDescriptor</code> 对象数组，然后将其赋值给 <code>images</code> 属性。这点很重要，如果跳过这一步，下载下来的笔记里的图片都无法显示。最后，根据是否成功取得笔记数据，我们调用 completion handler。如果成功取得笔记，我们把读取来的对象传给 completion handler，让调用者使用，如果没有成功取得笔记，返回 nil，因为没有取得对象。</p>
+<p>现在，回到 <code>EditNoteViewController.swift</code> 文件，声明并初始化一个新的 <code>Note</code> 属性：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> editedNote = <span class="type">Note</span>()</span><br></pre></td></tr></table></figure>
+<p>这个对象首先调用上面实现的新方法，然后存储从数据库中加载的数据。</p>
+<p>使用 <code>loadSingleNote(...)</code> 方法来，根据 <code>editedNoteID</code> 属性来加载特定的某条笔记。对我们而言，我们要定义 <code>viewWillAppear(_:)</code> 方法，在这里我们要扩展一些逻辑。</p>
+<p>在下面的代码中你会看到，<code>loadSingleNotedWithID(...)</code> 会在 completion handler 获取到笔记之后给所有属性赋值。也就是说，我们会设置笔记的标题、内容、文字颜色、文字字体等等。不仅如此，如果笔记里有图片，我们还会给每条笔记创建 images view 控件，控件的大小使用的当然是 <code>ImageDescriptor</code> 对象里具体的 frames 值。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewWillAppear</span><span class="params">(animated: Bool)</span></span> &#123;</span><br><span class="line">    <span class="keyword">super</span>.viewWillAppear(animated)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> editedNoteID != <span class="literal">nil</span> &#123;</span><br><span class="line">        editedNote.loadSingleNoteWithID(editedNoteID, completionHandler: &#123; (note) -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">            dispatch_async(dispatch_get_main_queue(), &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">                <span class="keyword">if</span> note != <span class="literal">nil</span> &#123;</span><br><span class="line">                    <span class="keyword">self</span>.txtTitle.text = note.title!</span><br><span class="line">                    <span class="keyword">self</span>.tvNote.text = note.text!</span><br><span class="line">                    <span class="keyword">self</span>.tvNote.textColor = <span class="type">NSKeyedUnarchiver</span>.unarchiveObjectWithData(note.textColor!) <span class="keyword">as</span>? <span class="type">UIColor</span></span><br><span class="line">                    <span class="keyword">self</span>.tvNote.font = <span class="type">UIFont</span>(name: note.fontName!, size: note.fontSize <span class="keyword">as</span> <span class="type">CGFloat</span>)</span><br><span class="line">                    </span><br><span class="line">                    <span class="keyword">if</span> <span class="keyword">let</span> images = note.images &#123;</span><br><span class="line">                        <span class="keyword">for</span> image <span class="keyword">in</span> images &#123;</span><br><span class="line">                            <span class="keyword">let</span> imageView = <span class="type">PanningImageView</span>(frame: image.frameData.toCGRect())</span><br><span class="line">                            imageView.image = <span class="type">Helper</span>.loadNoteImageWithName(image.imageName)</span><br><span class="line">                            imageView.delegate = <span class="keyword">self</span></span><br><span class="line">                            <span class="keyword">self</span>.tvNote.addSubview(imageView)</span><br><span class="line">                            <span class="keyword">self</span>.imageViews.append(imageView)</span><br><span class="line">                            <span class="keyword">self</span>.setExclusionPathForImageView(imageView)</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                    </span><br><span class="line">                    <span class="keyword">self</span>.editedNote = note</span><br><span class="line">                    </span><br><span class="line">                    <span class="keyword">self</span>.currentFontName = note.fontName!</span><br><span class="line">                    <span class="keyword">self</span>.currentFontSize = note.fontSize <span class="keyword">as</span> <span class="type">CGFloat</span></span><br><span class="line">                &#125;</span><br><span class="line">            &#125;)</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在所有属性都被赋值后，不要忘了把 <code>note</code> 赋值给 <code>editedNote</code> 对象，后面我们会用到。</p>
+<p>这里还需要最后一步：更新 <code>saveNote()</code> 方法，这样当一条已有笔记更新内容后，不会创建一条新的 <code>Note</code> 对象，也不会生成一个新的主键和创建日期。</p>
+<p>所以，找到这三行代码（在 <code>saveNote()</code> 方法里）：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> note = <span class="type">Note</span>()</span><br><span class="line">note.noteID = <span class="type">Int</span>(<span class="type">NSDate</span>().timeIntervalSince1970)</span><br><span class="line">note.creationDate = <span class="type">NSDate</span>()</span><br></pre></td></tr></table></figure>
+<p>替换成下面这堆代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> note = (editedNoteID == <span class="literal">nil</span>) ? <span class="type">Note</span>() : editedNote</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> editedNoteID == <span class="literal">nil</span> &#123;</span><br><span class="line">    note.noteID = <span class="type">Int</span>(<span class="type">NSDate</span>().timeIntervalSince1970)</span><br><span class="line">    note.creationDate = <span class="type">NSDate</span>()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>剩下的部分保持不变（至少现在来说是这样）。</p>
+<h2 id="更新笔记列表"><a href="#更新笔记列表" class="headerlink" title="更新笔记列表"></a>更新笔记列表</h2><p>如果现在测试 App，你会发现创建新的笔记或者编辑某条笔记后，笔记清单没有更新。这很正常，因为你还没有开发这个功能呢，在这一节中，我们会修复这个问题。</p>
+<p>你可能已经猜到了，我们会使用 <code>代理模式（Delegation pattern）</code> 来通知 <code>NoteListViewController</code> 类，告知 <code>EditViewController</code> 里发生的变动。我们的出发点是在 <code>EditViewController</code> 里创建一个新的协议，协议包含两个必须实现的方法，如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">EditNoteViewControllerDelegate</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">didCreateNewNote</span><span class="params">(noteID: Int)</span></span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">didUpdateNote</span><span class="params">(noteID: Int)</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这两种情况下，我们都给委托方法提供新的或编辑笔记的 ID 值。现在到 <code>EditNoteViewController</code> 类，添加下列属性：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> delegate: <span class="type">EditNoteViewControllerDelegate!</span></span><br></pre></td></tr></table></figure>
+<p>最后，我们最后一次修改 <code>saveNote()</code> 方法，首先找到 completion handler 闭包：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">lf.navigationController?.popViewControllerAnimated(<span class="literal">true</span>)</span><br></pre></td></tr></table></figure>
+<p>将上面这行代码删掉，换成下方这堆的代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> <span class="keyword">self</span>.delegate != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> !shouldUpdate &#123;</span><br><span class="line">        <span class="keyword">self</span>.delegate.didCreateNewNote(note.noteID <span class="keyword">as</span> <span class="type">Int</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">self</span>.delegate.didUpdateNote(<span class="keyword">self</span>.editedNoteID)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">self</span>.navigationController?.popViewControllerAnimated(<span class="literal">true</span>)</span><br></pre></td></tr></table></figure>
+<p>从今往后，每当创建新笔记或者编辑已有笔后，对应的 delegate 方法就会被调用。目前我们只完成了一半的工作，让我们回到 <code>NoteListViewController.swift</code> 文件，首先在类的开头遵守新的协议：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">NoteListViewController</span>: <span class="title">UIViewController</span>, <span class="title">UITableViewDelegate</span>, <span class="title">UITableViewDataSource</span>, <span class="title">EditNoteViewControllerDelegate</span> </span>&#123;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接下来，在 <code>prepareForSegue(...)</code> 方法里，让 <code>NoteListViewController</code> 类成为 <code>EditNoteViewController</code> 的委托对象。在 <code>let editNoteViewController = segue.destinationViewController as! EditNoteViewController</code> 这行增加下方代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">prepareForSegue</span><span class="params">(segue: UIStoryboardSegue, sender: AnyObject?)</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">let</span> identifier = segue.identifier &#123;</span><br><span class="line">        <span class="keyword">if</span> identifier == <span class="string">"idSegueEditNote"</span> &#123;</span><br><span class="line">            <span class="keyword">let</span> editNoteViewController = segue.destinationViewController <span class="keyword">as</span>! <span class="type">EditNoteViewController</span></span><br><span class="line">            editNoteViewController.delegate = <span class="keyword">self</span> <span class="comment">// 增加这一行代码</span></span><br><span class="line">            </span><br><span class="line">            ...</span><br><span class="line">            </span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>不错，大部分的工作都完成了。还需要实现两个协议方法，我们先处理创建新笔记这种情况：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">didCreateNewNote</span><span class="params">(noteID: Int)</span></span> &#123;</span><br><span class="line">    note.loadSingleNoteWithID(noteID) &#123; (note) -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        dispatch_async(dispatch_get_main_queue(), &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">            <span class="keyword">if</span> note != <span class="literal">nil</span> &#123;</span><br><span class="line">                <span class="keyword">self</span>.notes.append(note)</span><br><span class="line">                <span class="keyword">self</span>.sortNotes()</span><br><span class="line">                <span class="keyword">self</span>.tblNotes.reloadData()</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如你所见，我们从数据库里获取 <code>noteID</code> 参数值对应的对象，然后（如果对象存在）我们把对象添加到 <code>notes</code> 数组，重新加载 tableview。</p>
+<p>继续实现另一个操作：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">didUpdateNote</span><span class="params">(noteID: Int)</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> indexOfEditedNote: <span class="type">Int!</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="number">0</span>..&lt;notes.<span class="built_in">count</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> notes[i].noteID == noteID &#123;</span><br><span class="line">            indexOfEditedNote = i</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> indexOfEditedNote != <span class="literal">nil</span> &#123;</span><br><span class="line">        note.loadSingleNoteWithID(noteID, completionHandler: &#123; (note) -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">            <span class="keyword">if</span> note != <span class="literal">nil</span> &#123;</span><br><span class="line">                <span class="keyword">self</span>.notes[indexOfEditedNote] = note</span><br><span class="line">                <span class="keyword">self</span>.sortNotes()</span><br><span class="line">                <span class="keyword">self</span>.tblNotes.reloadData()</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这种情况下，我们首先在 <code>notes</code> 字典里找到被编辑过笔记的 index，找到之后从数据库里加载对应的笔记，用新的对象替换旧的对象，然后更新 tableview，新的修改日期就会出现了。</p>
+<h2 id="删除记录"><a href="#删除记录" class="headerlink" title="删除记录"></a>删除记录</h2><p>还有最后一个主要的功能没有开发，那就是删除笔记。很明显，我们需要在 <code>Note</code> 类里实现我们最后一个方法，每次想删除笔记时都会调用这个方法。请打开 <code>Note.swift</code> 文件。</p>
+<p>这里唯一的一个知识点就是 SwiftyDB 方法会从数据库里直接删除数据，在接下来的实现方法中你会看到这一点。和以前一样，这个操作还是异步操作，一旦执行结束，调用 completion handler，最后用一个过滤器指明需要被删除的行。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">deleteNote</span><span class="params">(completionHandler: <span class="params">(success: Bool)</span></span></span> -&gt; <span class="type">Void</span>) &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="built_in">filter</span> = <span class="type">Filter</span>.<span class="built_in">equal</span>(<span class="string">"noteID"</span>, value: noteID)</span><br><span class="line">    </span><br><span class="line">    database.asyncDeleteObjectsForType(<span class="type">Note</span>.<span class="keyword">self</span>, matchingFilter: <span class="built_in">filter</span>) &#123; (result) -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">let</span> deleteOK = result.value &#123;</span><br><span class="line">            completionHandler(success: deleteOK)</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">let</span> error = result.error &#123;</span><br><span class="line">            <span class="built_in">print</span>(error)</span><br><span class="line">            completionHandler(success: <span class="literal">false</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在打开 <code>NoteListViewController.swift</code>，定义下一个方法 <code>UITableViewDataSource</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">   <span class="function"><span class="keyword">func</span> <span class="title">tableView</span><span class="params">(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle, forRowAtIndexPath indexPath: NSIndexPath)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> editingStyle == <span class="type">UITableViewCellEditingStyle</span>.<span class="type">Delete</span> &#123;</span><br><span class="line">	</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>把上面的方法添加到代码中之后，每次你左滑一行笔记，右边会出现默认的 <code>Delete</code> 按钮。而且，当用户点击 Delete 按钮时，会执行 if 后面对应的代码，如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">tableView</span><span class="params">(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle, forRowAtIndexPath indexPath: NSIndexPath)</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> editingStyle == <span class="type">UITableViewCellEditingStyle</span>.<span class="type">Delete</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> noteToDelete = notes[indexPath.row]</span><br><span class="line">        </span><br><span class="line">        noteToDelete.deleteNote(&#123; (success) -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">            dispatch_async(dispatch_get_main_queue(), &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">                <span class="keyword">if</span> success &#123;</span><br><span class="line">                    <span class="keyword">self</span>.notes.removeAtIndex(indexPath.row)</span><br><span class="line">                    <span class="keyword">self</span>.tblNotes.reloadData()</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;)</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先，找到所选中行对应的对象，然后，调用 <code>Note</code> 类里的新方法进行删除，如果删除成功，从 <code>notes</code> 数组里移除 <code>Note</code> 对象，重新加载 tableview，更新 UI 显示内容。</p>
+<p>就是这么简单！</p>
+<h2 id="那么，如何排序呢？"><a href="#那么，如何排序呢？" class="headerlink" title="那么，如何排序呢？"></a>那么，如何排序呢？</h2><p>你可能正在想，如何对读取出来的数据进行排序。排序非常有用，可以基于一个或者多个字段进行升序或降序排列，最后改变返回数据的顺序。例如，我们可以将我们所有的笔记按照修改日期的先后进行排序。</p>
+<p>不幸的是，在我写这篇教程时，SwiftyDB 还不支持对数据进行排序，这确实是个劣势，不过还有一个解决办法：手动排序。为了演示手动排序的方法，我们在 <code>NoteListViewController.swift</code> 文件里创建最后一个方法 <code>sortNotes()</code>。这里会使用 Swift 自带的 <code>sort()</code> 函数：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">sortNotes</span><span class="params">()</span></span> &#123;</span><br><span class="line">    notes = notes.<span class="built_in">sort</span>(&#123; (note1, note2) -&gt; <span class="type">Bool</span> <span class="keyword">in</span></span><br><span class="line">        <span class="keyword">let</span> modificationDate1 = note1.modificationDate.timeIntervalSinceReferenceDate</span><br><span class="line">        <span class="keyword">let</span> modificationDate2 = note2.modificationDate.timeIntervalSinceReferenceDate</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> modificationDate1 &gt; modificationDate2</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>由于我们无法直接比较 <code>NSDate</code> 对象，我们先转换成时间戳（double 类型的值）。接着执行比较，返回比较的结果。上面的代码让我们进行笔记排序，最新修改的笔记排在 <code>notes</code> 数组最前面。</p>
+<p>只要 <code>notes</code> 数组发生了改变，上面的方法就要被调用。我们先更新 <code>loadNotes</code> 方法，如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">loadNotes</span><span class="params">()</span></span> &#123;</span><br><span class="line">    note.loadAllNotes &#123; (notes) -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        dispatch_async(dispatch_get_main_queue(), &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">            <span class="keyword">if</span> notes != <span class="literal">nil</span> &#123;</span><br><span class="line">                <span class="keyword">self</span>.notes = notes</span><br><span class="line">                </span><br><span class="line">                <span class="keyword">self</span>.sortNotes()  <span class="comment">// 添加此行代码对所有的笔记进行排序</span></span><br><span class="line">                </span><br><span class="line">                <span class="keyword">self</span>.tblNotes.reloadData()</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接着在下方的两个 delegate 方法里做同样的事情：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">didCreateNewNote</span><span class="params">(noteID: Int)</span></span> &#123;</span><br><span class="line">    note.loadSingleNoteWithID(noteID) &#123; (note) -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">        dispatch_async(dispatch_get_main_queue(), &#123; () -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">            <span class="keyword">if</span> note != <span class="literal">nil</span> &#123;</span><br><span class="line">                <span class="keyword">self</span>.notes.append(note)</span><br><span class="line"></span><br><span class="line">                <span class="keyword">self</span>.sortNotes() <span class="comment">// 添加此行代码对所有的笔记进行排序</span></span><br><span class="line">                </span><br><span class="line">                <span class="keyword">self</span>.tblNotes.reloadData()</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">didUpdateNote</span><span class="params">(noteID: Int)</span></span> &#123;</span><br><span class="line">    ...</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> indexOfEditedNote != <span class="literal">nil</span> &#123;</span><br><span class="line">        note.loadSingleNoteWithID(noteID, completionHandler: &#123; (note) -&gt; <span class="type">Void</span> <span class="keyword">in</span></span><br><span class="line">            <span class="keyword">if</span> note != <span class="literal">nil</span> &#123;</span><br><span class="line">                <span class="keyword">self</span>.notes[indexOfEditedNote] = note</span><br><span class="line">                </span><br><span class="line">                <span class="keyword">self</span>.sortNotes()  <span class="comment">// 添加此行代码对所有的笔记进行排序</span></span><br><span class="line">                </span><br><span class="line">                <span class="keyword">self</span>.tblNotes.reloadData()</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在再运行 App，所有的笔记都会按照它们的修改时间顺序显示。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>毫无疑问，SwiftyDB 是非常棒的工具，可以用在各种应用里。非常简单、高效且可靠，当我们的应用必须使用数据库时，SwiftyDB 可以满足各种需求。在本文的 demo 辅导教程里，我们了解了 SwiftyDB 的基本知识，还有很多东西等待你去学习。当然，如需更多帮助，这里有官方文档供你查阅。在今天的例子讲解中，为了方便编写辅导教程，我们创建的这个数据库有一个表对应 <code>Note</code> 类。在实际开发中，你想创建多少表就能创建多少表，只要有对应的 model 代码即可（对应的类）。就我个人而言，我肯定会在我的项目中使用 SwiftyDB 的，实际上，我正在这样做。现在你已经了解了 SwiftyDB，你也见识了它如何工作的，如何实现的。SwiftyDB 能否成为你工具箱里的新成员，完全由你决定。总之，我希望阅读这篇文章并不是在浪费你的时间，希望你也学到了一些新的知识，在我们下一教程出来之前，祝您开心！</p>
+<p>仅供参考，你可以<a href="https://github.com/appcoda/SwiftyDB-Demo" target="_blank" rel="noopener">在 GitHub 上下载完整的工程</a></p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/AppCoda/">AppCoda</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/SwiftyDB/">SwiftyDB</a><a href="/tags/数据库/">数据库</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/05/17/swiftydb/" data-title="用 SwiftyDB 管理 SQLite 数据库 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2016/05/18/your-parse-backend-was-always-a-bad-idea/" title="使用 Parse 是一个糟糕的主意">
+  <strong>上一篇</strong><br>
+  <span>
+  使用 Parse 是一个糟糕的主意</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/05/16/using-swift-extensions/" title="“错误”的使用 Swift 中的 Extension">
+ <strong>下一篇</strong><br> 
+ <span>“错误”的使用 Swift 中的 Extension
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/05/17/swiftydb/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#关于-Demo-App"><span class="toc-number">1.</span> <span class="toc-text">关于 Demo App</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#安装-SwiftyDB"><span class="toc-number">2.</span> <span class="toc-text">安装 SwiftyDB</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#安装-CocoaPods"><span class="toc-number">2.1.</span> <span class="toc-text">安装 CocoaPods</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#安装-SwiftyDB-和其他的依赖库"><span class="toc-number">2.2.</span> <span class="toc-text">安装 SwiftyDB 和其他的依赖库</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#开始使用-SwiftyDB-我们的-Model"><span class="toc-number">3.</span> <span class="toc-text">开始使用 SwiftyDB - 我们的 Model</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#主键和忽略属性"><span class="toc-number">4.</span> <span class="toc-text">主键和忽略属性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#保存一个新笔记"><span class="toc-number">5.</span> <span class="toc-text">保存一个新笔记</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#下载和列出笔记"><span class="toc-number">6.</span> <span class="toc-text">下载和列出笔记</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#另外一种获取数据的方法"><span class="toc-number">7.</span> <span class="toc-text">另外一种获取数据的方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#更新一条笔记"><span class="toc-number">8.</span> <span class="toc-text">更新一条笔记</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#更新笔记列表"><span class="toc-number">9.</span> <span class="toc-text">更新笔记列表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#删除记录"><span class="toc-number">10.</span> <span class="toc-text">删除记录</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#那么，如何排序呢？"><span class="toc-number">11.</span> <span class="toc-text">那么，如何排序呢？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">12.</span> <span class="toc-text">总结</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

@@ -1,0 +1,1032 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>使用 NSUndoManager 来进行撤销和重做 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Tomasz Szulc，原文链接，原文日期：2015-09-13译者：Yake；校对：numbbbbb；定稿：CMB   在相当长的一段时间内 NSUndoManager 对我来说都是一个很神秘的东西。我想学习使用它，但是一直没有时间。一直到今天，我写了一个简单的应用，这个应用创建了一个可以移动的矩形，并且还可以修改矩形的属性，例如背景色或者圆角。">
+<meta name="keywords" content="Swift 进阶">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用 NSUndoManager 来进行撤销和重做">
+<meta property="og:url" content="https://swift.gg/2015/11/10/ios-undo-and-redo-with-nsundomanager/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Tomasz Szulc，原文链接，原文日期：2015-09-13译者：Yake；校对：numbbbbb；定稿：CMB   在相当长的一段时间内 NSUndoManager 对我来说都是一个很神秘的东西。我想学习使用它，但是一直没有时间。一直到今天，我写了一个简单的应用，这个应用创建了一个可以移动的矩形，并且还可以修改矩形的属性，例如背景色或者圆角。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://swift.gg/img/articles/ios-undo-and-redo-with-nsundomanager/Screen-Shot-2015-09-13-at-17.24.19.png1447290433.4454885">
+<meta property="og:image" content="https://swift.gg/img/articles/ios-undo-and-redo-with-nsundomanager/undo-event.png1447290437.6564598">
+<meta property="og:updated_time" content="2022-08-26T13:33:54.978Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用 NSUndoManager 来进行撤销和重做">
+<meta name="twitter:description" content="作者：Tomasz Szulc，原文链接，原文日期：2015-09-13译者：Yake；校对：numbbbbb；定稿：CMB   在相当长的一段时间内 NSUndoManager 对我来说都是一个很神秘的东西。我想学习使用它，但是一直没有时间。一直到今天，我写了一个简单的应用，这个应用创建了一个可以移动的矩形，并且还可以修改矩形的属性，例如背景色或者圆角。">
+<meta name="twitter:image" content="https://swift.gg/img/articles/ios-undo-and-redo-with-nsundomanager/Screen-Shot-2015-09-13-at-17.24.19.png1447290433.4454885">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2015/11/10/ios-undo-and-redo-with-nsundomanager/" target="_blank" title="使用 NSUndoManager 来进行撤销和重做" itemprop="url">使用 NSUndoManager 来进行撤销和重做</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2015-11-10T15:00:00.000Z" itemprop="datePublished">2015-11-10</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Tomasz Szulc，<a href="http://szulctomasz.com/ios-undo-and-redo-with-nsundomanager/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-09-13<br>译者：<a href="http://blog.csdn.net/yake_099" target="_blank" rel="noopener">Yake</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>在相当长的一段时间内 NSUndoManager 对我来说都是一个很神秘的东西。我想学习使用它，但是一直没有时间。一直到今天，我写了一个简单的应用，这个应用创建了一个可以移动的矩形，并且还可以修改矩形的属性，例如背景色或者圆角。</p>
+<a id="more"></a>
+<p>你可以在<a href="https://github.com/tomkowz/undo-manager-practice" target="_blank" rel="noopener">这儿</a>获取到示例应用<br><a href="https://youtu.be/3Pk85X8bugk" target="_blank" rel="noopener">这儿</a>是一段小视频，你可以看看这个示例应用是怎么工作的。</p>
+<p><img src="/img/articles/ios-undo-and-redo-with-nsundomanager/Screen-Shot-2015-09-13-at-17.24.19.png1447290433.4454885" alt="Screen-Shot-2015-09-13-at-17.24.19.png"></p>
+<h2 id="NSUndoManager"><a href="#NSUndoManager" class="headerlink" title="NSUndoManager"></a>NSUndoManager</h2><p><code>NSUndoManager</code>允许记录用户执行的操作并且反转这类操作。</p>
+<p>当你调用一个可以改变一些东西的方法或者是执行一个改变属性值的动作（例如 setter 方法）时，你可以注册这个操作来进行撤销。</p>
+<p>一个撤销操作包含了接收消息的对象，发送消息以及参数 - 通常你会传入原始值。</p>
+<p><code>NSUndoManager</code>实例支持重做操作，所以才能逆转操作。你可以认为这个管理器拥有两个栈。实际上，它管理两个栈，<code>undo</code>(撤销)栈和<code>redo</code>（重做）栈 - 对应<code>NSUndoManager</code>的私有属性<code>_undoStack</code>和<code>_redoStack</code>，里面存储着一些操作。</p>
+<p>注册<code>undo</code>操作时，它会被添加到<code>undo</code>栈中。当调用<code>undo()</code>方法时管理器就会进行撤销，执行栈中的操作并把这个操作移动到<code>redo</code>栈中，这样你就可以重做它。当你拥有多个<code>undo</code>操作时，按照逆序来撤销和重做这些操作。你肯定不会将操作直接注册到<code>redo</code>栈中，实际上这根本无法实现。</p>
+<p>你可以为<code>undo</code>操作设置一个级别，这指的是一个管理器可以在它的栈中存储多少<code>undo</code>操作。如果添加的<code>undo</code>操作数量超过了这个级别，最早加入的那个操作将会从栈中移除。</p>
+<p>你可以通过<code>canUndo</code>和<code>canRedo</code>来检查<code>undo</code>和<code>redo</code>栈的状态。这些状态很重要，你可能会基于这些栈的状态来更新 UI。</p>
+<p>假设你已经设置了<code>undo</code>操作的级别并且<code>redo</code>栈中还有一个操作，如果<code>undo</code>操作超过了这个级别，那你就需要使用<code>canUndo</code>和<code>canRedo</code>来检测可用性。之所以要这样做，是因为在这种情况下<code>NSUndoManager</code>将会移除<code>redo</code>操作，因为它是历史操作中最新的<code>undo</code>操作。（校对注：这里确实很绕，大家可以类比一下编辑器的撤销和重做操作，如果你在撤销之后进行了新的改动，那之前撤销过的操作其实已经无法再被重做了，因此可以被直接删掉，从而把更多的空间留给<code>undo</code>操作。）</p>
+<h2 id="注册undo操作"><a href="#注册undo操作" class="headerlink" title="注册undo操作"></a>注册<code>undo</code>操作</h2><p>API提供了两种注册操作的方法。</p>
+<p>第一种是使用<code>registerUndoWithTarget(_:selector:object:)</code>方法：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">registerUndoAddFigure</span><span class="params">(figure: FigureView)</span></span> &#123;</span><br><span class="line">    undoManager.registerUndoWithTarget(<span class="keyword">self</span>, selector: <span class="type">Selector</span>(“removeFigure:”), object: figure)</span><br><span class="line">    undoManager.setActionName(“<span class="type">Add</span> <span class="type">Figure</span>”)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>第二种撤销方法是基于<code>NSInvocation</code>。你可以使用<code>prepareWithInvocationTarget(_:)</code>方法来注册此类操作。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">registerUndoAddFigure</span><span class="params">(figure: FigureView)</span></span> &#123;</span><br><span class="line">    undoManager.prepareWithInvocationTarget(<span class="keyword">self</span>).removeFigure(figure)</span><br><span class="line">    undoManager.setActionName(<span class="string">"Add Figure"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>你将会得到一个<code>NSUndoManagerProxy</code>类型对象，可以用它调用任何方法（但是只能调用目标对象遵守的那些协议方法，否则应用会抛出运行时异常）。注册之后代理对象将会在内部创建<code>NSInvocation</code>对象来记录你的操作，这个对象会在传入的目标对象执行<code>undo</code>操作时被调用。</p>
+<p>值得强调的是，在注册过程中目标对象没有被持有，需要你去管理它。如果<code>undo</code>操作被调用而目标对象已经被销毁，就会产生运行时异常。</p>
+<p>当对象将要被销毁时你需要调用<code>removeAllActionsWithTarget(_:)</code>来移除与目标对象相关联的一些操作，或者调用<code>removeAllActions()</code>来移除<code>undo</code>和<code>redo</code>栈中所有的操作</p>
+<h2 id="将操作分组"><a href="#将操作分组" class="headerlink" title="将操作分组"></a>将操作分组</h2><p>分组操作是一件很有用的事情。默认情况下操作是通过事件进行分组的。这就意味着操作将会通过每一轮运行时循环来分组。你可以关闭自动分组，调用<code>beginUndoGrouping()</code>和<code>endUndoGrouping()</code>方法来手动操作分组。</p>
+<h2 id="命名并显示操作"><a href="#命名并显示操作" class="headerlink" title="命名并显示操作"></a>命名并显示操作</h2><p><code>NSUndoManager</code>支持存储操作的名称。你可以调用<code>setActionName(_:)</code>方法来为操作命名。管理器已经包含<code>Undo</code>和<code>Redo</code>这两个单词的多语言版本，可以使用 API 直接获取对应语言的<code>Undo/Redo</code>字符串。</p>
+<p>下面这个方法来自示例应用，每一个新的<code>undo</code>操作被注册或者<code>undo`</code>redo<code>操作被执行之后，将会更新</code>undo<code>和</code>redo`按钮。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">updateUndoAndRedoButtons</span><span class="params">()</span></span> &#123;</span><br><span class="line">    undoButton.enabled = undoManager.canUndo == <span class="literal">true</span></span><br><span class="line">    <span class="keyword">if</span> undoManager.canUndo &#123;</span><br><span class="line">        undoButton.setTitle(undoManager.undoMenuTitleForUndoActionName(undoManager.undoActionName), forState: .<span class="type">Normal</span>)</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        undoButton.setTitle(undoManager.undoMenuItemTitle, forState: .<span class="type">Normal</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    redoButton.enabled = undoManager.canRedo == <span class="literal">true</span></span><br><span class="line">    <span class="keyword">if</span> undoManager.canRedo &#123;</span><br><span class="line">        redoButton.setTitle(undoManager.redoMenuTitleForUndoActionName(undoManager.redoActionName), forState: .<span class="type">Normal</span>)</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        redoButton.setTitle(undoManager.redoMenuItemTitle, forState: .<span class="type">Normal</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="通知"><a href="#通知" class="headerlink" title="通知"></a>通知</h2><p>管理器有几个你可以观察的通知类型。在示例应用中我关注的是<code>NSUndoManagerDidUndoChangeNotification</code>和<code>NSUndoManagerDidRedoChangeNotification</code>。为了让应用完美运行，我可能需要观察所有<code>will</code>或者<code>did</code>类型的通知，因为操作可能要执行一段时间，并且一部分代码可能是异步的。在这些情况下应用要正确展示 UI 就需要使用这些通知来刷新<code>Undo</code>和<code>Redo</code>按钮。</p>
+<h2 id="上下文"><a href="#上下文" class="headerlink" title="上下文"></a>上下文</h2><p>应用在不同的上下文中可能有不同的管理器。示例应用在不同的上下文中用了两个管理器。</p>
+<p>第一个上下文是块展板，展板用来展示矩形并且可以在上面移动这个矩形。在这个展板上下文中可能发生的操作就是添加、移动或者移除一个矩形。</p>
+<p>第二个上下文是这个矩形自己。你可以改变它的颜色和圆角。我决定追踪展板的背景色以及圆角，忽略掉它在展板中的位置。</p>
+<p>这样你就可以添加一个矩形，移动它，改变它的颜色和圆角，使用<code>undo</code>来撤销移动操作但是不会撤销掉背景色和圆角的改变。你所使用的上下文数量取决于你的应用是怎么样的。</p>
+<h2 id="响应链"><a href="#响应链" class="headerlink" title="响应链"></a>响应链</h2><p>每一个<code>UIView</code>对象继承自<code>UIResponder</code>类型，这个类定义了响应对象的接口并且处理事件。</p>
+<p><code>UIResponder</code>类声明了<code>undoManager</code>属性。当应用接收到<code>undo</code>事件，<code>UIResponder</code>搭建起响应者链并通过<code>undoManager</code>返回一个<code>NSUndoManager</code>类型的对象来找到这个响应者。找到的第一个响应者将被用来处理<code>undo</code>或者<code>redo</code>操作。</p>
+<p>为了使用响应者链你需要重载<code>canBecomeFirstResponder()</code>属性并且设置返回值为<code>true</code>，然后通过调用<code>becomeFirstResponder()</code>方法使持有<code>undoManager</code>的对象成为第一响应者。如果你已经正确设置好了一切，可以执行一个摇晃手势，应用会出现一个警告框询问你是否要执行<code>undo</code>操作。</p>
+<p><img src="/img/articles/ios-undo-and-redo-with-nsundomanager/undo-event.png1447290437.6564598" alt="图片二.png"></p>
+<h2 id="示例代码"><a href="#示例代码" class="headerlink" title="示例代码"></a>示例代码</h2><p>当我写这个示例代码的时候我注意自己花费了很多时间去考虑“具有唯一目的”的方法。当你需要支持撤销和重做操作时这其实很重要，因为你调用那些方法就是出于特定的目的。</p>
+<p>下面的示例代码来自那个示例应用，它展示了在展板中的添加，移除以及移动操作都是怎么实现的。下面是所有与<code>undo manager</code>相关的代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">/// MARK: Actions on Figures</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">addFigure</span><span class="params">(figure: FigureView)</span></span> &#123;</span><br><span class="line">    registerUndoAddFigure(figure)</span><br><span class="line">    </span><br><span class="line">    boardView.addSubview(figure)</span><br><span class="line">    figures.append(figure)</span><br><span class="line">    </span><br><span class="line">    updateUndoAndRedoButtons()</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">removeFigure</span><span class="params">(figure: FigureView)</span></span> &#123;</span><br><span class="line">    registerUndoRemoveFigure(figure)</span><br><span class="line">    </span><br><span class="line">    figure.removeFromSuperview()</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">let</span> index = figures.indexOf(figure) &#123;</span><br><span class="line">        figures.removeAtIndex(index)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">moveFigure</span><span class="params">(figure: FigureView, center: CGPoint)</span></span> &#123;</span><br><span class="line">    registerUndoMoveFigure(figure)</span><br><span class="line">    figure.center = center</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="comment">/// MARK: Undo Manager</span></span><br><span class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">canBecomeFirstResponder</span><span class="params">()</span></span> -&gt; <span class="type">Bool</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">private</span> <span class="keyword">var</span> _undoManager = <span class="type">NSUndoManager</span>()</span><br><span class="line"><span class="keyword">override</span> <span class="keyword">var</span> undoManager: <span class="type">NSUndoManager</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> _undoManager</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">observeUndoManager</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="type">NSNotificationCenter</span>.defaultCenter().addObserver(<span class="keyword">self</span>, selector: <span class="type">Selector</span>(<span class="string">"updateUndoAndRedoButtons"</span>), name: <span class="type">NSUndoManagerDidUndoChangeNotification</span>, object: undoManager)</span><br><span class="line">    <span class="type">NSNotificationCenter</span>.defaultCenter().addObserver(<span class="keyword">self</span>, selector: <span class="type">Selector</span>(<span class="string">"updateUndoAndRedoButtons"</span>), name: <span class="type">NSUndoManagerDidRedoChangeNotification</span>, object: undoManager)</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="meta">@objc</span> <span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">updateUndoAndRedoButtons</span><span class="params">()</span></span> &#123;</span><br><span class="line">    undoButton.enabled = undoManager.canUndo == <span class="literal">true</span></span><br><span class="line">    <span class="keyword">if</span> undoManager.canUndo &#123;</span><br><span class="line">        undoButton.setTitle(undoManager.undoMenuTitleForUndoActionName(undoManager.undoActionName), forState: .<span class="type">Normal</span>)</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        undoButton.setTitle(undoManager.undoMenuItemTitle, forState: .<span class="type">Normal</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    redoButton.enabled = undoManager.canRedo == <span class="literal">true</span></span><br><span class="line">    <span class="keyword">if</span> undoManager.canRedo &#123;</span><br><span class="line">        redoButton.setTitle(undoManager.redoMenuTitleForUndoActionName(undoManager.redoActionName), forState: .<span class="type">Normal</span>)</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        redoButton.setTitle(undoManager.redoMenuItemTitle, forState: .<span class="type">Normal</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="comment">/// MARK: Undo Manager Actions</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">registerUndoAddFigure</span><span class="params">(figure: FigureView)</span></span> &#123;</span><br><span class="line">    undoManager.prepareWithInvocationTarget(<span class="keyword">self</span>).removeFigure(figure)</span><br><span class="line">    undoManager.setActionName(<span class="string">"Add Figure"</span>)</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">registerUndoRemoveFigure</span><span class="params">(figure: FigureView)</span></span> &#123;</span><br><span class="line">    undoManager.prepareWithInvocationTarget(<span class="keyword">self</span>).addFigure(figure)</span><br><span class="line">    undoManager.setActionName(<span class="string">"Remove Figure"</span>)</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">registerUndoMoveFigure</span><span class="params">(figure: FigureView)</span></span> &#123;</span><br><span class="line">    undoManager.prepareWithInvocationTarget(<span class="keyword">self</span>).moveFigure(figure, center: figure.center)</span><br><span class="line">    undoManager.setActionName(<span class="string">"Move to \(figure.center)"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我创建了一些<code>undo</code>相关的简单方法。这样做效果很好，注册<code>undo</code>操作的逻辑和操作本身的逻辑相分离，代码精简为一句函数调用。</p>
+<p>我决定放弃使用<code>registerUndoWithTarget(_:selector:object:)</code>方法，因为<code>Selector</code>是一个字符串，这样做很危险。而<code>prepareWithInvocationTarget(_:)</code>看起来更好一些，既安全又便于使用。</p>
+<p>不过，当你需要设置属性时可能要用带<code>Selector</code>的方法。</p>
+<p>你需要直接调用想要记录的方法，但是这样做不能设置属性（因为只能调用方法）。有两种解决方法：第一种是添加类似<code>setPropertyName(_:)</code>的方法，第二种是使用<code>registerUndoWithTarget(_:selector:object:)</code>方法并将<code>Selector</code>设置为<code>setPropertyName:</code>，作为参数传入。</p>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p><code>NSUndoManager</code>是一种强大的机制，我们可以简单地向应用中加入<code>undo</code>和<code>redo</code>方法。它需要你谨慎地设计应用的结构，因为你需要使用“具有唯一目的性”的方法来将用户的操作设置为<code>undo</code>或者是<code>redo</code>。但是总体来说这是个好事，不是吗？这会改善代码设计。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Tomasz-Szulc/">Tomasz Szulc</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2015/11/10/ios-undo-and-redo-with-nsundomanager/" data-title="使用 NSUndoManager 来进行撤销和重做 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2015/11/11/c-callbacks-in-swift/" title="在 Swift 2.0 当中使用 C 语言回调">
+  <strong>上一篇</strong><br>
+  <span>
+  在 Swift 2.0 当中使用 C 语言回调</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2015/11/09/what-makes-good-code/" title="好代码是怎样炼成的">
+ <strong>下一篇</strong><br> 
+ <span>好代码是怎样炼成的
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2015/11/10/ios-undo-and-redo-with-nsundomanager/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#NSUndoManager"><span class="toc-number">1.</span> <span class="toc-text">NSUndoManager</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#注册undo操作"><span class="toc-number">2.</span> <span class="toc-text">注册undo操作</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#将操作分组"><span class="toc-number">3.</span> <span class="toc-text">将操作分组</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#命名并显示操作"><span class="toc-number">4.</span> <span class="toc-text">命名并显示操作</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#通知"><span class="toc-number">5.</span> <span class="toc-text">通知</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#上下文"><span class="toc-number">6.</span> <span class="toc-text">上下文</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#响应链"><span class="toc-number">7.</span> <span class="toc-text">响应链</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#示例代码"><span class="toc-number">8.</span> <span class="toc-text">示例代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结论"><span class="toc-number">9.</span> <span class="toc-text">结论</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

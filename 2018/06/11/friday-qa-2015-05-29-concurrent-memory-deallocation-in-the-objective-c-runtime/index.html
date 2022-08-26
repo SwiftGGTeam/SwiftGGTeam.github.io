@@ -1,0 +1,1058 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>Concurrent Memory Deallocation in the Objective-C Runtime | Objective-C Runtime 中内存释放的并发问题 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="Runtime,Objective-C,threading,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="作者：Mike Ash，原文链接，原文日期：2015-06-05译者：阳仔；校对：numbbbbb，liberalism；定稿：CMB   Objective-C Runtime 是绝大多数 Mac 和 iOS 程序代码的核心。Runtime 的核心就是 objc_msgSend 函数，这个函数最关键的就是方法缓存。我在这篇文章中将会阐述一下，Apple 是如何在不影响性能的情况下，以线程安全的">
+<meta name="keywords" content="Runtime,Objective-C,threading">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Objective-C Runtime 中内存释放的并发问题">
+<meta property="og:url" content="https://swift.gg/2018/06/11/friday-qa-2015-05-29-concurrent-memory-deallocation-in-the-objective-c-runtime/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="作者：Mike Ash，原文链接，原文日期：2015-06-05译者：阳仔；校对：numbbbbb，liberalism；定稿：CMB   Objective-C Runtime 是绝大多数 Mac 和 iOS 程序代码的核心。Runtime 的核心就是 objc_msgSend 函数，这个函数最关键的就是方法缓存。我在这篇文章中将会阐述一下，Apple 是如何在不影响性能的情况下，以线程安全的">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-08-26T13:33:55.025Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Objective-C Runtime 中内存释放的并发问题">
+<meta name="twitter:description" content="作者：Mike Ash，原文链接，原文日期：2015-06-05译者：阳仔；校对：numbbbbb，liberalism；定稿：CMB   Objective-C Runtime 是绝大多数 Mac 和 iOS 程序代码的核心。Runtime 的核心就是 objc_msgSend 函数，这个函数最关键的就是方法缓存。我在这篇文章中将会阐述一下，Apple 是如何在不影响性能的情况下，以线程安全的">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2018/06/11/friday-qa-2015-05-29-concurrent-memory-deallocation-in-the-objective-c-runtime/" target="_blank" title="Objective-C Runtime 中内存释放的并发问题" itemprop="url">Objective-C Runtime 中内存释放的并发问题</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2018-06-11T05:00:00.000Z" itemprop="datePublished">2018-06-11</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Mike Ash，<a href="https://www.mikeash.com/pyblog/friday-qa-2015-05-29-concurrent-memory-deallocation-in-the-objective-c-runtime.html" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-06-05<br>译者：<a href="https://github.com/YangGao1991" target="_blank" rel="noopener">阳仔</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>，<a href="https://weibo.com/1743643682/profile?topnav=1&amp;wvr=6" target="_blank" rel="noopener">liberalism</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>Objective-C Runtime 是绝大多数 Mac 和 iOS 程序代码的核心。Runtime 的核心就是 <code>objc_msgSend</code> 函数，这个函数最关键的就是方法缓存。我在这篇文章中将会阐述一下，Apple 是如何在不影响性能的情况下，以线程安全的方式来重新分配缓存大小、释放方法缓存。</p>
+<a id="more"></a>
+<h3 id="消息传递的概念"><a href="#消息传递的概念" class="headerlink" title="消息传递的概念"></a>消息传递的概念</h3><p><code>objc_msgSend</code> 会查找被调用的方法的实现，然后去执行。从概念上讲，查找方法的过程如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">IMP lookUp(id obj, SEL selector) &#123;</span><br><span class="line">    Class c = object_getClass(obj);</span><br><span class="line"></span><br><span class="line">    while(c) &#123;</span><br><span class="line">        for(int i = 0; i &lt; c-&gt;numMethods; i++) &#123;</span><br><span class="line">            Method m = c-&gt;methods[i];</span><br><span class="line">            if(m.selector == selector) &#123;</span><br><span class="line">                return m.imp;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        c = c-&gt;superclass;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return _objc_msgForward;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>考虑到源码的版权，一些变量名做了修改。如果你想看看真实的实现代码，可以查看 Objective-C runtime 的<a href="http://www.opensource.apple.com/source/objc4/" target="_blank" rel="noopener">开源代码</a>。</p>
+<h3 id="方法缓存"><a href="#方法缓存" class="headerlink" title="方法缓存"></a>方法缓存</h3><p>绝大部分 Objective-C 的代码都用到了消息传递。如果每一次消息传递都需要进行一次完整查找的话，速度将会非常慢。</p>
+<p>解决方法是建立方法的缓存。每个类持有一个哈希表，将方法名映射到方法的实现。这个哈希表需要尽可能地提高读取效率，<code>objc_msgSend</code> 函数使用精心构造的汇编代码来快速实现这个哈希表的查询。这样，在有缓存的情况下，一条消息的传递只需要几纳秒的时间。虽然每条消息第一次被传递的时候还是很慢，但这之后，就会变得很快。</p>
+<p>我们所说的“缓存”，通常来说是指为了加快多次访问最近使用过的资源的速度，而开辟的一块有限大小的区域。例如，你可能会把从网络上下载的图片缓存起来，那么接下来的一段时间，如果再需要使用到这些图片的话，就不需要再去从网络下载了。尽管如此，你也不会希望缓存占用太多的内存空间。所以你可能会限制缓存图片的最大数量。当缓存的图片达到最大数量后，每次缓存新的图片，就会把最旧的那个从缓存中去掉。</p>
+<p>这对于大部分问题来说是一个不错的做法，但它也可能导致性能上的损耗。比如，你设定图片缓存最多缓存 40 张图片，但在某种情况下，你的应用需要一直循环使用 41 张图片，这时你会发现缓存完全不起作用！</p>
+<p>对于我们自己的应用，可以通过测试，调整缓存的大小来避免出现这种情况，但 Objective-C 的 runtime 并不能这样做。方法缓存对性能来说非常重要，并且每个方法的缓存占用的空间都很小，因此，runtime 并不会对缓存空间的大小进行限制，而是会在需要时随时扩大缓存空间，来缓存所有发送过的消息。</p>
+<p>请注意，runtime 的方法缓存有时确实是会刷新的。比如当将新的代码加载到进程时，或者修改了一个类的方法列表时，可能会导致某些缓存的数据失效。这时，相应的旧的缓存数据就会被删除，并重新写入新的缓存数据。</p>
+<h3 id="改变缓存大小，销毁，以及线程问题"><a href="#改变缓存大小，销毁，以及线程问题" class="headerlink" title="改变缓存大小，销毁，以及线程问题"></a>改变缓存大小，销毁，以及线程问题</h3><p>改变缓存大小，从概念上来说比较简单，比如这样：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">bucket_t</span> *newCache = <span class="built_in">malloc</span>(newSize);</span><br><span class="line">copyEntries(newCache, class-&gt;cache);</span><br><span class="line"><span class="built_in">free</span>(class-&gt;cache);</span><br><span class="line"><span class="class"><span class="keyword">class</span>-&gt;<span class="title">cache</span> = <span class="title">newCache</span>;</span></span><br></pre></td></tr></table></figure>
+<p>实际上，Objective-C runtime 在这个基础上又对代码进行了精简：旧的缓存数据并没有被复制到新的缓存空间中！毕竟，这只是一块缓存空间而已，并没有要求一定要保留其中的数据。在消息发送的时候，新的数据自然又会被缓存下来。因此，事实上，代码是这样：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="built_in">free</span>(class-&gt;cache);</span><br><span class="line"><span class="class"><span class="keyword">class</span>-&gt;<span class="title">cache</span> = <span class="title">malloc</span>(<span class="title">newSize</span>);</span></span><br></pre></td></tr></table></figure>
+<p>如果只讲单线程，需要做的就是这么多了，这篇文章到这也可以结束了。但是，Objective-C runtime 肯定要支持多线程操作，这就意味着所有的代码必须保证线程安全。每一个类的缓存数据都可能会被多个线程同时操作，因此，这里的代码必须谨慎处理，才能满足线程安全的条件。</p>
+<p>像上面的写法自然不行。在释放了旧的缓存空间，并且还没有正确赋值新开辟的空间的这段“窗口时间”中，另一个线程就可能访问到非法的地址，这会导致其访问到垃圾数据。此外，如果那块内存没有进行映射的话，就会造成闪退。</p>
+<p>我们如何解决这个问题？典型的做法是使用线程锁，就像这样：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">lock(class-&gt;lock);</span><br><span class="line"><span class="built_in">free</span>(class-&gt;cache);</span><br><span class="line"><span class="class"><span class="keyword">class</span>-&gt;<span class="title">cache</span> = <span class="title">malloc</span>(<span class="title">newSize</span>);</span></span><br><span class="line">unlock(class-&gt;lock);</span><br></pre></td></tr></table></figure>
+<p>所有访问都必须由锁控制，包括读操作。这样就意味着，<code>objc_msgSend</code> 方法可能需要获取线程锁，访问缓存空间，然后释放锁。考虑到缓存的查找本身只会占用几纳秒的时间，每次获取、释放锁会增加很多时间的损耗，对性能的影响太大了。</p>
+<p>我们也可以尝试用另外的方法去解决“窗口时间”，比如先分配和赋值新的内存空间，再销毁旧的：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">bucket_t</span> *oldCache = class-&gt;cache;</span><br><span class="line"><span class="class"><span class="keyword">class</span>-&gt;<span class="title">cache</span> = <span class="title">malloc</span>(<span class="title">newSize</span>);</span></span><br><span class="line"><span class="built_in">free</span>(oldCache);</span><br></pre></td></tr></table></figure>
+<p>这也许有点用，但并没有解决问题。另一个线程也可能先获取到旧缓存的指针，然后在访问内存前被系统中断。然后，旧的缓存被销毁后，另外的线程又重新启动，这就导致了和前面一样的问题。</p>
+<p>如果我们加一个延迟呢？比如说：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">bucket_t</span> *oldCache = class-&gt;cache;</span><br><span class="line"><span class="class"><span class="keyword">class</span>-&gt;<span class="title">cache</span> = <span class="title">malloc</span>(<span class="title">newSize</span>);</span></span><br><span class="line">after(<span class="number">5</span> <span class="comment">/* seconds */</span>, ^&#123;</span><br><span class="line">    <span class="built_in">free</span>(oldCache);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>这似乎是可行的，但还是可以想到一种情况，就是一个线程刚好被中断足够久，以至于五秒的延迟结束了才重新启动。虽然这样的情况及其罕见，但并不是毫无可能。</p>
+<p>如果不是设置一个固定的延迟时间，而是确定等到“窗口时间”结束呢。我们可以给 <code>objc_msgSend</code> 函数增加一个计数器，就像这样：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">gInMsgSend++;</span><br><span class="line">lookUpCache(class-&gt;cache);</span><br><span class="line">gInMsgSend--;</span><br></pre></td></tr></table></figure>
+<p>正确的线程安全的做法需要对计数器使用原子性，以及使用内存屏障，来保证互相依赖的缓存的读取/存储正确进行。这里我们假设计数器已经满足这些条件。</p>
+<p>有了计数器，重新分配缓存的代码就会像这样：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">bucket_t</span> *oldCache = class-&gt;cache;</span><br><span class="line"><span class="class"><span class="keyword">class</span>-&gt;<span class="title">cache</span> = <span class="title">malloc</span>(<span class="title">newSize</span>);</span></span><br><span class="line"><span class="keyword">while</span>(gInMsgSend)</span><br><span class="line">    ; <span class="comment">// spin</span></span><br><span class="line"><span class="built_in">free</span>(oldCache);</span><br></pre></td></tr></table></figure>
+<p>注意，我们并不需要阻塞 <code>objc_msgSend</code> 执行，就能让这段代码正确工作。在给缓存的指针重新赋值后，一旦某一时刻，确认没有方法在调用 <code>objc_msgSend</code> 了，就可以将旧的缓存空间释放。另一个线程有可能会在旧缓存空间被释放的时候调用 <code>objc_msgSend</code> ，但这个新的调用不会访问到旧的缓存的指针，因此是安全的。</p>
+<p>然而，轮询操作效率较低，且不优雅。事实上，释放旧的缓存空间并不是十分要紧的一件事。内存能够正确释放当然是好的，但晚点再释放也没有什么大不了的。因此，我们可以不使用轮询，而是持有一份未释放的缓存的记录表。每次需要释放缓存时，就清空所有待释放的缓存：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">bucket_t</span> *oldCache = class-&gt;cache;</span><br><span class="line"><span class="class"><span class="keyword">class</span>-&gt;<span class="title">cache</span> = <span class="title">malloc</span>(<span class="title">newSize</span>);</span></span><br><span class="line"></span><br><span class="line">append(gOldCachesList, oldCache);</span><br><span class="line"><span class="keyword">if</span>(!gInMsgSend) &#123;</span><br><span class="line">    <span class="keyword">for</span>(cache in gOldCachesList) &#123;</span><br><span class="line">        <span class="built_in">free</span>(cache);</span><br><span class="line">    &#125;</span><br><span class="line">    gOldCachesList.clear();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果一条消息正在传递的话，那这里并不会立刻清空旧的缓存。但没关系，当下次时机来临时，比如消息传递结束或未来的某个时间点，这些过期的缓存都会被清空。</p>
+<p>这个版本已经很接近 Objective-C runtime 的源码了。</p>
+<h3 id="零消耗的标志位"><a href="#零消耗的标志位" class="headerlink" title="零消耗的标志位"></a>零消耗的标志位</h3><p>消息传递中的两部分存在着明显的不同。<code>objc_msgSend</code> 可能每秒钟需要运行数百万次，因此速度必须足够快，最好单次调用只消耗几纳秒的时间。然而，重新分配缓存却是个比较不频繁的操作，而且随着应用的持续运行，该操作也会变得越来越少。一旦应用达到一个稳定状态，不再加载新的代码，不再修改消息列表，这时缓存也就达到了它们所需的最大容量，再也不需要重新分配缓存了。在这之前，可能会发生成百上千次的缓存的重新分配，但相比于 <code>objc_msgSend</code> 来说，调用次数还是很少，因此对性能的要求也很低。</p>
+<p>因此，应当尽可能少的去干预消息传递的过程，尽管这样会让缓存释放的过程变慢。如果在 <code>objc_msgSend</code> 阶段能减少一个 CPU 周期，那么即使每次缓存释放操作都会消耗一百万个 CPU 周期，那也能极大提高效率。</p>
+<p>这么说来，哪怕设置一个全局的计数器，性能损耗的代价还是太高。那意味着 <code>objc_msgSend</code> 过程中需要增加两次内存访问，从而增加很多性能开销。而需要使用原子性以及内存屏障只会让这变得更糟。幸运的是，Objective-C runtime 能够将 <code>objc_msgSend</code> 的性能损耗降到零，代价是会让缓存释放的过程变得慢很多。</p>
+<p>在上面的代码中，我们设置全局计数器的目的是追踪是否有线程处于消息传递的过程中。事实上，线程本身知道自己正在运行什么代码：程序计数器。这是一个记录当前指令的内存地址的 CPU 寄存器。我们可以用它来代替全局的计数器，来检查每个线程是否处于 <code>objc_msgSend</code> 当中。如果所有线程都不处于 <code>objc_msgSend</code> 中，那么旧的缓存就可以被安全释放。这种方法的实现如下：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function">BOOL <span class="title">ThreadsInMsgSend</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span>(thread in GetAllThreads()) &#123;</span><br><span class="line">        <span class="keyword">uintptr_t</span> pc = thread.GetPC();</span><br><span class="line">        <span class="keyword">if</span>(pc &gt;= objc_msgSend_startAddress &amp;&amp; pc &lt;= objc_msgSend_endAddress) &#123;</span><br><span class="line">            <span class="keyword">return</span> YES;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> NO;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">bucket_t</span> *oldCache = class-&gt;cache;</span><br><span class="line"><span class="class"><span class="keyword">class</span>-&gt;<span class="title">cache</span> = <span class="title">malloc</span>(<span class="title">newSize</span>);</span></span><br><span class="line"></span><br><span class="line">append(gOldCachesList, oldCache);</span><br><span class="line"><span class="keyword">if</span>(!ThreadsInMsgSend()) &#123;</span><br><span class="line">    <span class="keyword">for</span>(cache in gOldCachesList) &#123;</span><br><span class="line">        <span class="built_in">free</span>(cache);</span><br><span class="line">    &#125;</span><br><span class="line">    gOldCachesList.clear();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>objc_msgSend</code> 并不需要额外做任何事情，它可以不用考虑设置标志位，直接访问缓存：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">lookUpCache(class-&gt;cache);</span><br></pre></td></tr></table></figure>
+<p>缓存释放的代码效率很低，因为它需要检查进程中所有线程的状态。但这样 <code>objc_msgSend</code> 可以做到与单线程环境中同样高的效率，这是一个值得付出的代价。这就是 Apple 的 runtime 源码实现方式。</p>
+<h3 id="真实代码"><a href="#真实代码" class="headerlink" title="真实代码"></a>真实代码</h3><p>具体的实现可以查看 runtime 源码 <a href="https://opensource.apple.com/source/objc4/objc4-646/runtime/objc-cache.mm" target="_blank" rel="noopener">objc-cache.mm</a> 中的 <code>_collecting_in_critical</code> 函数。</p>
+<p>需要使用程序计数器的入口和出口位置被储存在全局变量中：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">OBJC_EXPORT <span class="keyword">uintptr_t</span> objc_entryPoints[];</span><br><span class="line">OBJC_EXPORT <span class="keyword">uintptr_t</span> objc_exitPoints[];</span><br></pre></td></tr></table></figure>
+<p>事实上，<code>objc_msgSend</code> 有多种实现方式（比如返回 struct 类型），内部的 <code>cache_getImp</code> 也会直接访问缓存。这些都需要在缓存释放的时候被检查。</p>
+<p><code>_collecting_in_critical</code> 函数没有入参，返回一个 <code>int</code> 类型，被当做一个布尔类型的标志位，指明是否有线程处于关键的函数中：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">int</span> _collecting_in_critical(<span class="keyword">void</span>)</span><br><span class="line">&#123;</span><br></pre></td></tr></table></figure>
+<p>我会跳过该函数中不重要的部分，只介绍最关键的部分。如果你想阅读完整代码，可以查看 <a href="https://opensource.apple.com/source/objc4/objc4-646/runtime/objc-cache.mm" target="_blank" rel="noopener">opensource.apple.com</a>。</p>
+<p>获取线程信息的 API 处于 mach 层。<code>task_threads</code> 能够获取到指定任务（进程在 mach 中的表示）中的所有线程，这里用它来获取当前进程中的线程：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">ret = task_threads(mach_task_self(), &amp;threads, &amp;number);</span><br></pre></td></tr></table></figure>
+<p>函数会在 <code>threads</code> 中保存 <code>thread_t</code> 数组，在 <code>number</code> 中保存线程的数量。然后会遍历所有线程：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> (count = <span class="number">0</span>; count &lt; number; count++)</span><br><span class="line">&#123;</span><br></pre></td></tr></table></figure>
+<p>获取一个线程的程序计数器是在另外一个单独的函数中：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">pc = _get_pc_for_thread (threads[count]);</span><br></pre></td></tr></table></figure>
+<p>然后，程序会遍历所有的入口和出口，并逐个进行判断：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">    <span class="keyword">for</span> (region = <span class="number">0</span>; objc_entryPoints[region] != <span class="number">0</span>; region++)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> ((pc &gt;= objc_entryPoints[region]) &amp;&amp;</span><br><span class="line">            (pc &lt;= objc_exitPoints[region])) </span><br><span class="line">        &#123;</span><br><span class="line">            result = TRUE;</span><br><span class="line">            <span class="keyword">goto</span> done;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>遍历结束后，将结果返回给调用者：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>_get_pc_for_thread</code> 函数是怎么工作的呢？它只是简单地调用 <code>thread_get_state</code> 函数来获得目标线程的寄存器状态。之所以要放到一个单独的函数中，是因为寄存器状态的结构体是与具体架构相关的，不同架构都有不同的寄存器。也就是说，这个函数需要对每个支持的架构有一套单独的实现，尽管这些实现差别不大。下面是 x86-64 下的实现：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">uintptr_t</span> _get_pc_for_thread(<span class="keyword">thread_t</span> thread)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">x86_thread_state64_t</span>            state;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> count = x86_THREAD_STATE64_COUNT;</span><br><span class="line">    <span class="keyword">kern_return_t</span> okay = thread_get_state (thread, x86_THREAD_STATE64, (<span class="keyword">thread_state_t</span>)&amp;state, &amp;count);</span><br><span class="line">    <span class="keyword">return</span> (okay == KERN_SUCCESS) ? state.__rip : PC_SENTINEL;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>rip 是 x86-64 下程序计数器的寄存器名字。“R”代表“register”，“IP”代表“instruction pointer”。</p>
+<p>上面所说的入口和出口的代码位置，与其函数一同定义在汇编文件中：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">.private_extern _objc_entryPoints</span><br><span class="line">_objc_entryPoints:</span><br><span class="line">    .quad   _cache_getImp</span><br><span class="line">    .quad   _objc_msgSend</span><br><span class="line">    .quad   _objc_msgSend_fpret</span><br><span class="line">    .quad   _objc_msgSend_fp2ret</span><br><span class="line">    .quad   _objc_msgSend_stret</span><br><span class="line">    .quad   _objc_msgSendSuper</span><br><span class="line">    .quad   _objc_msgSendSuper_stret</span><br><span class="line">    .quad   _objc_msgSendSuper2</span><br><span class="line">    .quad   _objc_msgSendSuper2_stret</span><br><span class="line">    .quad   <span class="number">0</span></span><br><span class="line"></span><br><span class="line">.private_extern _objc_exitPoints</span><br><span class="line">_objc_exitPoints:</span><br><span class="line">    .quad   LExit_cache_getImp</span><br><span class="line">    .quad   LExit_objc_msgSend</span><br><span class="line">    .quad   LExit_objc_msgSend_fpret</span><br><span class="line">    .quad   LExit_objc_msgSend_fp2ret</span><br><span class="line">    .quad   LExit_objc_msgSend_stret</span><br><span class="line">    .quad   LExit_objc_msgSendSuper</span><br><span class="line">    .quad   LExit_objc_msgSendSuper_stret</span><br><span class="line">    .quad   LExit_objc_msgSendSuper2</span><br><span class="line">    .quad   LExit_objc_msgSendSuper2_stret</span><br><span class="line">    .quad   <span class="number">0</span></span><br></pre></td></tr></table></figure>
+<p><code>_collecting_in_critical</code> 的用法和上面我们假设的例子很相似。它在释放缓存之前被调用。事实上，runtime 有两种工作模式：一种是如果其他线程正在调用相关函数的话，就把垃圾内存的清理工作留到下一次调用；另一种是一直轮询，直到确认没有线程正在调用，然后再进行销毁：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Synchronize collection with objc_msgSend and other cache readers</span></span><br><span class="line"><span class="keyword">if</span> (!collectALot) &#123;</span><br><span class="line">    <span class="keyword">if</span> (_collecting_in_critical ()) &#123;</span><br><span class="line">        <span class="comment">// objc_msgSend (or other cache reader) is currently looking in</span></span><br><span class="line">        <span class="comment">// the cache and might still be using some garbage.</span></span><br><span class="line">        <span class="keyword">if</span> (PrintCaches) &#123;</span><br><span class="line">            _objc_inform (<span class="string">"CACHES: not collecting; "</span></span><br><span class="line">                          <span class="string">"objc_msgSend in progress"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125; </span><br><span class="line"><span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">// No excuses.</span></span><br><span class="line">    <span class="keyword">while</span> (_collecting_in_critical()) </span><br><span class="line">        ;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// free garbage here</span></span><br></pre></td></tr></table></figure>
+<p>第一种将垃圾内存留到下一次调用时清理的模式，是在正常的重新分配缓存大小时采用；第二种始终清理垃圾内存的模式，是在需要刷新所有类的所有缓存时使用，因为这样往往会产生大量的垃圾内存。以我阅读代码来看，这种情况只会在开启一项日志调试功能时发生。日志调试会将所有的消息发送记录到文件中，消息缓存会影响这一日志，因此需要全部刷新。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>性能和线程安全经常会互相冲突。不同部分的代码对同一块内存的访问方式往往不同，也就允许我们以更加有效率的方式来实现线程安全。方式之一是用一个全局标志位或者计数器来指明对内存的改动操作是否安全。在 Objective-C runtime 中，Apple 更进一步，使用了各个线程的程序计数器来判断线程是否正在进行不安全的操作。这是一个很专业的案例，这种做法想要用到其他地方也不是很有用，但研究它的原理本身就是一件很有意思的事情。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Mike-Ash/">Mike Ash</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/iOS-开发/">iOS 开发</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2018/06/11/friday-qa-2015-05-29-concurrent-memory-deallocation-in-the-objective-c-runtime/" data-title="Objective-C Runtime 中内存释放的并发问题 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2018/06/19/swift-org-blog-iuo/" title="重新实现可选类型的隐式解包">
+  <strong>上一篇</strong><br>
+  <span>
+  重新实现可选类型的隐式解包</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2018/06/07/friday-qa-2015-02-06-locks-thread-safety-and-swift/" title="Swift 中的锁和线程安全">
+ <strong>下一篇</strong><br> 
+ <span>Swift 中的锁和线程安全
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2018/06/11/friday-qa-2015-05-29-concurrent-memory-deallocation-in-the-objective-c-runtime/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#消息传递的概念"><span class="toc-number">1.</span> <span class="toc-text">消息传递的概念</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#方法缓存"><span class="toc-number">2.</span> <span class="toc-text">方法缓存</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#改变缓存大小，销毁，以及线程问题"><span class="toc-number">3.</span> <span class="toc-text">改变缓存大小，销毁，以及线程问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#零消耗的标志位"><span class="toc-number">4.</span> <span class="toc-text">零消耗的标志位</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#真实代码"><span class="toc-number">5.</span> <span class="toc-text">真实代码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#总结"><span class="toc-number">6.</span> <span class="toc-text">总结</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

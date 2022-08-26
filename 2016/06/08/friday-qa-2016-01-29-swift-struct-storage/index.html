@@ -1,0 +1,1081 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>Friday Q&amp;A 2016-01-29: Swift 的结构体存储 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="swift结构体,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="Swift 结构体存储在哪里你知道吗，本文就来说下 Swift 结构体的工作原理。">
+<meta name="keywords" content="swift结构体">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Friday Q&amp;A 2016-01-29: Swift 的结构体存储">
+<meta property="og:url" content="https://swift.gg/2016/06/08/friday-qa-2016-01-29-swift-struct-storage/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="Swift 结构体存储在哪里你知道吗，本文就来说下 Swift 结构体的工作原理。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-08-26T13:33:54.999Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Friday Q&amp;A 2016-01-29: Swift 的结构体存储">
+<meta name="twitter:description" content="Swift 结构体存储在哪里你知道吗，本文就来说下 Swift 结构体的工作原理。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/06/08/friday-qa-2016-01-29-swift-struct-storage/" target="_blank" title="Friday Q&amp;A 2016-01-29: Swift 的结构体存储" itemprop="url">Friday Q&amp;A 2016-01-29: Swift 的结构体存储</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-06-08T05:00:00.000Z" itemprop="datePublished">2016-06-08</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Mike Ash，<a href="https://www.mikeash.com/pyblog/friday-qa-2016-01-29-swift-struct-storage.html" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-01-29<br>译者：<a href="http://www.jianshu.com/users/97c49dfd1f9f/latest_articles" target="_blank" rel="noopener">ray16897188</a>；校对：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="noopener">Channe</a>；定稿：<a href="http://weibo.com/xiaoxxiao" target="_blank" rel="noopener">千叶知风</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>Swift 的类对大多数刚接触编程语言的人来说是很容易理解的，它们和其他语言中的类十分类似。无论你是从 Objective-C、Java 还是 Ruby 过来的，在 Swift 中对于类的使用并无太大区别。而 Swift 中的结构体就是另外一回事儿了，它们有点儿像类，但是它们是值类型，还没有继承，另外我总是听到这个什么 copy-on-write（写入时复制）的说法。那么 Swift 中的结构体是存在哪里？它们是怎么个工作原理？今天我们来仔细研究一下如何在内存中保存和操作结构体。</p>
+<a id="more"></a>
+<h4 id="简单的结构体"><a href="#简单的结构体" class="headerlink" title="简单的结构体"></a>简单的结构体</h4><p>我建了一个有两个文件的程序来探究一下结构体在内存中是怎样存储的。对这个测试程序采用 optimizations enabled 选项编译，并取消 whole-module optimization 选项。此测试是让一个文件调用一个文件，这就会防止编译器将所有东西都内联，从而让我们能更清楚的看明白东西都存在哪儿，以及数据在函数间如何传递。</p>
+<p>从创建一个三个元素的结构体开始：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ExampleInts</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> x: <span class="type">Int</span></span><br><span class="line">    <span class="keyword">var</span> y: <span class="type">Int</span></span><br><span class="line">    <span class="keyword">var</span> z: <span class="type">Int</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>又写了三个函数，都是各自接收一个结构体的实例，然后分别返回该实例的一个字段（field）：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getX</span><span class="params">(parameter: ExampleInts)</span></span> -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> parameter.x</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getY</span><span class="params">(parameter: ExampleInts)</span></span> -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> parameter.y</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getZ</span><span class="params">(parameter: ExampleInts)</span></span> -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> parameter.z</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>在另一个文件中创建了一个结构体实例，然后调用所有的 get 函数：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">testGets</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">let</span> s = <span class="type">ExampleInts</span>(x: <span class="number">1</span>, y: <span class="number">2</span>, z: <span class="number">3</span>)</span><br><span class="line">    getX(s)</span><br><span class="line">    getY(s)</span><br><span class="line">    getZ(s)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>针对 getX，编译器生成了如下代码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pushq   %rbp</span><br><span class="line">movq    %rsp, %rbp</span><br><span class="line"></span><br><span class="line">movq    %rdi, %rax</span><br><span class="line"></span><br><span class="line">popq    %rbp</span><br><span class="line">retq</span><br></pre></td></tr></table></figure>
+<p>查看一下汇编的<a href="https://en.wikipedia.org/wiki/X86_calling_conventions#System_V_AMD64_ABI" target="_blank" rel="noopener">备忘单</a>，知道参数是按顺序被传进寄存器 rdi、rsi、rdx、rcx、r8 和 r9 中，然后返回值被存放在 rax 中。这里前两个指令只是函数序言（function prologue），而后两个是函数尾声（function epilogue）。真正做的工作就是 <code>movq %rdi, %rax</code>：提取第一个参数并将其返回。再看一下 getY：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pushq   %rbp</span><br><span class="line">movq    %rsp, %rbp</span><br><span class="line"></span><br><span class="line">movq    %rsi, %rax</span><br><span class="line"></span><br><span class="line">popq    %rbp</span><br><span class="line">retq</span><br></pre></td></tr></table></figure>
+<p>基本一样，只不过它返回的是第二个参数。那 getZ 呢？</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pushq   %rbp</span><br><span class="line">movq    %rsp, %rbp</span><br><span class="line"></span><br><span class="line">movq    %rdx, %rax</span><br><span class="line"></span><br><span class="line">popq    %rbp</span><br><span class="line">retq</span><br></pre></td></tr></table></figure>
+<p>还是，基本都一样，但返回的是第三个参数。从这我们可以看出来每个单独的结构体元素都是被看做独立的参数，被单独的传递进函数中。在接收端挑出某个元素，仅仅就是选择它所在的相应的寄存器。</p>
+<p>在调用点验证一下。下面是 testGets 的编译器生成码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pushq   %rbp</span><br><span class="line">movq    %rsp, %rbp</span><br><span class="line"></span><br><span class="line">movl    $1, %edi</span><br><span class="line">movl    $2, %esi</span><br><span class="line">movl    $3, %edx</span><br><span class="line">callq   __TF4main4getXFVS_11ExampleIntsSi</span><br><span class="line"></span><br><span class="line">movl    $1, %edi</span><br><span class="line">movl    $2, %esi</span><br><span class="line">movl    $3, %edx</span><br><span class="line">callq   __TF4main4getYFVS_11ExampleIntsSi</span><br><span class="line"></span><br><span class="line">movl    $1, %edi</span><br><span class="line">movl    $2, %esi</span><br><span class="line">movl    $3, %edx</span><br><span class="line">popq    %rbp</span><br><span class="line">jmp __TF4main4getZFVS_11ExampleIntsSi</span><br></pre></td></tr></table></figure>
+<p>可以看出这个结构体实例的是直接在组建于参数寄存器上的。（edi、esi 和 edx 寄存器分别是 rdi、rsi 和 rdx 对应的低 32 bit 带宽版本。）这样甚至不用在调用途中操心值的额外存储，只需每次调用时重建这个结构体的实例就好了。因为编译器明确的知道寄存器中的内容，这就可以大大的改变 Swift 的代码编写方式。注意到对 getZ 的调用和对 getX、getY 的调用有些许不同：由于它是该函数中的最后一部分，编译器以尾调用（tail call）的形式将其生成，清空本地调用栈帧（local call frame），然后让 getZ 直接返回到 testGets 函数被调用的地方。</p>
+<p>再让我们看一下当编译器不知道结构体的内容时会生成怎样的代码。下面是这个 test 函数的变体，从其他的地方获得结构体的实例：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">testGets2</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">let</span> s = getExampleInts()</span><br><span class="line">    getX(s)</span><br><span class="line">    getY(s)</span><br><span class="line">    getZ(s)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>getExampleInts 创建了一个结构体实例然后将其返回，但这个函数是在另一个文件中，所以优化 testGets2 的时候编译器是不知道发生了什么情况的。函数如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getExampleInts</span><span class="params">()</span></span> -&gt; <span class="type">ExampleInts</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="type">ExampleInts</span>(x: <span class="number">1</span>, y: <span class="number">2</span>, z: <span class="number">3</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当编译器不知道结构体的内容时 testGets2 会生成怎样的代码呢？</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pushq   %rbp</span><br><span class="line">movq    %rsp, %rbp</span><br><span class="line"></span><br><span class="line">pushq   %r15</span><br><span class="line">pushq   %r14</span><br><span class="line">pushq   %rbx</span><br><span class="line">pushq   %rax</span><br><span class="line"></span><br><span class="line">callq   __TF4main14getExampleIntsFT_VS_11ExampleInts</span><br><span class="line">movq    %rax, %rbx</span><br><span class="line">movq    %rdx, %r14</span><br><span class="line">movq    %rcx, %r15</span><br><span class="line"></span><br><span class="line">movq    %rbx, %rdi</span><br><span class="line">movq    %r14, %rsi</span><br><span class="line">movq    %r15, %rdx</span><br><span class="line">callq   __TF4main4getXFVS_11ExampleIntsSi</span><br><span class="line"></span><br><span class="line">movq    %rbx, %rdi</span><br><span class="line">movq    %r14, %rsi</span><br><span class="line">movq    %r15, %rdx</span><br><span class="line">callq   __TF4main4getYFVS_11ExampleIntsSi</span><br><span class="line"></span><br><span class="line">movq    %rbx, %rdi</span><br><span class="line">movq    %r14, %rsi</span><br><span class="line">movq    %r15, %rdx</span><br><span class="line"></span><br><span class="line">addq    $8, %rsp</span><br><span class="line">popq    %rbx</span><br><span class="line">popq    %r14</span><br><span class="line">popq    %r15</span><br><span class="line">popq    %rbp</span><br><span class="line">jmp __TF4main4getZFVS_11ExampleIntsSi</span><br></pre></td></tr></table></figure>
+<p>由于编译器不能在每个阶段都直接将相应的值重现，它就得把这些值存起来。结构体的三个元素被放到 rbx、r14 和 r15 寄存器中，并在每次调用时从这些寄存器里将值加载到参数寄存器中。调用者会保存这三个寄存器，就是说在调用过程中它们存的值会被持有。然后和之前一样，编译器也对 getZ 生成了尾调用，以及一些更昂贵的预先清理。</p>
+<p>函数的开始部分调用了 getExampleInts 并从 rax、rdx 和 rcx 中加载了其中的值。显然结构体的值是从这些寄存器里返回的，看看 getExampleInts 函数来确认下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pushq   %rbp</span><br><span class="line">movl    $1, %edi</span><br><span class="line">movl    $2, %esi</span><br><span class="line">movl    $3, %edx</span><br><span class="line">popq    %rbp</span><br><span class="line">jmp __TFV4main11ExampleIntsCfMS0_FT1xSi1ySi1zSi_S0_</span><br></pre></td></tr></table></figure>
+<p>这代码把值 1、2 和 3 放进参数寄存器中，然后调用结构体的构造器。下面是构造器的生成码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pushq   %rbp</span><br><span class="line">movq    %rsp, %rbp</span><br><span class="line"></span><br><span class="line">movq    %rdx, %rcx</span><br><span class="line">movq    %rdi, %rax</span><br><span class="line">movq    %rsi, %rdx</span><br><span class="line"></span><br><span class="line">popq    %rbp</span><br><span class="line">retq</span><br></pre></td></tr></table></figure>
+<p>够清楚了，它向 rax、rdx 和 rcx 中返回三个值。<a href="https://en.wikipedia.org/wiki/X86_calling_conventions#System_V_AMD64_ABI" target="_blank" rel="noopener">备忘单</a>并未提及往多个寄存器中返回多个值。那<a href="http://x86-64.org/documentation/abi.pdf" target="_blank" rel="noopener">官方的PDF呢</a>？里面说到了可以往 rax 和 rdx 中返回两个值，却没说可以给 rcx 返回第三个值。而上面的代码还是很明确的。新语言有趣的地方就在这儿，它不一定非按老规矩来。要是和C语言联调就得按传统规范，但是 Swift 和 Swift 之间的调用就可以玩新路子了。</p>
+<p>那 inout 参数呢？如果它是像我们在 C 中所熟悉的那样，结构体就会被安置在内存中，然后传过去一个指针。下面是两个 test 函数（当然是在两个不同文件里的）：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">testInout</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> s = getExampleInts()</span><br><span class="line">    totalInout(&amp;s)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">totalInout</span><span class="params">(<span class="keyword">inout</span> parameter: ExampleInts)</span></span> -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> parameter.x + parameter.y + parameter.z</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>下面是 testInout 的生成码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pushq   %rbp</span><br><span class="line">movq    %rsp, %rbp</span><br><span class="line">subq    $32, %rsp</span><br><span class="line"></span><br><span class="line">callq   __TF4main14getExampleIntsFT_VS_11ExampleInts</span><br><span class="line"></span><br><span class="line">movq    %rax, -24(%rbp)</span><br><span class="line">movq    %rdx, -16(%rbp)</span><br><span class="line">movq    %rcx, -8(%rbp)</span><br><span class="line">leaq    -24(%rbp), %rdi</span><br><span class="line">callq   __TF4main10totalInoutFRVS_11ExampleIntsSi</span><br><span class="line"></span><br><span class="line">addq    $32, %rsp</span><br><span class="line">popq    %rbp</span><br><span class="line">retq</span><br></pre></td></tr></table></figure>
+<p>函数序言中先创建了一个 32 字节的堆栈帧，再调用 getExampleInts，而后的调用把结果的值分别存在偏移量为 -24、-16 和 -8 的栈槽（stack slots）中。随即计算出指向偏移为 -24 的指针，将其加载到 rdi 参数寄存器中后调用 totalInout。下面是这个函数的生成码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pushq   %rbp</span><br><span class="line">movq    %rsp, %rbp</span><br><span class="line">movq    (%rdi), %rax</span><br><span class="line">addq    8(%rdi), %rax</span><br><span class="line">jo  LBB4_3</span><br><span class="line">addq    16(%rdi), %rax</span><br><span class="line">jo  LBB4_3</span><br><span class="line">popq    %rbp</span><br><span class="line">retq</span><br><span class="line">LBB4_3:</span><br><span class="line">ud2</span><br></pre></td></tr></table></figure>
+<p>以上是从传递进来的参数加载偏移量所对应的值，合并之后将结果返回到 rax 中。jo 指令做溢出检查。如果有任一 addq 指令引起溢出，jo 指令会跳转到 ud2 指令，将程序终结。</p>
+<p>可以看出这正是我们所想的那样：把一个结构体传递给一个 inout 参数时，该结构体被置进连续的内存中，随后得到一个指向该内存的地址。</p>
+<h4 id="大结构体"><a href="#大结构体" class="headerlink" title="大结构体"></a>大结构体</h4><p>如果我们处理的是一些更大的结构体，大到寄存器不再适合了的话会怎样呢？下面是一个有十个元素的结构体：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">TenInts</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> elements = (<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而这面是一个 get 函数，创建一该结构体的实例并将其返回。为防止内联它被放在另一个文件中：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getHuge</span><span class="params">()</span></span> -&gt; <span class="type">TenInts</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="type">TenInts</span>()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>一个获取该结构体中单个元素的函数：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getHugeElement</span><span class="params">(parameter: TenInts)</span></span> -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> parameter.elements.<span class="number">5</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最后是一个 test 函数：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">testHuge</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">let</span> s = getHuge()</span><br><span class="line">    getHugeElement(s)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>看下生成码，从 testHuge 开始：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pushq   %rbp</span><br><span class="line">movq    %rsp, %rbp</span><br><span class="line">subq    $160, %rsp</span><br><span class="line"></span><br><span class="line">leaq    -80(%rbp), %rdi</span><br><span class="line">callq   __TF4main7getHugeFT_VS_7TenInts</span><br><span class="line"></span><br><span class="line">movups  -80(%rbp), %xmm0</span><br><span class="line">movups  -64(%rbp), %xmm1</span><br><span class="line">movups  -48(%rbp), %xmm2</span><br><span class="line">movups  -32(%rbp), %xmm3</span><br><span class="line">movups  -16(%rbp), %xmm4</span><br><span class="line">movups  %xmm0, -160(%rbp)</span><br><span class="line">movups  %xmm1, -144(%rbp)</span><br><span class="line">movups  %xmm2, -128(%rbp)</span><br><span class="line">movups  %xmm3, -112(%rbp)</span><br><span class="line">movups  %xmm4, -96(%rbp)</span><br><span class="line"></span><br><span class="line">leaq    -160(%rbp), %rdi</span><br><span class="line">callq   __TF4main14getHugeElementFVS_7TenIntsSi</span><br><span class="line"></span><br><span class="line">addq    $160, %rsp</span><br><span class="line">popq    %rbp</span><br><span class="line">retq</span><br></pre></td></tr></table></figure>
+<p>这段代码（除去函数序言和尾声）可以分成三部分。</p>
+<p>第一部分计算出对这个堆栈帧有 -80 偏移量的地址，然后调用 getHuge，把计算出的地址传参给它。getHuge 函数在源代码里没有任何参数，但是用一个隐式参数返回较大的结构体并不罕见。调用处为返回值分配储存空间，而后给把一个指向该分配好的空间的指针传给隐藏参数。栈中的这块已分配空间告诉我们基本就是这样的。</p>
+<p>第二部分将栈偏移-80的地方结构体复制到 -160 的地方。它将这个结构体加载到五个 xmm 寄存器中，每次加载十六字节的片段，然后把寄存器的内容放回到从 -160 开始的地方。我不大清楚为什么编译器要弄一个拷贝而不是直接用原始值。我怀疑优化器可能还是不够聪明，意识不到它根本就不需要用到拷贝。</p>
+<p>第三部分计算出栈偏移 -160 的地址，然后调用 getHugeElement，传参给它计算出的地址。之前的三个元素的试验中传递的是寄存器中的值，而对于这个更大的结构体，传递的是指针。</p>
+<p>其他函数的生成码确认了这点：结构体是以指针形式传进传出的，并存活在栈中。从 getHugeElement 开始：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pushq   %rbp</span><br><span class="line">movq    %rsp, %rbp</span><br><span class="line">movq    40(%rdi), %rax</span><br><span class="line">popq    %rbp</span><br><span class="line">retq</span><br></pre></td></tr></table></figure>
+<p>加载了离传入参数 40 个偏移量的内容。每个元素为 8 字节，偏移量是 40 就是第 5 个元素，该函数返回这个值。</p>
+<p>getHuge 函数：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pushq   %rbp</span><br><span class="line">movq    %rsp, %rbp</span><br><span class="line">pushq   %rbx</span><br><span class="line">subq    $88, %rsp</span><br><span class="line"></span><br><span class="line">movq    %rdi, %rbx</span><br><span class="line">leaq    -88(%rbp), %rdi</span><br><span class="line">callq   __TFV4main7TenIntsCfMS0_FT_S0_</span><br><span class="line"></span><br><span class="line">movups  -88(%rbp), %xmm0</span><br><span class="line">movups  -72(%rbp), %xmm1</span><br><span class="line">movups  -56(%rbp), %xmm2</span><br><span class="line">movups  -40(%rbp), %xmm3</span><br><span class="line">movups  -24(%rbp), %xmm4</span><br><span class="line">movups  %xmm0, (%rbx)</span><br><span class="line">movups  %xmm1, 16(%rbx)</span><br><span class="line">movups  %xmm2, 32(%rbx)</span><br><span class="line">movups  %xmm3, 48(%rbx)</span><br><span class="line">movups  %xmm4, 64(%rbx)</span><br><span class="line">movq    %rbx, %rax</span><br><span class="line"></span><br><span class="line">addq    $88, %rsp</span><br><span class="line">popq    %rbx</span><br><span class="line">popq    %rbp</span><br><span class="line">retq</span><br></pre></td></tr></table></figure>
+<p>和上面的 testHuge 很像：分配栈空间，调用一个函数，这回是 TenInts 构造器函数，然后把返回值复制到它最终的地方：隐式参数传进来的指针所指向的地址。</p>
+<p>都说到这儿了，看一下 TenInts 构造器吧：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pushq   %rbp</span><br><span class="line">movq    %rsp, %rbp</span><br><span class="line"></span><br><span class="line">movq    $1, (%rdi)</span><br><span class="line">movq    $2, 8(%rdi)</span><br><span class="line">movq    $3, 16(%rdi)</span><br><span class="line">movq    $4, 24(%rdi)</span><br><span class="line">movq    $5, 32(%rdi)</span><br><span class="line">movq    $6, 40(%rdi)</span><br><span class="line">movq    $7, 48(%rdi)</span><br><span class="line">movq    $8, 56(%rdi)</span><br><span class="line">movq    $9, 64(%rdi)</span><br><span class="line">movq    $10, 72(%rdi)</span><br><span class="line">movq    %rdi, %rax</span><br><span class="line"></span><br><span class="line">popq    %rbp</span><br><span class="line">retq</span><br></pre></td></tr></table></figure>
+<p>类似于另一个函数，它也是用了一个指向新结构体的隐式指针作为参数，然后把从 1 到 10 这些值存储好，再返回。</p>
+<p>创建这些test案例时我遇到过一个有意思的地方。这是一个 test 函数，调用了三次 getHugeElement：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">testThreeHuge</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">let</span> s = getHuge()</span><br><span class="line">    getHugeElement(s)</span><br><span class="line">    getHugeElement(s)</span><br><span class="line">    getHugeElement(s)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其生成码如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pushq   %rbp</span><br><span class="line">movq    %rsp, %rbp</span><br><span class="line">pushq   %r15</span><br><span class="line">pushq   %r14</span><br><span class="line">pushq   %r13</span><br><span class="line">pushq   %r12</span><br><span class="line">pushq   %rbx</span><br><span class="line">subq    $392, %rsp</span><br><span class="line"></span><br><span class="line">leaq    -120(%rbp), %rdi</span><br><span class="line">callq   __TF4main7getHugeFT_VS_7TenInts</span><br><span class="line">movq    -120(%rbp), %rbx</span><br><span class="line">movq    %rbx, -376(%rbp)</span><br><span class="line">movq    -112(%rbp), %r8</span><br><span class="line">movq    %r8, -384(%rbp)</span><br><span class="line">movq    -104(%rbp), %r9</span><br><span class="line">movq    %r9, -392(%rbp)</span><br><span class="line">movq    -96(%rbp), %r10</span><br><span class="line">movq    %r10, -400(%rbp)</span><br><span class="line">movq    -88(%rbp), %r11</span><br><span class="line">movq    %r11, -368(%rbp)</span><br><span class="line">movq    -80(%rbp), %rax</span><br><span class="line">movq    -72(%rbp), %rcx</span><br><span class="line">movq    %rcx, -408(%rbp)</span><br><span class="line">movq    -64(%rbp), %rdx</span><br><span class="line">movq    %rdx, -416(%rbp)</span><br><span class="line">movq    -56(%rbp), %rsi</span><br><span class="line">movq    %rsi, -424(%rbp)</span><br><span class="line">movq    -48(%rbp), %rdi</span><br><span class="line"></span><br><span class="line">movq    %rdi, -432(%rbp)</span><br><span class="line">movq    %rbx, -200(%rbp)</span><br><span class="line">movq    %rbx, %r14</span><br><span class="line">movq    %r8, -192(%rbp)</span><br><span class="line">movq    %r8, %r15</span><br><span class="line">movq    %r9, -184(%rbp)</span><br><span class="line">movq    %r9, %r12</span><br><span class="line">movq    %r10, -176(%rbp)</span><br><span class="line">movq    %r10, %r13</span><br><span class="line">movq    %r11, -168(%rbp)</span><br><span class="line">movq    %rax, -160(%rbp)</span><br><span class="line">movq    %rax, %rbx</span><br><span class="line">movq    %rcx, -152(%rbp)</span><br><span class="line">movq    %rdx, -144(%rbp)</span><br><span class="line">movq    %rsi, -136(%rbp)</span><br><span class="line">movq    %rdi, -128(%rbp)</span><br><span class="line">leaq    -200(%rbp), %rdi</span><br><span class="line">callq   __TF4main14getHugeElementFVS_7TenIntsSi</span><br><span class="line"></span><br><span class="line">movq    %r14, -280(%rbp)</span><br><span class="line">movq    %r15, -272(%rbp)</span><br><span class="line">movq    %r12, -264(%rbp)</span><br><span class="line">movq    %r13, -256(%rbp)</span><br><span class="line">movq    -368(%rbp), %rax</span><br><span class="line">movq    %rax, -248(%rbp)</span><br><span class="line">movq    %rbx, -240(%rbp)</span><br><span class="line">movq    -408(%rbp), %r14</span><br><span class="line">movq    %r14, -232(%rbp)</span><br><span class="line">movq    -416(%rbp), %r15</span><br><span class="line">movq    %r15, -224(%rbp)</span><br><span class="line">movq    -424(%rbp), %r12</span><br><span class="line">movq    %r12, -216(%rbp)</span><br><span class="line">movq    -432(%rbp), %r13</span><br><span class="line">movq    %r13, -208(%rbp)</span><br><span class="line">leaq    -280(%rbp), %rdi</span><br><span class="line">callq   __TF4main14getHugeElementFVS_7TenIntsSi</span><br><span class="line"></span><br><span class="line">movq    -376(%rbp), %rax</span><br><span class="line">movq    %rax, -360(%rbp)</span><br><span class="line">movq    -384(%rbp), %rax</span><br><span class="line">movq    %rax, -352(%rbp)</span><br><span class="line">movq    -392(%rbp), %rax</span><br><span class="line">movq    %rax, -344(%rbp)</span><br><span class="line">movq    -400(%rbp), %rax</span><br><span class="line">movq    %rax, -336(%rbp)</span><br><span class="line">movq    -368(%rbp), %rax</span><br><span class="line">movq    %rax, -328(%rbp)</span><br><span class="line">movq    %rbx, -320(%rbp)</span><br><span class="line">movq    %r14, -312(%rbp)</span><br><span class="line">movq    %r15, -304(%rbp)</span><br><span class="line">movq    %r12, -296(%rbp)</span><br><span class="line">movq    %r13, -288(%rbp)</span><br><span class="line">leaq    -360(%rbp), %rdi</span><br><span class="line">callq   __TF4main14getHugeElementFVS_7TenIntsSi</span><br><span class="line"></span><br><span class="line">addq    $392, %rsp</span><br><span class="line">popq    %rbx</span><br><span class="line">popq    %r12</span><br><span class="line">popq    %r13</span><br><span class="line">popq    %r14</span><br><span class="line">popq    %r15</span><br><span class="line">popq    %rbp</span><br><span class="line">retq</span><br></pre></td></tr></table></figure>
+<p>此函数的结构和前面的那个版本类似，调用 getHuge，复制结果，然后调用三次 getHugeElement。每次的调用都再次的复制该结构体，猜测是为了防止 getHugeElement 发生变动。发现真正有意思的是这些都是使用整型寄存器、每次只复制一个元素，而不是像 testHuge 函数那样每次往 xmm 寄存器中复制两个元素。我不确定是什么导致编译器在这里选择了整型寄存器，看起来用 xmm 寄存器一次复制两个元素是更有效率的，生成码也更简洁。</p>
+<p>我还试验了非常大的结构体：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">HundredInts</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> elements = (<span class="type">TenInts</span>(), <span class="type">TenInts</span>(), <span class="type">TenInts</span>(), <span class="type">TenInts</span>(), <span class="type">TenInts</span>(), <span class="type">TenInts</span>(), <span class="type">TenInts</span>(), <span class="type">TenInts</span>(), <span class="type">TenInts</span>(), <span class="type">TenInts</span>())</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ThousandInts</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> elements = (<span class="type">HundredInts</span>(), <span class="type">HundredInts</span>(), <span class="type">HundredInts</span>(), <span class="type">HundredInts</span>(), <span class="type">HundredInts</span>(), <span class="type">HundredInts</span>(), <span class="type">HundredInts</span>(), <span class="type">HundredInts</span>(), <span class="type">HundredInts</span>(), <span class="type">HundredInts</span>())</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getThousandInts</span><span class="params">()</span></span> -&gt; <span class="type">ThousandInts</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="type">ThousandInts</span>()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>getThousandInts 的生成码相当的疯狂：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pushq   %rbp</span><br><span class="line">pushq   %rbx</span><br><span class="line">subq    $8008, %rsp</span><br><span class="line"></span><br><span class="line">movq    %rdi, %rbx</span><br><span class="line">leaq    -8008(%rbp), %rdi</span><br><span class="line">callq   __TFV4main12ThousandIntsCfMS0_FT_S0_</span><br><span class="line">movq    -8008(%rbp), %rax</span><br><span class="line">movq    %rax, (%rbx)</span><br><span class="line">movq    -8000(%rbp), %rax</span><br><span class="line">movq    %rax, 8(%rbx)</span><br><span class="line">movq    -7992(%rbp), %rax</span><br><span class="line">movq    %rax, 16(%rbx)</span><br><span class="line">movq    -7984(%rbp), %rax</span><br><span class="line">movq    %rax, 24(%rbx)</span><br><span class="line">movq    -7976(%rbp), %rax</span><br><span class="line">movq    %rax, 32(%rbx)</span><br><span class="line">movq    -7968(%rbp), %rax</span><br><span class="line">movq    %rax, 40(%rbx)</span><br><span class="line">movq    -7960(%rbp), %rax</span><br><span class="line">movq    %rax, 48(%rbx)</span><br><span class="line">movq    -7952(%rbp), %rax</span><br><span class="line">movq    %rax, 56(%rbx)</span><br><span class="line">movq    -7944(%rbp), %rax</span><br><span class="line">movq    %rax, 64(%rbx)</span><br><span class="line">movq    -7936(%rbp), %rax</span><br><span class="line">movq    %rax, 72(%rbx)</span><br><span class="line">...</span><br><span class="line">movq    -104(%rbp), %rax</span><br><span class="line">movq    %rax, 7904(%rbx)</span><br><span class="line">movq    -96(%rbp), %rax</span><br><span class="line">movq    %rax, 7912(%rbx)</span><br><span class="line">movq    -88(%rbp), %rax</span><br><span class="line">movups  -80(%rbp), %xmm0</span><br><span class="line">movups  -64(%rbp), %xmm1</span><br><span class="line">movups  -48(%rbp), %xmm2</span><br><span class="line">movups  -32(%rbp), %xmm3</span><br><span class="line">movq    %rax, 7920(%rbx)</span><br><span class="line">movq    -16(%rbp), %rax</span><br><span class="line">movups  %xmm0, 7928(%rbx)</span><br><span class="line">movups  %xmm1, 7944(%rbx)</span><br><span class="line">movups  %xmm2, 7960(%rbx)</span><br><span class="line">movups  %xmm3, 7976(%rbx)</span><br><span class="line">movq    %rax, 7992(%rbx)</span><br><span class="line">movq    %rbx, %rax</span><br><span class="line"></span><br><span class="line">addq    $8008, %rsp</span><br><span class="line">popq    %rbx</span><br><span class="line">popq    %rbp</span><br><span class="line">retq</span><br></pre></td></tr></table></figure>
+<p>编译器为复制这个结构体生成了两千多条指令。这种情况下貌似调用 memcpy 函数非常合适，而我觉得为这种大的出奇的结构体做优化应该不是编译器团队现在的首要目标。</p>
+<h4 id="类字段（Class-Fields）"><a href="#类字段（Class-Fields）" class="headerlink" title="类字段（Class Fields）"></a>类字段（Class Fields）</h4><p>我们来看看当结构体的字段（struct fields）比整形复杂的多的情况下会发生什么。下面有个简单的类，然后包含了一个结构体：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ExampleClass</span> </span>&#123;&#125;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ContainsClass</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> x: <span class="type">Int</span></span><br><span class="line">    <span class="keyword">var</span> y: <span class="type">ExampleClass</span></span><br><span class="line">    <span class="keyword">var</span> z: <span class="type">Int</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里是一堆试验的函数（分在两个不同文件中防止内联）：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">testContainsClass</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">let</span> s = <span class="type">ContainsClass</span>(x: <span class="number">1</span>, y: getExampleClass(), z: <span class="number">3</span>)</span><br><span class="line">    getClassX(s)</span><br><span class="line">    getClassY(s)</span><br><span class="line">    getClassZ(s)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getExampleClass</span><span class="params">()</span></span> -&gt; <span class="type">ExampleClass</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="type">ExampleClass</span>()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getClassX</span><span class="params">(parameter: ContainsClass)</span></span> -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> parameter.x</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getClassY</span><span class="params">(parameter: ContainsClass)</span></span> -&gt; <span class="type">ExampleClass</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> parameter.y</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getClassZ</span><span class="params">(parameter: ContainsClass)</span></span> -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> parameter.z</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从 getters 的生成码看起，首先是 getClassX：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pushq   %rbp</span><br><span class="line">movq    %rsp, %rbp</span><br><span class="line">pushq   %rbx</span><br><span class="line">pushq   %rax</span><br><span class="line"></span><br><span class="line">movq    %rdi, %rbx</span><br><span class="line">movq    %rsi, %rdi</span><br><span class="line">callq   _swift_release</span><br><span class="line">movq    %rbx, %rax</span><br><span class="line"></span><br><span class="line">addq    $8, %rsp</span><br><span class="line">popq    %rbx</span><br><span class="line">popq    %rbp</span><br><span class="line">retq</span><br></pre></td></tr></table></figure>
+<p>三个结构体元素会被传递进前三个参数寄存器中，rdi、rsi 和 rdx。该函数想通过把 rdi 中的值移动到 rax 中再返回，但得先记录一下才行。看上去似乎是传入 rsi 的对象引用被持有了，在函数返回之前是必须被释放掉的。这段生成码把 rdi 搬进了一个安全的临时寄存器 rbx，然后将对象引用移动到 rdi，再调用 swift_release 将其释放。随后把 rbx 中的值移动到 rax 中，再从函数中返回。</p>
+<p>getClassZ 也很类似，除了它是从 rdx，而不是 rdi 中获取值的：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pushq   %rbp</span><br><span class="line">movq    %rsp, %rbp</span><br><span class="line">pushq   %rbx</span><br><span class="line">pushq   %rax</span><br><span class="line"></span><br><span class="line">movq    %rdx, %rbx</span><br><span class="line">movq    %rsi, %rdi</span><br><span class="line">callq   _swift_release</span><br><span class="line">movq    %rbx, %rax</span><br><span class="line"></span><br><span class="line">addq    $8, %rsp</span><br><span class="line">popq    %rbx</span><br><span class="line">popq    %rbp</span><br><span class="line">retq</span><br></pre></td></tr></table></figure>
+<p>getClassY 的生成码会是特殊的一个，因为它返回的是对象的引用而非一个整型：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pushq   %rbp</span><br><span class="line">movq    %rsp, %rbp</span><br><span class="line">movq    %rsi, %rax</span><br><span class="line">popq    %rbp</span><br><span class="line">retq</span><br></pre></td></tr></table></figure>
+<p>十分简短！它从 rsi 中取值，该值为对象引用，然后放进 rax 再将其返回。这里就不需要记录，仅仅是数据的拖拽。显然值传进来的时候被持有，被返回的时候也被持有，所以这段代码是无需任何内存管理的。</p>
+<p>到目前为止我们看到的对这个结构体的处理和前面的对那个有三个整型元素的结构体的处理没有太大区别，除了对象引用字段传递进来是被持有的，必须要由被调用者做释放处理。记着这一点，我们来看下 testContainsClass 的生成码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pushq   %rbp</span><br><span class="line">movq    %rsp, %rbp</span><br><span class="line">pushq   %r14</span><br><span class="line">pushq   %rbx</span><br><span class="line"></span><br><span class="line">callq   __TF4main15getExampleClassFT_CS_12ExampleClass</span><br><span class="line">movq    %rax, %rbx</span><br><span class="line"></span><br><span class="line">movq    %rbx, %rdi</span><br><span class="line">callq   _swift_retain</span><br><span class="line">movq    %rax, %r14</span><br><span class="line">movl    $1, %edi</span><br><span class="line">movl    $3, %edx</span><br><span class="line">movq    %rbx, %rsi</span><br><span class="line">callq   __TF4main9getClassXFVS_13ContainsClassSi</span><br><span class="line"></span><br><span class="line">movq    %r14, %rdi</span><br><span class="line">callq   _swift_retain</span><br><span class="line">movl    $1, %edi</span><br><span class="line">movl    $3, %edx</span><br><span class="line">movq    %rbx, %rsi</span><br><span class="line">callq   __TF4main9getClassYFVS_13ContainsClassCS_12ExampleClass</span><br><span class="line">movq    %rax, %rdi</span><br><span class="line">callq   _swift_release</span><br><span class="line"></span><br><span class="line">movl    $1, %edi</span><br><span class="line">movl    $3, %edx</span><br><span class="line">movq    %rbx, %rsi</span><br><span class="line"></span><br><span class="line">popq    %rbx</span><br><span class="line">popq    %r14</span><br><span class="line">popq    %rbp</span><br><span class="line">jmp __TF4main9getClassZFVS_13ContainsClassSi</span><br></pre></td></tr></table></figure>
+<p>这个函数做的第一件事就是调用 getExampleClass 来获得结构体中存储的 ExampleClass 实例，它得到返回的引用之后将其移动到 rbx 中以安全保留。</p>
+<p>接下来调用了 getClassX，为此它得在参数寄存器中建立一个该结构体的拷贝。两个整型的字段是很容易的，而对象的字段就需要按照函数所期的那样被持有。这段代码对 rbx 中所存的值调用了 swift_retain，然后将其放入 rsi，再把 1 和 3 分别放入 rdi 和 rdx 中，构建出完整的结构体。最后，它调用了 getClassX。</p>
+<p>调用 getClassY 也基本一样，然而 getClassY 返回的是一个需要被释放的对象，在调用之后这段代码将返回值移动至 rdi 中，调用 swift_release 来实线所要求的内存管理。</p>
+<p>函数调用 getClassZ 作为其尾调用，所以这里的生成代码有些许不同。从 getExampleClass 得来的对象引用已被持有，所以它不需要为这个最后的调用而再被单独持有。代码将其放进 rsi 里，再把 1 和 3 分别放进 rdi 和 rdx 里，然后做清空栈，跳转到 getClassZ 做最后的调用。 </p>
+<p>基本上说，与全是整型的那个结构体相比几乎没有变化。唯一的实质的不同就是复制一个带有对象的结构体时需要持有这个对象，销毁这个结构体时也需要释放掉这个对象。</p>
+<h4 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h4><p>Swift 中的结构体存储根本上讲还是比较简单，我们看到的这些也是从C语言中非常简单的结构体中延续过来的。一个结构体实例在很大程度上可以看做是一些独立值的松散集合，需要时这些值可以作为整体被操作。本地的结构体变量可能会被存储到栈中，其中的每个元素可能会被存到寄存器里，这取决于结构体的大小、寄存器对余下代码的利用以及编译器临时冒出的什么点子。小的结构体在寄存器中传递和返回，大的结构体通过引用传递和返回。结构体在传递和返回时会被复制，尽管你可以用结构体来实现写入时复制（copy-on-write）的数据类型，但是基本的语言框架还是会被复制，而且在选择复制的数据时多多少少有些盲目。</p>
+<p>今天就到这儿吧。欢迎再回来阅读更多的精彩编程技术。Friday Q&amp;A 是由读者想法驱动的，所以如果你等不及下一期，还有一些希望看到的讨论话题，就<a href="mike@mikeash.com">发邮件过来吧</a>！</p>
+<blockquote>
+<p>觉得这篇文章怎么样？我在买一本书，里面全是这样的文章。在 iBooks 上和 Kindle 上有售，加上一个可以直接下载的PDF和ePub格式。还有传统的纸质版本。<a href="https://www.mikeash.com/book.html" target="_blank" rel="noopener">点击这里查看更多信息</a><br>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Mike-Ash/">Mike Ash</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/06/08/friday-qa-2016-01-29-swift-struct-storage/" data-title="Friday Q&amp;A 2016-01-29: Swift 的结构体存储 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2016/06/12/let-it-throw/" title="如何在 Swift 中进行错误处理">
+  <strong>上一篇</strong><br>
+  <span>
+  如何在 Swift 中进行错误处理</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/06/07/dear-erica-why-doesnt-nslog-support-swift-objects/" title="为什么 NSLog 不支持 Swift 对象">
+ <strong>下一篇</strong><br> 
+ <span>为什么 NSLog 不支持 Swift 对象
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/06/08/friday-qa-2016-01-29-swift-struct-storage/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#简单的结构体"><span class="toc-number">1.</span> <span class="toc-text">简单的结构体</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#大结构体"><span class="toc-number">2.</span> <span class="toc-text">大结构体</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#类字段（Class-Fields）"><span class="toc-number">3.</span> <span class="toc-text">类字段（Class Fields）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#结论"><span class="toc-number">4.</span> <span class="toc-text">结论</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

@@ -1,0 +1,1029 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>Measurements 和 Units，第三部分 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="measurements,units,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="Swift 中 Measurements 和 Units 的系列文章第三章，本文主要讲解了在计算中使用首选单位映射保持单位。">
+<meta name="keywords" content="measurements,units">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Measurements 和 Units，第三部分">
+<meta property="og:url" content="https://swift.gg/2016/09/29/unitsquare/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="Swift 中 Measurements 和 Units 的系列文章第三章，本文主要讲解了在计算中使用首选单位映射保持单位。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-08-26T13:33:55.007Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Measurements 和 Units，第三部分">
+<meta name="twitter:description" content="Swift 中 Measurements 和 Units 的系列文章第三章，本文主要讲解了在计算中使用首选单位映射保持单位。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/09/29/unitsquare/" target="_blank" title="Measurements 和 Units，第三部分" itemprop="url">Measurements 和 Units，第三部分</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-09-29T05:00:00.000Z" itemprop="datePublished">2016-09-29</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Ole Begemann，<a href="http://oleb.net/blog/2016/07/unitsquare/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016/07/29<br>译者：<a href="https://github.com/cyanzhong" target="_blank" rel="noopener">钟颖</a>；校对：<a href="http://linusling.com" target="_blank" rel="noopener">小铁匠Linus</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>更新：<br>2016-08-02 已将代码更新至 Xcode 8 Beta 4</p>
+<p>本系列其他文章：</p>
+<p>(1) <a href="http://oleb.net/blog/2016/07/measurements-and-units/" target="_blank" rel="noopener">Measurements 和 Units 概览</a></p>
+<p>(2) <a href="http://oleb.net/blog/2016/07/unitproduct/" target="_blank" rel="noopener">乘法和除法</a></p>
+<p>(3) 内容提炼（本文） </p>
+<p>(4) <a href="http://oleb.net/blog/2016/08/measurements-and-units-with-phantom-types/" target="_blank" rel="noopener">幽灵类型</a></p>
+<p>Swift 中 Measurements 和 Units 的系列文章中，仍然有一些<a href="http://movie-sounds.org/sci-fi-movie-samples/sound-clips-from-star-trek-insurrection-1998/you-re-not-finished-here-just-a-few-loose-ends-to-tie-up-dougherty-out" target="_blank" rel="noopener">收尾</a>工作要做。如果你还没有看过之前的文章的话，可以在<a href="http://oleb.net/blog/2016/07/measurements-and-units/" target="_blank" rel="noopener">第一部分</a>中找到 Foundation 框架中 Measurements 和 Units 接口的大致介绍，并在<a href="http://swift.gg/2016/08/11/unitproduct/">第二部分</a>中看到我如何扩展该系统用于类型安全的乘法和除法。</p>
+<a id="more"></a>
+<h2 id="在计算过程中保持单位"><a href="#在计算过程中保持单位" class="headerlink" title="在计算过程中保持单位"></a>在计算过程中保持单位</h2><p>在我们<a href="http://swift.gg/2016/08/11/unitproduct/">之前的文章</a>里面，乘法和除法在计算之前总是会将单位转换到各自的<em>默认单位</em>，正如我们在 <code>UnitProduct</code> 协议的 <code>defaultUnitMapping()</code> 方法定义的那样。为了让结果在各种计算场景下都正确，无论传入参数的单位是什么。</p>
+<p>到目前为止，我们仍然使用一个<em>默认的单位映射</em>作为计算结果的单位。比如说，<a href="https://developer.apple.com/reference/foundation/nsunitspeed" target="_blank" rel="noopener"><code>UnitSpeed</code></a>，<a href="https://developer.apple.com/reference/foundation/nsunitduration" target="_blank" rel="noopener"><code>UnitDuration</code></a> 和 <a href="https://developer.apple.com/reference/foundation/nsunitlength" target="_blank" rel="noopener"><code>UnitLength</code></a> 的映射是 <code>(.metersPerSecond, .seconds, .meters)</code>。这意味着 <em>72 千米每 2 小时</em> 将会在计算前被转换成 <em>72000 米每 7200 秒</em>。然后我们会将计算结果封装成 <code>Measurement&lt;UnitVelocity&gt;</code> 并且返回，它的单位将会是米每秒。</p>
+<p>从实现的角度来说这是一个最简单的方案，但是可以想象的是，方法的调用者会更希望在计算中尽可能保持单位一致。<em>如果我输入米和秒，则尽可能的返回米每秒，但是如果我输入千米和小时，则希望返回千米每小时。</em></p>
+<h2 id="首选单位映射"><a href="#首选单位映射" class="headerlink" title="首选单位映射"></a>首选单位映射</h2><p>我们可以在协议里面添加一个新的方法来实现这个目标，这个方法会通过优先级排序返回一个单位映射的集合。在计算的时候我们通过遍历这个集合，为当前的计算找出最合适的单位映射。如果没有匹配到，则回退到默认的单位映射。我把这个方法叫做 <code>preferredUnitMappings()</code>。完整的协议看起来像是这样：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">UnitProduct</span> </span>&#123;</span><br><span class="line">    <span class="keyword">associatedtype</span> <span class="type">Factor1</span>: <span class="type">Dimension</span></span><br><span class="line">    <span class="keyword">associatedtype</span> <span class="type">Factor2</span>: <span class="type">Dimension</span></span><br><span class="line">    <span class="keyword">associatedtype</span> <span class="type">Product</span>: <span class="type">Dimension</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">defaultUnitMapping</span><span class="params">()</span></span> -&gt; (<span class="type">Factor1</span>, <span class="type">Factor2</span>, <span class="type">Product</span>)</span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">preferredUnitMappings</span><span class="params">()</span></span> -&gt; [(<span class="type">Factor1</span>, <span class="type">Factor2</span>, <span class="type">Product</span>)]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们需要提供一个返回空数组的默认实现，这样的话如果协议的实现者不需要这个功能，他也可以选择忽略这个方法。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UnitProduct</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 默认实现</span></span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">preferredUnitMappings</span><span class="params">()</span></span> -&gt; [(<span class="type">Factor1</span>, <span class="type">Factor2</span>, <span class="type">Product</span>)] &#123;</span><br><span class="line">        <span class="keyword">return</span> []</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接下来，我们需要提供一系列的便捷方法，他们的功能是为乘法或者除法的参数匹配出合适的单位映射。这个方法需要三个重载的形式，取决于 <code>Factor1</code>，<code>Factor2</code> 和 <code>Product</code> 三个参数是哪两个组成一对。他们的工作原理是相同的：返回在 <code>preferredUnitMappings</code> 列表里面同时匹配两个参数的第一个结果。如果没有匹配的话，返回默认的单位映射。我们使用 Swift 3 里面 <code>Sequence</code> 的新方法 <a href="http://swiftdoc.org/v3.0/protocol/Sequence/#comment-func--first-where_" target="_blank" rel="noopener"><code>first(where:)</code></a> 来实现这个功能：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UnitProduct</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">unitMapping</span><span class="params">(factor1: Factor1, factor2: Factor2)</span></span> -&gt; (<span class="type">Factor1</span>, <span class="type">Factor2</span>, <span class="type">Product</span>) &#123;</span><br><span class="line">        <span class="keyword">let</span> match = preferredUnitMappings().first &#123; (f1, f2, <span class="number">_</span>) <span class="keyword">in</span></span><br><span class="line">            f1 == factor1 &amp;&amp; f2 == factor2</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> match ?? defaultUnitMapping()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">unitMapping</span><span class="params">(product: Product, factor2: Factor2)</span></span> -&gt; (<span class="type">Factor1</span>, <span class="type">Factor2</span>, <span class="type">Product</span>) &#123;</span><br><span class="line">        <span class="keyword">let</span> match = preferredUnitMappings().first &#123; (<span class="number">_</span>, f2, p) <span class="keyword">in</span></span><br><span class="line">            p == product &amp;&amp; f2 == factor2</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> match ?? defaultUnitMapping()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">unitMapping</span><span class="params">(product: Product, factor1: Factor1)</span></span> -&gt; (<span class="type">Factor1</span>, <span class="type">Factor2</span>, <span class="type">Product</span>) &#123;</span><br><span class="line">        <span class="keyword">let</span> match = preferredUnitMappings().first &#123; (f1, <span class="number">_</span>, p) <span class="keyword">in</span></span><br><span class="line">            p == product &amp;&amp; f1 == factor1</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> match ?? defaultUnitMapping()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="在计算中使用首选单位映射"><a href="#在计算中使用首选单位映射" class="headerlink" title="在计算中使用首选单位映射"></a>在计算中使用首选单位映射</h2><p>最后，我们可以修改乘法和除法来使用这个新功能。计算过程本身没有任何变化，我们还是通过默认的单位进行计算。但是在返回结果之前，我们将其转换到我们首选的单位映射。如下是除法的代码（实现另一个重载方法的实现是类似的）：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">/// UnitProduct / Factor2 = Factor1</span></span><br><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">func</span> / &lt;UnitType: Dimension&gt; <span class="params">(lhs: Measurement&lt;UnitType&gt;, rhs: Measurement&lt;UnitType.Factor2&gt;)</span></span></span><br><span class="line">    -&gt; <span class="type">Measurement</span>&lt;<span class="type">UnitType</span>.<span class="type">Factor1</span>&gt; <span class="keyword">where</span> <span class="type">UnitType</span>: <span class="type">UnitProduct</span>, <span class="type">UnitType</span> == <span class="type">UnitType</span>.<span class="type">Product</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 使用默认单位进行计算</span></span><br><span class="line">    <span class="keyword">let</span> (resultUnit, rightUnit, leftUnit) = <span class="type">UnitType</span>.defaultUnitMapping()</span><br><span class="line">    <span class="keyword">let</span> value = lhs.converted(to: leftUnit).value / rhs.converted(to: rightUnit).value</span><br><span class="line">    <span class="keyword">let</span> result = <span class="type">Measurement</span>(value: value, unit: resultUnit)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 转换到首选的单位</span></span><br><span class="line">    <span class="keyword">let</span> (desiredUnit, <span class="number">_</span>, <span class="number">_</span>) = <span class="type">UnitType</span>.unitMapping(product: lhs.unit, factor2: rhs.unit)</span><br><span class="line">    <span class="keyword">return</span> result.converted(to: desiredUnit)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>一切准备就绪，我们可以为 <code>UnitLength</code> 实现 <code>preferredUnitMappings()</code> 这个方法，他实现了 <code>UnitProduct</code> 这个协议：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UnitLength</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">preferredUnitMappings</span><span class="params">()</span></span> -&gt; [(<span class="type">UnitSpeed</span>, <span class="type">UnitDuration</span>, <span class="type">UnitLength</span>)] &#123;</span><br><span class="line">        <span class="keyword">return</span> [</span><br><span class="line">            (.kilometersPerHour, .hours, .kilometers),</span><br><span class="line">            (.milesPerHour, .hours, .miles),</span><br><span class="line">            (.knots, .hours, .nauticalMiles)</span><br><span class="line">        ]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在，计算过程中匹配到合适单位的将会得到保留（会带有一点舍入误差）：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="type">Measurement</span>(value: <span class="number">72</span>, unit: <span class="type">UnitLength</span>.kilometers) / <span class="type">Measurement</span>(value: <span class="number">2</span>, unit: <span class="type">UnitDuration</span>.hours)</span><br><span class="line"><span class="comment">// → 35.999971200023 km/h</span></span><br><span class="line"><span class="type">Measurement</span>(value: <span class="number">10</span>, unit: <span class="type">UnitLength</span>.miles) / <span class="type">Measurement</span>(value: <span class="number">1</span>, unit: <span class="type">UnitDuration</span>.hours)</span><br><span class="line"><span class="comment">// → 9.99997514515231 mph</span></span><br><span class="line"><span class="type">Measurement</span>(value: <span class="number">25</span>, unit: <span class="type">UnitLength</span>.nauticalMiles) / <span class="type">Measurement</span>(value: <span class="number">2</span>, unit: <span class="type">UnitDuration</span>.hours)</span><br><span class="line"><span class="comment">// → 12.5000107991454 kn</span></span><br></pre></td></tr></table></figure>
+<h2 id="这是一个好主意吗？"><a href="#这是一个好主意吗？" class="headerlink" title="这是一个好主意吗？"></a>这是一个好主意吗？</h2><p>我不太确定这个方案是不是真的是一个好想法。他使代码变得相当的复杂，但是收益可以说是很小的。而且在每一次计算时，枚举首选单位列表会使代码变得慢一点点<a href="在当前的实现中，单位映射的列表甚至没有被缓存下来，每次计算的时候都会重新创建一次。所以这毫无疑问是可以优化的，但不管怎样都会比不需要进行一次查询要慢。">^1</a>，这可能在循环中会是个问题。但像我们在这里做的这种简单的计算应该尽可能的快。</p>
+<h2 id="乘方的问题"><a href="#乘方的问题" class="headerlink" title="乘方的问题"></a>乘方的问题</h2><p>如果你使用过 <code>UnitProduct</code> 这个协议的话，可能发现它并不能应用于物理量的乘方，也就是说，<code>Factor1</code> 和 <code>Factor2</code> 类型相同的情况。<em>面积 = 长度 × 长度</em> 是一个很好的例子：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UnitArea</span>: <span class="title">UnitProduct</span> </span>&#123;</span><br><span class="line">    <span class="keyword">typealias</span> <span class="type">Factor1</span> = <span class="type">UnitLength</span></span><br><span class="line">    <span class="keyword">typealias</span> <span class="type">Factor2</span> = <span class="type">UnitLength</span></span><br><span class="line">    <span class="keyword">typealias</span> <span class="type">Product</span> = <span class="type">UnitArea</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">defaultUnitMapping</span><span class="params">()</span></span> -&gt; (<span class="type">UnitLength</span>, <span class="type">UnitLength</span>, <span class="type">UnitArea</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> (.meters, .meters, .squareMeters)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果我们尝试执行两个长度的乘法时，编译器会因为 * 运算符的歧义而报错。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> width = <span class="type">Measurement</span>(value: <span class="number">4</span>, unit: <span class="type">UnitLength</span>.meters)</span><br><span class="line"><span class="keyword">let</span> height = <span class="type">Measurement</span>(value: <span class="number">6</span>, unit: <span class="type">UnitLength</span>.meters)</span><br><span class="line"><span class="keyword">let</span> area: <span class="type">Measurement</span>&lt;<span class="type">UnitArea</span>&gt; = width * height</span><br><span class="line"><span class="comment">// error: Ambiguous use of operator '*'</span></span><br></pre></td></tr></table></figure>
+<p>原因是我们有两个乘法重载运算符，一个是 <code>(Factor1, Factor2) -&gt; Product</code> 另一个是 <code>(Factor2, Factor1) -&gt; Product</code>。当 <code>Factor1</code> 和 <code>Factor2</code> 类型相同的时候，这两个重载方法的类型是一模一样的，编译器不知道应该调用哪个，所以就会报错。（在我们的场景中，两个方法都是对的，他们能算出同一个结果，但是编译器并不知道这一点）</p>
+<p>最好的解决方案是，我们能够给其中一个方法添加一个通用的约束，类似于 <code>Factor1 != Factor2</code>，可以让类型检查在参数类型相同的时候将其区分开来。像这样：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> * &lt;UnitType: Dimension&gt; <span class="params">(...)</span></span> -&gt; ...</span><br><span class="line">    <span class="keyword">where</span> <span class="type">UnitType</span>: <span class="type">UnitProduct</span>, <span class="type">UnitType</span> == <span class="type">UnitType</span>.<span class="type">Product</span>, <span class="type">UnitType</span>.<span class="type">Factor1</span> != <span class="type">UnitType</span>.<span class="type">Factor2</span></span><br><span class="line"><span class="comment">// error: Expected ':' or '==' to indicate a conformance or same-type requirement</span></span><br></pre></td></tr></table></figure>
+<p>遗憾的是，Swift 并不支持这样的语法，Swift 的 where 语句只能包含 <code>:</code> 和 <code>==</code>。</p>
+<h2 id="单独给乘方的协议"><a href="#单独给乘方的协议" class="headerlink" title="单独给乘方的协议"></a>单独给乘方的协议</h2><p>我们通过引入一个单独的协议，<code>UnitSquare</code> 协议，来解决这个问题，用于定义乘方关系。这个协议只需要两个 associated 类型，<code>Factor</code> 和 <code>Product</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">UnitSquare</span> </span>&#123;</span><br><span class="line">    <span class="keyword">associatedtype</span> <span class="type">Factor</span>: <span class="type">Dimension</span></span><br><span class="line">    <span class="keyword">associatedtype</span> <span class="type">Product</span>: <span class="type">Dimension</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">defaultUnitMapping</span><span class="params">()</span></span> -&gt; (<span class="type">Factor</span>, <span class="type">Factor</span>, <span class="type">Product</span>)</span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">preferredUnitMappings</span><span class="params">()</span></span> -&gt; [(<span class="type">Factor</span>, <span class="type">Factor</span>, <span class="type">Product</span>)]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们在这里就不展开其具体实现了，因为这个协议和 <code>UnitProduct</code> 很大程度上是相同的。（他的乘法和除法重载都只需要一个，相反的是 <code>UnitProduct</code> 需要两个。）</p>
+<p>如果我们将 <a href="https://developer.apple.com/reference/foundation/nsunitarea" target="_blank" rel="noopener"><code>UnitArea</code></a> 遵循 <code>UnitSquare</code>，那么这些计算就能符合我们的预期：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">extension</span> <span class="title">UnitArea</span>: <span class="title">UnitSquare</span> </span>&#123;</span><br><span class="line">    <span class="keyword">typealias</span> <span class="type">Factor</span> = <span class="type">UnitLength</span></span><br><span class="line">    <span class="keyword">typealias</span> <span class="type">Product</span> = <span class="type">UnitArea</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="keyword">func</span> <span class="title">defaultUnitMapping</span><span class="params">()</span></span> -&gt; (<span class="type">UnitLength</span>, <span class="type">UnitLength</span>, <span class="type">UnitArea</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> (.meters, .meters, .squareMeters)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> width = <span class="type">Measurement</span>(value: <span class="number">4</span>, unit: <span class="type">UnitLength</span>.meters)</span><br><span class="line"><span class="keyword">let</span> height = <span class="type">Measurement</span>(value: <span class="number">6</span>, unit: <span class="type">UnitLength</span>.meters)</span><br><span class="line"><span class="keyword">let</span> area: <span class="type">Measurement</span>&lt;<span class="type">UnitArea</span>&gt; = width * height</span><br><span class="line"><span class="comment">// → 24.0 m²</span></span><br><span class="line">area / width</span><br><span class="line"><span class="comment">// → 6.0 m</span></span><br><span class="line">area / height</span><br><span class="line"><span class="comment">// → 4.0 m</span></span><br></pre></td></tr></table></figure>
+<h2 id="自身相除"><a href="#自身相除" class="headerlink" title="自身相除"></a>自身相除</h2><p>谜题的最后一部分，我想应该是实现两个相同类型的除法，比如说 <em>6 米 / 4 米 = 1.5</em>。计算结果应该是一个<a href="https://en.wikipedia.org/wiki/Dimensionless_quantity" target="_blank" rel="noopener">没有单位的量</a>（换句话说是一个 <code>Double</code> 类型），并且对所有的 <a href="https://developer.apple.com/reference/foundation/nsdimension" target="_blank" rel="noopener"><code>Dimension</code></a> 类型都是可以有效的。</p>
+<p>支持这一特性十分简单，我们只需要再增加一个重载的除法。可以描述为：输入两个相同 <code>Dimension</code> 的量，返回一个 <code>Double</code> 值。我们通过将两个量都转换成基本类型来实现这个除法：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> / &lt;UnitType: Dimension&gt; <span class="params">(lhs: Measurement&lt;UnitType&gt;, rhs: Measurement&lt;UnitType&gt;)</span></span> -&gt; <span class="type">Double</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> lhs.converted(to: <span class="type">UnitType</span>.baseUnit()).value / rhs.converted(to: <span class="type">UnitType</span>.baseUnit()).value</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> ratio = height / width</span><br><span class="line"><span class="comment">// → 1.5</span></span><br></pre></td></tr></table></figure>
+<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><p>我将在本系列文章中讨论到的所有代码放到了一个叫 <a href="https://github.com/ole/Ampere" target="_blank" rel="noopener"><code>Ampere</code></a> 的库里面，你可以在 GitHub 上面找到。这个工作正在进展中，我还没有将其变成一个“真正的”库，类似于加入版本控制以及支持 CocoaPods，因为我不知道社区会不会对这些内容感兴趣。所以，让我知道你的想法吧！</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Ole-Begemann/">Ole Begemann</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-进阶/">Swift 进阶</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/09/29/unitsquare/" data-title="Measurements 和 Units，第三部分 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2016/09/30/siri-speech-framework/" title="使用 iOS 10 的 Speech 框架构建语音转文本应用">
+  <strong>上一篇</strong><br>
+  <span>
+  使用 iOS 10 的 Speech 框架构建语音转文本应用</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/09/28/transformative-streams/" title="转换流">
+ <strong>下一篇</strong><br> 
+ <span>转换流
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/09/29/unitsquare/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#在计算过程中保持单位"><span class="toc-number">1.</span> <span class="toc-text">在计算过程中保持单位</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#首选单位映射"><span class="toc-number">2.</span> <span class="toc-text">首选单位映射</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#在计算中使用首选单位映射"><span class="toc-number">3.</span> <span class="toc-text">在计算中使用首选单位映射</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#这是一个好主意吗？"><span class="toc-number">4.</span> <span class="toc-text">这是一个好主意吗？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#乘方的问题"><span class="toc-number">5.</span> <span class="toc-text">乘方的问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#单独给乘方的协议"><span class="toc-number">6.</span> <span class="toc-text">单独给乘方的协议</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#自身相除"><span class="toc-number">7.</span> <span class="toc-text">自身相除</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#代码"><span class="toc-number">8.</span> <span class="toc-text">代码</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

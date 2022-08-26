@@ -1,0 +1,1040 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>在 Linux 中使用 Swift 进行 TCP Sockets 编程 | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="linux swift,swift tcp socket,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="想知道在Linux下载使用Swift来进行TCP Sockets编程要怎么做吗，看看本文你就会知道了。">
+<meta name="keywords" content="linux swift,swift tcp socket">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在 Linux 中使用 Swift 进行 TCP Sockets 编程">
+<meta property="og:url" content="https://swift.gg/2016/03/01/tcp-sockets-with-swift-on-linux/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="想知道在Linux下载使用Swift来进行TCP Sockets编程要怎么做吗，看看本文你就会知道了。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://swift.gg/img/articles/tcp-sockets-with-swift-on-linux/Selection_007.png1456793714.7514606">
+<meta property="og:updated_time" content="2022-08-26T13:33:54.989Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="在 Linux 中使用 Swift 进行 TCP Sockets 编程">
+<meta name="twitter:description" content="想知道在Linux下载使用Swift来进行TCP Sockets编程要怎么做吗，看看本文你就会知道了。">
+<meta name="twitter:image" content="https://swift.gg/img/articles/tcp-sockets-with-swift-on-linux/Selection_007.png1456793714.7514606">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/03/01/tcp-sockets-with-swift-on-linux/" target="_blank" title="在 Linux 中使用 Swift 进行 TCP Sockets 编程" itemprop="url">在 Linux 中使用 Swift 进行 TCP Sockets 编程</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-03-01T06:00:00.000Z" itemprop="datePublished">2016-03-01</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Joe，<a href="http://dev.iachieved.it/iachievedit/tcp-sockets-with-swift-on-linux/" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-01-03<br>译者：<a href="http://codebuild.me/" target="_blank" rel="noopener">shanks</a>；校对：<a href="http://numbbbbb.com/" target="_blank" rel="noopener">numbbbbb</a>；定稿：<a href="https://github.com/Cee" target="_blank" rel="noopener">Cee</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>在远古时代，程序员们使用 <a href="https://en.wikipedia.org/wiki/Transmission_Control_Protocol" target="_blank" rel="noopener">TCP/IP</a> <a href="https://en.wikipedia.org/wiki/Network_socket" target="_blank" rel="noopener">套接字（sockets）</a>来编写客户端-服务器（client-server）应用。这事发生在黑暗时代 <a href="https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol" target="_blank" rel="noopener">HTTP</a> 诞生之前。</p>
+<p>当然，我只是开了个玩笑。HTTP 的出现给客户端-服务器（client-server）应用带来更多的变化，当然它也是 <a href="https://en.wikipedia.org/wiki/Representational_state_transfer" target="_blank" rel="noopener">REST</a> 应用的基础。HTTP 带给我们的不仅是将数据在网络中打包传输，还包括一个一致认可的包协议架构（从某种程度上来讲，是一个在特定端口下使用的标准）。可以进行的动作有：GET，POST，PUT 等。HTTP 头部本身也使得 HTTP 协议对于开发客户端-服务器应用变得更加友好。</p>
+<a id="more"></a>
+<p>接下来，在栈的底层，字节和字符都会被你操作系统的套接字接口处理和传输。网络套接字编程的 API 已经很强大了，很多<a href="http://gnosis.cx/publish/programming/sockets.html" target="_blank" rel="noopener">教程</a>和<a href="http://www.amazon.com/TCP-Illustrated-Protocols-Addison-Wesley-Professional/dp/0321336313" target="_blank" rel="noopener">书籍</a>都和这个知识点有关。用 C 来处理 IP 网络目前看来很繁琐，但是一开始只能用它来做。之后我们使用 C++ 面向对象的思想来包装这些 API，从而使网络编程变得更加容易。接着，出现了苹果 Foundation 中的 <code>CFStream</code> 类，然后就是我们要用到的 <code>swiftysockets</code> API。</p>
+<h3 id="Swiftychat"><a href="#Swiftychat" class="headerlink" title="Swiftychat"></a>Swiftychat</h3><p>为了说明如何使用 Swift 来调用 TCP/IP 网络套接字，我们开发了 一个简单的聊天应用：Swiftychat。不过这只是一个很初级的应用，功能有限，不能在真实环境中使用。但是，它可以作为一个案例，让我们学习如何使用 Swift 来调用 TCP/IP 网络套接字发送和接收字符串。</p>
+<h4 id="swiftysockets"><a href="#swiftysockets" class="headerlink" title="swiftysockets"></a>swiftysockets</h4><p>Swiftychat 需要用到 <a href="https://github.com/iachievedit/swiftysockets" target="_blank" rel="noopener">swiftysockets</a>，一个由 <a href="https://github.com/zewo" target="_blank" rel="noopener">Zewo 团队</a>基于 Swift 开发的 TCP/IP 套接字的包。但是由于包的限制，我们不得不首先安装一个 C 库──<a href="https://github.com/iachievedit/Tide" target="_blank" rel="noopener">Tide</a>。那么我们现在就搞起吧。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ git <span class="built_in">clone</span> https://github.com/iachievedit/Tide</span><br><span class="line">Cloning into <span class="string">'Tide'</span>...</span><br><span class="line">...</span><br><span class="line">$ <span class="built_in">cd</span> Tide</span><br><span class="line">$ sudo make install</span><br><span class="line">clang -c Tide/tcp.c Tide/ip.c Tide/utils.c</span><br><span class="line">ar -rcs libtide.a *.o</span><br><span class="line">rm *.o</span><br><span class="line">mkdir -p tide/usr/<span class="built_in">local</span>/lib</span><br><span class="line">mkdir -p tide/usr/<span class="built_in">local</span>/include/tide</span><br><span class="line">cp Tide/tcp.h Tide/ip.h Tide/utils.h Tide/tide_swift.h tide/usr/<span class="built_in">local</span>/include/tide</span><br><span class="line"><span class="comment"># copy .a</span></span><br><span class="line">cp libtide.a tide/usr/<span class="built_in">local</span>/lib/</span><br><span class="line">mkdir -p /usr/<span class="built_in">local</span></span><br><span class="line">cp -r tide/usr/<span class="built_in">local</span>/* /usr/<span class="built_in">local</span>/</span><br></pre></td></tr></table></figure>
+<p>小道消息称未来 <a href="https://github.com/ddunbar/swift-evolution/blob/master/proposals/NNNN-swiftpm-c-language-targets.md" target="_blank" rel="noopener">Swift 包管理会支持编译 C 库</a>，可以和你写的包一起进行编译。但是在这之前，我们必须安装 C 库。</p>
+<p>安装好 Tide 以后，我们就可以在 Swiftychat 应用中愉快的使用 swiftysockets 了。</p>
+<h4 id="开始编码！"><a href="#开始编码！" class="headerlink" title="开始编码！"></a>开始编码！</h4><p><code>main.swift</code> 文件中的代码比较简单：创建一个 <code>ChatterServer</code> 并启动它。</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">//main.swift</span></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> server = <span class="type">ChatterServer</span>() &#123;</span><br><span class="line">  server.start()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，<code>main.swift</code> 相当简单，只做了一件事情，入侵……抱歉，我刚才跑偏了，这不是星球大战……</p>
+<p>简洁的 <code>main.swift</code> 意味着我们所有的实现都在 <code>ChatterServer</code> 类中，代码如下：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> swiftysockets</span><br><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ChatterServer</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">let</span> ip:<span class="type">IP?</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">let</span> server:<span class="type">TCPServerSocket?</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">init</span>?() &#123;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">      <span class="keyword">self</span>.ip     = <span class="keyword">try</span> <span class="type">IP</span>(port:<span class="number">5555</span>)</span><br><span class="line">      <span class="keyword">self</span>.server = <span class="keyword">try</span> <span class="type">TCPServerSocket</span>(ip:<span class="keyword">self</span>.ip!)</span><br><span class="line">    &#125; <span class="keyword">catch</span> <span class="keyword">let</span> error &#123;</span><br><span class="line">      <span class="built_in">print</span>(error)</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">start</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">while</span> <span class="literal">true</span> &#123;</span><br><span class="line">      <span class="keyword">do</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> client = <span class="keyword">try</span> server!.accept()</span><br><span class="line">        <span class="keyword">self</span>.addClient(client)</span><br><span class="line">      &#125; <span class="keyword">catch</span> <span class="keyword">let</span> error &#123;</span><br><span class="line">        <span class="built_in">print</span>(error)</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">var</span> connectedClients:[<span class="type">TCPClientSocket</span>] = []</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">var</span> connectionCount = <span class="number">0</span></span><br><span class="line">  <span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">addClient</span><span class="params">(client:TCPClientSocket)</span></span> &#123;</span><br><span class="line">    <span class="keyword">self</span>.connectionCount += <span class="number">1</span></span><br><span class="line">    <span class="keyword">let</span> handlerThread = <span class="type">NSThread</span>()&#123;</span><br><span class="line">      <span class="keyword">let</span> clientId = <span class="keyword">self</span>.connectionCount</span><br><span class="line">      </span><br><span class="line">      <span class="built_in">print</span>(<span class="string">"Client \(clientId) connected"</span>)</span><br><span class="line">      </span><br><span class="line">      <span class="keyword">while</span> <span class="literal">true</span> &#123;</span><br><span class="line">        <span class="keyword">do</span> &#123;</span><br><span class="line">          <span class="keyword">if</span> <span class="keyword">let</span> s = <span class="keyword">try</span> client.receiveString(untilDelimiter: <span class="string">"\n"</span>) &#123;</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">"Received from client \(clientId):  \(s)"</span>, terminator:<span class="string">""</span>)</span><br><span class="line">            <span class="keyword">self</span>.broadcastMessage(s, except:client)</span><br><span class="line">          &#125;</span><br><span class="line">        &#125; <span class="keyword">catch</span> <span class="keyword">let</span> error &#123;</span><br><span class="line">          <span class="built_in">print</span> (<span class="string">"Client \(clientId) disconnected:  \(error)"</span>)</span><br><span class="line">          <span class="keyword">self</span>.removeClient(client)</span><br><span class="line">          <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    handlerThread.start()</span><br><span class="line">    connectedClients.append(client)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">removeClient</span><span class="params">(client:TCPClientSocket)</span></span> &#123;</span><br><span class="line">    connectedClients = connectedClients.<span class="built_in">filter</span>()&#123;$<span class="number">0</span> !== client&#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="function"><span class="keyword">func</span> <span class="title">broadcastMessage</span><span class="params">(message:String, except:TCPClientSocket)</span></span> &#123;</span><br><span class="line">    <span class="keyword">for</span> client <span class="keyword">in</span> connectedClients <span class="keyword">where</span> client !== except &#123;</span><br><span class="line">      <span class="keyword">do</span> &#123;</span><br><span class="line">        <span class="keyword">try</span> client.sendString(message)</span><br><span class="line">        <span class="keyword">try</span> client.flush()</span><br><span class="line">      &#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">        <span class="comment">// </span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们的服务器分解为以下几部分代码：</p>
+<p><strong>1.</strong> 初始化</p>
+<p>我们使用可选的构造器 <code>init?</code>，这表示有可能返回 <code>nil</code>，因为调用 <code>swiftysockets</code> 中的 <code>IP</code> 和 <code>TCPServerSocket</code> 类有可能抛出错误。<code>IP</code> 类封装好了 <code>IP</code> 地址和端口，提供给 <code>TCPServerSocket</code> 类构造器一个 <code>IP</code> 类实例。如果初始化成功，我们就可以得到一个指定端口上的 <code>TCP</code> 套接字，为下一步的连接做好准备。</p>
+<p><strong>2.</strong> 主循环</p>
+<p>我们不关心主循环的名字，你叫它 <code>startListening</code>、<code>start</code> 或者 <code>main</code> 都可以。主循环的任务是接收新的客户端连接，然后把它们加入到已连接的客户端列表中。<code>server!.accept()</code> 是一个阻塞方法，它会挂起并等待新连接到来。这是标准做法。</p>
+<p><strong>3.</strong> 客户端管理</p>
+<p><code>ChatterServer</code> 类剩余的部分包含了所有对于客户端管理的方法，包括一些变量和三个动作。</p>
+<p>变量包括：</p>
+<pre><code>* 一个包含已连接客户端的数组: `[TCPClientSocket]`
+* 连接计数用来处理客户端连接的标识符
+</code></pre><p>同时有以下 3 个方法：</p>
+<ul>
+<li><p><code>addClient</code> 接收一个 <code>TCPClientSocket</code> 对象，增加连接计数，然后建立一个新的 <code>NSThread</code> 来独立处理当前获得的客户端连接。接收到新连接时，它会创建新的 <code>NSThread</code> 来处理它们。我们在后面会介绍 <code>NSThread</code> 的方法。当线程启动后，<code>addClient</code> 会把这个传入的 <code>TCPClientSocket</code> 实例加入已连接客户端列表的末尾。</p>
+</li>
+<li><p><code>removeClient</code> 使用 <code>filter</code> 方法从已连接客户端列表删除指定的客户端连接。注意我们这里使用了 <a href="https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/ClassesAndStructures.html" target="_blank" rel="noopener"><code>!==</code> 操作符</a>。</p>
+</li>
+<li><p><code>broadcastMessage</code> 方法把我们的 <code>ChatterServer</code> 变成了一个聊天服务器。方法中使用 <code>where</code> 语句创建一个过滤后的数组，然后把一个客户端的消息广播给所有已连接的客户端。在这里，我们再次使用了 <code>!==</code> 操作符。</p>
+</li>
+</ul>
+<p>再回顾一下，线程是一个在主过程中单独的执行路径。服务器端创建一个单独的线程来处理每个连接的客户端。你可能会质疑，这样做是否合适？如果我们的服务器最终要处理成千上万的客户端请求，那我也认为这不是一个好的做法。但是对于这篇教学文章来说，我认为已经够啦。</p>
+<p>让我们再看一眼线程代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> handlerThread = <span class="type">NSThread</span>()&#123;</span><br><span class="line">      <span class="keyword">let</span> clientId = <span class="keyword">self</span>.connectionCount</span><br><span class="line">      </span><br><span class="line">      <span class="built_in">print</span>(<span class="string">"Client \(clientId) connected"</span>)</span><br><span class="line">      </span><br><span class="line">      <span class="keyword">while</span> <span class="literal">true</span> &#123;</span><br><span class="line">        <span class="keyword">do</span> &#123;</span><br><span class="line">          <span class="keyword">if</span> <span class="keyword">let</span> s = <span class="keyword">try</span> client.receiveString(untilDelimiter: <span class="string">"\n"</span>) &#123;</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">"Received from client \(clientId):  \(s)"</span>, terminator:<span class="string">""</span>)</span><br><span class="line">            <span class="keyword">self</span>.broadcastMessage(s, except:client)</span><br><span class="line">          &#125;</span><br><span class="line">        &#125; <span class="keyword">catch</span> <span class="keyword">let</span> error &#123;</span><br><span class="line">          <span class="built_in">print</span> (<span class="string">"Client \(clientId) disconnected:  \(error)"</span>)</span><br><span class="line">          <span class="keyword">self</span>.removeClient(client)</span><br><span class="line">          <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    handlerThread.start()</span><br></pre></td></tr></table></figure>
+<p>客户端处理线程时会进入一个循环，等待 <code>TCPClientSocket</code> 中的 <code>receiveString</code> 方法获取客户端的输入。当服务器端接收到一个字符串后，服务器端会打印到终端，然后广播这个消息，如果 <code>try</code> 语句抛出了错误（断开连接），服务器端会删除这个客户端连接。</p>
+<h3 id="整合所有内容"><a href="#整合所有内容" class="headerlink" title="整合所有内容"></a>整合所有内容</h3><p>我们的目标是使用 Swift 包管理来编译我们的应用，关于 <code>swiftpm</code> 的介绍，请查看我们的<a href="http://dev.iachieved.it/iachievedit/introducing-the-swift-package-manager/" target="_blank" rel="noopener">相关教程</a>。</p>
+<p>以下是 <code>Package.swift</code> 的代码：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> PackageDescription</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> package = <span class="type">Package</span>(</span><br><span class="line">  name:  <span class="string">"chatterserver"</span>,</span><br><span class="line">  dependencies: [</span><br><span class="line">    .<span class="type">Package</span>(url:  <span class="string">"https://github.com/iachievedit/swiftysockets"</span>, majorVersion: <span class="number">0</span>),</span><br><span class="line">  ]</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>然后创建一个 <code>Sources</code> 文件夹，把 <code>main.swift</code> 和 <code>ChatterServer.swift</code> 放进去。</p>
+<p>运行 <code>swift build</code>，它会下载和编译 2 个依赖的库（<code>Tide</code> 和 <code>swiftysockets</code>），接着就会编译我们的应用代码。如果编译成功，你就可以在 <code>.build/debug/</code> 目录下找到一个可执行的二进制文件：<code>chatterserver</code>。</p>
+<h4 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h4><p>我们的下一个教程将会编写一个简单使用的聊天客户端程序，在这里我们就使用 <code>nc</code>（<a href="https://en.wikipedia.org/wiki/Netcat" target="_blank" rel="noopener">netcat</a>）命令来测试我们的服务器。启动服务器，在另外一个终端窗口中输入 <code>nc localhost 5555</code>，你可以在服务器的终端窗口中看到 <code>Client 1 connected</code>。如果你用 CTRL-C 关掉客户端窗口，服务器端会打印一个断开连接信息，并且会打印出说明信息（比如：<code>Connection reset by peer</code>）。</p>
+<p>下面进行更加真实的测试，我们将启用一个服务器端和三个客户端，见下图：</p>
+<p><img src="/img/articles/tcp-sockets-with-swift-on-linux/Selection_007.png1456793714.7514606" alt></p>
+<p>看图中左边的终端，我们的聊天服务器正在运行。右边终端有 3 个客户端，每一个都使用命令 <code>nc localhost 5555</code> 来启动。每个客户端连接服务器的时候，都会在服务器端打印出连接信息。</p>
+<p>回想一下，我们的 <code>broadcastMessage</code> 方法中排除了广播的发起方，这样就避免了客户端收到自己发送的消息（仔细看 <code>where</code> 语句，你就知道我在说啥了）。</p>
+<h4 id="下回分解"><a href="#下回分解" class="headerlink" title="下回分解"></a>下回分解</h4><p>使用 <code>nc</code> 命令作为我们的客户端有点无聊。我们不能使用昵称，消息也没有结构可言，而且没有时间戳之类的信息。在上面的例子中，服务器端完全不知道我们传过来是啥。<code>swiftysockets</code> 有一个 <code>TCPClientSocket</code> 类，为啥我们不可以使用它去创建一个更加健壮的聊天客户端呢？</p>
+<h3 id="获取代码"><a href="#获取代码" class="headerlink" title="获取代码"></a>获取代码</h3><p>我们将聊天服务器代码上传到了 <a href="https://github.com/iachievedit/swiftychatter" target="_blank" rel="noopener">GitHub</a> 上。这其中也包括目前暂时未实现的 <code>chatterclient</code> 项目。下载完成后，你可以在根目录下使用 <code>make</code> 指令编译服务器端和客户端。</p>
+<p><strong>牢记</strong>：你必须提前安装好 <code>libtide.a</code> 和对应的头文件，因为 <code>swiftysockets</code> 会用到它！</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/iAchieved-it/">iAchieved.it</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift-入门/">Swift 入门</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/03/01/tcp-sockets-with-swift-on-linux/" data-title="在 Linux 中使用 Swift 进行 TCP Sockets 编程 | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2016/03/02/github-readme-badges-in-wordpress/" title="在 WordPress 中使用 GitHub README 标签">
+  <strong>上一篇</strong><br>
+  <span>
+  在 WordPress 中使用 GitHub README 标签</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/02/29/open-source-swift-weekly-7/" title="Swift 一周简讯 #7">
+ <strong>下一篇</strong><br> 
+ <span>Swift 一周简讯 #7
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/03/01/tcp-sockets-with-swift-on-linux/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Swiftychat"><span class="toc-number">1.</span> <span class="toc-text">Swiftychat</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#swiftysockets"><span class="toc-number">1.1.</span> <span class="toc-text">swiftysockets</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#开始编码！"><span class="toc-number">1.2.</span> <span class="toc-text">开始编码！</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#整合所有内容"><span class="toc-number">2.</span> <span class="toc-text">整合所有内容</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#测试"><span class="toc-number">2.1.</span> <span class="toc-text">测试</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#下回分解"><span class="toc-number">2.2.</span> <span class="toc-text">下回分解</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#获取代码"><span class="toc-number">3.</span> <span class="toc-text">获取代码</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

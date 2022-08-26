@@ -1,0 +1,1021 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="baidu-site-verification" content="vqJV77bZM6">
+  
+    <title>Friday Q&amp;A 2016-02-19: 什么是安全区域？ | Swift 教程 - Swift 语言学习 - Swift code - SwiftGG 翻译组 - 高质量的 Swift 译文网站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="SwiftGG">
+    
+
+    <meta name="keywords" content="secure enclave是什么,iphone安全区域,ios安全区域,swift语言,swift翻译,swift学习">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta name="description" content="iPhone 手机使用的 iOS Secure Enclave 模块是什么呢，为什么连 FBI 甚至是苹果自己都无法破解呢，本文就来好好解析下 Secure Enclave 安全区域。">
+<meta name="keywords" content="secure enclave是什么,iphone安全区域,ios安全区域">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Friday Q&amp;A 2016-02-19: 什么是安全区域？">
+<meta property="og:url" content="https://swift.gg/2016/08/15/friday-qa-2016-02-19-what-is-the-secure-enclave/index.html">
+<meta property="og:site_name" content="SwiftGG">
+<meta property="og:description" content="iPhone 手机使用的 iOS Secure Enclave 模块是什么呢，为什么连 FBI 甚至是苹果自己都无法破解呢，本文就来好好解析下 Secure Enclave 安全区域。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-08-26T13:33:55.003Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Friday Q&amp;A 2016-02-19: 什么是安全区域？">
+<meta name="twitter:description" content="iPhone 手机使用的 iOS Secure Enclave 模块是什么呢，为什么连 FBI 甚至是苹果自己都无法破解呢，本文就来好好解析下 Secure Enclave 安全区域。">
+
+    
+    <link rel="alternative" href="/atom.xml" title="SwiftGG" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon_new.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/logo_new.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/logo_new.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/gitment.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="SwiftGG">SwiftGG</a></h1>
+				<h2 class="blog-motto">走心的 Swift 翻译组</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+						<li><a href="/stat">统计</a></li>
+					
+						<li><a href="https://swiftgg.gitbook.io/swift/">Swift 官方文档翻译</a></li>
+					
+					<li>
+ 					
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		
+  <header class="article-info clearfix">
+    <h1 itemprop="name">
+      
+        <a href="/2016/08/15/friday-qa-2016-02-19-what-is-the-secure-enclave/" target="_blank" title="Friday Q&amp;A 2016-02-19: 什么是安全区域？" itemprop="url">Friday Q&amp;A 2016-02-19: 什么是安全区域？</a>
+    </h1>
+    <p class="article-time">
+      <time datetime="2016-08-15T05:00:00.000Z" itemprop="datePublished">2016-08-15</time>
+      <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
+    </p>
+  </header>
+
+	<div class="article-content">
+		
+		<blockquote>
+<p>作者：Mike Ash，<a href="https://www.mikeash.com/pyblog/friday-qa-2016-02-19-what-is-the-secure-enclave.html" target="_blank" rel="noopener">原文链接</a>，原文日期：2016-02-19<br>译者：<a href="undefined">littledogboy</a>；校对：<a href="http://weibo.com/277195544" target="_blank" rel="noopener">Cwift</a>；定稿：<a href="https://github.com/chenmingbiao" target="_blank" rel="noopener">CMB</a></p>
+</blockquote>
+<!--此处开始正文-->
+<p>本周最大的科技新闻是 FBI 正试图迫使苹果公司解锁一个嫌疑人的 iPhone。有趣的是，涉案手机的型号是老款的 iPhone 5c。新款的 iPhone 中加入了苹果的 Secure Enclave（安全区域）技术，用来防止手机被暴力破解，甚至连苹果自己都无法破解。这件事过后许多朋友都在问一个问题：什么是 Secure Enclave？它扮演了什么角色？</p>
+<p>在我开始写之前声明一下: 我平时写文章的习惯是一直深入到比特和字节，然后再讨论发生了什么。但这次必定有所不同，因为我这种凡夫俗子是触及不到安全区域的本质的。因此本文中大部分的知识来自<a href="https://www.apple.com/business/docs/iOS_Security_Guide.pdf" target="_blank" rel="noopener">苹果 iOS 信息安全指南</a>，又添加了一些通用的理论。参考指南中安全区域的相关信息，解释并且思考它们的含义。这篇文章建立在苹果提供了准确信息的假设上，因为从外部没有可行的方法来检测这些信息的真实性。因此最终检测结果将基于苹果文档的准确性，和我自己的理解，这点读者需要注意。</p>
+<p>而且，此文章是为了调研本案的技术和安全区域技术。对 FBI 的要求，苹果的回应，任何其他政治问题，没有任何意见和暗示。如果你想在此讨论政治问题，出门右转。</p>
+<p>找准了方向，让我们开始吧。</p>
+<a id="more"></a>
+<h2 id="回顾"><a href="#回顾" class="headerlink" title="回顾"></a>回顾</h2><p>涉案 iPhone 通过密码保护，密码没有直接存储在手机中。获取密码的唯一方法是暴力破解密码。计算验证密码非常慢，每次大约需要 80 毫秒。不过，暴力破解是可行的。一个四位数的密码，尝试 10000 个组合，每次 80 毫秒，只需不到 15 分钟。一个 6 位数字密码需要大约一天的时间。</p>
+<p>这意味着密码并不十分安全。尝试多次输入密码失败后，苹果会增加额外的时间来延缓暴力破解的频次。几次错误的尝试之后，当你再次尝试输入密码时，iPhone 会让你等待，最开始等待 1 分钟，然后等待 5 分钟，后面的等待时间会递增。</p>
+<p>你可能会想，如果把闪存从苹果电脑中取出来，复制它的内容，然后在一个更快的计算机上尝试破解密码，可以解决这个问题。这样就不会有苹果软件强加的额外延迟。 这么做带来的好处是，在更快的计算机上每次尝试的时间会少于 80 毫秒，并且可以并发执行多个尝试。然而，这是行不通的。因为数据加密与硬件是绑定的，所以必须在原始设备进行暴力破解。</p>
+<p>没有安全区域的旧 iPhone 系统上有一个弱点。为了防止暴力破解而持续增加的延迟时间，只是手机操作系统的特征。密钥推导的计算时间是固定的80毫秒，而在多次错误的尝试之后额外添加的分钟或者小时数所起到的作用，仅仅是操作系统拒绝在这些延迟时间结束前接受输入而已。FBI 希望苹果构建和安装一个不包含延迟时间并且允许自动提交密码的系统版本。这将使得联邦调查局可以在几分钟或几小时内破解密码。除了苹果之外不允许任何人更新 iPhone 操作系统，所以，对于来自外部的攻击该系统是安全可靠的，但对苹果自身来说该系统是不安全的。</p>
+<p>注意，以上的方案只针对使用数字密码的用户，比较复杂的密码在这些旧版 iPhone 仍然是安全的。例如，一个八个字符的字母数字密码将需要 550000 年的时间去尝试所有可能的组合。</p>
+<h2 id="不可读的-UIDs"><a href="#不可读的-UIDs" class="headerlink" title="不可读的 UIDs"></a>不可读的 UIDs</h2><p>每个内置的 iOS CPU 都独有一个 256 位的标识符或者 UID。UID 被直接嵌入到了硬件中，不存储在任何地方。UID 不能被外部直接访问，包括那些以最高权限在 CPU 上运行的软件。取而代之的是，CPU 中包含一个 AES 硬件加密引擎，而且唯一通过硬件获取到 UID 的方式是通过 AES 加密引擎加载秘钥，然后使用秘钥对数据进行加密或者解密。</p>
+<p>苹果使这种硬件加密方式把用户密码和设备绑定起来。通过把设备的 UID 作为 AES 密钥，然后对密码再次加密，得到一系列随机的不可逆的数据。因为特定设备 UID 取决于用户密码和加密数据，因此它是不可读取的。加密过程执行了多次 <a href="https://en.wikipedia.org/wiki/PBKDF2" target="_blank" rel="noopener">PBKDF2加密方法</a>，把每轮加密后得到的结果作为下一轮加密的输入，以至于每次验证密码都需要 80 毫秒以完成复杂的运算。</p>
+<h2 id="安全区域"><a href="#安全区域" class="headerlink" title="安全区域"></a>安全区域</h2><p>苹果首次引入安全区域是在搭载 A7 芯片的操作系统上。对应的手机型号从 iPhone 5S 开始，5 和 5C 以及旧版本都没有安全区域。iPad 端是从 iPad mini 2 和 iPad Air 开始。</p>
+<p>安全区域 是 A7（以及之后的芯片）内部中一个独立的处理器，其负责低级别的加密操作。安全区域不能运行 iOS 程序或任何类似于 iOS 的程序，其上运行的是 <a href="https://en.wikipedia.org/wiki/L4_microkernel_family" target="_blank" rel="noopener">L4微内核</a> 程序。因为在高级权限下，运行时的代码可能会引发 bug，L4 意欲在内核中执行尽可能少的代码，从而使系统达到理论上的更加安全的状态。安全区域使用 secure boot (安全引导)系统，确保运行的代码不能被修改，它使用加密存储确保其它系统数据无法被读取或者篡改。这种方式有效地在计算机内另外构建了一台很难被攻击的电脑。</p>
+<p>安全区域内包含自己的 UID 和 AES 引擎。该区域独立于系统的其余部分，密码验证的过程在安全区域中进行。安全区域同时也管理 Touch ID 指纹的处理和匹配，以及 Apple Pay 的授权。</p>
+<p>安全区域管理着所有加密文件的密钥。文件加密几乎应用于所有的用户数据。大部分系统应用程序使都用了文件加密，并且系统版本不低于 iOS 7 的所有第三方应用程序默认使用的也是文件加密。每个加密文件都有一个唯一的秘钥，该秘钥又被设备的 UID 和 用户的密码进行了加密。主 CPU 自身并不能读取加密的文件，它必须从安全区域中获取文件的密钥，而该秘钥没有用户密码是获取不到的。</p>
+<p>尝试输入密码失败而增加的延迟，是由安全区域执行的。主 CPU 只是提交密码和接收结果。安全区域负责检查密码，如果检查出多次失败，则将会延迟密码检查。主处理器并不能加快检查的速度。</p>
+<h2 id="启示"><a href="#启示" class="headerlink" title="启示"></a>启示</h2><p>安全区域对系统整体安全来说担当一个什么角色？</p>
+<p>在大多数系统中，如果你可以进入系统内核，那么你就可以拥有整个系统权限。内核可以完成任何事情。它可以读写系统内存中的每一个字节、控制所有的硬件、控制系统运行的所有应用程序的代码，并且可以破坏这一切。</p>
+<p>由于安全区域是一个独立的 CPU，与系统的其余部分阻断，因此它不受内核的控制。在一个旧的 iPhone 上，掌控内核就意味着掌控了系统能做的一切功能，包括密码验证过程。有了安全区域，不管是谁在控制主 CPU，无论操作系统运行什么样的代码，基本的安全功能依旧保持不变。</p>
+<p>这套系统本质上允许把任意代码放在加密功能之前，这样任意代码都不能绕过加密。这有点像是那个需要花费 80 毫秒的密码校验的超级版本。延迟的时间来源于固定的计算。这意味着它不能被绕过，并且固有的计算时间会限制你能做的事情。例如，你不能设置第五次尝试时的延时为一分钟，因为原密码构造不存在第五次尝试的概念。有了安全区域，一分钟的延时就变成了强制的，因为即使系统的其他区域被破换了，安全区域中延迟代码也不会改变。</p>
+<h2 id="软件更新"><a href="#软件更新" class="headerlink" title="软件更新"></a>软件更新</h2><p>iPhone 5C（和其他没有搭载 A7 处理器的 iPhone）可以被暴力破解，通过创建一个新的没有延迟时间的操作系统，把该系统安装到设备上，以硬件最快的计算速度来破解密码。安全区域阻止了这样做。但是如果进行相同的更高级别的攻击，在安全区域中加载新的软件，那么可以去掉延迟时间么？</p>
+<p>苹果的指南包含了在安全区域中更新软件的讨论：</p>
+<blockquote>
+<p>安全区域使用了它自己的安全引导和专用的软件，与应用程序处理器的更新是隔离开的。</p>
+</blockquote>
+<p>就是这样！没有任何细节。实际情况是什么？那么，我们必须进行猜测，因为只要我没有挖到任何有关于安全区域软件更新是如何执行的信息。我预测了两种可能性。</p>
+<p>第一种可能性是安全区域使用的软件更新机制类似于其余的设备。也就是说，更新必须由苹果签署，但可以自由应用。这将使安全区域遭受到来自苹果本身的攻击时变得毫无用途，因为苹果可以创造新的安全区域软件解除限制。如果主操作系统是由第三方开发的，安全区域仍然是一个有用的功能，帮助保护用户。但是苹果是否可以进入它自己的设备，决定了该问题是否有必要。</p>
+<p>第二种可能性是，安全区域的软件更新机制做了更先进的防攻击甚至是苹果本身的攻击。安全区域的整体思路是，强制执行附加的规则，以至于不能从外面绕过安全区域。这些附加的规则可能包括了其自身的软件更新。出于保护用户数据的目的，除非该设备已经由用户的密码解锁，否则安全区域拒绝任何软件的更新。一般情况下，用户忘了密码，想清除设备并重新启动，安全区域可能允许更新，但是会删除主密钥下保护的用户数据。</p>
+<p>哪一种情况是正确答案？现在，我们不知道。苹果付出了很大的努力来保护用户数据，并且他们采取第二种方法，如果没有用户的密码进行更新会清除数据，将会很有意义。这将是相当容易实现的，并不应该影响设备的可用性。鉴于苹果对用户隐私的公开立场，我想如果它的安全区域的软件更新机制不是这样实现的会很奇怪。另一方面，蒂姆库克的公开信暗示，所有型号的苹果手机都存在潜在的弱点，所以也许他们没有采取这一额外的步骤。</p>
+<p>回到执法者迫使苹果攻击 iOS 设备的问题，这是问题的关键。如果更新安全区域在苹果的攻击下都是牢固的，那么以联邦调查局的能力，会止步于苹果 5S 。如果不是，那么即使是最新的 6S 仍然可能被攻击。我对这个问题的答案很感兴趣。</p>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>安全区域增加了一个额外的防线，通过在硬件独立的 CPU 中实现核心安全和加密功能，来防御攻击。这个独立的处理器运行特殊的软件，并隔离于系统的其余部分，隔离于主操作系统和内核的控制。安全区域实现了设备的密码验证、文件加密、Touch ID 识别和  Apple Pay，并执行安全限制，如过多次错误的密码输入后增加延迟时间。</p>
+<p>FBI 要求苹果破解的 iPhone 5C 机型，早于安全区域技术之前，因此可以通过安装一个新的移除了延迟时间的苹果操作系统。新机型手机是否同样可以被破解取决于安全区域的软件更新机制的实现。如果更新软件时，没有密码就会删除加密主密钥，那么新的 iPhone 就不能被这样攻击，甚至抵御来自苹果自己的攻击。如果更新软件时，即便没有密码也不会删除主秘钥，那么安全区域就像旧版的 iPhone 一样可以被攻击。在我能得到确切的资料之前，真实情况是否如此依旧是一个悬而未决的问题。</p>
+<blockquote>
+<p>本文由 SwiftGG 翻译组翻译，已经获得作者翻译授权，最新文章请访问 <a href="http://swift.gg">http://swift.gg</a>。</p>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Mike-Ash/">Mike Ash</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Swift/">Swift</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://swift.gg/2016/08/15/friday-qa-2016-02-19-what-is-the-secure-enclave/" data-title="Friday Q&amp;A 2016-02-19: 什么是安全区域？ | SwiftGG" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev">
+ <a href="/2016/08/16/building-ios-interfaces-subclassing-views/" title="构建 iOS 界面：子类化 Views">
+  <strong>上一篇</strong><br>
+  <span>
+  构建 iOS 界面：子类化 Views</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/08/12/collaborative-writing-on-github/" title="在 GitHub 上进行协同写作">
+ <strong>下一篇</strong><br> 
+ <span>在 GitHub 上进行协同写作
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments" class="comment">
+  <div id="gitcomment">
+  </div>
+  <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+  <script>
+    var gitment = new Gitment({
+      id: "2016/08/15/friday-qa-2016-02-19-what-is-the-secure-enclave/",
+      owner: "SwiftGGBot",
+      repo: "gg-comment",
+      oauth: {
+        client_id: "8ed6aa0071e9d92f7ffc",
+        client_secret: "29cc2c70290fad40a967780e5b49d86501348ddf",
+      },
+    })
+    gitment.render('gitcomment')
+    </script>
+</section>
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#回顾"><span class="toc-number">1.</span> <span class="toc-text">回顾</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#不可读的-UIDs"><span class="toc-number">2.</span> <span class="toc-text">不可读的 UIDs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#安全区域"><span class="toc-number">3.</span> <span class="toc-text">安全区域</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#启示"><span class="toc-number">4.</span> <span class="toc-text">启示</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#软件更新"><span class="toc-number">5.</span> <span class="toc-text">软件更新</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结论"><span class="toc-number">6.</span> <span class="toc-text">结论</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Andyy-Hope/" title="Andyy Hope">Andyy Hope<sup>4</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Arthur-Knopper/" title="Arthur Knopper">Arthur Knopper<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Big-O-Note-Taking/" title="Big O Note-Taking">Big O Note-Taking<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Coding-Explorer-Blog/" title="Coding Explorer Blog">Coding Explorer Blog<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Erica-Sadun/" title="Erica Sadun">Erica Sadun<sup>68</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>29</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jacob-Bandes-Storch/" title="Jacob Bandes-Storch">Jacob Bandes-Storch<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jameson-Quave/" title="Jameson Quave">Jameson Quave<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/JamesonQuave-com/" title="JamesonQuave.com">JamesonQuave.com<sup>18</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/KHANLOU/" title="KHANLOU">KHANLOU<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Khanlou/" title="Khanlou">Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/NSHipster/" title="NSHipster">NSHipster<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Natasha-The-Robot/" title="Natasha The Robot">Natasha The Robot<sup>48</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemannh/" title="Ole Begemannh">Ole Begemannh<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/" title="Olivier Halligon">Olivier Halligon<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Open-Source-Swift/" title="Open Source Swift">Open Source Swift<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Raj-Kandathi/" title="Raj Kandathi">Raj Kandathi<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Reinder-de-Vries/" title="Reinder de Vries">Reinder de Vries<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Soroush-Khanlou/" title="Soroush Khanlou">Soroush Khanlou<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-and-Painless/" title="Swift and Painless">Swift and Painless<sup>11</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/Swift-入门/" title="Swift 入门">Swift 入门<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Think-and-Build/" title="Think and Build">Think and Build<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thomas-Hanning/" title="Thomas Hanning">Thomas Hanning<sup>22</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Thoughtbot/" title="Thoughtbot">Thoughtbot<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Tomasz-Szulc/" title="Tomasz Szulc">Tomasz Szulc<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Wooji-Juice/" title="Wooji Juice">Wooji Juice<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alisoftware/" title="alisoftware">alisoftware<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/alloc-init/" title="alloc-init">alloc-init<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/appcoda/" title="appcoda">appcoda<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/codingexplorer/" title="codingexplorer">codingexplorer<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iAchieved-it/" title="iAchieved.it">iAchieved.it<sup>24</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS-开发/" title="iOS 开发">iOS 开发<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou-com/" title="khanlou.com">khanlou.com<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/machinethink/" title="machinethink">machinethink<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/medium-com/" title="medium.com">medium.com<sup>12</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/mikeash-com/" title="mikeash.com">mikeash.com<sup>9</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/radex-io/" title="radex.io">radex.io<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swift-org/" title="swift.org">swift.org<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/thomashanning/" title="thomashanning">thomashanning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/uraimo/" title="uraimo">uraimo<sup>15</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/原创文章/" title="原创文章">原创文章<sup>6</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/投稿/" title="投稿">投稿<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/直播资源/" title="直播资源">直播资源<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/社区问答/" title="社区问答">社区问答<sup>19</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>170</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-入门/" title="Swift 入门">Swift 入门<sup>130</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-开发/" title="iOS 开发">iOS 开发<sup>85</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-开源信息/" title="Swift 开源信息">Swift 开源信息<sup>11</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/WatchOS-2/" title="WatchOS 2">WatchOS 2<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-入门/" title="iOS 入门">iOS 入门<sup>6</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Apple-TV-开发/" title="Apple TV 开发">Apple TV 开发<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Xcode/" title="Xcode">Xcode<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/IOSCREATOR/" title="IOSCREATOR">IOSCREATOR<sup>4</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/社区问答/" title="社区问答">社区问答<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://c4ios.swift.gg" target="_blank" title="C4iOS 教程">C4iOS 教程</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swift.gg/2016/03/14/live-video/" target="_blank" title="SwiftGG直播">SwiftGG直播</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://t.swift.gg/" target="_blank" title="T 沙龙">T 沙龙</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://codebuild.me" target="_blank" title="Code Build Me">Code Build Me</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.saitjr.com" target="_blank" title="//TODO:">//TODO:</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.5isjyx.com/" target="_blank" title="chiba">chiba</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.cee.moe" target="_blank" title="Perfect Freeze">Perfect Freeze</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftyper.com" target="_blank" title="小锅的 swift 之路">小锅的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.futantan.com/" target="_blank" title="Prayer 的博客">Prayer 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.csdn.net/mmoaay" target="_blank" title="画渣程序猿 mmoaay">画渣程序猿 mmoaay</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://linusling.com" target="_blank" title="小铁匠的 swift 之路">小铁匠的 swift 之路</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jianshu.com/users/596f2ba91ce9/latest_articles" target="_blank" title="ppppppmst 的简书博客">ppppppmst 的简书博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chenmingbiao.github.io/" target="_blank" title="CMB 的博客">CMB 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wxgbridgeq.github.io/" target="_blank" title="BridgeQ">BridgeQ</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://chengway.in" target="_blank" title="walkingway 的博客">walkingway 的博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://blog.dianqk.org" target="_blank" title="靛青K">靛青K</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://alanmelody.com/" target="_blank" title="JackAlan">JackAlan</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftconchina.com" target="_blank" title="SwiftConChina">SwiftConChina</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://swiftcn.io" target="_blank" title="Swift 中国">Swift 中国</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://boxueio.com/" target="_blank" title="泊学">泊学</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bearychat.com/" target="_blank" title="BearyChat">BearyChat</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bbs.php-z.com" target="_blank" title="PHP-Z 论坛">PHP-Z 论坛</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.swiftguide.cn" target="_blank" title="官方文档">官方文档</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.upyun.com/" target="_blank" title="又拍云赞助图床">又拍云赞助图床</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  <div class="wechatpart">
+	<p class="asidetitle">微信公众号</p>
+	<img src="/img/wechat.jpg">
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer>
+
+
+<div id="footer">
+	
+	<div class="social-font">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		
+		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
+		
+		 | 
+		<a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备14022870号-3</a>
+		</p>
+</div>
+<img src="/img/logo_new.jpg" style="position: fixed; top: -9999px;height: 500px;width: 500px;">
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.15.0/dist/av-min.js"></script>
+<script src="/js/mm.js"></script>
+<script src="/js/subscribe.js"></script>
+
+<div id="swiftweekly" style="display:none;">
+  <img id="closeme" src="/img/close.png">
+  <span id="sw_slogan">每天两块钱，加入 <b>Setapp</b> 会员，免费使用超过 200 款 Mac 应用，帮助你高效使用 Mac。<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://setapp.sjv.io/c/3589949/949160/5114">查看详情</a></b></span>
+  <!-- <form id="content"> -->
+    <!-- <input name="email" id="sw_email" placeholder="输入邮箱地址" type="email" /><a class="sw_sub">订阅</a> -->
+  <!-- </form> -->
+</div>
+
+<script>
+(function(){
+    var bp = document.createElement('script');
+    bp.src = '//push.zhanzhang.baidu.com/push.js';
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+  
+
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-66150920-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+<!--
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"></a>
+	</div>
+	<script src="/js/totop.js"></script>
+-->
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
