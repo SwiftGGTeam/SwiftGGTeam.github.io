@@ -22,7 +22,7 @@
 <meta property="og:description" content="作者：Natasha，原文链接，原文日期：2015-08-17译者：小铁匠Linus；校对：Channe；定稿：小锅   自从令人兴奋的Swift 面向协议编程 WWDC 讲座发布，我就在思考协议的用法。但是现实中，我并没有使用过它们。我仍在消化面向协议编程的含义，之后就可以在代码中用面向协议编程模式替换面向过程编程模式了。 一个庞大的案例涌上心头：MVVM ! 我之前用过 MVVM，如果你想要">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://swift.gg/img/articles/swift-2-0-protocol-oriented-mvvm/Simulator-Screen-Shot-Aug-17-2015-8.26.21-AM.png1444269944.206409">
-<meta property="og:updated_time" content="2022-08-26T13:33:54.984Z">
+<meta property="og:updated_time" content="2023-08-26T12:25:35.812Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift 2.0 中的面向协议的MVVM">
 <meta name="twitter:description" content="作者：Natasha，原文链接，原文日期：2015-08-17译者：小铁匠Linus；校对：Channe；定稿：小锅   自从令人兴奋的Swift 面向协议编程 WWDC 讲座发布，我就在思考协议的用法。但是现实中，我并没有使用过它们。我仍在消化面向协议编程的含义，之后就可以在代码中用面向协议编程模式替换面向过程编程模式了。 一个庞大的案例涌上心头：MVVM ! 我之前用过 MVVM，如果你想要">
@@ -45,10 +45,20 @@
   <body>
     <header>
       
+<div style="
+top: 0px;
+position: sticky;
+width: 100%;
+background-color: #e3512b;
+z-index: 9999;
+padding: 10px 0px 10px;
+text-align: center;">
+  <span id="sw_slogan">Hi，SwiftGG 翻译组启用了新的域名：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://swiftgg.team">swiftgg.team</a></b>今后翻译组的各项活动将会在新域名下开展，不要错过哦！</span>
+</div>
 <div>
-		
-			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+	
+		<div id="imglogo">
+			<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -77,6 +87,7 @@
 				</ul>
 			</nav>			
 </div>
+
     </header>
     <div id="container">
       <div id="main" class="post" itemscope itemprop="blogPost">
@@ -89,7 +100,7 @@
         <a href="/2015/09/11/swift-2-0-protocol-oriented-mvvm/" target="_blank" title="Swift 2.0 中的面向协议的MVVM" itemprop="url">Swift 2.0 中的面向协议的MVVM</a>
     </h1>
     <p class="article-time">
-      <time datetime="2015-09-11T05:00:00.000Z" itemprop="datePublished">2015-09-11</time>
+      <time datetime="2015-09-10T16:00:00.000Z" itemprop="datePublished">2015-09-11</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -104,7 +115,7 @@
 <p>一个庞大的案例涌上心头：<code>MVVM</code> ! 我之前用过 <code>MVVM</code>，如果你想要具体了解，可以看我之前发表的<a href="http://natashatherobot.com/swift-mvvm-optionals/" target="_blank" rel="noopener">关于 MVVM 的博客</a>。不过面向协议的内容都在本篇文章。</p>
 <a id="more"></a>
 <p>接下来我会用一个简单的例子来说明。现在有一个设置界面，其中只有一个设置：开启、关闭Minion Mode，当然你也可以推广到有许多设置的情况：</p>
-<p><img src="/img/articles/swift-2-0-protocol-oriented-mvvm/Simulator-Screen-Shot-Aug-17-2015-8.26.21-AM.png1444269944.206409" alt></p>
+<p><img src="https://swift.gg/img/articles/swift-2-0-protocol-oriented-mvvm/Simulator-Screen-Shot-Aug-17-2015-8.26.21-AM.png1444269944.206409" alt></p>
 <h2 id="视图单元格"><a href="#视图单元格" class="headerlink" title="视图单元格"></a>视图单元格</h2><p>一个拥有<code>label</code>和<code>switch</code>按钮的<code>cell</code>是很通用的。你可以把相同的 <code>cell</code> 运用在不同的地方，比如放在登录界面的 Remember Me 设置中。因此，你想让这个视图通用化。</p>
 <h3 id="复杂的配置方法"><a href="#复杂的配置方法" class="headerlink" title="复杂的配置方法"></a>复杂的配置方法</h3><p>通常，我会在 <code>cell</code> 中使用配置(<code>configure</code>)方法来追踪在应用程序不同部分的所有可能用到这个 <code>cell</code> 的设置。这个方法大概是这样的：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SwitchWithTextTableViewCell</span>: <span class="title">UITableViewCell</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">private</span> <span class="keyword">weak</span> <span class="keyword">var</span> label: <span class="type">UILabel!</span></span><br><span class="line">    <span class="meta">@IBOutlet</span> <span class="keyword">private</span> <span class="keyword">weak</span> <span class="keyword">var</span> switchToggle: <span class="type">UISwitch!</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">typealias</span> onSwitchToggleHandlerType = (switchOn: <span class="type">Bool</span>) -&gt; <span class="type">Void</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> onSwitchToggleHandler: onSwitchToggleHandlerType?</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">awakeFromNib</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.awakeFromNib()</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">func</span> <span class="title">configure</span><span class="params">(withTitle title: String,</span></span></span><br><span class="line"><span class="function"><span class="params">        switchOn: Bool,</span></span></span><br><span class="line"><span class="function"><span class="params">        onSwitchToggleHandler: onSwitchToggleHandlerType? = <span class="literal">nil</span>)</span></span></span><br><span class="line">    &#123;</span><br><span class="line">        label.text = title</span><br><span class="line">        switchToggle.on = switchOn</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">self</span>.onSwitchToggleHandler = onSwitchToggleHandler</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@IBAction</span> <span class="function"><span class="keyword">func</span> <span class="title">onSwitchToggle</span><span class="params">(sender: UISwitch)</span></span> &#123;</span><br><span class="line">        onSwitchToggleHandler?(switchOn: sender.on)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -167,18 +178,18 @@
 <nav class="article-nav clearfix">
  
  <div class="prev">
- <a href="/2015/09/11/fun_with_functions/" title="函数之趣">
+ <a href="/2015/09/11/A-Beautiful-Solution-to-Non-Optional-UIImage-Named-in-Swift/" title="如何在 Swift 中优雅地使用 UIImage">
   <strong>上一篇</strong><br>
   <span>
-  函数之趣</span>
+  如何在 Swift 中优雅地使用 UIImage</span>
 </a>
 </div>
 
 
 <div class="next">
-<a href="/2015/09/11/A-Beautiful-Solution-to-Non-Optional-UIImage-Named-in-Swift/" title="如何在 Swift 中优雅地使用 UIImage">
+<a href="/2015/09/11/ios-a-beautiful-way-of-styling-iboutlets-in-swift/" title="Swift 小贴士: 优雅地设置 IBOutlets">
  <strong>下一篇</strong><br> 
- <span>如何在 Swift 中优雅地使用 UIImage
+ <span>Swift 小贴士: 优雅地设置 IBOutlets
 </span>
 </a>
 </div>
@@ -228,7 +239,7 @@
 		<ul>
 		
 		  
-			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>16</sup></a></li>
 		  
 		
 		  
@@ -236,7 +247,7 @@
 		  
 		
 		  
-			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>45</sup></a></li>
 		  
 		
 		  
@@ -252,7 +263,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>26</sup></a></li>
 		  
 		
 		  
@@ -288,7 +299,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Miscellaneous/" title="Miscellaneous">Miscellaneous<sup>1</sup></a></li>
 		  
 		
 		  
@@ -296,7 +311,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
 		  
 		
 		  
@@ -304,11 +319,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>38</sup></a></li>
 		  
 		
 		  
@@ -324,6 +339,10 @@
 		  
 		
 		  
+			<li><a href="/categories/POP/" title="POP">POP<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
 		  
 		
@@ -336,7 +355,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/POP/SWIFT/" title="SWIFT">SWIFT<sup>1</sup></a></li>
 		  
 		
 		  
@@ -344,15 +367,19 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>17</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -365,6 +392,10 @@
 		
 		  
 			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/The-Always-Right-Institute/" title="The Always Right Institute">The Always Right Institute<sup>1</sup></a></li>
 		  
 		
 		  
@@ -408,11 +439,19 @@
 		  
 		
 		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
 		  
 		
 		  
@@ -420,7 +459,7 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+			<li><a href="/categories/khanlou/" title="khanlou">khanlou<sup>1</sup></a></li>
 		  
 		
 		  
@@ -449,6 +488,10 @@
 		
 		  
 			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftjectivec/" title="swiftjectivec">swiftjectivec<sup>2</sup></a></li>
 		  
 		
 		  
@@ -493,7 +536,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>112</sup></a></li>
 			
 		
 			
@@ -501,7 +544,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>14</sup></a></li>
 			
 		
 			
@@ -509,7 +552,11 @@
 			
 		
 			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>8</sup></a></li>
 			
 		
 			
@@ -518,10 +565,6 @@
 		
 			
 				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
 			
 		
 			
@@ -537,6 +580,10 @@
 			
 		
 			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>4</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
@@ -545,11 +592,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
 			
 		
 			
@@ -557,11 +600,11 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS/" title="iOS">iOS<sup>3</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
 			
 		
 		</ul>
@@ -755,7 +798,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2023 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

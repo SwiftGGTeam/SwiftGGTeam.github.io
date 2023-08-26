@@ -24,7 +24,7 @@
 <meta property="og:image" content="https://swift.gg/img/articles/swift-weak-and-unowned/retainc1.jpg1449449056.5054061">
 <meta property="og:image" content="https://swift.gg/img/articles/swift-weak-and-unowned/retain2c.jpg1449449057.561948">
 <meta property="og:image" content="https://swift.gg/img/articles/swift-weak-and-unowned/retainc3.jpg1449449058.1724997">
-<meta property="og:updated_time" content="2022-08-26T13:33:54.980Z">
+<meta property="og:updated_time" content="2023-08-26T12:25:35.812Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Swift 中的 weak 和 unowned">
 <meta name="twitter:description" content="作者：Thomas Hanning，原文链接，原文日期：2015-11-30译者：pmst；校对：Cee；定稿：Cee   使用 weak 和 unowned 关键字，我们可以避免所谓的循环引用。在这篇文章中，我们将讨论两者之间的差异。">
@@ -47,10 +47,20 @@
   <body>
     <header>
       
+<div style="
+top: 0px;
+position: sticky;
+width: 100%;
+background-color: #e3512b;
+z-index: 9999;
+padding: 10px 0px 10px;
+text-align: center;">
+  <span id="sw_slogan">Hi，SwiftGG 翻译组启用了新的域名：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://swiftgg.team">swiftgg.team</a></b>今后翻译组的各项活动将会在新域名下开展，不要错过哦！</span>
+</div>
 <div>
-		
-			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+	
+		<div id="imglogo">
+			<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -79,6 +89,7 @@
 				</ul>
 			</nav>			
 </div>
+
     </header>
     <div id="container">
       <div id="main" class="post" itemscope itemprop="blogPost">
@@ -91,7 +102,7 @@
         <a href="/2015/12/02/swift-weak-and-unowned/" target="_blank" title="Swift 中的 weak 和 unowned" itemprop="url">Swift 中的 weak 和 unowned</a>
     </h1>
     <p class="article-time">
-      <time datetime="2015-12-02T06:00:00.000Z" itemprop="datePublished">2015-12-02</time>
+      <time datetime="2015-12-01T16:00:00.000Z" itemprop="datePublished">2015-12-02</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -109,14 +120,14 @@
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ModelObject 类内容</span></span><br><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">ModelObjectDelegate</span>: <span class="title">class</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ModelObject</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">var</span> delegate: <span class="type">ModelObjectDelegate?</span></span><br><span class="line">       </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// SecondViewController 类内容</span></span><br><span class="line"><span class="keyword">import</span> UIKit</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SecondViewController</span>: <span class="title">UIViewController</span>, <span class="title">ModelObjectDelegate</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">var</span> modelObject: <span class="type">ModelObject?</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">func</span> <span class="title">viewDidLoad</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.viewDidLoad()</span><br><span class="line">        modelObject = <span class="type">ModelObject</span>()</span><br><span class="line">        modelObject!.delegate = <span class="keyword">self</span></span><br><span class="line">    &#125;</span><br><span class="line">        </span><br><span class="line">    <span class="meta">@IBAction</span> <span class="function"><span class="keyword">func</span> <span class="title">closeButtonPressed</span><span class="params">(sender: UIButton)</span></span> &#123;</span><br><span class="line">        dismissViewControllerAnimated(<span class="literal">true</span>, completion: <span class="literal">nil</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>准备工作完毕，现在来测试下内存管理：首先我们释放掉（dismiss）<code>SecondViewController</code> 视图控制器，你会发现使用内存并未有所下降。这是为什么呢？按照期望应该是释放掉 <code>SecondViewController</code> 对象,内存被释放才对。让我们首先来了解下对象之间的关系。假设 <code>SecondViewController</code> 加载完毕，对象之间关系应该看起来这样：</p>
-<p><img src="/img/articles/swift-weak-and-unowned/retainc1.jpg1449449056.5054061" alt></p>
+<p><img src="https://swift.gg/img/articles/swift-weak-and-unowned/retainc1.jpg1449449056.5054061" alt></p>
 <p>现在，释放掉 <code>SecondViewController</code>，看起来应该这样：</p>
-<p><img src="/img/articles/swift-weak-and-unowned/retain2c.jpg1449449057.561948" alt></p>
+<p><img src="https://swift.gg/img/articles/swift-weak-and-unowned/retain2c.jpg1449449057.561948" alt></p>
 <p>如图所示：<code>RootViewController</code> 不再对 <code>SecondViewController</code> 拥有强引用关系。但是 <code>SecondViewController</code> 和 <code>ModelObject</code> 对象之间始终保持相互强引用。所以它们不会被释放掉。</p>
 <h3 id="Weak"><a href="#Weak" class="headerlink" title="Weak"></a>Weak</h3><p>为了避免这种情况发生，我们可以将引用关系声明为 <code>weak</code> ，它不会阻止 ARC 释放内存。</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">ModelObjectDelegate</span>: <span class="title">class</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ModelObject</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">weak</span> <span class="keyword">var</span> delegate: <span class="type">ModelObjectDelegate?</span></span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>现在对象关系图应该看起来这样：</p>
-<p><img src="/img/articles/swift-weak-and-unowned/retainc3.jpg1449449058.1724997" alt></p>
+<p><img src="https://swift.gg/img/articles/swift-weak-and-unowned/retainc3.jpg1449449058.1724997" alt></p>
 <p>由于 <code>SecondViewController</code> 和 <code>ModelObject</code> 对象之间仅存一个强引用关系，毫无疑问可以成功释放内存。</p>
 <h3 id="Unowned"><a href="#Unowned" class="headerlink" title="Unowned"></a>Unowned</h3><p>此外你还可以使用 <code>unowned</code> 关键字替换掉 <code>weak</code>,那么两者的区别在哪里？倘若你使用 <code>weak</code>,属性可以是可选类型，即允许有 <code>nil</code> 值的情况。另一方面，倘若你使用 <code>unowned</code>，它不允许设为可选类型。因为一个 unowned 属性不能为可选类型，那么它必须在 init 方法中初始化值：</p>
 <figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Foundation</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">protocol</span> <span class="title">ModelObjectDelegate</span>: <span class="title">class</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ModelObject</span> </span>&#123;</span><br><span class="line">    <span class="comment">//译者注：swift 要求变量一定要有初始值</span></span><br><span class="line">    <span class="comment">//        可选类型默认初始值为 nil</span></span><br><span class="line">    <span class="keyword">unowned</span> <span class="keyword">var</span> delegate: <span class="type">ModelObjectDelegate</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">init</span>(delegate:<span class="type">ModelObjectDelegate</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.delegate = delegate</span><br><span class="line">    &#125;</span><br><span class="line">        </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -222,7 +233,7 @@
 		<ul>
 		
 		  
-			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>16</sup></a></li>
 		  
 		
 		  
@@ -230,7 +241,7 @@
 		  
 		
 		  
-			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>45</sup></a></li>
 		  
 		
 		  
@@ -246,7 +257,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>26</sup></a></li>
 		  
 		
 		  
@@ -282,7 +293,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Miscellaneous/" title="Miscellaneous">Miscellaneous<sup>1</sup></a></li>
 		  
 		
 		  
@@ -290,7 +305,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
 		  
 		
 		  
@@ -298,11 +313,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>38</sup></a></li>
 		  
 		
 		  
@@ -318,6 +333,10 @@
 		  
 		
 		  
+			<li><a href="/categories/POP/" title="POP">POP<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
 		  
 		
@@ -330,7 +349,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/POP/SWIFT/" title="SWIFT">SWIFT<sup>1</sup></a></li>
 		  
 		
 		  
@@ -338,15 +361,19 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>17</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -359,6 +386,10 @@
 		
 		  
 			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/The-Always-Right-Institute/" title="The Always Right Institute">The Always Right Institute<sup>1</sup></a></li>
 		  
 		
 		  
@@ -402,11 +433,19 @@
 		  
 		
 		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
 		  
 		
 		  
@@ -414,7 +453,7 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+			<li><a href="/categories/khanlou/" title="khanlou">khanlou<sup>1</sup></a></li>
 		  
 		
 		  
@@ -443,6 +482,10 @@
 		
 		  
 			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftjectivec/" title="swiftjectivec">swiftjectivec<sup>2</sup></a></li>
 		  
 		
 		  
@@ -487,7 +530,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>112</sup></a></li>
 			
 		
 			
@@ -495,7 +538,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>14</sup></a></li>
 			
 		
 			
@@ -503,7 +546,11 @@
 			
 		
 			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>8</sup></a></li>
 			
 		
 			
@@ -512,10 +559,6 @@
 		
 			
 				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
 			
 		
 			
@@ -531,6 +574,10 @@
 			
 		
 			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>4</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
@@ -539,11 +586,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
 			
 		
 			
@@ -551,11 +594,11 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS/" title="iOS">iOS<sup>3</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
 			
 		
 		</ul>
@@ -749,7 +792,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2023 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		

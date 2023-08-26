@@ -22,7 +22,7 @@
 <meta property="og:description" content="在 Swift 中怎么使用 OC 中很有名 method swizzling 呢，本文来好好给你讲解下。">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://swift.gg/img/articles/effective-method-swizzling-with-swift/swizzling.png1459213818.9107738">
-<meta property="og:updated_time" content="2022-08-26T13:33:54.992Z">
+<meta property="og:updated_time" content="2023-08-26T12:25:35.814Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="如何在 Swift 中高效地使用 Method Swizzling">
 <meta name="twitter:description" content="在 Swift 中怎么使用 OC 中很有名 method swizzling 呢，本文来好好给你讲解下。">
@@ -45,10 +45,20 @@
   <body>
     <header>
       
+<div style="
+top: 0px;
+position: sticky;
+width: 100%;
+background-color: #e3512b;
+z-index: 9999;
+padding: 10px 0px 10px;
+text-align: center;">
+  <span id="sw_slogan">Hi，SwiftGG 翻译组启用了新的域名：<b><a style="color: white;text-decoration:underline;" target="_blank" href="https://swiftgg.team">swiftgg.team</a></b>今后翻译组的各项活动将会在新域名下开展，不要错过哦！</span>
+</div>
 <div>
-		
-			<div id="imglogo">
-				<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
+	
+		<div id="imglogo">
+			<a href="/"><img src="/img/logo_new.png" alt="SwiftGG" title="SwiftGG"></a>
 			</div>
 			
 			<div id="textlogo">
@@ -77,6 +87,7 @@
 				</ul>
 			</nav>			
 </div>
+
     </header>
     <div id="container">
       <div id="main" class="post" itemscope itemprop="blogPost">
@@ -89,7 +100,7 @@
         <a href="/2016/03/29/effective-method-swizzling-with-swift/" target="_blank" title="如何在 Swift 中高效地使用 Method Swizzling" itemprop="url">如何在 Swift 中高效地使用 Method Swizzling</a>
     </h1>
     <p class="article-time">
-      <time datetime="2016-03-29T05:00:00.000Z" itemprop="datePublished">2016-03-29</time>
+      <time datetime="2016-03-28T16:00:00.000Z" itemprop="datePublished">2016-03-29</time>
       <span style="margin-left: 0.5em;"><i class="icon-eye-open"></i> <span class="viewcount"></span></span>
     </p>
   </header>
@@ -97,14 +108,14 @@
 	<div class="article-content">
 		
 		<blockquote>
-<p>作者：uraimo，<a href="https://www.uraimo.com/2015/10/23/effective-method-swizzling-with-swift/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-10-23<br>译者：<a href="http://linusling.com" target="_blank" rel="noopener">小铁匠Linus</a>；校对：<a href="undefined">100mango</a>；定稿：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="noopener">Channe</a></p>
+<p>作者：uraimo，<a href="https://www.uraimo.com/2015/10/23/effective-method-swizzling-with-swift/" target="_blank" rel="noopener">原文链接</a>，原文日期：2015-10-23<br>译者：<a href="http://linusling.com" target="_blank" rel="noopener">小铁匠Linus</a>；校对：100mango；定稿：<a href="http://www.jianshu.com/users/7a07113a6597/latest_articles" target="_blank" rel="noopener">Channe</a></p>
 </blockquote>
 <!--此处开始正文-->
 <p>示例程序可以从 <a href="https://github.com/uraimo/SwizzlingInSwift/" target="_blank" rel="noopener">Github</a> 上下载。</p>
 <p>（译者注：译者也写了一篇关于 Method Swizzling 的文章 <a href="http://linusling.com/2016/03/23/method-swizzling-in-ios/" target="_blank" rel="noopener">Runtime 之 Method Swizzling</a>，顺便写了两个小 demo 来对比 Objective-C 和 Swift 之间 Method Swizzling 的异同，<a href="https://github.com/LinusLing/RuntimeTest" target="_blank" rel="noopener">示例代码传送门</a>）</p>
 <p>Method Swizzling 在 Objective-C 或其他语言中是一种很有名的技术，用来支持动态方法派发。</p>
 <p>Method Swizzling 通过改变特定 selector（方法）与实际实现之间的映射，在 <em>runtime</em> 时将一个方法的实现替换成其它方法的实现。</p>
-<p><img src="/img/articles/effective-method-swizzling-with-swift/swizzling.png1459213818.9107738" alt></p>
+<p><img src="https://swift.gg/img/articles/effective-method-swizzling-with-swift/swizzling.png1459213818.9107738" alt></p>
 <p>虽然这看起来非常方便，但是这个功能也有其缺点。在 runtime 执行这类更改时，你就不能在编译时利用那些可用的安全检查了。因此，应该小心使用 Method Swizzling。</p>
 <a id="more"></a>
 <p><a href="http://nshipster.com/method-swizzling/" target="_blank" rel="noopener">NSHipster</a> 上有一篇关于如何在 Objective-C 中使用 Method Swizzling 的文章（译者注：<a href="http://southpeak.github.io/blog/2014/11/06/objective-c-runtime-yun-xing-shi-zhi-si-:method-swizzling/" target="_blank" rel="noopener">南峰子的技术博客</a>有这篇文章的译文）（其他详情也可以看<a href="https://www.mikeash.com/pyblog/friday-qa-2010-01-29-method-replacement-for-fun-and-profit.html" target="_blank" rel="noopener">这里</a>）以及 <a href="http://stackoverflow.com/q/5339276" target="_blank" rel="noopener">Stackoverflow</a> 上有一些如何使用 Method Swizzling 的讨论。</p>
@@ -235,7 +246,7 @@
 		<ul>
 		
 		  
-			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>14</sup></a></li>
+			<li><a href="/categories/APPVENTURE/" title="APPVENTURE">APPVENTURE<sup>16</sup></a></li>
 		  
 		
 		  
@@ -243,7 +254,7 @@
 		  
 		
 		  
-			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>44</sup></a></li>
+			<li><a href="/categories/AppCoda/" title="AppCoda">AppCoda<sup>45</sup></a></li>
 		  
 		
 		  
@@ -259,7 +270,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>25</sup></a></li>
+			<li><a href="/categories/Crunchy-Development/" title="Crunchy Development">Crunchy Development<sup>26</sup></a></li>
 		  
 		
 		  
@@ -295,7 +306,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>15</sup></a></li>
+			<li><a href="/categories/Mike-Ash/" title="Mike Ash">Mike Ash<sup>16</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Miscellaneous/" title="Miscellaneous">Miscellaneous<sup>1</sup></a></li>
 		  
 		
 		  
@@ -303,7 +318,7 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+			<li><a href="/categories/Swift/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
 		  
 		
 		  
@@ -311,11 +326,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>37</sup></a></li>
+			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/PhotoKit/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>1</sup></a></li>
+			<li><a href="/categories/Ole-Begemann/" title="Ole Begemann">Ole Begemann<sup>38</sup></a></li>
 		  
 		
 		  
@@ -331,6 +346,10 @@
 		  
 		
 		  
+			<li><a href="/categories/POP/" title="POP">POP<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/PhotoKit/" title="PhotoKit">PhotoKit<sup>1</sup></a></li>
 		  
 		
@@ -343,7 +362,11 @@
 		  
 		
 		  
-			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>7</sup></a></li>
+			<li><a href="/categories/Russ-Bishop/" title="Russ Bishop">Russ Bishop<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/POP/SWIFT/" title="SWIFT">SWIFT<sup>1</sup></a></li>
 		  
 		
 		  
@@ -351,15 +374,19 @@
 		  
 		
 		  
-			<li><a href="/categories/Swift/" title="Swift">Swift<sup>13</sup></a></li>
+			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Ole-Begemann/Swift/" title="Swift">Swift<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Swift/" title="Swift">Swift<sup>17</sup></a></li>
 		  
 		
 		  
 			<li><a href="/categories/Mike-Ash/Swift/" title="Swift">Swift<sup>1</sup></a></li>
-		  
-		
-		  
-			<li><a href="/categories/Olivier-Halligon/Swift/" title="Swift">Swift<sup>1</sup></a></li>
 		  
 		
 		  
@@ -372,6 +399,10 @@
 		
 		  
 			<li><a href="/categories/Swift-进阶/" title="Swift 进阶">Swift 进阶<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/The-Always-Right-Institute/" title="The Always Right Institute">The Always Right Institute<sup>1</sup></a></li>
 		  
 		
 		  
@@ -415,11 +446,19 @@
 		  
 		
 		  
+			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/khanlou/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+		  
+		
+		  
 			<li><a href="/categories/iOS/" title="iOS">iOS<sup>2</sup></a></li>
 		  
 		
 		  
-			<li><a href="/categories/AppCoda/iOS/" title="iOS">iOS<sup>1</sup></a></li>
+			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
 		  
 		
 		  
@@ -427,7 +466,7 @@
 		  
 		
 		  
-			<li><a href="/categories/iOS/iOS-开发/" title="iOS 开发">iOS 开发<sup>1</sup></a></li>
+			<li><a href="/categories/khanlou/" title="khanlou">khanlou<sup>1</sup></a></li>
 		  
 		
 		  
@@ -456,6 +495,10 @@
 		
 		  
 			<li><a href="/categories/swiftandpainless/" title="swiftandpainless">swiftandpainless<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/swiftjectivec/" title="swiftjectivec">swiftjectivec<sup>2</sup></a></li>
 		  
 		
 		  
@@ -500,7 +543,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift/" title="Swift">Swift<sup>105</sup></a></li>
+				<li><a href="/tags/Swift/" title="Swift">Swift<sup>112</sup></a></li>
 			
 		
 			
@@ -508,7 +551,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>13</sup></a></li>
+				<li><a href="/tags/Swift-跨平台/" title="Swift 跨平台">Swift 跨平台<sup>14</sup></a></li>
 			
 		
 			
@@ -516,7 +559,11 @@
 			
 		
 			
-				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>8</sup></a></li>
+				<li><a href="/tags/NSHipster/" title="NSHipster">NSHipster<sup>10</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/教程/" title="教程">教程<sup>8</sup></a></li>
 			
 		
 			
@@ -525,10 +572,6 @@
 		
 			
 				<li><a href="/tags/Swift-3/" title="Swift 3">Swift 3<sup>7</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/教程/" title="教程">教程<sup>6</sup></a></li>
 			
 		
 			
@@ -544,6 +587,10 @@
 			
 		
 			
+				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>4</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/iOS-9/" title="iOS 9">iOS 9<sup>4</sup></a></li>
 			
 		
@@ -552,11 +599,7 @@
 			
 		
 			
-				<li><a href="/tags/Swift-2/" title="Swift 2">Swift 2<sup>3</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/Objective-C/" title="Objective-C">Objective-C<sup>3</sup></a></li>
+				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
 			
 		
 			
@@ -564,11 +607,11 @@
 			
 		
 			
-				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
+				<li><a href="/tags/iOS/" title="iOS">iOS<sup>3</sup></a></li>
 			
 		
 			
-				<li><a href="/tags/Design-Patterns/" title="Design Patterns">Design Patterns<sup>3</sup></a></li>
+				<li><a href="/tags/Jesse-Squires/" title="Jesse Squires">Jesse Squires<sup>3</sup></a></li>
 			
 		
 		</ul>
@@ -762,7 +805,7 @@
 		
 
 		<p class="copyright">
-		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2022 
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2023 
 		
 		<a href="/about" target="_blank" title="SwiftGG">SwiftGG</a>
 		
